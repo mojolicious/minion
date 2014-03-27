@@ -1,5 +1,6 @@
 
 0.02  2014-03-28
+  - Reduced Perl version requirement to 5.10.1.
 
 0.01  2014-03-27
   - First release.
