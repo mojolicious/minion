@@ -1,0 +1,16 @@
+language: perl
+perl:
+  - "5.18"
+  - "5.16"
+  - "5.14"
+  - "5.12"
+  - "5.10"
+env:
+  - "HARNESS_OPTIONS=j9 TEST_POD=1 TEST_ONLINE=mongodb://127.0.0.1:27017/mango"
+services:
+  - mongodb
+install:
+  - "cpanm -n Test::Pod Test::Pod::Coverage"
+  - "cpanm -n --installdeps ."
+notifications:
+  email: false
