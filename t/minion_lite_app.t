@@ -18,7 +18,7 @@ my $count = app->minion->jobs->insert({count => 0});
 app->minion->add_task(
   increment => sub {
     my $job = shift;
-    my $doc = $job->worker->minion->jobs->find_one($count);
+    my $doc = $job->app->minion->jobs->find_one($count);
     $doc->{count}++;
     $job->worker->minion->jobs->save($doc);
   }

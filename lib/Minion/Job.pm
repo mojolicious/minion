@@ -3,6 +3,8 @@ use Mojo::Base -base;
 
 has [qw(doc worker)];
 
+sub app { shift->worker->minion->app }
+
 sub fail { shift->_update(shift // 'Unknown error.') }
 
 sub finish { shift->_update }
@@ -77,6 +79,15 @@ L<Minion::Worker> object this job belongs to.
 
 L<Minion::Job> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
+
+=head2 app
+
+  my $app = $job->app;
+
+Get application from L<Minion/"app">.
+
+  # Longer version
+  my $app = $job->worker->minion->app;
 
 =head2 fail
 
