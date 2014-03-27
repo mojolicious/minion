@@ -7,7 +7,7 @@ use Minion::Job;
 use Minion::Worker;
 use Mojo::Server;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 has app  => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has jobs => sub { $_[0]->mango->db->collection($_[0]->prefix . '.jobs') };

@@ -27,7 +27,7 @@ get '/' => sub {
 app->start;
 ```
 
-  And just start a background worker process in addition to your web server.
+  Just start a background worker process in addition to your web server.
 
     $ ./myapp.pl minion worker
 
