@@ -34,8 +34,9 @@ sub _child {
 
 sub _update {
   my ($self, $err) = @_;
-  $self->worker->minion->jobs->save(
-    {%{$self->doc}, state => $err ? ('failed', error => $err) : 'finished'});
+  my $doc = $self->doc;
+  $self->worker->minion->jobs->update({_id => $doc->{_id}, state => 'active'},
+    {%$doc, state => $err ? ('failed', error => $err) : 'finished'});
   return $self;
 }
 

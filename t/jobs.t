@@ -55,14 +55,13 @@ $job = $worker->register->dequeue;
 is $job->doc->{_id}, $oid, 'right object id';
 $job->finish;
 isnt $worker->dequeue->{_id}, $oid, 'different object id';
-$job->finish;
 $worker->unregister;
 
 # Failed jobs
 $oid = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue;
 is $job->doc->{_id}, $oid, 'right object id';
-$job->fail;
+$job->fail->finish;
 $doc = $jobs->find_one($oid);
 is $doc->{state}, 'failed',         'right state';
 is $doc->{error}, 'Unknown error.', 'right error';

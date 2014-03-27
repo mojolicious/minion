@@ -19,6 +19,7 @@ $_->options && $_->drop for $workers, $minion->jobs;
 # Nothing to repair
 my $worker = $minion->worker;
 $worker->repair;
+isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
 # Register and unregister
 $worker->register;
