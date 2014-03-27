@@ -26,7 +26,7 @@ sub run {
 
 =head1 NAME
 
-Minion::Command::minion::orker - Minion worker command
+Minion::Command::minion::worker - Minion worker command
 
 =head1 SYNOPSIS
 
