@@ -39,6 +39,23 @@ sub enqueue {
 
 sub new { shift->SUPER::new(mango => Mango->new(@_)) }
 
+sub stats {
+  my $self = shift;
+
+  my $jobs    = $self->jobs;
+  my $workers = $self->workers;
+  my $all     = $workers->find->count;
+  my $active  = @{$jobs->find({state => 'active'})->distinct('worker')};
+  return {
+    active_jobs      => $jobs->find({state => 'active'})->count,
+    active_workers   => $active,
+    failed_jobs      => $jobs->find({state => 'failed'})->count,
+    finished_jobs    => $jobs->find({state => 'finished'})->count,
+    inactive_jobs    => $jobs->find({state => 'inactive'})->count,
+    inactive_workers => $all - $active
+  };
+}
+
 sub worker { Minion::Worker->new(minion => shift) }
 
 1;
@@ -174,6 +191,12 @@ Job priority.
 
 Construct a new L<Minion> object and pass connection string to L</"mango"> if
 necessary.
+
+=head2 stats
+
+  my $stats = $minion->stats;
+
+Get statistics for jobs and workers.
 
 =head2 worker
 
