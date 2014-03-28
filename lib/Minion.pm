@@ -28,7 +28,8 @@ sub enqueue {
   $options //= {};
 
   my $doc = {
-    args => $args // [],
+    after => $options->{after} // bson_time(1),
+    args  => $args             // [],
     created  => bson_time,
     priority => $options->{priority} // 0,
     state    => 'inactive',
@@ -74,7 +75,7 @@ Minion - Job queue
     say 'This is a background worker process.';
   });
 
-  # Enqueue jobs (everything gets BSON serialized)
+  # Enqueue jobs (data gets BSON serialized)
   $minion->enqueue(something_slow => ['foo', 'bar']);
   $minion->enqueue(something_slow => [1, 2, 3]);
 
@@ -82,6 +83,11 @@ Minion - Job queue
   my $worker = $minion->worker;
   $worker->one_job;
   $worker->all_jobs;
+
+  # Build more sophisticated workers
+  my $worker = $minion->worker->repair->register;
+  if (my $job = $worker->dequeue) { $job->perform }
+  $worker->unregister;
 
 =head1 DESCRIPTION
 
@@ -171,6 +177,12 @@ Enqueue a new job.
 These options are currently available:
 
 =over 2
+
+=item after
+
+  after => bson_time((time + 1) * 1000)
+
+Perform job only after this point in time.
 
 =item priority
 

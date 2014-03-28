@@ -5,6 +5,7 @@ use Test::More;
 plan skip_all => 'set TEST_ONLINE to enable this test'
   unless $ENV{TEST_ONLINE};
 
+use Mango::BSON 'bson_time';
 use Minion;
 
 # Clean up before start
@@ -86,6 +87,18 @@ $job = $worker->register->dequeue;
 is $job->doc->{_id}, $oid, 'right object id';
 $job->finish;
 isnt $worker->dequeue->{_id}, $oid, 'different object id';
+$worker->unregister;
+
+# Delayed jobs
+$oid = $minion->enqueue(
+  add => [2, 1] => {after => bson_time((time + 100) * 1000)});
+is $worker->register->dequeue, undef, 'too early for job';
+$doc = $jobs->find_one($oid);
+$doc->{after} = bson_time((time - 100) * 1000);
+$jobs->save($doc);
+$job = $worker->dequeue;
+is $job->doc->{_id}, $oid, 'right object id';
+$job->finish;
 $worker->unregister;
 
 # Failed jobs

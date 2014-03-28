@@ -19,8 +19,11 @@ sub dequeue {
   return undef unless $self->{id};
 
   my $doc = {
-    query =>
-      {state => 'inactive', task => {'$in' => [keys %{$self->minion->tasks}]}},
+    query => {
+      after => {'$lt' => bson_time},
+      state => 'inactive',
+      task  => {'$in' => [keys %{$self->minion->tasks}]}
+    },
     sort   => {priority => -1},
     update => {'$set'   => {state => 'active', worker => $self->{id}}},
     new => 1
@@ -55,6 +58,8 @@ sub repair {
     $jobs->save({%$job, state => 'failed', error => 'Worker went away.'})
       unless $workers->find_one($job->{worker});
   }
+
+  return $self;
 }
 
 sub unregister {
@@ -144,7 +149,7 @@ Register worker.
 
 =head2 repair
 
-  $worker->repair;
+  $worker = $worker->repair;
 
 Repair worker registry and job queue.
 
