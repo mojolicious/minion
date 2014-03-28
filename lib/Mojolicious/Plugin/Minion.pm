@@ -31,6 +31,21 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
   # Mojolicious::Lite
   plugin Minion => {uri => 'mongodb://127.0.0.1:27017'};
 
+  # Add tasks to your application
+  app->minion->add_task(slow_log => sub {
+    my ($job, $msg) = @_;
+    sleep 5;
+    $job->app->log->debug(qq{Received message "$msg".});
+  });
+
+  # Start jobs from anywhere in your application
+  $c->minion->enqueue(slow_log => ['test 123']);
+
+  # Perform jobs in your application tests
+  $t->get_ok('/start_job')->status_is(200);
+  my $worker = $t->app->minion->worker;
+  $worker->all_jobs;
+
 =head1 DESCRIPTION
 
 L<Mojolicious::Plugin::Minion> is a L<Mojolicious> plugin for the L<Minion>
