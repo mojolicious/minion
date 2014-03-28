@@ -43,17 +43,13 @@ sub stats {
   my $self = shift;
 
   my $jobs    = $self->jobs;
+  my $active  = @{$jobs->find({state => 'active'})->distinct('worker')};
   my $workers = $self->workers;
   my $all     = $workers->find->count;
-  my $active  = @{$jobs->find({state => 'active'})->distinct('worker')};
-  return {
-    active_jobs      => $jobs->find({state => 'active'})->count,
-    active_workers   => $active,
-    failed_jobs      => $jobs->find({state => 'failed'})->count,
-    finished_jobs    => $jobs->find({state => 'finished'})->count,
-    inactive_jobs    => $jobs->find({state => 'inactive'})->count,
-    inactive_workers => $all - $active
-  };
+  my $stats = {active_workers => $active, inactive_workers => $all - $active};
+  $stats->{"${_}_jobs"} = $jobs->find({state => $_})->count
+    for qw(active failed finished inactive);
+  return $stats;
 }
 
 sub worker { Minion::Worker->new(minion => shift) }
@@ -82,7 +78,7 @@ Minion - Job queue
   $minion->enqueue(something_slow => ['foo', 'bar']);
   $minion->enqueue(something_slow => [1, 2, 3]);
 
-  # Create a worker and perform job right away (useful for testing)
+  # Create a worker and perform jobs right away (useful for testing)
   my $worker = $minion->worker;
   $worker->one_job;
   $worker->all_jobs;
