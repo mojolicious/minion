@@ -25,7 +25,10 @@ sub dequeue {
       task  => {'$in' => [keys %{$self->minion->tasks}]}
     },
     sort   => {priority => -1},
-    update => {'$set'   => {state => 'active', worker => $self->{id}}},
+    update => {
+      '$set' =>
+        {started => bson_time, state => 'active', worker => $self->{id}}
+    },
     new => 1
   };
   return undef unless my $job = $self->minion->jobs->find_and_modify($doc);

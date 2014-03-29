@@ -65,19 +65,22 @@ my $oid = $minion->enqueue(add => [2, 2]);
 my $doc = $jobs->find_one({task => 'add'});
 is $doc->{_id}, $oid, 'right object id';
 is_deeply $doc->{args}, [2, 2], 'right arguments';
-ok $doc->{created}->to_epoch, 'has timestamp';
+ok $doc->{created}->to_epoch, 'has created timestamp';
 is $doc->{priority}, 0,          'right priority';
 is $doc->{state},    'inactive', 'right state';
 $worker = $minion->worker;
 is $worker->dequeue, undef, 'not registered';
 $job = $worker->register->dequeue;
+ok $job->doc->{started}->to_epoch, 'has started timestamp';
 is_deeply $job->doc->{args}, [2, 2], 'right arguments';
 is $job->doc->{state}, 'active', 'right state';
 is $job->doc->{task},  'add',    'right task';
 is $workers->find_one($job->doc->{worker})->{pid}, $$, 'right worker';
 $job->perform;
 is_deeply $jobs->find_one($add)->{results}, [4], 'right result';
-is $jobs->find_one($oid)->{state}, 'finished', 'right state';
+$doc = $jobs->find_one($oid);
+is $doc->{state}, 'finished', 'right state';
+ok $doc->{finished}->to_epoch, 'has finished timestamp';
 $worker->unregister;
 
 # Jobs with priority

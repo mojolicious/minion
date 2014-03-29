@@ -1,6 +1,8 @@
 package Minion::Job;
 use Mojo::Base -base;
 
+use Mango::BSON 'bson_time';
+
 has [qw(doc worker)];
 
 sub app { shift->worker->minion->app }
@@ -35,8 +37,14 @@ sub _child {
 sub _update {
   my ($self, $err) = @_;
   my $doc = $self->doc;
-  $self->worker->minion->jobs->update({_id => $doc->{_id}, state => 'active'},
-    {%$doc, state => $err ? ('failed', error => $err) : 'finished'});
+  $self->worker->minion->jobs->update(
+    {_id => $doc->{_id}, state => 'active'},
+    {
+      %$doc,
+      finished => bson_time,
+      state    => $err ? ('failed', error => $err) : 'finished'
+    }
+  );
   return $self;
 }
 
