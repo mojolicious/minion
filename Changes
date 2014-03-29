@@ -1,4 +1,6 @@
 
+0.03  2014-03-29
+
 0.02  2014-03-28
   - Added support for delayed jobs.
   - Added stats method to Minion.
