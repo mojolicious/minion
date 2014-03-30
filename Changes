@@ -1,5 +1,6 @@
 
 0.04  2014-04-01
+  - Added error method to Minion::Job.
 
 0.03  2014-03-30
   - Removed doc and worker attributes from Minion::Job.

@@ -48,9 +48,8 @@ $pid++ while kill 0, $pid;
 $workers->save({%$doc, pid => $pid});
 $worker->repair;
 ok !$workers->find_one({pid => $$, num => $num}), 'not registered';
-$doc = $jobs->find_one($oid);
-is $doc->{state}, 'failed',            'job is no longer active';
-is $doc->{error}, 'Worker went away.', 'right error';
+is $job->state, 'failed',            'job is no longer active';
+is $job->error, 'Worker went away.', 'right error';
 
 # Repair abandoned job
 $worker->register;
@@ -58,9 +57,8 @@ $oid = $minion->enqueue('test');
 $job = $worker->dequeue;
 is $job->id, $oid, 'right object id';
 $worker->unregister->repair;
-$doc = $jobs->find_one($oid);
-is $doc->{state}, 'failed',            'job is no longer active';
-is $doc->{error}, 'Worker went away.', 'right error';
+is $job->state, 'failed',            'job is no longer active';
+is $job->error, 'Worker went away.', 'right error';
 $workers->drop;
 
 done_testing();

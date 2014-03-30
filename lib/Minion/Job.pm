@@ -8,6 +8,8 @@ has [qw(id minion task)];
 
 sub app { shift->minion->app }
 
+sub error { shift->_get('error') }
+
 sub fail { shift->_update(shift // 'Unknown error.') }
 
 sub finish { shift->_update }
@@ -18,12 +20,7 @@ sub perform {
   $self->fail('Non-zero exit status.') if $?;
 }
 
-sub state {
-  my $self = shift;
-  return undef
-    unless my $job = $self->minion->jobs->find_one($self->id, {state => 1});
-  return $job->{state};
-}
+sub state { shift->_get('state') }
 
 sub _child {
   my $self = shift;
@@ -39,6 +36,13 @@ sub _child {
   my $cb = $minion->tasks->{$task};
   eval { $self->$cb(@{$self->args}); 1 } ? $self->finish : $self->fail($@);
   exit 0;
+}
+
+sub _get {
+  my ($self, $key) = @_;
+  return undef
+    unless my $job = $self->minion->jobs->find_one($self->id, {$key => 1});
+  return $job->{$key};
 }
 
 sub _update {
@@ -120,6 +124,12 @@ Get application from L<Minion/"app">.
 
   # Longer version
   my $app = $job->minion->app;
+
+=head2 error
+
+  my $err = $job->error;
+
+Get error for C<failed> job.
 
 =head2 fail
 
