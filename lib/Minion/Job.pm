@@ -3,9 +3,9 @@ use Mojo::Base -base;
 
 use Mango::BSON 'bson_time';
 
-has [qw(doc worker)];
+has [qw(doc minion)];
 
-sub app { shift->worker->minion->app }
+sub app { shift->minion->app }
 
 sub fail { shift->_update(shift // 'Unknown error.') }
 
@@ -26,7 +26,7 @@ sub _child {
 
   # Child
   my $doc    = $self->doc;
-  my $minion = $self->worker->minion;
+  my $minion = $self->minion;
   $minion->app->log->debug(
     qq{Performing job "$doc->{task}" ($doc->{_id}:$$).});
   my $cb = $minion->tasks->{$doc->{task}};
@@ -36,8 +36,9 @@ sub _child {
 
 sub _update {
   my ($self, $err) = @_;
+
   my $doc = $self->doc;
-  $self->worker->minion->jobs->update(
+  $self->minion->jobs->update(
     {_id => $doc->{_id}, state => 'active'},
     {
       %$doc,
@@ -45,6 +46,7 @@ sub _update {
       state    => $err ? ('failed', error => $err) : 'finished'
     }
   );
+
   return $self;
 }
 
@@ -77,12 +79,12 @@ L<Minion::Job> implements the following attributes.
 
 BSON document for job.
 
-=head2 worker
+=head2 minion
 
-  my $worker = $job->worker;
-  $job       = $job->worker(Minion::Worker->new);
+  my $minion = $job->minion;
+  $job       = $job->minion(Minion->new);
 
-L<Minion::Worker> object this job belongs to.
+L<Minion> object this job belongs to.
 
 =head1 METHODS
 
@@ -96,7 +98,7 @@ following new ones.
 Get application from L<Minion/"app">.
 
   # Longer version
-  my $app = $job->worker->minion->app;
+  my $app = $job->minion->app;
 
 =head2 fail
 

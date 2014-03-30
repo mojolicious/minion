@@ -1,5 +1,8 @@
 
-0.03  2014-03-29
+0.03  2014-03-30
+  - Removed worker attribute from Minion::Job.
+  - Added minion attribute to Minion::Job.
+  - Added job method to Minion.
 
 0.02  2014-03-28
   - Added support for delayed jobs.

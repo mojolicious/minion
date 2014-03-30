@@ -21,9 +21,9 @@ my $add = $jobs->insert({results => []});
 $minion->add_task(
   add => sub {
     my ($job, $first, $second) = @_;
-    my $doc = $job->worker->minion->jobs->find_one($add);
+    my $doc = $job->minion->jobs->find_one($add);
     push @{$doc->{results}}, $first + $second;
-    $job->worker->minion->jobs->save($doc);
+    $job->minion->jobs->save($doc);
   }
 );
 $minion->add_task(exit => sub { exit 1 });
@@ -78,9 +78,9 @@ is $job->doc->{task},  'add',    'right task';
 is $workers->find_one($job->doc->{worker})->{pid}, $$, 'right worker';
 $job->perform;
 is_deeply $jobs->find_one($add)->{results}, [4], 'right result';
-$doc = $jobs->find_one($oid);
-is $doc->{state}, 'finished', 'right state';
-ok $doc->{finished}->to_epoch, 'has finished timestamp';
+$job = $minion->job($oid);
+is $job->doc->{state}, 'finished', 'right state';
+ok $job->doc->{finished}->to_epoch, 'has finished timestamp';
 $worker->unregister;
 
 # Jobs with priority
@@ -109,23 +109,23 @@ $oid = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue;
 is $job->doc->{_id}, $oid, 'right object id';
 $job->fail->finish;
-$doc = $jobs->find_one($oid);
-is $doc->{state}, 'failed',         'right state';
-is $doc->{error}, 'Unknown error.', 'right error';
+$job = $minion->job($oid);
+is $job->doc->{state}, 'failed',         'right state';
+is $job->doc->{error}, 'Unknown error.', 'right error';
 $oid = $minion->enqueue(add => [6, 7]);
 $job = $worker->dequeue;
 is $job->doc->{_id}, $oid, 'right object id';
 $job->fail('Something bad happened!');
-$doc = $jobs->find_one($oid);
-is $doc->{state}, 'failed', 'right state';
-is $doc->{error}, 'Something bad happened!', 'right error';
+$job = $minion->job($oid);
+is $job->doc->{state}, 'failed', 'right state';
+is $job->doc->{error}, 'Something bad happened!', 'right error';
 $oid = $minion->enqueue('fail');
 $job = $worker->dequeue;
 is $job->doc->{_id}, $oid, 'right object id';
 $job->perform;
-$doc = $jobs->find_one($oid);
-is $doc->{state}, 'failed', 'right state';
-is $doc->{error}, "Intentional failure!\n", 'right error';
+$job = $minion->job($oid);
+is $job->doc->{state}, 'failed', 'right state';
+is $job->doc->{error}, "Intentional failure!\n", 'right error';
 $worker->unregister;
 
 # Exit
@@ -133,9 +133,9 @@ $oid = $minion->enqueue('exit');
 $job = $worker->register->dequeue;
 is $job->doc->{_id}, $oid, 'right object id';
 $job->perform;
-$doc = $jobs->find_one($oid);
-is $doc->{state}, 'failed', 'right state';
-is $doc->{error}, 'Non-zero exit status.', 'right error';
+$job = $minion->job($oid);
+is $job->doc->{state}, 'failed', 'right state';
+is $job->doc->{error}, 'Non-zero exit status.', 'right error';
 $worker->unregister;
 $_->drop for $workers, $jobs;
 

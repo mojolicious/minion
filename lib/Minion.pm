@@ -38,6 +38,12 @@ sub enqueue {
   return $self->jobs->insert($doc);
 }
 
+sub job {
+  my ($self, $oid) = @_;
+  return undef unless my $job = $self->jobs->find_one($oid);
+  return Minion::Job->new(doc => $job, minion => $self);
+}
+
 sub new { shift->SUPER::new(mango => Mango->new(@_)) }
 
 sub stats {
@@ -191,6 +197,13 @@ Perform job only after this point in time.
 Job priority.
 
 =back
+
+=head2 job
+
+  my $job = $minion->job($oid);
+
+Get L<Minion::Job> object without making any changes to the actual job or
+return C<undef> if job doesn't exist.
 
 =head2 new
 

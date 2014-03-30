@@ -18,11 +18,12 @@ sub dequeue {
   # Worker not registered
   return undef unless $self->{id};
 
-  my $doc = {
+  my $minion = $self->minion;
+  my $doc    = {
     query => {
       after => {'$lt' => bson_time},
       state => 'inactive',
-      task  => {'$in' => [keys %{$self->minion->tasks}]}
+      task  => {'$in' => [keys %{$minion->tasks}]}
     },
     sort   => {priority => -1},
     update => {
@@ -31,8 +32,8 @@ sub dequeue {
     },
     new => 1
   };
-  return undef unless my $job = $self->minion->jobs->find_and_modify($doc);
-  return Minion::Job->new(doc => $job, worker => $self);
+  return undef unless my $job = $minion->jobs->find_and_modify($doc);
+  return Minion::Job->new(doc => $job, minion => $minion);
 }
 
 sub one_job { !!shift->_jobs(1) }

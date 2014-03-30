@@ -20,7 +20,7 @@ app->minion->add_task(
     my $job = shift;
     my $doc = $job->app->minion->jobs->find_one($count);
     $doc->{count}++;
-    $job->worker->minion->jobs->save($doc);
+    $job->minion->jobs->save($doc);
   }
 );
 
