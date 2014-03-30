@@ -7,7 +7,7 @@ use Sys::Hostname 'hostname';
 # Global counter
 my $COUNTER = 0;
 
-has 'minion';
+has [qw(id minion)];
 has number => sub { ++$COUNTER };
 
 sub all_jobs { shift->_jobs }
@@ -16,7 +16,7 @@ sub dequeue {
   my $self = shift;
 
   # Worker not registered
-  return undef unless $self->{id};
+  return undef unless my $oid = $self->id;
 
   my $minion = $self->minion;
   my $doc    = {
@@ -27,10 +27,8 @@ sub dequeue {
     },
     fields => {args     => 1, task => 1},
     sort   => {priority => -1},
-    update => {
-      '$set' =>
-        {started => bson_time, state => 'active', worker => $self->{id}}
-    },
+    update =>
+      {'$set' => {started => bson_time, state => 'active', worker => $oid}},
     new => 1
   };
   return undef unless my $job = $minion->jobs->find_and_modify($doc);
@@ -46,9 +44,9 @@ sub one_job { !!shift->_jobs(1) }
 
 sub register {
   my $self = shift;
-  $self->{id} = $self->minion->workers->insert(
+  my $oid  = $self->minion->workers->insert(
     {host => hostname, num => $self->number, pid => $$, started => bson_time});
-  return $self;
+  return $self->id($oid);
 }
 
 sub repair {
@@ -113,6 +111,13 @@ L<Minion::Worker> performs jobs for L<Minion>.
 =head1 ATTRIBUTES
 
 L<Minion::Worker> implements the following attributes.
+
+=head2 id
+
+  my $id  = $worker->id;
+  $worker = $worker->id($oid);
+
+Worker id.
 
 =head2 minion
 

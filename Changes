@@ -2,6 +2,7 @@
 0.03  2014-03-30
   - Removed doc and worker attributes from Minion::Job.
   - Added args, id and minion attributes to Minion::Job.
+  - Added id attribute to Minion::Worker.
   - Added job method to Minion.
   - Added state method to Minion::Job.
 
