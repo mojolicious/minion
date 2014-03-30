@@ -84,6 +84,10 @@ $doc = $jobs->find_one($job->id);
 is $doc->{state}, 'finished', 'right state';
 ok $doc->{finished}->to_epoch, 'has finished timestamp';
 $worker->unregister;
+$job = $minion->job($job->id);
+is_deeply $job->args, [2, 2], 'right arguments';
+is $job->state, 'finished', 'right state';
+is $job->task,  'add',      'right task';
 
 # Jobs with priority
 $minion->enqueue(add => [1, 2]);
