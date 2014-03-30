@@ -114,6 +114,7 @@ $worker->unregister;
 $oid = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue;
 is $job->id, $oid, 'right object id';
+is $job->error, undef, 'no error';
 $job->fail->finish;
 is $job->state, 'failed',         'right state';
 is $job->error, 'Unknown error.', 'right error';
