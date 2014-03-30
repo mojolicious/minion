@@ -179,7 +179,7 @@ Register a new task.
   my $oid = $minion->enqueue(foo => [@args]);
   my $oid = $minion->enqueue(foo => [@args] => {priority => 1});
 
-Enqueue a new job.
+Enqueue a new job with C<inactive> state.
 
 These options are currently available:
 

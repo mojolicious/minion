@@ -126,13 +126,13 @@ Get application from L<Minion/"app">.
   $job = $job->fail;
   $job = $job->fail('Something went wrong!');
 
-Update job to C<failed> state.
+Transition from C<active> to C<failed> state.
 
 =head2 finish
 
   $job = $job->finish;
 
-Update job to C<finished> state.
+Transition from C<active> to C<finished> state.
 
 =head2 perform
 

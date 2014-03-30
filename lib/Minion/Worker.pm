@@ -143,7 +143,8 @@ Perform jobs until queue is empty and return the number of jobs performed.
 
   my $job = $worker->dequeue;
 
-Dequeue L<Minion::Job> object or return C<undef> if queue was empty.
+Dequeue L<Minion::Job> object and transition from C<inactive> to C<active>
+state or return C<undef> if queue was empty.
 
 =head2 one_job
 
