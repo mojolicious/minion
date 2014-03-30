@@ -204,7 +204,7 @@ Job priority.
   my $job = $minion->job($oid);
 
 Get L<Minion::Job> object without making any changes to the actual job or
-return C<undef> if job doesn't exist.
+return C<undef> if job does not exist.
 
 =head2 new
 

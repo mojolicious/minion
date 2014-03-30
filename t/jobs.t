@@ -5,7 +5,7 @@ use Test::More;
 plan skip_all => 'set TEST_ONLINE to enable this test'
   unless $ENV{TEST_ONLINE};
 
-use Mango::BSON 'bson_time';
+use Mango::BSON qw(bson_oid bson_time);
 use Minion;
 
 # Clean up before start
@@ -61,6 +61,7 @@ is $stats->{finished_jobs},    1, 'one finished job';
 is $stats->{inactive_jobs},    0, 'no inactive jobs';
 
 # Enqueue, dequeue and perform
+is $minion->job(bson_oid), undef, 'job does not exist';
 my $oid = $minion->enqueue(add => [2, 2]);
 my $doc = $jobs->find_one({task => 'add'});
 is $doc->{_id}, $oid, 'right object id';
