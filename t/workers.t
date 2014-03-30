@@ -41,7 +41,7 @@ is $job->id, $oid, 'right object id';
 my $num = $worker2->number;
 undef $worker2;
 my $jobs = $minion->jobs;
-is $jobs->find_one($oid)->{state}, 'active', 'job is still active';
+is $job->state, 'active', 'job is still active';
 my $doc = $workers->find_one({pid => $$, num => $num});
 ok $doc, 'is registered';
 my $pid = 4000;

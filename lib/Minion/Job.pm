@@ -18,6 +18,13 @@ sub perform {
   $self->fail('Non-zero exit status.') if $?;
 }
 
+sub state {
+  my $self = shift;
+  return undef
+    unless my $job = $self->minion->jobs->find_one($self->id, {state => 1});
+  return $job->{state};
+}
+
 sub _child {
   my $self = shift;
 
@@ -42,7 +49,7 @@ sub _update {
     {
       '$set' => {
         finished => bson_time,
-        state    => $err ? ('failed', error => $err) : 'finished'
+        state => $err ? ('failed', error => $err) : 'finished'
       }
     }
   );
@@ -132,6 +139,13 @@ Update job to C<finished> state.
   $job->perform;
 
 Perform job in new process and wait for it to finish.
+
+=head2 state
+
+  my $state = $job->state;
+
+Get current state of job, usually C<active>, C<failed>, C<finished> or
+C<inactive>.
 
 =head1 SEE ALSO
 

@@ -74,8 +74,8 @@ is $worker->dequeue, undef, 'not registered';
 $job = $worker->register->dequeue;
 ok $jobs->find_one($job->id)->{started}->to_epoch, 'has started timestamp';
 is_deeply $job->args, [2, 2], 'right arguments';
-is $jobs->find_one($job->id)->{state}, 'active', 'right state';
-is $jobs->find_one($job->id)->{task},  'add',    'right task';
+is $job->state, 'active', 'right state';
+is $job->task,  'add',    'right task';
 is $workers->find_one($jobs->find_one($job->id)->{worker})->{pid}, $$,
   'right worker';
 $job->perform;
