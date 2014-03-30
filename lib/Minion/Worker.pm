@@ -114,7 +114,7 @@ L<Minion::Worker> implements the following attributes.
 
 =head2 id
 
-  my $id  = $worker->id;
+  my $oid = $worker->id;
   $worker = $worker->id($oid);
 
 Worker id.

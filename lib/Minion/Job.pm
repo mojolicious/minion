@@ -88,8 +88,8 @@ Arguments passed to task.
 
 =head2 id
 
-  my $id = $job->id;
-  $job   = $job->id($oid);
+  my $oid = $job->id;
+  $job    = $job->id($oid);
 
 Job id.
 
