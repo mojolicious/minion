@@ -3,7 +3,8 @@ use Mojo::Base -base;
 
 use Mango::BSON 'bson_time';
 
-has [qw(doc minion)];
+has args => sub { [] };
+has [qw(id minion task)];
 
 sub app { shift->minion->app }
 
@@ -25,25 +26,24 @@ sub _child {
   return $pid if $pid;
 
   # Child
-  my $doc    = $self->doc;
+  my $task   = $self->task;
   my $minion = $self->minion;
-  $minion->app->log->debug(
-    qq{Performing job "$doc->{task}" ($doc->{_id}:$$).});
-  my $cb = $minion->tasks->{$doc->{task}};
-  eval { $self->$cb(@{$doc->{args}}); 1 } ? $self->finish : $self->fail($@);
+  $minion->app->log->debug(qq{Performing job "$task" (@{[$self->id]}:$$).});
+  my $cb = $minion->tasks->{$task};
+  eval { $self->$cb(@{$self->args}); 1 } ? $self->finish : $self->fail($@);
   exit 0;
 }
 
 sub _update {
   my ($self, $err) = @_;
 
-  my $doc = $self->doc;
   $self->minion->jobs->update(
-    {_id => $doc->{_id}, state => 'active'},
+    {_id => $self->id, state => 'active'},
     {
-      %$doc,
-      finished => bson_time,
-      state    => $err ? ('failed', error => $err) : 'finished'
+      '$set' => {
+        finished => bson_time,
+        state    => $err ? ('failed', error => $err) : 'finished'
+      }
     }
   );
 
@@ -62,7 +62,7 @@ Minion::Job - Minion job
 
   use Minion::Job;
 
-  my $job = Minion::Job->new(doc => $doc, worker => $worker);
+  my $job = Minion::Job->new(id => $oid, minion => $minion, task => 'foo');
 
 =head1 DESCRIPTION
 
@@ -72,12 +72,19 @@ L<Minion::Job> is a container for L<Minion> jobs.
 
 L<Minion::Job> implements the following attributes.
 
-=head2 doc
+=head2 args
 
-  my $doc = $job->doc;
-  $job    = $job->doc({});
+  my $args = $job->args;
+  $job     = $job->args([]);
 
-BSON document for job.
+Arguments passed to task.
+
+=head2 id
+
+  my $id = $job->id;
+  $job   = $job->id($oid);
+
+Job id.
 
 =head2 minion
 
@@ -85,6 +92,13 @@ BSON document for job.
   $job       = $job->minion(Minion->new);
 
 L<Minion> object this job belongs to.
+
+=head2 task
+
+  my $task = $job->task;
+  $job     = $job->task('foo');
+
+Task name.
 
 =head1 METHODS
 

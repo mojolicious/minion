@@ -40,8 +40,9 @@ sub enqueue {
 
 sub job {
   my ($self, $oid) = @_;
-  return undef unless my $job = $self->jobs->find_one($oid);
-  return Minion::Job->new(doc => $job, minion => $self);
+  return undef unless my $job = $self->jobs->find_one($oid, {task => 1});
+  return Minion::Job->new(id => $job->{_id}, minion => $self,
+    task => $job->{task});
 }
 
 sub new { shift->SUPER::new(mango => Mango->new(@_)) }

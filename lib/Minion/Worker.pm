@@ -25,6 +25,7 @@ sub dequeue {
       state => 'inactive',
       task  => {'$in' => [keys %{$minion->tasks}]}
     },
+    fields => {args     => 1, task => 1},
     sort   => {priority => -1},
     update => {
       '$set' =>
@@ -33,7 +34,12 @@ sub dequeue {
     new => 1
   };
   return undef unless my $job = $minion->jobs->find_and_modify($doc);
-  return Minion::Job->new(doc => $job, minion => $minion);
+  return Minion::Job->new(
+    args   => $job->{args},
+    id     => $job->{_id},
+    minion => $minion,
+    task   => $job->{task}
+  );
 }
 
 sub one_job { !!shift->_jobs(1) }
