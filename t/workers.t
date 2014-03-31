@@ -17,7 +17,7 @@ is $workers->name, 'workers_test.workers', 'right name';
 $_->options && $_->drop for $workers, $minion->jobs;
 
 # Nothing to repair
-my $worker = $minion->worker->repair;
+my $worker = $minion->repair->worker;
 isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
 # Register and unregister
@@ -46,7 +46,7 @@ ok $doc, 'is registered';
 my $pid = 4000;
 $pid++ while kill 0, $pid;
 $workers->save({%$doc, pid => $pid});
-$worker->repair;
+$minion->repair;
 ok !$workers->find_one({pid => $$, num => $num}), 'not registered';
 is $job->state, 'failed',            'job is no longer active';
 is $job->error, 'Worker went away.', 'right error';
@@ -56,7 +56,8 @@ $worker->register;
 $oid = $minion->enqueue('test');
 $job = $worker->dequeue;
 is $job->id, $oid, 'right object id';
-$worker->unregister->repair;
+$worker->unregister;
+$minion->repair;
 is $job->state, 'failed',            'job is no longer active';
 is $job->error, 'Worker went away.', 'right error';
 $workers->drop;

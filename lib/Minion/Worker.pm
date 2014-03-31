@@ -60,27 +60,6 @@ sub register {
   return $self->id($oid);
 }
 
-sub repair {
-  my $self = shift;
-
-  # Check workers on this host (all should be owned by the same user)
-  my $workers = $self->minion->workers;
-  my $cursor = $workers->find({host => hostname});
-  while (my $worker = $cursor->next) {
-    $workers->remove({_id => $worker->{_id}}) unless kill 0, $worker->{pid};
-  }
-
-  # Abandoned jobs
-  my $jobs = $self->minion->jobs;
-  $cursor = $jobs->find({state => 'active'});
-  while (my $job = $cursor->next) {
-    $jobs->save({%$job, state => 'failed', error => 'Worker went away.'})
-      unless $workers->find_one($job->{worker});
-  }
-
-  return $self;
-}
-
 sub unregister {
   my ($self, $id) = @_;
   $self->minion->workers->remove({_id => delete $_[0]->{id}});
@@ -153,12 +132,6 @@ Perform jobs until queue is empty and return the number of jobs performed.
   $worker = $worker->register;
 
 Register worker.
-
-=head2 repair
-
-  $worker = $worker->repair;
-
-Repair worker registry and job queue.
 
 =head2 unregister
 
