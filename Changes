@@ -1,5 +1,7 @@
 
 0.04  2014-04-01
+  - Removed all_jobs and one_job methods from Minion::Job.
+  - Added auto_perform attribute to Minion.
   - Added error method to Minion::Job.
 
 0.03  2014-03-30

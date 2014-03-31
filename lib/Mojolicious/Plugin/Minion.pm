@@ -44,7 +44,7 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
   # Perform jobs in your tests
   $t->get_ok('/start_job')->status_is(200);
   my $worker = $t->app->minion->worker;
-  $worker->all_jobs;
+  $worker->perform_jobs;
 
 =head1 DESCRIPTION
 
@@ -78,7 +78,7 @@ Get L<Minion> object for application.
 
   # Perform queued jobs right away for testing
   my $worker = $app->minion->worker;
-  $worker->all_jobs;
+  $worker->perform_jobs;
 
 =head1 METHODS
 

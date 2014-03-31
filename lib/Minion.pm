@@ -9,9 +9,9 @@ use Mojo::Server;
 
 our $VERSION = '0.04';
 
-has app  => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
+has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
+has [qw(auto_perform mango)];
 has jobs => sub { $_[0]->mango->db->collection($_[0]->prefix . '.jobs') };
-has 'mango';
 has prefix => 'minion';
 has tasks => sub { {} };
 has workers =>
@@ -35,7 +35,9 @@ sub enqueue {
     state    => 'inactive',
     task     => $task
   };
-  return $self->jobs->insert($doc);
+  my $oid = $self->jobs->insert($doc);
+  $self->worker->perform_jobs if $self->auto_perform;
+  return $oid;
 }
 
 sub job {
@@ -94,8 +96,7 @@ Minion - Job queue
 
   # Create a worker and perform jobs right away (useful for testing)
   my $worker = $minion->worker;
-  $worker->one_job;
-  $worker->all_jobs;
+  $worker->perform_jobs;
 
   # Build more sophisticated workers
   my $worker = $minion->worker->repair->register;
@@ -130,6 +131,14 @@ L<Minion> implements the following attributes.
   $minion = $minion->app(MyApp->new);
 
 Application for job queue, defaults to a L<Mojo::HelloWorld> object.
+
+=head2 auto_perform
+
+  my $bool = $minion->auto_perform;
+  $minion  = $minion->auto_perform($bool);ø
+
+Perform jobs automatically with L<Minion::Worker/"perform_jobs"> when a new
+one has been enqueued with L</"enqueue">.
 
 =head2 jobs
 

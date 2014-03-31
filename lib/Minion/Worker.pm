@@ -10,8 +10,6 @@ my $COUNTER = 0;
 has [qw(id minion)];
 has number => sub { ++$COUNTER };
 
-sub all_jobs { shift->_jobs }
-
 sub dequeue {
   my $self = shift;
 
@@ -40,7 +38,20 @@ sub dequeue {
   );
 }
 
-sub one_job { !!shift->_jobs(1) }
+sub perform_jobs {
+  my $self = shift;
+
+  # No recursion
+  return 0 if $self->{lock};
+  local $self->{lock} = 1;
+
+  $self->register;
+  my $i = 0;
+  while (my $job = $self->dequeue) { ++$i and $job->perform }
+  $self->unregister;
+
+  return $i;
+}
 
 sub register {
   my $self = shift;
@@ -74,20 +85,6 @@ sub unregister {
   my ($self, $id) = @_;
   $self->minion->workers->remove({_id => delete $_[0]->{id}});
   return $self;
-}
-
-sub _jobs {
-  my ($self, $one) = @_;
-
-  $self->register;
-  my $i = 0;
-  while (my $job = $self->dequeue) {
-    ++$i and $job->perform;
-    last if $one;
-  }
-  $self->unregister;
-
-  return $i;
 }
 
 1;
@@ -138,12 +135,6 @@ Number of this worker, unique per process.
 L<Minion::Worker> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 all_jobs
-
-  my $num = $worker->all_jobs;
-
-Perform jobs until queue is empty and return the number of jobs performed.
-
 =head2 dequeue
 
   my $job = $worker->dequeue;
@@ -151,11 +142,11 @@ Perform jobs until queue is empty and return the number of jobs performed.
 Dequeue L<Minion::Job> object and transition from C<inactive> to C<active>
 state or return C<undef> if queue was empty.
 
-=head2 one_job
+=head2 perform_jobs
 
-  my $bool = $worker->one_job;
+  my $num = $worker->perform_jobs;
 
-Perform one job and return a false value if queue was empty.
+Perform jobs until queue is empty and return the number of jobs performed.
 
 =head2 register
 
