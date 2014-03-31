@@ -26,6 +26,17 @@ sub add_task {
   return $self;
 }
 
+sub call {
+  my $self = shift;
+
+  my $oid    = $self->enqueue(@_);
+  my $cursor = $self->notifications->find->tailable(1);
+  while (1) {
+    my $doc = $cursor->next;
+    return $doc->{result} if $doc->{job} eq $oid;
+  }
+}
+
 sub enqueue {
   my ($self, $task, $args, $options) = @_;
   $options //= {};
@@ -41,17 +52,6 @@ sub enqueue {
   my $oid = $self->jobs->insert($doc);
   $self->_perform if $self->auto_perform;
   return $oid;
-}
-
-sub enqueue_and_wait {
-  my $self = shift;
-
-  my $oid    = $self->enqueue(@_);
-  my $cursor = $self->notifications->find->tailable(1);
-  while (1) {
-    my $doc = $cursor->next;
-    return $doc->{result} if $doc->{job} eq $oid;
-  }
 }
 
 sub job {
@@ -254,6 +254,12 @@ new ones.
 
 Register a new task.
 
+=head2 call
+
+  my $result = $minion->call('foo');
+
+Same as C</"enqueue">, but waits for the result.
+
 =head2 enqueue
 
   my $oid = $minion->enqueue('foo');
@@ -279,12 +285,6 @@ Perform job only after this point in time.
 Job priority.
 
 =back
-
-=head2 enqueue_and_wait
-
-  my $result = $minion->enqueue_and_wait('foo');
-
-Same as C</"enqueue">, but waits for the result.
 
 =head2 job
 

@@ -26,7 +26,7 @@ get '/add' => sub {
   my $self   = shift;
   my $first  = $self->param('first') // 1;
   my $second = $self->param('second') // 1;
-  my $result = $self->minion->enqueue_and_wait('add' => [$first, $second]);
+  my $result = $self->minion->call('add' => [$first, $second]);
   $self->render(text => $result);
 };
 
