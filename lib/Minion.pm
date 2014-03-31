@@ -153,6 +153,9 @@ Minion - Job queue
   $minion->enqueue(something_slow => ['foo', 'bar']);
   $minion->enqueue(something_slow => [1, 2, 3]);
 
+  # Enqueue job and wait for result
+  say $minion->call('something_else_slow');
+
   # Perform jobs automatically (useful for testing)
   $minion->auto_perform(1);
   $minion->enqueue(something_slow => ['foo', 'bar']);

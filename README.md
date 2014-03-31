@@ -10,19 +10,33 @@ use Mojolicious::Lite;
 my $uri = 'mongodb://<user>:<pass>@<server>/<database>';
 plugin Minion => {uri => $uri};
 
-# Very slow task
+# Slow task
 app->minion->add_task(slow_log => sub {
-  my ($job, $msg) = @_;
+  my $job = shift;
   sleep 5;
-  $job->app->log->debug(qq{Received message "$msg".});
+  $job->app->log->debug('Something.');
   return undef;
 });
 
-# Perform job in a background process
-get '/' => sub {
+# Slow task with result
+app->minion->add_task(slow_add => sub {
+  my ($job, $first, $second) = @_;
+  sleep 5;
+  return $first + $second;
+});
+
+# Perform job in a background worker process
+get '/log' => sub {
   my $self = shift;
-  $self->minion->enqueue(slow_log => [$self->param('msg') // 'no message']);
-  $self->render(text => 'Your message will be logged soon.');
+  $self->minion->enqueue('slow_log');
+  $self->render(text => 'Something will be logged soon.');
+};
+
+# Perform job in a background worker process and wait for result
+get '/add' => sub {
+  my $self = shift;
+  my $result = $self->minion->call(slow_add => [2, 2]);
+  $self->render(text => "The result is $result.");
 };
 
 app->start;
