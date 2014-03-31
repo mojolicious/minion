@@ -14,7 +14,8 @@ is $minion->prefix, 'minion', 'right prefix';
 my $workers = $minion->workers;
 my $jobs    = $minion->prefix('jobs_test')->jobs;
 is $jobs->name, 'jobs_test.jobs', 'right name';
-$_->options && $_->drop for $workers, $jobs;
+my $notifications = $minion->notifications;
+$_->options && $_->drop for $workers, $jobs, $notifications;
 
 # Tasks
 my $add = $jobs->insert({results => []});
@@ -24,6 +25,7 @@ $minion->add_task(
     my $doc = $job->minion->jobs->find_one($add);
     push @{$doc->{results}}, $first + $second;
     $job->minion->jobs->save($doc);
+    return undef;
   }
 );
 $minion->add_task(exit => sub { exit 1 });
@@ -140,6 +142,8 @@ $job->perform;
 is $job->state, 'failed', 'right state';
 is $job->error, 'Non-zero exit status.', 'right error';
 $worker->unregister;
-$_->drop for $workers, $jobs;
+
+# Clean up
+$_->drop for $workers, $jobs, $notifications;
 
 done_testing();

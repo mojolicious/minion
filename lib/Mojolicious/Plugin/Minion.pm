@@ -36,6 +36,7 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
     my ($job, $msg) = @_;
     sleep 5;
     $job->app->log->debug(qq{Received message "$msg".});
+    return undef;
   });
 
   # Start jobs from anywhere in your application (data gets BSON serialized)
@@ -75,9 +76,8 @@ Get L<Minion> object for application.
   # Add job to the queue
   $c->minion->enqueue(foo => ['bar', 'baz']);
 
-  # Perform queued jobs right away for testing
-  my $worker = $app->minion->worker;
-  $worker->perform_jobs;
+  # Perform jobs automatically for testing
+  $app->minion->auto_perform(1);
 
 =head1 METHODS
 

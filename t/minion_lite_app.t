@@ -12,47 +12,33 @@ plugin Minion => {uri => $ENV{TEST_ONLINE}};
 
 # Clean up before start
 app->minion->prefix('minion_lite_app_test');
-$_->options && $_->drop for app->minion->workers, app->minion->jobs;
+$_->options && $_->drop
+  for app->minion->workers, app->minion->jobs, app->minion->notifications;
 
-my $count = app->minion->jobs->insert({count => 0});
 app->minion->add_task(
-  increment => sub {
-    my $job = shift;
-    my $doc = $job->app->minion->jobs->find_one($count);
-    $doc->{count}++;
-    $job->minion->jobs->save($doc);
+  add => sub {
+    my ($job, $first, $second) = @_;
+    return $first + $second;
   }
 );
 
-get '/increment' => sub {
-  my $self = shift;
-  $self->minion->enqueue('increment');
-  $self->render(text => 'Incrementing soon!');
-};
-
-get '/count' => sub {
-  my $self = shift;
-  $self->render(text => $self->minion->jobs->find_one($count)->{count});
+get '/add' => sub {
+  my $self   = shift;
+  my $first  = $self->param('first') // 1;
+  my $second = $self->param('second') // 1;
+  my $result = $self->minion->enqueue_and_wait('add' => [$first, $second]);
+  $self->render(text => $result);
 };
 
 my $t = Test::Mojo->new;
 
-# Perform jobs manually
-my $worker = $t->app->minion->worker;
-is $worker->perform_jobs, 0, 'no jobs performed';
-$t->get_ok('/count')->status_is(200)->content_is('0');
-$t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
-$t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
-is $worker->perform_jobs, 2, 'two jobs performed';
-is $worker->perform_jobs, 0, 'no jobs performed';
-$t->get_ok('/count')->status_is(200)->content_is('2');
-
 # Perform jobs automatically
 $t->app->minion->auto_perform(1);
-$t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
-$t->get_ok('/count')->status_is(200)->content_is('3');
-$t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
-$t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
-$t->get_ok('/count')->status_is(200)->content_is('5');
+$t->get_ok('/add')->status_is(200)->content_is('2');
+$t->get_ok('/add?first=3&second=5')->status_is(200)->content_is('8');
+
+# Clean up
+$_->drop
+  for app->minion->workers, app->minion->jobs, app->minion->notifications;
 
 done_testing();

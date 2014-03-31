@@ -38,24 +38,9 @@ sub dequeue {
   );
 }
 
-sub perform_jobs {
-  my $self = shift;
-
-  # No recursion
-  return 0 if $self->{lock};
-  local $self->{lock} = 1;
-
-  $self->register;
-  my $i = 0;
-  while (my $job = $self->dequeue) { ++$i and $job->perform }
-  $self->unregister;
-
-  return $i;
-}
-
 sub register {
   my $self = shift;
-  my $oid  = $self->minion->workers->insert(
+  my $oid  = $self->minion->repair->workers->insert(
     {host => hostname, num => $self->number, pid => $$, started => bson_time});
   return $self->id($oid);
 }
@@ -120,12 +105,6 @@ following new ones.
 
 Dequeue L<Minion::Job> object and transition from C<inactive> to C<active>
 state or return C<undef> if queue was empty.
-
-=head2 perform_jobs
-
-  my $num = $worker->perform_jobs;
-
-Perform jobs until queue is empty and return the number of jobs performed.
 
 =head2 register
 

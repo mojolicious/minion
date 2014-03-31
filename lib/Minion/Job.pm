@@ -10,9 +10,9 @@ sub app { shift->minion->app }
 
 sub error { shift->_get('error') }
 
-sub fail { shift->_update(shift // 'Unknown error.') }
+sub fail { shift->_update(shift // 'Unknown error.', undef) }
 
-sub finish { shift->_update }
+sub finish { shift->_update(undef, shift) }
 
 sub perform {
   my $self = shift;
@@ -34,7 +34,10 @@ sub _child {
   my $minion = $self->minion;
   $minion->app->log->debug(qq{Performing job "$task" (@{[$self->id]}:$$).});
   my $cb = $minion->tasks->{$task};
-  eval { $self->$cb(@{$self->args}); 1 } ? $self->finish : $self->fail($@);
+  my $result;
+  eval { $result = $self->$cb(@{$self->args}); 1 }
+    ? $self->finish($result)
+    : $self->fail($@);
   exit 0;
 }
 
@@ -46,17 +49,23 @@ sub _get {
 }
 
 sub _update {
-  my ($self, $err) = @_;
+  my ($self, $err, $result) = @_;
 
+  my $oid = $self->id;
+  my $state = defined $err ? 'failed' : 'finished';
   $self->minion->jobs->update(
-    {_id => $self->id, state => 'active'},
+    {_id => $oid, state => 'active'},
     {
       '$set' => {
+        error    => $err,
         finished => bson_time,
-        state => $err ? ('failed', error => $err) : 'finished'
+        result   => $result,
+        state    => $state
       }
     }
   );
+  $self->minion->notifications->insert(
+    {error => $err, job => $oid, result => $result, state => $state});
 
   return $self;
 }

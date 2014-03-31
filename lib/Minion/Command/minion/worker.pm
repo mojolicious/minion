@@ -9,7 +9,7 @@ sub run {
 
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
 
-  my $worker = $self->app->minion->repair->worker->register;
+  my $worker = $self->app->minion->worker->register;
   while (!$self->{finished}) {
     if   (my $job = $worker->dequeue) { $job->perform }
     else                              { sleep 5 }

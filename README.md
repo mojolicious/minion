@@ -15,6 +15,7 @@ app->minion->add_task(slow_log => sub {
   my ($job, $msg) = @_;
   sleep 5;
   $job->app->log->debug(qq{Received message "$msg".});
+  return undef;
 });
 
 # Perform job in a background process

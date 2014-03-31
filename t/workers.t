@@ -14,7 +14,9 @@ my $minion = Minion->new($ENV{TEST_ONLINE});
 is $minion->prefix, 'minion', 'right prefix';
 my $workers = $minion->prefix('workers_test')->workers;
 is $workers->name, 'workers_test.workers', 'right name';
-$_->options && $_->drop for $workers, $minion->jobs;
+my $jobs          = $minion->jobs;
+my $notifications = $minion->notifications;
+$_->options && $_->drop for $workers, $jobs, $notifications;
 
 # Nothing to repair
 my $worker = $minion->repair->worker;
@@ -39,7 +41,6 @@ my $job = $worker2->dequeue;
 is $job->id, $oid, 'right object id';
 my $num = $worker2->number;
 undef $worker2;
-my $jobs = $minion->jobs;
 is $job->state, 'active', 'job is still active';
 my $doc = $workers->find_one({pid => $$, num => $num});
 ok $doc, 'is registered';
@@ -60,6 +61,8 @@ $worker->unregister;
 $minion->repair;
 is $job->state, 'failed',            'job is no longer active';
 is $job->error, 'Worker went away.', 'right error';
-$workers->drop;
+
+# Clean up
+$_->drop for $workers, $jobs, $notifications;
 
 done_testing();
