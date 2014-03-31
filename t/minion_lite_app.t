@@ -21,8 +21,9 @@ app->minion->add_task(
     return $first + $second;
   }
 );
+app->minion->add_task(dead => sub { die "BOOM!\n" });
 
-get '/add' => sub {
+get '/blocking' => sub {
   my $self   = shift;
   my $first  = $self->param('first') // 1;
   my $second = $self->param('second') // 1;
@@ -30,12 +31,17 @@ get '/add' => sub {
   $self->render(text => $result);
 };
 
+get '/blocking_dead' => sub { shift->minion->call('dead') };
+
 my $t = Test::Mojo->new;
 
-# Perform jobs automatically
+# Blocking job
 $t->app->minion->auto_perform(1);
-$t->get_ok('/add')->status_is(200)->content_is('2');
-$t->get_ok('/add?first=3&second=5')->status_is(200)->content_is('8');
+$t->get_ok('/blocking')->status_is(200)->content_is('2');
+$t->get_ok('/blocking?first=3&second=5')->status_is(200)->content_is('8');
+
+# Blocking job (failed)
+$t->get_ok('/blocking_dead')->status_is(500)->content_like(qr/BOOM!/);
 
 # Clean up
 $_->drop

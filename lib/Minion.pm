@@ -33,7 +33,8 @@ sub call {
   my $cursor = $self->notifications->find->tailable(1);
   while (1) {
     my $doc = $cursor->next;
-    return $doc->{result} if $doc->{job} eq $oid;
+    next unless $doc->{job} eq $oid;
+    return $doc->{state} eq 'finished' ? $doc->{result} : die $doc->{error};
   }
 }
 
