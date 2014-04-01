@@ -161,7 +161,7 @@ Get application from L<Minion/"app">.
 
   my $epoch = $job->created;
 
-Time the job was created in floating seconds since the epoch.
+Time this job was created in floating seconds since the epoch.
 
 =head2 error
 
@@ -186,7 +186,8 @@ Transition from C<active> to C<finished> state.
 
   my $epoch = $job->finished;
 
-Time the job was finished in floating seconds since the epoch.
+Time this job transitioned from C<active> to C<failed> or C<finished> in
+floating seconds since the epoch.
 
 =head2 perform
 
@@ -216,7 +217,8 @@ Get number of times this job has been restarted.
 
   my $epoch = $job->started;
 
-Time the job was started in floating seconds since the epoch.
+Time this job transitioned from C<inactive> to C<active> in floating seconds
+since the epoch.
 
 =head2 state
 

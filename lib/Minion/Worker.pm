@@ -122,7 +122,7 @@ Register worker.
 
   my $epoch = $worker->started;
 
-Time the worker was started in floating seconds since the epoch.
+Time this worker was started in floating seconds since the epoch.
 
 =head2 unregister
 
