@@ -21,9 +21,10 @@ sub perform {
 }
 
 sub remove {
-  my $self = shift;
-  $self->minion->jobs->remove(
-    {_id => $self->id, state => {'$in' => [qw(failed finished)]}});
+  my $self   = shift;
+  my $states = [qw(failed finished inactive)];
+  return !!$self->minion->jobs->remove(
+    {_id => $self->id, state => {'$in' => $states}})->{n};
 }
 
 sub restart {
@@ -162,9 +163,9 @@ Perform job in new process and wait for it to finish.
 
 =head2 remove
 
-  $job->remove;
+  my $bool = $job->remove;
 
-Remove C<failed> or C<finished> job from queue.
+Remove C<failed>, C<finished> or C<inactive> job from queue.
 
 =head2 restart
 

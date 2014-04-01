@@ -102,15 +102,18 @@ ok !$worker->dequeue, 'no more jobs';
 is $minion->job($oid)->restart->state, 'inactive', 'right state';
 $job = $worker->dequeue;
 is $job->id, $oid, 'right object id';
-$job->remove;
+ok !$job->remove, 'job has not been removed';
 is $job->state, 'active', 'right state';
-$job->finish->remove;
+ok $job->finish->remove, 'job has been removed';
 is $job->state, undef, 'no state';
 $oid = $minion->enqueue(add => [6, 5]);
 $job = $worker->dequeue;
 is $job->id, $oid, 'right object id';
-$job->fail->remove;
+ok $job->fail->remove, 'job has been removed';
 is $job->state, undef, 'no state';
+$oid = $minion->enqueue(add => [5, 5]);
+$job = $minion->job($oid);
+ok $job->remove, 'job has been removed';
 $worker->unregister;
 
 # Jobs with priority
