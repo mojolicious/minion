@@ -13,8 +13,6 @@ our $VERSION = '0.04';
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has [qw(auto_perform mango)];
 has jobs => sub { $_[0]->mango->db->collection($_[0]->prefix . '.jobs') };
-has notifications =>
-  sub { $_[0]->mango->db->collection($_[0]->prefix . '.notifications') };
 has prefix => 'minion';
 has tasks => sub { {} };
 has workers =>
@@ -24,18 +22,6 @@ sub add_task {
   my ($self, $name, $cb) = @_;
   $self->tasks->{$name} = $cb;
   return $self;
-}
-
-sub call {
-  my $self = shift;
-
-  my $oid    = $self->enqueue(@_);
-  my $cursor = $self->notifications->find->tailable(1);
-  while (1) {
-    my $doc = $cursor->next;
-    next unless $doc->{job} eq $oid;
-    return $doc->{state} eq 'finished' ? $doc->{result} : die $doc->{error};
-  }
 }
 
 sub enqueue {
@@ -73,9 +59,6 @@ sub new { shift->SUPER::new(mango => Mango->new(@_)) }
 sub repair {
   my $self = shift;
 
-  # Capped collection for notifications
-  $self->_notifications;
-
   # Check workers on this host (all should be owned by the same user)
   my $workers = $self->workers;
   my $cursor = $workers->find({host => hostname});
@@ -109,14 +92,6 @@ sub stats {
 
 sub worker { Minion::Worker->new(minion => shift) }
 
-sub _notifications {
-  my $self = shift;
-  $self->{capped} ? return : $self->{capped}++;
-  my $notifications = $self->notifications;
-  $notifications->create({capped => \1, max => 2048, size => 268435456})
-    unless $notifications->options;
-}
-
 sub _perform {
   my $self = shift;
 
@@ -124,8 +99,9 @@ sub _perform {
   return if $self->{lock};
   local $self->{lock} = 1;
 
-  my $worker = $self->{perform} ||= $self->worker->register;
+  my $worker = $self->worker->register;
   while (my $job = $worker->dequeue) { $job->perform }
+  $worker->unregister;
 }
 
 1;
@@ -146,22 +122,18 @@ Minion - Job queue
     my ($job, @args) = @_;
     sleep 5;
     say 'This is a background worker process.';
-    return undef;
   });
 
   # Enqueue jobs (data gets BSON serialized)
   $minion->enqueue(something_slow => ['foo', 'bar']);
   $minion->enqueue(something_slow => [1, 2, 3]);
 
-  # Enqueue job and wait for result
-  say $minion->call('something_else_slow');
-
-  # Perform jobs automatically (useful for testing)
+  # Perform jobs automatically for testing
   $minion->auto_perform(1);
   $minion->enqueue(something_slow => ['foo', 'bar']);
 
   # Build more sophisticated workers
-  my $worker = $minion->worker->register;
+  my $worker = $minion->repair->worker->register;
   if (my $job = $worker->dequeue) { $job->perform }
   $worker->unregister;
 
@@ -217,14 +189,6 @@ L</"prefix">.
 
 L<Mango> object used to store collections.
 
-=head2 notifications
-
-  my $notifications = $minion->notifications;
-  $minion           = $minion->notifications(Mango::Collection->new);
-
-L<Mango::Collection> object for C<notifications> collection, defaults to one
-based on L</"prefix">.
-
 =head2 prefix
 
   my $prefix = $minion->prefix;
@@ -257,12 +221,6 @@ new ones.
   $minion = $minion->add_task(foo => sub {...});
 
 Register a new task.
-
-=head2 call
-
-  my $result = $minion->call('foo');
-
-Same as C</"enqueue">, but waits for the result.
 
 =head2 enqueue
 

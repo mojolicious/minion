@@ -36,7 +36,6 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
     my ($job, $msg) = @_;
     sleep 5;
     $job->app->log->debug(qq{Received message "$msg".});
-    return undef;
   });
 
   # Start jobs from anywhere in your application (data gets BSON serialized)

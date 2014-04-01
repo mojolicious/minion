@@ -40,7 +40,7 @@ sub dequeue {
 
 sub register {
   my $self = shift;
-  my $oid  = $self->minion->repair->workers->insert(
+  my $oid  = $self->minion->workers->insert(
     {host => hostname, num => $self->number, pid => $$, started => bson_time});
   return $self->id($oid);
 }
