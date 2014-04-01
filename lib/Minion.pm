@@ -169,10 +169,10 @@ Application for job queue, defaults to a L<Mojo::HelloWorld> object.
 =head2 auto_perform
 
   my $bool = $minion->auto_perform;
-  $minion  = $minion->auto_perform($bool);ø
+  $minion  = $minion->auto_perform($bool);
 
 Perform jobs automatically when a new one has been enqueued with
-L</"enqueue">.
+L</"enqueue">, very useful for testing.
 
 =head2 jobs
 
