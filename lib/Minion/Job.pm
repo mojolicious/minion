@@ -29,10 +29,12 @@ sub remove {
 
 sub restart {
   my $self = shift;
+
   $self->minion->jobs->update(
     {_id => $self->id, state => {'$in' => [qw(failed finished)]}},
     {'$set' => {state => 'inactive'}, '$inc' => {restarts => 1}}
   );
+
   return $self;
 }
 
