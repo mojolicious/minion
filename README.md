@@ -27,7 +27,8 @@ get '/log' => sub {
 app->start;
 ```
 
-  Just start a background worker process in addition to your web server.
+  Just start one or more background worker processes in addition to your web
+  server.
 
     $ ./myapp.pl minion worker
 
