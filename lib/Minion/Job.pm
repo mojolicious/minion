@@ -20,6 +20,14 @@ sub perform {
   $self->fail('Non-zero exit status.') if $?;
 }
 
+sub restart {
+  my $self = shift;
+  $self->minion->jobs->update(
+    {_id => $self->id, state => {'$in' => [qw(failed finished)]}},
+    {'$set' => {state => 'inactive'}});
+  return $self;
+}
+
 sub state { shift->_get('state') }
 
 sub _child {
@@ -145,6 +153,12 @@ Transition from C<active> to C<finished> state.
   $job->perform;
 
 Perform job in new process and wait for it to finish.
+
+=head2 restart
+
+  $job = $job->restart;
+
+Transition from C<failed> or C<finished> state back to C<inactive>.
 
 =head2 state
 

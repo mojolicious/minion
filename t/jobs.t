@@ -49,15 +49,19 @@ is $stats->{active_jobs},    1, 'one active job';
 is $stats->{inactive_jobs},  1, 'one inactive job';
 $job->finish;
 is $minion->stats->{finished_jobs}, 1, 'one finished job';
-$worker->dequeue->fail;
+$job = $worker->dequeue;
+$job->fail;
 is $minion->stats->{failed_jobs}, 1, 'one failed job';
+$job->restart;
+is $minion->stats->{failed_jobs}, 0, 'no failed jobs';
+$worker->dequeue->finish;
 $worker->unregister;
 $stats = $minion->stats;
 is $stats->{active_workers},   0, 'no active workers';
 is $stats->{inactive_workers}, 0, 'no inactive workers';
 is $stats->{active_jobs},      0, 'no active jobs';
-is $stats->{failed_jobs},      1, 'one failed job';
-is $stats->{finished_jobs},    1, 'one finished job';
+is $stats->{failed_jobs},      0, 'one failed job';
+is $stats->{finished_jobs},    2, 'one finished job';
 is $stats->{inactive_jobs},    0, 'no inactive jobs';
 
 # Enqueue, dequeue and perform
@@ -89,13 +93,24 @@ is_deeply $job->args, [2, 2], 'right arguments';
 is $job->state, 'finished', 'right state';
 is $job->task,  'add',      'right task';
 
+# Restart
+$oid = $minion->enqueue(add => [5, 6]);
+$job = $worker->register->dequeue;
+is $job->id, $oid, 'right object id';
+$job->finish;
+ok !$worker->dequeue, 'no more jobs';
+is $minion->job($oid)->restart->state, 'inactive', 'right state';
+$job = $worker->dequeue;
+is $job->id, $oid, 'right object id';
+$worker->unregister;
+
 # Jobs with priority
 $minion->enqueue(add => [1, 2]);
 $oid = $minion->enqueue(add => [2, 4], {priority => 1});
 $job = $worker->register->dequeue;
 is $job->id, $oid, 'right object id';
 $job->finish;
-isnt $worker->dequeue->{_id}, $oid, 'different object id';
+isnt $worker->dequeue->id, $oid, 'different object id';
 $worker->unregister;
 
 # Delayed jobs
