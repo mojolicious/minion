@@ -32,7 +32,11 @@ sub restart {
 
   $self->minion->jobs->update(
     {_id => $self->id, state => {'$in' => [qw(failed finished)]}},
-    {'$set' => {state => 'inactive'}, '$inc' => {restarts => 1}}
+    {
+      '$inc' => {restarts => 1},
+      '$set' => {state    => 'inactive'},
+      '$unset' => {error => '', finished => '', started => '', worker => ''}
+    }
   );
 
   return $self;
