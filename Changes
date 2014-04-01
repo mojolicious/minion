@@ -2,6 +2,7 @@
 0.04  2014-04-02
   - Removed all_jobs and one_job methods from Minion::Job.
   - Removed repair method from Minion::Worker;
+  - Added Minion::Command::minion::job.
   - Added auto_perform attribute to Minion.
   - Added repair method to Minion.
   - Added created, error, finished, remove, restart, restarts and started
