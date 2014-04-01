@@ -20,6 +20,12 @@ sub perform {
   $self->fail('Non-zero exit status.') if $?;
 }
 
+sub remove {
+  my $self = shift;
+  $self->minion->jobs->remove(
+    {_id => $self->id, state => {'$in' => [qw(failed finished)]}});
+}
+
 sub restart {
   my $self = shift;
   $self->minion->jobs->update(
@@ -153,6 +159,12 @@ Transition from C<active> to C<finished> state.
   $job->perform;
 
 Perform job in new process and wait for it to finish.
+
+=head2 remove
+
+  $job->remove;
+
+Remove C<failed> or C<finished> job from queue.
 
 =head2 restart
 

@@ -4,7 +4,7 @@
   - Removed repair method from Minion::Worker;
   - Added auto_perform attribute to Minion.
   - Added repair method to Minion.
-  - Added error and restart methods to Minion::Job.
+  - Added error, remove and restart methods to Minion::Job.
 
 0.03  2014-03-30
   - Removed doc and worker attributes from Minion::Job.

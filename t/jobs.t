@@ -93,7 +93,7 @@ is_deeply $job->args, [2, 2], 'right arguments';
 is $job->state, 'finished', 'right state';
 is $job->task,  'add',      'right task';
 
-# Restart
+# Restart and remove
 $oid = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue;
 is $job->id, $oid, 'right object id';
@@ -102,6 +102,15 @@ ok !$worker->dequeue, 'no more jobs';
 is $minion->job($oid)->restart->state, 'inactive', 'right state';
 $job = $worker->dequeue;
 is $job->id, $oid, 'right object id';
+$job->remove;
+is $job->state, 'active', 'right state';
+$job->finish->remove;
+is $job->state, undef, 'no state';
+$oid = $minion->enqueue(add => [6, 5]);
+$job = $worker->dequeue;
+is $job->id, $oid, 'right object id';
+$job->fail->remove;
+is $job->state, undef, 'no state';
 $worker->unregister;
 
 # Jobs with priority
