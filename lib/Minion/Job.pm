@@ -31,9 +31,12 @@ sub restart {
   my $self = shift;
   $self->minion->jobs->update(
     {_id => $self->id, state => {'$in' => [qw(failed finished)]}},
-    {'$set' => {state => 'inactive'}});
+    {'$set' => {state => 'inactive'}, '$inc' => {restarts => 1}}
+  );
   return $self;
 }
+
+sub restarts { shift->_get('restarts') // 0 }
 
 sub state { shift->_get('state') }
 
@@ -172,6 +175,12 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
   $job = $job->restart;
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
+
+=head2 restarts
+
+  my $num = $job->restarts;
+
+Get number of times this job has been restarted.
 
 =head2 state
 

@@ -96,13 +96,17 @@ is $job->task,  'add',      'right task';
 # Restart and remove
 $oid = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue;
+is $job->restarts, 0, 'job has not been restarted';
 is $job->id, $oid, 'right object id';
 $job->finish;
 ok !$worker->dequeue, 'no more jobs';
 is $minion->job($oid)->restart->state, 'inactive', 'right state';
+is $minion->job($oid)->restarts, 1, 'job has been restarted once';
 $job = $worker->dequeue;
 is $job->id, $oid, 'right object id';
 ok !$job->remove, 'job has not been removed';
+is $job->fail->restart->restarts, 2, 'job has been restarted twice';
+$job = $worker->dequeue;
 is $job->state, 'active', 'right state';
 ok $job->finish->remove, 'job has been removed';
 is $job->state, undef, 'no state';
