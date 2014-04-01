@@ -8,11 +8,15 @@ has [qw(id minion task)];
 
 sub app { shift->minion->app }
 
+sub created { shift->_time('created') }
+
 sub error { shift->_get('error') }
 
 sub fail { shift->_update(shift // 'Unknown error.') }
 
 sub finish { shift->_update }
+
+sub finished { shift->_time('finished') }
 
 sub perform {
   my $self = shift;
@@ -44,6 +48,8 @@ sub restart {
 
 sub restarts { shift->_get('restarts') // 0 }
 
+sub started { shift->_time('started') }
+
 sub state { shift->_get('state') }
 
 sub _child {
@@ -67,6 +73,12 @@ sub _get {
   return undef
     unless my $job = $self->minion->jobs->find_one($self->id, {$key => 1});
   return $job->{$key};
+}
+
+sub _time {
+  my $self = shift;
+  return undef unless my $time = $self->_get(@_);
+  return $time->to_epoch;
 }
 
 sub _update {
@@ -145,6 +157,12 @@ Get application from L<Minion/"app">.
   # Longer version
   my $app = $job->minion->app;
 
+=head2 created
+
+  my $epoch = $job->created;
+
+Time the job was created in floating seconds since the epoch.
+
 =head2 error
 
   my $err = $job->error;
@@ -163,6 +181,12 @@ Transition from C<active> to C<failed> state.
   $job = $job->finish;
 
 Transition from C<active> to C<finished> state.
+
+=head2 finished
+
+  my $epoch = $job->finished;
+
+Time the job was finished in floating seconds since the epoch.
 
 =head2 perform
 
@@ -187,6 +211,12 @@ Transition from C<failed> or C<finished> state back to C<inactive>.
   my $num = $job->restarts;
 
 Get number of times this job has been restarted.
+
+=head2 started
+
+  my $epoch = $job->started;
+
+Time the job was started in floating seconds since the epoch.
 
 =head2 state
 

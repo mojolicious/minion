@@ -45,6 +45,12 @@ sub register {
   return $self->id($oid);
 }
 
+sub started {
+  my $self = shift;
+  return undef unless my $worker = $self->minion->workers->find_one($self->id);
+  return $worker->{started}->to_epoch;
+}
+
 sub unregister {
   my ($self, $id) = @_;
   $self->minion->workers->remove({_id => delete $_[0]->{id}});
@@ -111,6 +117,12 @@ state or return C<undef> if queue was empty.
   $worker = $worker->register;
 
 Register worker.
+
+=head2 started
+
+  my $epoch = $worker->started;
+
+Time the worker was started in floating seconds since the epoch.
 
 =head2 unregister
 

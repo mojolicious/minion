@@ -23,7 +23,7 @@ isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
 # Register and unregister
 $worker->register;
-ok $workers->find_one($worker->id)->{started}->to_epoch, 'has timestamp';
+like $worker->started, qr/^[\d.]+$/, 'has timestamp';
 ok !$worker->unregister->minion->workers->find_one(
   {pid => $$, num => $worker->number}), 'not registered';
 ok $worker->register->minion->workers->find_one(
