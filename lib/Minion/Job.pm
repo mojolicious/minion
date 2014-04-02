@@ -23,7 +23,7 @@ sub finished { shift->_time('finished') }
 sub perform {
   my $self = shift;
   waitpid $self->_child, 0;
-  $self->fail('Non-zero exit status.') if $?;
+  $? ? $self->fail('Non-zero exit status.') : $self->finish;
 }
 
 sub priority { shift->_get('priority') }
@@ -64,11 +64,10 @@ sub _child {
   return $pid if $pid;
 
   # Child
-  my $task   = $self->task;
-  my $minion = $self->minion;
-  $minion->app->log->debug(qq{Performing job "$task" (@{[$self->id]}:$$).});
-  my $cb = $minion->tasks->{$task};
-  eval { $self->$cb(@{$self->args}); 1 } ? $self->finish : $self->fail($@);
+  my $task = $self->task;
+  $self->app->log->debug(qq{Performing job "$task" (@{[$self->id]}:$$).});
+  my $cb = $self->minion->tasks->{$task};
+  $self->fail($@) unless eval { $self->$cb(@{$self->args}); 1 };
   exit 0;
 }
 
