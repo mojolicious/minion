@@ -13,11 +13,12 @@ sub run {
 
   GetOptionsFromArray \@args,
     'r|remove'  => \my $remove,
-    's|restart' => \my $restart;
+    'R|restart' => \my $restart,
+    's|stats'   => \my $stats;
   my $oid = @args ? bson_oid(shift @args) : undef;
 
-  # List jobs
-  return $self->_list unless $oid;
+  # Show stats or list jobs
+  return $stats ? $self->_stats : $self->_list unless $oid;
   die "Job does not exist.\n" unless my $job = $self->app->minion->job($oid);
 
   # Remove job
@@ -31,14 +32,23 @@ sub run {
 }
 
 sub _list {
-  my $self = shift;
   my @table;
-  my $cursor = $self->app->minion->jobs->find->sort({_id => -1});
+  my $cursor = shift->app->minion->jobs->find->sort({_id => -1});
   while (my $doc = $cursor->next) {
     my $err = $doc->{error} // '';
     push @table, [$doc->{_id}, $doc->{task}, $doc->{state}, $err];
   }
-  say tablify \@table;
+  print tablify \@table;
+}
+
+sub _stats {
+  my $stats = shift->app->minion->stats;
+  say "Inactive workers: $stats->{inactive_workers}";
+  say "Active workers:   $stats->{active_workers}";
+  say "Inactive jobs:    $stats->{inactive_jobs}";
+  say "Active jobs:      $stats->{active_jobs}";
+  say "Failed jobs:      $stats->{failed_jobs}";
+  say "Finished jobs:    $stats->{finished_jobs}";
 }
 
 1;
@@ -54,12 +64,14 @@ Minion::Command::minion::job - Minion job command
   Usage: APPLICATION minion job [ID]
 
     ./myapp.pl minion job
+    ./myapp.pl minion job -s
     ./myapp.pl minion job 533b4e2b5867b4c72b0a0000
     ./myapp.pl minion job 533b4e2b5867b4c72b0a0000 -r
 
   Options:
     -r, --remove    Remove job.
-    -s, --restart   Restart job.
+    -R, --restart   Restart job.
+    -s, --stats     Show queue statistics.
 
 =head1 DESCRIPTION
 
