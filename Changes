@@ -1,5 +1,7 @@
 
 0.06  2014-04-03
+  - Added delayed and priority methods to Minion::Job.
+  - Renamed after option to delayed.
   - Improved job command to use a human readable time format and allow new
     jobs to be enqueued.
 

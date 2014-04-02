@@ -29,9 +29,9 @@ sub enqueue {
   $options //= {};
 
   my $doc = {
-    after => $options->{after} // bson_time(1),
-    args  => $args             // [],
+    args => $args // [],
     created  => bson_time,
+    delayed  => $options->{delayed} // bson_time(1),
     priority => $options->{priority} // 0,
     state    => 'inactive',
     task     => $task
@@ -234,11 +234,11 @@ These options are currently available:
 
 =over 2
 
-=item after
+=item delayed
 
-  after => bson_time((time + 1) * 1000)
+  delayed => bson_time((time + 1) * 1000)
 
-Perform job only after this point in time.
+Delay job until after this point in time.
 
 =item priority
 

@@ -10,6 +10,8 @@ sub app { shift->minion->app }
 
 sub created { shift->_time('created') }
 
+sub delayed { shift->_time('delayed') }
+
 sub error { shift->_get('error') }
 
 sub fail { shift->_update(shift // 'Unknown error.') }
@@ -23,6 +25,8 @@ sub perform {
   waitpid $self->_child, 0;
   $self->fail('Non-zero exit status.') if $?;
 }
+
+sub priority { shift->_get('priority') }
 
 sub remove {
   my $self   = shift;
@@ -163,6 +167,12 @@ Get application from L<Minion/"app">.
 
 Time this job was created in floating seconds since the epoch.
 
+=head2 delayed
+
+  my $epoch = $job->delayed;
+
+Time this job was delayed to in floating seconds since the epoch.
+
 =head2 error
 
   my $err = $job->error;
@@ -194,6 +204,12 @@ floating seconds since the epoch.
   $job->perform;
 
 Perform job in new process and wait for it to finish.
+
+=head2 priority
+
+  my $priority = $job->priority;
+
+Get job priority.
 
 =head2 remove
 

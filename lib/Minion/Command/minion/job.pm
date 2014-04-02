@@ -2,7 +2,7 @@ package Minion::Command::minion::job;
 use Mojo::Base 'Mojolicious::Command';
 
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
-use Mango::BSON 'bson_oid';
+use Mango::BSON qw(bson_oid bson_time);
 use Mojo::JSON 'decode_json';
 use Mojo::Util 'dumper';
 use Time::Piece 'localtime';
@@ -14,15 +14,19 @@ sub run {
   my ($self, @args) = @_;
 
   GetOptionsFromArray \@args,
-    'a|args=s' => \(my $args = '[]'),
-    'e|enqueue=s' => \my $enqueue,
-    'r|remove'    => \my $remove,
-    'R|restart'   => \my $restart,
-    's|stats'     => \my $stats;
+    'a|args=s'     => \(my $args     = '[]'),
+    'd|delayed=i'  => \(my $delayed  = 1),
+    'e|enqueue=s'  => \my $enqueue,
+    'p|priority=i' => \(my $priority = 0),
+    'r|remove'     => \my $remove,
+    'R|restart'    => \my $restart,
+    's|stats'      => \my $stats;
   my $oid = @args ? bson_oid(shift @args) : undef;
 
   # Enqueue
-  return say $self->app->minion->enqueue($enqueue, decode_json($args))
+  my $options = {delayed => bson_time($delayed * 1000), priority => $priority};
+  return
+    say $self->app->minion->enqueue($enqueue, decode_json($args), $options)
     if $enqueue;
 
   # Show stats or list jobs
@@ -43,12 +47,16 @@ sub _info {
   my ($self, $job) = @_;
 
   # Details
-  print $job->task, ' (', $job->state, ")\n", dumper($job->args);
+  my $state    = $job->state;
+  my $priority = $job->priority;
+  my $restarts = $job->restarts;
+  print $job->task, " ($state, p$priority, r$restarts)\n", dumper($job->args);
   my $err = $job->error;
   say chomp $err ? $err : $err if $err;
 
   # Timing
   say localtime($job->created)->datetime, ' (created)';
+  say localtime($job->delayed)->datetime, ' (delayed)';
   my $started = $job->started;
   say localtime($started)->datetime, ' (started)' if $started;
   my $finished = $job->finished;
@@ -86,13 +94,16 @@ Minion::Command::minion::job - Minion job command
 
     ./myapp.pl minion job
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
+    ./myapp.pl minion job -e foo -p 5
     ./myapp.pl minion job -s
     ./myapp.pl minion job 533b4e2b5867b4c72b0a0000
     ./myapp.pl minion job 533b4e2b5867b4c72b0a0000 -r
 
   Options:
     -a, --args <JSON array>   Arguments for new job in JSON format.
+    -d, --delayed <epoch>     Delay new job until after this point in time.
     -e, --enqueue <name>      New job to be enqueued.
+    -p, --priority <number>   Priority of new job, defaults to 0.
     -r, --remove              Remove job.
     -R, --restart             Restart job.
     -s, --stats               Show queue statistics.

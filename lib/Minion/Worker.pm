@@ -19,9 +19,9 @@ sub dequeue {
   my $minion = $self->minion;
   my $doc    = {
     query => {
-      after => {'$lt' => bson_time},
-      state => 'inactive',
-      task  => {'$in' => [keys %{$minion->tasks}]}
+      delayed => {'$lt' => bson_time},
+      state   => 'inactive',
+      task    => {'$in' => [keys %{$minion->tasks}]}
     },
     fields => {args     => 1, task => 1},
     sort   => {priority => -1},

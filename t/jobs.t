@@ -132,19 +132,21 @@ $minion->enqueue(add => [1, 2]);
 $oid = $minion->enqueue(add => [2, 4], {priority => 1});
 $job = $worker->register->dequeue;
 is $job->id, $oid, 'right object id';
+is $job->priority, 1, 'right priority';
 $job->finish;
 isnt $worker->dequeue->id, $oid, 'different object id';
 $worker->unregister;
 
 # Delayed jobs
 $oid = $minion->enqueue(
-  add => [2, 1] => {after => bson_time((time + 100) * 1000)});
+  add => [2, 1] => {delayed => bson_time((time + 100) * 1000)});
 is $worker->register->dequeue, undef, 'too early for job';
 $doc = $jobs->find_one($oid);
-$doc->{after} = bson_time((time - 100) * 1000);
+$doc->{delayed} = bson_time((time - 100) * 1000);
 $jobs->save($doc);
 $job = $worker->dequeue;
 is $job->id, $oid, 'right object id';
+like $job->delayed, qr/^[\d.]+$/, 'has delayed timestamp';
 $job->finish;
 $worker->unregister;
 
