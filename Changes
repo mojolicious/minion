@@ -1,4 +1,6 @@
 
+0.05  2014-04-03
+
 0.04  2014-04-02
   - Removed all_jobs and one_job methods from Minion::Job.
   - Removed repair method from Minion::Worker;

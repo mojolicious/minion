@@ -8,7 +8,7 @@ use Minion::Worker;
 use Mojo::Server;
 use Sys::Hostname 'hostname';
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has [qw(auto_perform mango)];
