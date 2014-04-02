@@ -3,7 +3,7 @@ use Mojo::Base 'Mojolicious::Command';
 
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
 use Mango::BSON 'bson_oid';
-use Mojo::Util 'tablify';
+use Mojo::Util 'dumper';
 
 has description => 'Manage Minion jobs.';
 has usage => sub { shift->extract_usage };
@@ -28,17 +28,31 @@ sub run {
   return $job->restart if $restart;
 
   # Job info
-  say join ' ', $job->id, $job->task, $job->state;
+  $self->_info($job);
+}
+
+sub _info {
+  my ($self, $job) = @_;
+
+  # Details
+  print $job->task, ' (', $job->state, ")\n", dumper($job->args);
+  my $err = $job->error;
+  say $err if $err;
+
+  # Timing
+  my @times   = ('Created: ' . $job->created);
+  my $started = $job->started;
+  push @times, 'Started: ' . $started if $started;
+  my $finished = $job->finished;
+  push @times, 'Finished: ' . $finished if $finished;
+  say join '  ', @times;
 }
 
 sub _list {
-  my @table;
   my $cursor = shift->app->minion->jobs->find->sort({_id => -1});
   while (my $doc = $cursor->next) {
-    my $err = $doc->{error} // '';
-    push @table, [$doc->{_id}, $doc->{task}, $doc->{state}, $err];
+    say sprintf '%s  %8s  %s', @$doc{qw(_id state task)};
   }
-  print tablify \@table;
 }
 
 sub _stats {
