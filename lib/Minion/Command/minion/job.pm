@@ -90,11 +90,11 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job 533b4e2b5867b4c72b0a0000 -r
 
   Options:
-    -a, --args      Arguments for new job in JSON format.
-    -e, --enqueue   New job to be enqueued.
-    -r, --remove    Remove job.
-    -R, --restart   Restart job.
-    -s, --stats     Show queue statistics.
+    -a, --args <JSON array>   Arguments for new job in JSON format.
+    -e, --enqueue <name>      New job to be enqueued.
+    -r, --remove              Remove job.
+    -R, --restart             Restart job.
+    -s, --stats               Show queue statistics.
 
 =head1 DESCRIPTION
 
