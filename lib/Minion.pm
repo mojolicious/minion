@@ -244,7 +244,7 @@ Perform job only after this point in time.
 
   priority => 5
 
-Job priority.
+Job priority, defaults to C<0>.
 
 =back
 
