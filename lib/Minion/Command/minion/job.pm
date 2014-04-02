@@ -51,7 +51,7 @@ sub _info {
 sub _list {
   my $cursor = shift->app->minion->jobs->find->sort({_id => -1});
   while (my $doc = $cursor->next) {
-    say sprintf '%s  %8s  %s', @$doc{qw(_id state task)};
+    say sprintf '%s  %-8s  %s', @$doc{qw(_id state task)};
   }
 }
 
