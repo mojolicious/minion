@@ -3,7 +3,9 @@ use Mojo::Base 'Mojolicious::Command';
 
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
 use Mango::BSON 'bson_oid';
+use Mojo::JSON 'decode_json';
 use Mojo::Util 'dumper';
+use Time::Piece 'localtime';
 
 has description => 'Manage Minion jobs.';
 has usage => sub { shift->extract_usage };
@@ -12,10 +14,15 @@ sub run {
   my ($self, @args) = @_;
 
   GetOptionsFromArray \@args,
-    'r|remove'  => \my $remove,
-    'R|restart' => \my $restart,
-    's|stats'   => \my $stats;
+    'a|args=s' => \(my $args = '[]'),
+    'e|enqueue=s' => \my $enqueue,
+    'r|remove'    => \my $remove,
+    'R|restart'   => \my $restart,
+    's|stats'     => \my $stats;
   my $oid = @args ? bson_oid(shift @args) : undef;
+
+  # Enqueue
+  return say $self->app->minion->enqueue($enqueue, decode_json($args));
 
   # Show stats or list jobs
   return $stats ? $self->_stats : $self->_list unless $oid;
@@ -40,12 +47,11 @@ sub _info {
   say $err if $err;
 
   # Timing
-  my @times   = ('Created: ' . $job->created);
+  say localtime($job->created)->datetime, ' (created)';
   my $started = $job->started;
-  push @times, 'Started: ' . $started if $started;
+  say localtime($started)->datetime, ' (started)' if $started;
   my $finished = $job->finished;
-  push @times, 'Finished: ' . $finished if $finished;
-  say join '  ', @times;
+  say localtime($finished)->datetime, ' (finished)' if $finished;
 }
 
 sub _list {
@@ -78,11 +84,14 @@ Minion::Command::minion::job - Minion job command
   Usage: APPLICATION minion job [ID]
 
     ./myapp.pl minion job
+    ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -s
     ./myapp.pl minion job 533b4e2b5867b4c72b0a0000
     ./myapp.pl minion job 533b4e2b5867b4c72b0a0000 -r
 
   Options:
+    -a, --args      Arguments for new job in JSON format.
+    -e, --enqueue   New job to be enqueued.
     -r, --remove    Remove job.
     -R, --restart   Restart job.
     -s, --stats     Show queue statistics.
