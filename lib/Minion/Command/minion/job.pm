@@ -13,20 +13,20 @@ has usage => sub { shift->extract_usage };
 sub run {
   my ($self, @args) = @_;
 
+  my $args    = [];
+  my $options = {};
   GetOptionsFromArray \@args,
-    'a|args=s'     => \(my $args     = '[]'),
-    'd|delayed=i'  => \(my $delayed  = 1),
+    'a|args=s' => sub { $args = decode_json($_[1]) },
+    'd|delayed=i' => sub { $options->{delayed} = bson_time($_[1] * 1000) },
     'e|enqueue=s'  => \my $enqueue,
-    'p|priority=i' => \(my $priority = 0),
+    'p|priority=i' => sub { $options->{priority} = $_[1] },
     'r|remove'     => \my $remove,
     'R|restart'    => \my $restart,
     's|stats'      => \my $stats;
   my $oid = @args ? bson_oid(shift @args) : undef;
 
   # Enqueue
-  my $options = {delayed => bson_time($delayed * 1000), priority => $priority};
-  return
-    say $self->app->minion->enqueue($enqueue, decode_json($args), $options)
+  return say $self->app->minion->enqueue($enqueue, $args, $options)
     if $enqueue;
 
   # Show stats or list jobs
@@ -56,7 +56,8 @@ sub _info {
 
   # Timing
   say localtime($job->created)->datetime, ' (created)';
-  say localtime($job->delayed)->datetime, ' (delayed)';
+  my $delayed = $job->delayed;
+  say localtime($delayed)->datetime, ' (delayed)' if $delayed > time;
   my $started = $job->started;
   say localtime($started)->datetime, ' (started)' if $started;
   my $finished = $job->finished;
