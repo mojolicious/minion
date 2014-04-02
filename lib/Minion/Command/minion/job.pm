@@ -22,7 +22,8 @@ sub run {
   my $oid = @args ? bson_oid(shift @args) : undef;
 
   # Enqueue
-  return say $self->app->minion->enqueue($enqueue, decode_json($args));
+  return say $self->app->minion->enqueue($enqueue, decode_json($args))
+    if $enqueue;
 
   # Show stats or list jobs
   return $stats ? $self->_stats : $self->_list unless $oid;
