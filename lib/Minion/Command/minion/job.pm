@@ -45,7 +45,7 @@ sub _info {
   # Details
   print $job->task, ' (', $job->state, ")\n", dumper($job->args);
   my $err = $job->error;
-  say $err if $err;
+  say chomp $err ? $err : $err if $err;
 
   # Timing
   say localtime($job->created)->datetime, ' (created)';
