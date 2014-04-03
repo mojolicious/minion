@@ -30,6 +30,8 @@ Minion::Command::minion::worker - Minion worker command
 
   Usage: APPLICATION minion worker
 
+    ./myapp.pl minion worker -m production
+
 =head1 DESCRIPTION
 
 L<Minion::Command::minion::worker> starts a L<Minion> worker.
