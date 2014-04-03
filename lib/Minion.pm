@@ -148,6 +148,11 @@ an application loads the plugin L<Mojolicious::Plugin::Minion>.
 
   $ ./myapp.pl minion worker
 
+Jobs can be managed right from the command line with
+L<Minion::Command::minion::job>.
+
+  $ ./myapp.pl minion job
+
 Note that this whole distribution is EXPERIMENTAL and will change without
 warning!
 
@@ -294,6 +299,7 @@ the terms of the Artistic License version 2.0.
 
 =head1 SEE ALSO
 
-L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<https://github.com/kraih/minion>, L<Mojolicious::Guides>,
+L<http://mojolicio.us>.
 
 =cut
