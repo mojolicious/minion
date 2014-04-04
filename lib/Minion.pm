@@ -6,6 +6,7 @@ use Mango::BSON 'bson_time';
 use Minion::Job;
 use Minion::Worker;
 use Mojo::Server;
+use Scalar::Util 'weaken';
 use Sys::Hostname 'hostname';
 
 our $VERSION = '0.08';
@@ -39,14 +40,16 @@ sub enqueue {
     task     => $task
   };
 
-  # Non-blocking
-  return $self->jobs->insert($doc => sub { shift; $self->_perform->$cb(@_) })
-    if $cb;
-
   # Blocking
-  my $oid = $self->jobs->insert($doc);
-  $self->_perform;
-  return $oid;
+  unless ($cb) {
+    my $oid = $self->jobs->insert($doc);
+    $self->_perform;
+    return $oid;
+  }
+
+  # Non-blocking
+  weaken $self;
+  return $self->jobs->insert($doc => sub { shift; $self->_perform->$cb(@_) });
 }
 
 sub job {
