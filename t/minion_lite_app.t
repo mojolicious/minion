@@ -33,7 +33,7 @@ get '/increment' => sub {
 get '/non_blocking_increment' => sub {
   my $self = shift;
   $self->minion->enqueue(
-    'increment' => sub {
+    increment => sub {
       $self->render(text => 'Incrementing soon too!');
     }
   );
