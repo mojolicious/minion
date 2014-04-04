@@ -38,16 +38,14 @@ sub remove {
 sub restart {
   my $self = shift;
 
-  $self->minion->jobs->update(
+  return !!$self->minion->jobs->update(
     {_id => $self->id, state => {'$in' => [qw(failed finished)]}},
     {
       '$inc' => {restarts => 1},
       '$set' => {state    => 'inactive'},
       '$unset' => {error => '', finished => '', started => '', worker => ''}
     }
-  );
-
-  return $self;
+  )->{n};
 }
 
 sub restarts { shift->_get('restarts') // 0 }
@@ -90,10 +88,8 @@ sub _update {
   my $doc
     = {finished => bson_time, state => defined $err ? 'failed' : 'finished'};
   $doc->{error} = $err if defined $err;
-  $self->minion->jobs->update({_id => $self->id, state => 'active'},
-    {'$set' => $doc});
-
-  return $self;
+  return !!$self->minion->jobs->update({_id => $self->id, state => 'active'},
+    {'$set' => $doc})->{n};
 }
 
 1;
@@ -180,14 +176,14 @@ Get error for C<failed> job.
 
 =head2 fail
 
-  $job = $job->fail;
-  $job = $job->fail('Something went wrong!');
+  my $bool = $job->fail;
+  my $bool = $job->fail('Something went wrong!');
 
 Transition from C<active> to C<failed> state.
 
 =head2 finish
 
-  $job = $job->finish;
+  my $bool = $job->finish;
 
 Transition from C<active> to C<finished> state.
 
@@ -218,7 +214,7 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
 
 =head2 restart
 
-  $job = $job->restart;
+  my $bool = $job->restart;
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
 
