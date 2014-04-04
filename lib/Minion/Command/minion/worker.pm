@@ -15,7 +15,6 @@ sub run {
     else                              { sleep 5 }
   }
   $worker->unregister;
-  exit 0;
 }
 
 1;
