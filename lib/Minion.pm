@@ -9,7 +9,7 @@ use Mojo::Server;
 use Scalar::Util 'weaken';
 use Sys::Hostname 'hostname';
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has [qw(auto_perform mango)];

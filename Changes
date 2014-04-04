@@ -1,4 +1,6 @@
 
+0.10  2014-04-06
+
 0.09  2014-04-05
   - Added worker event to Minion.
   - Added dequeue event to Minion::Worker.
