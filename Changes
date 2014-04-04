@@ -1,4 +1,6 @@
 
+0.09  2014-04-05
+
 0.08  2014-04-04
   - Added support for non-blocking enqueue.
 
