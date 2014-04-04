@@ -25,19 +25,27 @@ sub add_task {
 }
 
 sub enqueue {
-  my ($self, $task, $args, $options) = @_;
-  $options //= {};
+  my ($self, $task) = (shift, shift);
+  my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
+  my $args    = shift // [];
+  my $options = shift // {};
 
   my $doc = {
-    args => $args // [],
+    args     => $args,
     created  => bson_time,
     delayed  => $options->{delayed} // bson_time(1),
     priority => $options->{priority} // 0,
     state    => 'inactive',
     task     => $task
   };
+
+  # Non-blocking
+  return $self->jobs->insert($doc => sub { shift; $self->_perform->$cb(@_) })
+    if $cb;
+
+  # Blocking
   my $oid = $self->jobs->insert($doc);
-  $self->_perform if $self->auto_perform;
+  $self->_perform;
   return $oid;
 }
 
@@ -96,12 +104,13 @@ sub _perform {
   my $self = shift;
 
   # No recursion
-  return if $self->{lock};
+  return $self if !$self->auto_perform || $self->{lock};
   local $self->{lock} = 1;
 
   my $worker = $self->worker->register;
   while (my $job = $worker->dequeue) { $job->perform }
   $worker->unregister;
+  return $self;
 }
 
 1;
@@ -233,7 +242,14 @@ Register a new task.
   my $oid = $minion->enqueue(foo => [@args]);
   my $oid = $minion->enqueue(foo => [@args] => {priority => 1});
 
-Enqueue a new job with C<inactive> state.
+Enqueue a new job with C<inactive> state. You can also append a callback to
+perform operation non-blocking.
+
+  $minion->enqueue(foo => sub {
+    my ($minion, $err, $oid) = @_;
+    ...
+  });
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 These options are currently available:
 

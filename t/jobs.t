@@ -7,6 +7,7 @@ plan skip_all => 'set TEST_ONLINE to enable this test'
 
 use Mango::BSON qw(bson_oid bson_time);
 use Minion;
+use Mojo::IOLoop;
 
 # Clean up before start
 my $minion = Minion->new($ENV{TEST_ONLINE});
@@ -147,6 +148,26 @@ $jobs->save($doc);
 $job = $worker->dequeue;
 is $job->id, $oid, 'right object id';
 like $job->delayed, qr/^[\d.]+$/, 'has delayed timestamp';
+$job->finish;
+$worker->unregister;
+
+# Enqueue non-blocking
+my ($fail, $result) = @_;
+$minion->enqueue(
+  add => [23] => {priority => 1} => sub {
+    my ($minion, $err, $oid) = @_;
+    $fail   = $err;
+    $result = $oid;
+    Mojo::IOLoop->stop;
+  }
+);
+Mojo::IOLoop->start;
+ok !$fail, 'no error';
+$worker = $minion->worker->register;
+$job    = $worker->dequeue;
+is $job->id, $result, 'right object id';
+is_deeply $job->args, [23], 'right arguments';
+is $job->priority, 1, 'right priority';
 $job->finish;
 $worker->unregister;
 

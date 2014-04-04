@@ -30,6 +30,15 @@ get '/increment' => sub {
   $self->render(text => 'Incrementing soon!');
 };
 
+get '/non_blocking_increment' => sub {
+  my $self = shift;
+  $self->minion->enqueue(
+    'increment' => sub {
+      $self->render(text => 'Incrementing soon too!');
+    }
+  );
+};
+
 get '/count' => sub {
   my $self = shift;
   $self->render(text => $self->minion->jobs->find_one($count)->{count});
@@ -44,6 +53,14 @@ $t->get_ok('/count')->status_is(200)->content_is('1');
 $t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
 $t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
 $t->get_ok('/count')->status_is(200)->content_is('3');
+
+# Perform jobs automatically (non-blocking)
+$t->get_ok('/non_blocking_increment')->status_is(200)
+  ->content_is('Incrementing soon too!');
+$t->get_ok('/count')->status_is(200)->content_is('4');
+$t->get_ok('/non_blocking_increment')->status_is(200)
+  ->content_is('Incrementing soon too!');
+$t->get_ok('/count')->status_is(200)->content_is('5');
 $_->drop for app->minion->workers, app->minion->jobs;
 
 done_testing();
