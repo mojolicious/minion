@@ -1,5 +1,5 @@
 package Minion::Job;
-use Mojo::Base -base;
+use Mojo::Base 'Mojo::EventEmitter';
 
 use Mango::BSON 'bson_time';
 
@@ -90,8 +90,10 @@ sub _update {
   my $doc
     = {finished => bson_time, state => defined $err ? 'failed' : 'finished'};
   $doc->{error} = $err if defined $err;
-  return !!$self->minion->jobs->update({_id => $self->id, state => 'active'},
+  my $n = $self->minion->jobs->update({_id => $self->id, state => 'active'},
     {'$set' => $doc})->{n};
+  $err ? $self->emit(failed => $err) : $self->emit('finished') if $n;
+  return !!$n;
 }
 
 1;
@@ -111,6 +113,40 @@ Minion::Job - Minion job
 =head1 DESCRIPTION
 
 L<Minion::Job> is a container for L<Minion> jobs.
+
+=head1 EVENTS
+
+L<Minion::Job> inherits all events from L<Mojo::EventEmitter> and can emit the
+following new ones.
+
+=head2 failed
+
+  $job->on(failed => sub {
+    my ($job, $err) = @_;
+    ...
+  });
+
+Emitted after this job transitioned to the C<failed> state.
+
+  $job->on(failed => sub {
+    my ($job, $err) = @_;
+    say "Something went wrong: $err";
+  });
+
+=head2 finished
+
+  $job->on(finished => sub {
+    my $job = shift;
+    ...
+  });
+
+Emitted after this job transitioned to the C<finished> state.
+
+  $job->on(finished => sub {
+    my $job = shift;
+    my $oid = $job->id;
+    say "Job $oid is finished.";
+  });
 
 =head1 ATTRIBUTES
 
@@ -146,8 +182,8 @@ Task name.
 
 =head1 METHODS
 
-L<Minion::Job> inherits all methods from L<Mojo::Base> and implements the
-following new ones.
+L<Minion::Job> inherits all methods from L<Mojo::EventEmitter> and implements
+the following new ones.
 
 =head2 app
 

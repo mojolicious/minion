@@ -1,5 +1,8 @@
 
 0.09  2014-04-05
+  - Added worker event to Minion.
+  - Added dequeue event to Minion::Worker.
+  - Added failed and finished events to Minion::Job.
   - Added restarted method to Minion::Job.
   - Changed return values of fail, finish and restart methods in Minion::Job.
 

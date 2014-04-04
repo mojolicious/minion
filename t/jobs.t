@@ -180,6 +180,40 @@ is $job->priority, 1, 'right priority';
 ok $job->finish, 'job finished';
 $worker->unregister;
 
+# Events
+my ($failed, $finished) = (0, 0);
+$minion->on(
+  worker => sub {
+    my ($minion, $worker) = @_;
+    $worker->on(
+      dequeue => sub {
+        my ($worker, $job) = @_;
+        $job->on(failed   => sub { $failed++ });
+        $job->on(finished => sub { $finished++ });
+      }
+    );
+  }
+);
+$worker = $minion->worker->register;
+$minion->enqueue(add => [3, 3]);
+$minion->enqueue(add => [4, 3]);
+$job = $worker->dequeue;
+is $failed,   0, 'failed event has not been emitted';
+is $finished, 0, 'finished event has not been emitted';
+$job->finish;
+$job->finish;
+is $failed,   0, 'failed event has not been emitted';
+is $finished, 1, 'finished event has been emitted once';
+$job = $worker->dequeue;
+my $err;
+$job->on(failed => sub { $err = pop });
+$job->fail("test\n");
+$job->fail;
+is $err,      "test\n", 'right error';
+is $failed,   1,        'failed event has been emitted once';
+is $finished, 1,        'finished event has been emitted once';
+$worker->unregister;
+
 # Failed jobs
 $oid = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue;

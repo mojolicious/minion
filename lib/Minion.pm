@@ -1,5 +1,5 @@
 package Minion;
-use Mojo::Base -base;
+use Mojo::Base 'Mojo::EventEmitter';
 
 use Mango;
 use Mango::BSON 'bson_time';
@@ -101,7 +101,12 @@ sub stats {
   return $stats;
 }
 
-sub worker { Minion::Worker->new(minion => shift) }
+sub worker {
+  my $self = shift;
+  my $worker = Minion::Worker->new(minion => $self);
+  $self->emit(worker => $worker);
+  return $worker;
+}
 
 sub _perform {
   my $self = shift;
@@ -172,6 +177,26 @@ Most of the API is not changing much anymore, but you should wait for a stable
 1.0 release before using any of the modules in this distribution in a
 production environment.
 
+=head1 EVENTS
+
+L<Minion> inherits all events from L<Mojo::EventEmitter> and can emit the
+following new ones.
+
+=head2 worker
+
+  $minion->on(worker => sub {
+    my ($minion, $worker) = @_;
+    ...
+  });
+
+Emitted when a new worker is created.
+
+  $minion->on(worker => sub {
+    my ($minion, $worker) = @_;
+    my $num = $worker->number;
+    say "Worker $$:$num started.";
+  });
+
 =head1 ATTRIBUTES
 
 L<Minion> implements the following attributes.
@@ -230,8 +255,8 @@ on L</"prefix">.
 
 =head1 METHODS
 
-L<Minion> inherits all methods from L<Mojo::Base> and implements the following
-new ones.
+L<Minion> inherits all methods from L<Mojo::EventEmitter> and implements the
+following new ones.
 
 =head2 add_task
 

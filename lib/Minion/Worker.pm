@@ -1,5 +1,5 @@
 package Minion::Worker;
-use Mojo::Base -base;
+use Mojo::Base 'Mojo::EventEmitter';
 
 use Mango::BSON 'bson_time';
 use Sys::Hostname 'hostname';
@@ -30,12 +30,14 @@ sub dequeue {
     new => 1
   };
   return undef unless my $job = $minion->jobs->find_and_modify($doc);
-  return Minion::Job->new(
+  $job = Minion::Job->new(
     args   => $job->{args},
     id     => $job->{_id},
     minion => $minion,
     task   => $job->{task}
   );
+  $self->emit(dequeue => $job);
+  return $job;
 }
 
 sub register {
@@ -75,6 +77,26 @@ Minion::Worker - Minion worker
 
 L<Minion::Worker> performs jobs for L<Minion>.
 
+=head1 EVENTS
+
+L<Minion::Worker> inherits all events from L<Mojo::EventEmitter> and can emit
+the following new ones.
+
+=head2 dequeue
+
+  $worker->on(dequeue => sub {
+    my ($worker, $job) = @_;
+    ...
+  });
+
+Emitted when a job has been dequeued.
+
+  $worker->on(dequeue => sub {
+    my ($worker, $job) = @_;
+    my $oid = $job->id;
+    say "Job $oid has been dequeued.";
+  });
+
 =head1 ATTRIBUTES
 
 L<Minion::Worker> implements the following attributes.
@@ -102,8 +124,8 @@ Number of this worker, unique per process.
 
 =head1 METHODS
 
-L<Minion::Worker> inherits all methods from L<Mojo::Base> and implements the
-following new ones.
+L<Minion::Worker> inherits all methods from L<Mojo::EventEmitter> and
+implements the following new ones.
 
 =head2 dequeue
 
