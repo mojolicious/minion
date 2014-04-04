@@ -41,12 +41,14 @@ sub restart {
   return !!$self->minion->jobs->update(
     {_id => $self->id, state => {'$in' => [qw(failed finished)]}},
     {
-      '$inc' => {restarts => 1},
-      '$set' => {state    => 'inactive'},
+      '$inc' => {restarts  => 1},
+      '$set' => {restarted => bson_time, state => 'inactive'},
       '$unset' => {error => '', finished => '', started => '', worker => ''}
     }
   )->{n};
 }
+
+sub restarted { shift->_time('restarted') }
 
 sub restarts { shift->_get('restarts') // 0 }
 
@@ -217,6 +219,13 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
   my $bool = $job->restart;
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
+
+=head2 restarted
+
+  my $epoch = $job->restarted;
+
+Time this job last transitioned from C<failed> or C<finished> back to
+C<inactive> in floating seconds since the epoch.
 
 =head2 restarts
 

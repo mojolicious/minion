@@ -34,10 +34,10 @@ sub run {
   die "Job does not exist.\n" unless my $job = $self->app->minion->job($oid);
 
   # Remove job
-  return $job->remove if $remove;
+  return $job->remove ? 1 : die "Job is active.\n" if $remove;
 
   # Restart job
-  return $job->restart if $restart;
+  return $job->restart ? 1 : die "Job is active.\n" if $restart;
 
   # Job info
   $self->_info($job);
@@ -58,6 +58,8 @@ sub _info {
   say localtime($job->created)->datetime, ' (created)';
   my $delayed = $job->delayed;
   say localtime($delayed)->datetime, ' (delayed)' if $delayed > time;
+  my $restarted = $job->restarted;
+  say localtime($restarted)->datetime, ' (restarted)' if $restarted;
   my $started = $job->started;
   say localtime($started)->datetime, ' (started)' if $started;
   my $finished = $job->finished;

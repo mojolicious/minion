@@ -1,5 +1,6 @@
 
 0.09  2014-04-05
+  - Added restarted method to Minion::Job.
   - Changed return values of fail, finish and restart methods in Minion::Job.
 
 0.08  2014-04-04
