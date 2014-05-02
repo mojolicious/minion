@@ -316,7 +316,8 @@ necessary.
 
   $minion = $minion->repair;
 
-Repair worker registry and job queue.
+Repair worker registry and job queue, all workers on this host should be owned
+by the same user.
 
 =head2 stats
 
