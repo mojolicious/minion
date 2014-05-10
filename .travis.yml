@@ -12,9 +12,10 @@ before_install:
   - "echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | sudo tee /etc/apt/sources.list.d/mongodb.list"
   - "sudo apt-get update"
   - "sudo apt-get install mongodb-org-server"
-  - "sudo restart mongod"
 install:
   - "cpanm -n Test::Pod Test::Pod::Coverage"
   - "cpanm -n --installdeps ."
+before_script:
+  - "sleep 15"
 notifications:
   email: false
