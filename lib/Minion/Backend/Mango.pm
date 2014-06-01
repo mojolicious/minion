@@ -1,5 +1,5 @@
-package Minion::Backend::mongodb;
-use Mojo::Base -base;
+package Minion::Backend::Mango;
+use Mojo::Base 'Minion::Backend';
 
 use Mango;
 use Mango::BSON qw(bson_oid bson_time);
@@ -7,7 +7,7 @@ use Scalar::Util 'weaken';
 use Sys::Hostname 'hostname';
 
 has jobs => sub { $_[0]->mango->db->collection($_[0]->prefix . '.jobs') };
-has [qw(mango minion)];
+has 'mango';
 has prefix => 'minion';
 has workers =>
   sub { $_[0]->mango->db->collection($_[0]->prefix . '.workers') };
@@ -60,7 +60,7 @@ sub finish_job { shift->_update(@_) }
 
 sub job_info {
   my ($self, $id) = @_;
-  return {} unless my $job = $self->jobs->find_one($id);
+  return {} unless my $job = $self->jobs->find_one(bson_oid($id));
   return {
     args      => $job->{args},
     created   => $job->{created}->to_epoch,
@@ -163,156 +163,150 @@ sub _update {
 
 =head1 NAME
 
-Minion::Backend::mongodb - MongoDB backend
+Minion::Backend::Mango - MongoDB backend
 
 =head1 SYNOPSIS
 
-  use Minion::Backend::mongodb;
+  use Minion::Backend::Mango;
 
-  my $mongodb = Minion::Backend::mongodb->new('mongodb://127.0.0.1:27017');
+  my $backend = Minion::Backend::Mango->new('mongodb://127.0.0.1:27017');
 
 =head1 DESCRIPTION
 
-L<Minion::Backend::mongodb> is a L<Mango> backend for L<Minion>.
+L<Minion::Backend::Mango> is a L<Mango> backend for L<Minion>.
 
 =head1 ATTRIBUTES
 
-L<Minion::Backend::mongodb> implements the following attributes.
+L<Minion::Backend::Mango> inherits all attributes from L<Minion::Backend> and
+implements the following new ones.
 
 =head2 jobs
 
-  my $jobs = $mongodb->jobs;
-  $mongodb = $mongodb->jobs(Mango::Collection->new);
+  my $jobs = $backend->jobs;
+  $backend = $backend->jobs(Mango::Collection->new);
 
 L<Mango::Collection> object for C<jobs> collection, defaults to one based on
 L</"prefix">.
 
 =head2 mango
 
-  my $mango = $mongodb->mango;
-  $mongodb  = $mongodb->mango(Mango->new);
+  my $mango = $backend->mango;
+  $backend  = $backend->mango(Mango->new);
 
 L<Mango> object used to store collections.
 
-=head2 minion
-
-  my $minion = $mongodb->minion;
-  $mongodb   = $mongodb->minion(Minion->new);
-
-L<Minion> object this backend belongs to.
-
 =head2 prefix
 
-  my $prefix = $mongodb->prefix;
-  $mongodb   = $mongodb->prefix('foo');
+  my $prefix = $backend->prefix;
+  $backend   = $backend->prefix('foo');
 
 Prefix for collections, defaults to C<minion>.
 
 =head2 workers
 
-  my $workers = $mongodb->workers;
-  $mongodb    = $mongodb->workers(Mango::Collection->new);
+  my $workers = $backend->workers;
+  $backend    = $backend->workers(Mango::Collection->new);
 
 L<Mango::Collection> object for C<workers> collection, defaults to one based
 on L</"prefix">.
 
 =head1 METHODS
 
-L<Minion::Backend::mongodb> inherits all methods from L<Mojo::Base> and
+L<Minion::Backend::Mango> inherits all methods from L<Minion::Backend> and
 implements the following new ones.
 
 =head2 dequeue
 
-  my $info = $mongodb->dequeue($worker_id);
+  my $info = $backend->dequeue($worker_id);
 
 Dequeue job and transition from C<inactive> to C<active> state or return
 C<undef> if queue was empty.
 
 =head2 enqueue
 
-  my $job_id = $mongodb->enqueue('foo');
-  my $job_id = $mongodb->enqueue(foo => [@args]);
-  my $job_id = $mongodb->enqueue(foo => [@args] => {priority => 1});
+  my $job_id = $backend->enqueue('foo');
+  my $job_id = $backend->enqueue(foo => [@args]);
+  my $job_id = $backend->enqueue(foo => [@args] => {priority => 1});
 
 Enqueue a new job with C<inactive> state. You can also append a callback to
 perform operation non-blocking.
 
-  $mongodb->enqueue(foo => sub {
-    my ($mongodb, $err, $job_id) = @_;
+  $backend->enqueue(foo => sub {
+    my ($backend, $err, $job_id) = @_;
     ...
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head2 fail_job
 
-  my $bool = $mongodb->fail_job;
-  my $bool = $mongodb->fail_job($job_id, 'Something went wrong!');
+  my $bool = $backend->fail_job;
+  my $bool = $backend->fail_job($job_id, 'Something went wrong!');
 
 Transition from C<active> to C<failed> state.
 
 =head2 finish_job
 
-  my $bool = $mongodb->finish_job($job_id);
+  my $bool = $backend->finish_job($job_id);
 
 Transition from C<active> to C<finished> state.
 
 =head2 job_info
 
-  my $info = $mongodb->job_info($job_id);
+  my $info = $backend->job_info($job_id);
 
 Get information about a job.
 
 =head2 new
 
-  my $mongodb = Minion::Backend::mongodb->new('mongodb://127.0.0.1:27017');
+  my $backend = Minion::Backend::Mango->new('mongodb://127.0.0.1:27017');
 
-Construct a new L<Minion::Backend::mongodb> object.
+Construct a new L<Minion::Backend::Mango> object.
 
 =head2 register_worker
 
-  my $worker_id = $mongodb->register_worker;
+  my $worker_id = $backend->register_worker;
 
 Register worker.
 
 =head2 remove_job
 
-  my $bool = $mongodb->remove_job($job_id);
+  my $bool = $backend->remove_job($job_id);
 
 Remove C<failed>, C<finished> or C<inactive> job from queue.
 
 =head2 repair
 
-  $mongodb->repair;
+  $backend->repair;
 
 Repair worker registry and job queue.
 
 =head2 reset
 
-  $mongodb->reset;
+  $backend->reset;
 
 Reset job queue.
 
 =head2 restart_job
 
-  my $bool = $mongodb->restart_job;
+  my $bool = $backend->restart_job;
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
 
 =head2 stats
 
-  my $stats = $mongodb->stats;
+  my $stats = $backend->stats;
 
 Get statistics for jobs and workers.
 
 =head2 unregister_worker
 
-  $mongodb->unregister_worker($worker_id);
+  $backend->unregister_worker($worker_id);
 
 Unregister worker.
 
 =head2 worker_info
 
-  my $info = $mongodb->worker_info($worker_id);
+  my $info = $backend->worker_info($worker_id);
 
 Get information about a worker.
 

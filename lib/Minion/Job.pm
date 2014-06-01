@@ -6,12 +6,6 @@ has [qw(id minion task)];
 
 sub app { shift->minion->app }
 
-sub created { $_[0]->minion->backend->job_info($_[0]->id)->{created} }
-
-sub delayed { $_[0]->minion->backend->job_info($_[0]->id)->{delayed} }
-
-sub error { $_[0]->minion->backend->job_info($_[0]->id)->{error} }
-
 sub fail {
   my $self = shift;
   my $err = shift // 'Unknown error.';
@@ -27,7 +21,7 @@ sub finish {
     : undef;
 }
 
-sub finished { $_[0]->minion->backend->job_info($_[0]->id)->{finished} }
+sub info { $_[0]->minion->backend->job_info($_[0]->id) }
 
 sub perform {
   my $self = shift;
@@ -35,19 +29,9 @@ sub perform {
   $? ? $self->fail('Non-zero exit status.') : $self->finish;
 }
 
-sub priority { $_[0]->minion->backend->job_info($_[0]->id)->{priority} }
-
 sub remove { $_[0]->minion->backend->remove_job($_[0]->id) }
 
 sub restart { $_[0]->minion->backend->restart_job($_[0]->id) }
-
-sub restarted { $_[0]->minion->backend->job_info($_[0]->id)->{restarted} }
-
-sub restarts { $_[0]->minion->backend->job_info($_[0]->id)->{restarts} }
-
-sub started { $_[0]->minion->backend->job_info($_[0]->id)->{started} }
-
-sub state { $_[0]->minion->backend->job_info($_[0]->id)->{state} }
 
 sub _child {
   my $self = shift;
@@ -162,24 +146,6 @@ Get application from L<Minion/"app">.
   # Longer version
   my $app = $job->minion->app;
 
-=head2 created
-
-  my $epoch = $job->created;
-
-Time this job was created in floating seconds since the epoch.
-
-=head2 delayed
-
-  my $epoch = $job->delayed;
-
-Time this job was delayed to in floating seconds since the epoch.
-
-=head2 error
-
-  my $err = $job->error;
-
-Get error for C<failed> job.
-
 =head2 fail
 
   my $bool = $job->fail;
@@ -193,24 +159,17 @@ Transition from C<active> to C<failed> state.
 
 Transition from C<active> to C<finished> state.
 
-=head2 finished
+=head2 info
 
-  my $epoch = $job->finished;
+  my $info = $job->info;
 
-Time this job transitioned from C<active> to C<failed> or C<finished> in
-floating seconds since the epoch.
+Get job information.
 
 =head2 perform
 
   $job->perform;
 
 Perform job in new process and wait for it to finish.
-
-=head2 priority
-
-  my $priority = $job->priority;
-
-Get job priority.
 
 =head2 remove
 
@@ -223,33 +182,6 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
   my $bool = $job->restart;
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
-
-=head2 restarted
-
-  my $epoch = $job->restarted;
-
-Time this job last transitioned from C<failed> or C<finished> back to
-C<inactive> in floating seconds since the epoch.
-
-=head2 restarts
-
-  my $num = $job->restarts;
-
-Get number of times this job has been restarted.
-
-=head2 started
-
-  my $epoch = $job->started;
-
-Time this job transitioned from C<inactive> to C<active> in floating seconds
-since the epoch.
-
-=head2 state
-
-  my $state = $job->state;
-
-Get current state of job, usually C<active>, C<failed>, C<finished> or
-C<inactive>.
 
 =head1 SEE ALSO
 

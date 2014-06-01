@@ -2,7 +2,6 @@ package Minion::Command::minion::job;
 use Mojo::Base 'Mojolicious::Command';
 
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
-use Mango::BSON qw(bson_oid bson_time);
 use Mojo::JSON 'decode_json';
 use Mojo::Util 'dumper';
 use Time::Piece 'localtime';
@@ -16,22 +15,22 @@ sub run {
   my $args    = [];
   my $options = {};
   GetOptionsFromArray \@args,
-    'a|args=s' => sub { $args = decode_json($_[1]) },
-    'd|delayed=i' => sub { $options->{delayed} = bson_time($_[1] * 1000) },
+    'a|args=s'     => sub { $args                = decode_json($_[1]) },
+    'd|delayed=i'  => sub { $options->{delayed}  = $_[1] * 1000 },
     'e|enqueue=s'  => \my $enqueue,
     'p|priority=i' => sub { $options->{priority} = $_[1] },
-    'r|remove'     => \my $remove,
-    'R|restart'    => \my $restart,
-    's|stats'      => \my $stats;
-  my $oid = @args ? bson_oid(shift @args) : undef;
+    'r|remove'  => \my $remove,
+    'R|restart' => \my $restart,
+    's|stats'   => \my $stats;
+  my $id = @args ? shift @args : undef;
 
   # Enqueue
   return say $self->app->minion->enqueue($enqueue, $args, $options)
     if $enqueue;
 
   # Show stats or list jobs
-  return $stats ? $self->_stats : $self->_list unless $oid;
-  die "Job does not exist.\n" unless my $job = $self->app->minion->job($oid);
+  return $stats ? $self->_stats : $self->_list unless $id;
+  die "Job does not exist.\n" unless my $job = $self->app->minion->job($id);
 
   # Remove job
   return $job->remove ? 1 : die "Job is active.\n" if $remove;
@@ -47,22 +46,22 @@ sub _info {
   my ($self, $job) = @_;
 
   # Details
-  my $state    = $job->state;
-  my $priority = $job->priority;
-  my $restarts = $job->restarts;
-  print $job->task, " ($state, p$priority, r$restarts)\n", dumper($job->args);
-  my $err = $job->error;
+  my $info = $job->info;
+  my ($state, $priority, $restarts) = @$info{qw(state priority restarts)};
+  print $info->{task}, " ($state, p$priority, r$restarts)\n",
+    dumper($info->{args});
+  my $err = $info->{error};
   say chomp $err ? $err : $err if $err;
 
   # Timing
-  say localtime($job->created)->datetime, ' (created)';
-  my $delayed = $job->delayed;
+  say localtime($info->{created})->datetime, ' (created)';
+  my $delayed = $info->{delayed};
   say localtime($delayed)->datetime, ' (delayed)' if $delayed > time;
-  my $restarted = $job->restarted;
+  my $restarted = $info->{restarted};
   say localtime($restarted)->datetime, ' (restarted)' if $restarted;
-  my $started = $job->started;
+  my $started = $info->{started};
   say localtime($started)->datetime, ' (started)' if $started;
-  my $finished = $job->finished;
+  my $finished = $info->{finished};
   say localtime($finished)->datetime, ' (finished)' if $finished;
 }
 

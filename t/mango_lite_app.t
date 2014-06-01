@@ -8,7 +8,7 @@ plan skip_all => 'set TEST_ONLINE to enable this test'
 use Mojolicious::Lite;
 use Test::Mojo;
 
-plugin Minion => {uri => $ENV{TEST_ONLINE}};
+plugin Minion => {Mango => $ENV{TEST_ONLINE}};
 
 # Clean up before start
 app->minion->backend->prefix('minion_lite_app_test')->reset;

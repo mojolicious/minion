@@ -53,14 +53,11 @@ sub job {
 sub new {
   my $self = shift->SUPER::new;
 
-  my $uri    = Mojo::URL->new(shift);
-  my $proto  = $uri->protocol;
-  my $loader = Mojo::Loader->new;
-  my $class  = "Minion::Backend::$proto";
-  my $e      = $loader->load($class);
+  my $class = 'Minion::Backend::' . shift;
+  my $e     = Mojo::Loader->new->load($class);
   croak ref $e ? $e : qq{Missing backend "$class"} if $e;
 
-  $self->backend($class->new($uri));
+  $self->backend($class->new(@_));
   weaken $self->backend->minion($self)->{minion};
 
   return $self;
@@ -107,7 +104,7 @@ Minion - Job queue
   use Minion;
 
   # Add tasks
-  my $minion = Minion->new('mongodb://localhost:27017');
+  my $minion = Minion->new(Mango => 'mongodb://localhost:27017');
   $minion->add_task(something_slow => sub {
     my ($job, @args) = @_;
     sleep 5;
@@ -191,7 +188,7 @@ L</"enqueue">, very useful for testing.
 =head2 backend
 
   my $backend = $minion->backend;
-  $minion     = $minion->backend(Minion::Backend::mongodb->new);
+  $minion     = $minion->backend(Minion::Backend::Mango->new);
 
 Backend.
 
@@ -255,7 +252,7 @@ return C<undef> if job does not exist.
 
 =head2 new
 
-  my $minion = Minion->new('mongodb://127.0.0.1:27017');
+  my $minion = Minion->new(Mango => 'mongodb://127.0.0.1:27017');
 
 Construct a new L<Minion> object.
 

@@ -21,9 +21,9 @@ sub dequeue {
   return $job;
 }
 
-sub register { $_[0]->id($_[0]->minion->backend->register_worker) }
+sub info { $_[0]->minion->backend->worker_info($_[0]->id) }
 
-sub started { $_[0]->minion->backend->worker_info($_[0]->id)->{started} }
+sub register { $_[0]->id($_[0]->minion->backend->register_worker) }
 
 sub unregister {
   my $self = shift;
@@ -99,17 +99,17 @@ implements the following new ones.
 Dequeue L<Minion::Job> object and transition from C<inactive> to C<active>
 state or return C<undef> if queue was empty.
 
+=head2 info
+
+  my $info = $worker->info;
+
+Get worker information.
+
 =head2 register
 
   $worker = $worker->register;
 
 Register worker.
-
-=head2 started
-
-  my $epoch = $worker->started;
-
-Time this worker was started in floating seconds since the epoch.
 
 =head2 unregister
 

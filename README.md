@@ -8,7 +8,7 @@
 use Mojolicious::Lite;
 
 my $uri = 'mongodb://<user>:<pass>@<server>/<database>';
-plugin Minion => {uri => $uri};
+plugin Minion => {Mango => $uri};
 
 # Slow task
 app->minion->add_task(slow_log => sub {
