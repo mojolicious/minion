@@ -9,8 +9,7 @@ sub register {
 
   push @{$app->commands->namespaces}, 'Minion::Command';
 
-  my $minion = Minion->new;
-  $minion->mango->from_string($conf->{uri}) if $conf->{uri};
+  my $minion = Minion->new($conf->{uri});
   weaken $minion->app($app)->{app};
   $app->helper(minion => sub {$minion});
 }

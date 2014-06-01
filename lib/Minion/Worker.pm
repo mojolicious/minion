@@ -1,38 +1,19 @@
 package Minion::Worker;
 use Mojo::Base 'Mojo::EventEmitter';
 
-use Mango::BSON 'bson_time';
-use Sys::Hostname 'hostname';
-
-# Global counter
-my $COUNTER = 0;
-
 has [qw(id minion)];
-has number => sub { ++$COUNTER };
 
 sub dequeue {
   my $self = shift;
 
   # Worker not registered
-  return undef unless my $oid = $self->id;
+  return undef unless my $id = $self->id;
 
   my $minion = $self->minion;
-  my $doc    = {
-    query => {
-      delayed => {'$lt' => bson_time},
-      state   => 'inactive',
-      task    => {'$in' => [keys %{$minion->tasks}]}
-    },
-    fields => {args     => 1, task => 1},
-    sort   => {priority => -1},
-    update =>
-      {'$set' => {started => bson_time, state => 'active', worker => $oid}},
-    new => 1
-  };
-  return undef unless my $job = $minion->jobs->find_and_modify($doc);
+  return undef unless my $job = $minion->backend->dequeue($id);
   $job = Minion::Job->new(
     args   => $job->{args},
-    id     => $job->{_id},
+    id     => $job->{id},
     minion => $minion,
     task   => $job->{task}
   );
@@ -40,22 +21,13 @@ sub dequeue {
   return $job;
 }
 
-sub register {
-  my $self = shift;
-  my $oid  = $self->minion->workers->insert(
-    {host => hostname, num => $self->number, pid => $$, started => bson_time});
-  return $self->id($oid);
-}
+sub register { $_[0]->id($_[0]->minion->backend->register_worker) }
 
-sub started {
-  my $self = shift;
-  return undef unless my $worker = $self->minion->workers->find_one($self->id);
-  return $worker->{started}->to_epoch;
-}
+sub started { $_[0]->minion->backend->worker_info($_[0]->id)->{started} }
 
 sub unregister {
-  my ($self, $id) = @_;
-  $self->minion->workers->remove({_id => delete $_[0]->{id}});
+  my $self = shift;
+  $self->minion->backend->unregister_worker(delete $self->{id});
   return $self;
 }
 
@@ -93,8 +65,8 @@ Emitted when a job has been dequeued.
 
   $worker->on(dequeue => sub {
     my ($worker, $job) = @_;
-    my $oid = $job->id;
-    say "Job $oid has been dequeued.";
+    my $id = $job->id;
+    say "Job $id has been dequeued.";
   });
 
 =head1 ATTRIBUTES
@@ -103,8 +75,8 @@ L<Minion::Worker> implements the following attributes.
 
 =head2 id
 
-  my $oid = $worker->id;
-  $worker = $worker->id($oid);
+  my $id  = $worker->id;
+  $worker = $worker->id($id);
 
 Worker id.
 
@@ -114,13 +86,6 @@ Worker id.
   $worker    = $worker->minion(Minion->new);
 
 L<Minion> object this worker belongs to.
-
-=head2 number
-
-  my $num = $worker->number;
-  $worker = $worker->number(5);
-
-Number of this worker, unique per process.
 
 =head1 METHODS
 

@@ -1,24 +1,33 @@
 package Minion::Job;
 use Mojo::Base 'Mojo::EventEmitter';
 
-use Mango::BSON 'bson_time';
-
 has args => sub { [] };
 has [qw(id minion task)];
 
 sub app { shift->minion->app }
 
-sub created { shift->_time('created') }
+sub created { $_[0]->minion->backend->job_info($_[0]->id)->{created} }
 
-sub delayed { shift->_time('delayed') }
+sub delayed { $_[0]->minion->backend->job_info($_[0]->id)->{delayed} }
 
-sub error { shift->_get('error') }
+sub error { $_[0]->minion->backend->job_info($_[0]->id)->{error} }
 
-sub fail { shift->_update(shift // 'Unknown error.') }
+sub fail {
+  my $self = shift;
+  my $err = shift // 'Unknown error.';
+  return $self->minion->backend->fail_job($self->id, $err)
+    ? !!$self->emit(failed => $err)
+    : undef;
+}
 
-sub finish { shift->_update }
+sub finish {
+  my $self = shift;
+  return $self->minion->backend->finish_job($self->id)
+    ? !!$self->emit('finished')
+    : undef;
+}
 
-sub finished { shift->_time('finished') }
+sub finished { $_[0]->minion->backend->job_info($_[0]->id)->{finished} }
 
 sub perform {
   my $self = shift;
@@ -26,35 +35,19 @@ sub perform {
   $? ? $self->fail('Non-zero exit status.') : $self->finish;
 }
 
-sub priority { shift->_get('priority') }
+sub priority { $_[0]->minion->backend->job_info($_[0]->id)->{priority} }
 
-sub remove {
-  my $self   = shift;
-  my $states = [qw(failed finished inactive)];
-  return !!$self->minion->jobs->remove(
-    {_id => $self->id, state => {'$in' => $states}})->{n};
-}
+sub remove { $_[0]->minion->backend->remove_job($_[0]->id) }
 
-sub restart {
-  my $self = shift;
+sub restart { $_[0]->minion->backend->restart_job($_[0]->id) }
 
-  return !!$self->minion->jobs->update(
-    {_id => $self->id, state => {'$in' => [qw(failed finished)]}},
-    {
-      '$inc' => {restarts  => 1},
-      '$set' => {restarted => bson_time, state => 'inactive'},
-      '$unset' => {error => '', finished => '', started => '', worker => ''}
-    }
-  )->{n};
-}
+sub restarted { $_[0]->minion->backend->job_info($_[0]->id)->{restarted} }
 
-sub restarted { shift->_time('restarted') }
+sub restarts { $_[0]->minion->backend->job_info($_[0]->id)->{restarts} }
 
-sub restarts { shift->_get('restarts') // 0 }
+sub started { $_[0]->minion->backend->job_info($_[0]->id)->{started} }
 
-sub started { shift->_time('started') }
-
-sub state { shift->_get('state') }
+sub state { $_[0]->minion->backend->job_info($_[0]->id)->{state} }
 
 sub _child {
   my $self = shift;
@@ -71,31 +64,6 @@ sub _child {
   exit 0;
 }
 
-sub _get {
-  my ($self, $key) = @_;
-  return undef
-    unless my $job = $self->minion->jobs->find_one($self->id, {$key => 1});
-  return $job->{$key};
-}
-
-sub _time {
-  my $self = shift;
-  return undef unless my $time = $self->_get(@_);
-  return $time->to_epoch;
-}
-
-sub _update {
-  my ($self, $err) = @_;
-
-  my $doc
-    = {finished => bson_time, state => defined $err ? 'failed' : 'finished'};
-  $doc->{error} = $err if defined $err;
-  my $n = $self->minion->jobs->update({_id => $self->id, state => 'active'},
-    {'$set' => $doc})->{n};
-  $err ? $self->emit(failed => $err) : $self->emit('finished') if $n;
-  return !!$n;
-}
-
 1;
 
 =encoding utf8
@@ -108,7 +76,7 @@ Minion::Job - Minion job
 
   use Minion::Job;
 
-  my $job = Minion::Job->new(id => $oid, minion => $minion, task => 'foo');
+  my $job = Minion::Job->new(id => $id, minion => $minion, task => 'foo');
 
 =head1 DESCRIPTION
 
@@ -144,8 +112,8 @@ Emitted after this job transitioned to the C<finished> state.
 
   $job->on(finished => sub {
     my $job = shift;
-    my $oid = $job->id;
-    say "Job $oid is finished.";
+    my $id = $job->id;
+    say "Job $id is finished.";
   });
 
 =head1 ATTRIBUTES
@@ -161,8 +129,8 @@ Arguments passed to task.
 
 =head2 id
 
-  my $oid = $job->id;
-  $job    = $job->id($oid);
+  my $id = $job->id;
+  $job   = $job->id($id);
 
 Job id.
 

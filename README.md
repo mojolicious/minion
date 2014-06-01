@@ -1,8 +1,8 @@
 
 # Minion [![Build Status](https://travis-ci.org/kraih/minion.svg?branch=master)](https://travis-ci.org/kraih/minion)
 
-  A [Mango](https://github.com/kraih/mango) job queue for the
-  [Mojolicious](http://mojolicio.us) real-time web framework.
+  A job queue for the [Mojolicious](http://mojolicio.us) real-time web
+  framework.
 
 ```perl
 use Mojolicious::Lite;

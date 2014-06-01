@@ -1,5 +1,8 @@
 
-0.10  2014-05-10
+0.10  2014-06-01
+  - Added support for pluggable backends.
+  - Added Minion::Backend::mongodb.
+  - Added backend attribute to Minion.
 
 0.09  2014-04-05
   - Added worker event to Minion.

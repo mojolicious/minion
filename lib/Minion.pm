@@ -1,23 +1,19 @@
 package Minion;
 use Mojo::Base 'Mojo::EventEmitter';
 
-use Mango;
-use Mango::BSON 'bson_time';
+use Carp 'croak';
 use Minion::Job;
 use Minion::Worker;
+use Mojo::Loader;
 use Mojo::Server;
+use Mojo::URL;
 use Scalar::Util 'weaken';
-use Sys::Hostname 'hostname';
 
 our $VERSION = '0.10';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
-has [qw(auto_perform mango)];
-has jobs => sub { $_[0]->mango->db->collection($_[0]->prefix . '.jobs') };
-has prefix => 'minion';
+has [qw(auto_perform backend)];
 has tasks => sub { {} };
-has workers =>
-  sub { $_[0]->mango->db->collection($_[0]->prefix . '.workers') };
 
 sub add_task {
   my ($self, $name, $cb) = @_;
@@ -26,80 +22,57 @@ sub add_task {
 }
 
 sub enqueue {
-  my ($self, $task) = (shift, shift);
+  my $self = shift;
   my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
-  my $args    = shift // [];
-  my $options = shift // {};
-
-  my $doc = {
-    args     => $args,
-    created  => bson_time,
-    delayed  => $options->{delayed} // bson_time(1),
-    priority => $options->{priority} // 0,
-    state    => 'inactive',
-    task     => $task
-  };
 
   # Blocking
   unless ($cb) {
-    my $oid = $self->jobs->insert($doc);
+    my $id = $self->backend->enqueue(@_);
     $self->_perform;
-    return $oid;
+    return $id;
   }
 
   # Non-blocking
   weaken $self;
-  return $self->jobs->insert($doc => sub { shift; $self->_perform->$cb(@_) });
+  $self->backend->enqueue(@_ => sub { shift; $self->_perform->$cb(@_) });
 }
 
 sub job {
-  my ($self, $oid) = @_;
+  my ($self, $id) = @_;
 
-  return undef
-    unless my $job = $self->jobs->find_one($oid, {args => 1, task => 1});
+  my $job = $self->backend->job_info($id);
+  return undef unless $job->{state};
   return Minion::Job->new(
     args   => $job->{args},
-    id     => $job->{_id},
+    id     => $id,
     minion => $self,
     task   => $job->{task}
   );
 }
 
-sub new { shift->SUPER::new(mango => Mango->new(@_)) }
+sub new {
+  my $self = shift->SUPER::new;
 
-sub repair {
-  my $self = shift;
+  my $uri    = Mojo::URL->new(shift);
+  my $proto  = $uri->protocol;
+  my $loader = Mojo::Loader->new;
+  my $class  = "Minion::Backend::$proto";
+  my $e      = $loader->load($class);
+  croak ref $e ? $e : qq{Missing backend "$class"} if $e;
 
-  # Check workers on this host (all should be owned by the same user)
-  my $workers = $self->workers;
-  my $cursor = $workers->find({host => hostname});
-  while (my $worker = $cursor->next) {
-    $workers->remove({_id => $worker->{_id}}) unless kill 0, $worker->{pid};
-  }
-
-  # Abandoned jobs
-  my $jobs = $self->jobs;
-  $cursor = $jobs->find({state => 'active'});
-  while (my $job = $cursor->next) {
-    $jobs->save({%$job, state => 'failed', error => 'Worker went away.'})
-      unless $workers->find_one($job->{worker});
-  }
+  $self->backend($class->new($uri));
+  weaken $self->backend->minion($self)->{minion};
 
   return $self;
 }
 
-sub stats {
+sub repair {
   my $self = shift;
-
-  my $jobs    = $self->jobs;
-  my $active  = @{$jobs->find({state => 'active'})->distinct('worker')};
-  my $workers = $self->workers;
-  my $all     = $workers->find->count;
-  my $stats = {active_workers => $active, inactive_workers => $all - $active};
-  $stats->{"${_}_jobs"} = $jobs->find({state => $_})->count
-    for qw(active failed finished inactive);
-  return $stats;
+  $self->backend->repair;
+  return $self;
 }
+
+sub stats { shift->backend->stats }
 
 sub worker {
   my $self = shift;
@@ -141,7 +114,7 @@ Minion - Job queue
     say 'This is a background worker process.';
   });
 
-  # Enqueue jobs (data gets BSON serialized)
+  # Enqueue jobs
   $minion->enqueue(something_slow => ['foo', 'bar']);
   $minion->enqueue(something_slow => [1, 2, 3]);
 
@@ -156,8 +129,7 @@ Minion - Job queue
 
 =head1 DESCRIPTION
 
-L<Minion> is a L<Mango> job queue for the L<Mojolicious> real-time web
-framework.
+L<Minion> is a job queue for the L<Mojolicious> real-time web framework.
 
 Background worker processes are usually started with the command
 L<Minion::Command::minion::worker>, which becomes automatically available when
@@ -193,8 +165,8 @@ Emitted when a new worker is created.
 
   $minion->on(worker => sub {
     my ($minion, $worker) = @_;
-    my $num = $worker->number;
-    say "Worker $$:$num started.";
+    my $id = $worker->id;
+    say "Worker $$:$id started.";
   });
 
 =head1 ATTRIBUTES
@@ -216,27 +188,12 @@ Application for job queue, defaults to a L<Mojo::HelloWorld> object.
 Perform jobs automatically when a new one has been enqueued with
 L</"enqueue">, very useful for testing.
 
-=head2 jobs
+=head2 backend
 
-  my $jobs = $minion->jobs;
-  $minion  = $minion->jobs(Mango::Collection->new);
+  my $backend = $minion->backend;
+  $minion     = $minion->backend(Minion::Backend::mongodb->new);
 
-L<Mango::Collection> object for C<jobs> collection, defaults to one based on
-L</"prefix">.
-
-=head2 mango
-
-  my $mango = $minion->mango;
-  $minion   = $minion->mango(Mango->new);
-
-L<Mango> object used to store collections.
-
-=head2 prefix
-
-  my $prefix = $minion->prefix;
-  $minion    = $minion->prefix('foo');
-
-Prefix for collections, defaults to C<minion>.
+Backend.
 
 =head2 tasks
 
@@ -244,14 +201,6 @@ Prefix for collections, defaults to C<minion>.
   $minion   = $minion->tasks({foo => sub {...}});
 
 Registered tasks.
-
-=head2 workers
-
-  my $workers = $minion->workers;
-  $minion     = $minion->workers(Mango::Collection->new);
-
-L<Mango::Collection> object for C<workers> collection, defaults to one based
-on L</"prefix">.
 
 =head1 METHODS
 
@@ -266,15 +215,15 @@ Register a new task.
 
 =head2 enqueue
 
-  my $oid = $minion->enqueue('foo');
-  my $oid = $minion->enqueue(foo => [@args]);
-  my $oid = $minion->enqueue(foo => [@args] => {priority => 1});
+  my $id = $minion->enqueue('foo');
+  my $id = $minion->enqueue(foo => [@args]);
+  my $id = $minion->enqueue(foo => [@args] => {priority => 1});
 
 Enqueue a new job with C<inactive> state. You can also append a callback to
 perform operation non-blocking.
 
   $minion->enqueue(foo => sub {
-    my ($minion, $err, $oid) = @_;
+    my ($minion, $err, $id) = @_;
     ...
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
@@ -285,7 +234,7 @@ These options are currently available:
 
 =item delayed
 
-  delayed => bson_time((time + 1) * 1000)
+  delayed => (time + 1) * 1000
 
 Delay job until after this point in time.
 
@@ -299,18 +248,16 @@ Job priority, defaults to C<0>.
 
 =head2 job
 
-  my $job = $minion->job($oid);
+  my $job = $minion->job($id);
 
 Get L<Minion::Job> object without making any changes to the actual job or
 return C<undef> if job does not exist.
 
 =head2 new
 
-  my $minion = Minion->new;
   my $minion = Minion->new('mongodb://127.0.0.1:27017');
 
-Construct a new L<Minion> object and pass connection string to L</"mango"> if
-necessary.
+Construct a new L<Minion> object.
 
 =head2 repair
 
