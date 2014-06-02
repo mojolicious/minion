@@ -8,11 +8,34 @@ use Sys::Hostname 'hostname';
 
 has jobs => sub { $_[0]->mango->db->collection($_[0]->prefix . '.jobs') };
 has 'mango';
+has notifications =>
+  sub { $_[0]->mango->db->collection($_[0]->prefix . '.notifications') };
 has prefix => 'minion';
 has workers =>
   sub { $_[0]->mango->db->collection($_[0]->prefix . '.workers') };
 
 sub dequeue {
+  my ($self, $id) = @_;
+
+  my $job;
+  unless ($job = $self->_try($id)) {
+
+    # Await notification
+    my $last = $self->{last} //= bson_oid(0 x 24);
+    my $cursor
+      = $self->notifications->find({_id => {'$gt' => $last}, c => 'created'})
+      ->hint({'$natural' => 1})->tailable(1)->await_data(1);
+    my $next = $cursor->next || $cursor->next;
+    $self->{last} = $next->{_id} if $next;
+
+    $job = $self->_try($id);
+  }
+
+  return undef unless $job;
+  return {args => $job->{args}, id => $job->{_id}, task => $job->{task}};
+}
+
+sub _try {
   my ($self, $id) = @_;
 
   my $doc = {
@@ -27,8 +50,7 @@ sub dequeue {
       {'$set' => {started => bson_time, state => 'active', worker => $id}},
     new => 1
   };
-  return undef unless my $job = $self->jobs->find_and_modify($doc);
-  return {args => $job->{args}, id => $job->{_id}, task => $job->{task}};
+  return $self->jobs->find_and_modify($doc);
 }
 
 sub enqueue {
@@ -46,12 +68,31 @@ sub enqueue {
     task     => $task
   };
 
-  # Blocking
-  return $self->jobs->insert($doc) unless $cb;
+  # Capped collection for notifications
+  $self->_notifications;
 
   # Non-blocking
-  weaken $self;
-  $self->jobs->insert($doc => sub { shift; $self->$cb(@_) });
+  return Mojo::IOLoop->delay(
+    sub {
+      my $delay = shift;
+      $self->jobs->insert($doc => $delay->begin);
+    },
+    sub {
+      my ($delay, $err, $oid) = @_;
+      return $self->$cb($err) if $err;
+      $delay->pass($oid);
+      $self->notifications->insert({c => 'created'} => $delay->begin);
+    },
+    sub {
+      my ($delay, $oid, $err) = @_;
+      $self->$cb($err, $oid);
+    }
+  ) if $cb;
+
+  # Blocking
+  my $oid = $self->jobs->insert($doc);
+  $self->notifications->insert({c => 'created'});
+  return $oid;
 }
 
 sub fail_job { shift->_update(@_) }
@@ -93,6 +134,9 @@ sub remove_job {
 sub repair {
   my $self = shift;
 
+  # Capped collection for notifications
+  $self->_notifications;
+
   # Check workers on this host (all should be owned by the same user)
   my $workers = $self->workers;
   my $cursor = $workers->find({host => hostname});
@@ -111,7 +155,9 @@ sub repair {
 
 sub reset {
   my $self = shift;
-  $_->options && $_->drop for $self->workers, $self->jobs;
+  $_->options && $_->drop
+    for $self->workers, $self->jobs, $self->notifications;
+  delete $self->{capped};
 }
 
 sub restart_job {
@@ -145,6 +191,17 @@ sub worker_info {
   my ($self, $id) = @_;
   return {} unless my $worker = $self->workers->find_one($id);
   return {started => $worker->{started}->to_epoch};
+}
+
+sub _notifications {
+  my $self = shift;
+
+  # We can only await data if there's a document in the collection
+  $self->{capped} ? return : $self->{capped}++;
+  my $notifications = $self->notifications;
+  $notifications->create({capped => \1, max => 2048, size => 268435456})
+    unless $notifications->options;
+  $notifications->insert({});
 }
 
 sub _update {
@@ -194,6 +251,14 @@ L</"prefix">.
   $backend  = $backend->mango(Mango->new);
 
 L<Mango> object used to store collections.
+
+=head2 notifications
+
+  my $notifications = $backend->notifications;
+  $backend          = $backend->notifications(Mango::Collection->new);
+
+L<Mango::Collection> object for C<notifications> collection, defaults to one
+based on L</"prefix">.
 
 =head2 prefix
 

@@ -11,8 +11,7 @@ sub run {
 
   my $worker = $self->app->minion->repair->worker->register;
   while (!$self->{finished}) {
-    if   (my $job = $worker->dequeue) { $job->perform }
-    else                              { sleep 5 }
+    if (my $job = $worker->dequeue) { $job->perform }
   }
   $worker->unregister;
 }
