@@ -62,19 +62,14 @@ sub finish_job { shift->_update(@_) }
 sub job_info {
   my ($self, $id) = @_;
   return {} unless my $job = $self->jobs->find_one(bson_oid($id));
-  return {
-    args      => $job->{args},
-    created   => $job->{created}->to_epoch,
-    delayed   => $job->{delayed}->to_epoch,
-    error     => $job->{error},
-    finished  => $job->{finished} ? $job->{finished}->to_epoch : undef,
-    priority  => $job->{priority},
-    restarted => $job->{restarted} ? $job->{restarted}->to_epoch : undef,
-    restarts => $job->{restarts} // 0,
-    started => $job->{started} ? $job->{started}->to_epoch : undef,
-    state   => $job->{state},
-    task    => $job->{task}
-  };
+  return _info($job);
+}
+
+sub list_jobs {
+  my ($self, $skip, $limit) = @_;
+  my $all = $self->jobs->find({state => {'$exists' => \1}})->sort({_id => -1})
+    ->skip($skip)->limit($limit)->all;
+  return [map { _info($_) } @$all];
 }
 
 sub new { shift->SUPER::new(mango => Mango->new(@_)) }
@@ -146,6 +141,24 @@ sub worker_info {
   my ($self, $id) = @_;
   return {} unless my $worker = $self->workers->find_one($id);
   return {started => $worker->{started}->to_epoch};
+}
+
+sub _info {
+  my $job = shift;
+  return {
+    args      => $job->{args},
+    created   => $job->{created}->to_epoch,
+    delayed   => $job->{delayed}->to_epoch,
+    error     => $job->{error},
+    finished  => $job->{finished} ? $job->{finished}->to_epoch : undef,
+    id        => scalar $job->{_id},
+    priority  => $job->{priority},
+    restarted => $job->{restarted} ? $job->{restarted}->to_epoch : undef,
+    restarts => $job->{restarts} // 0,
+    started => $job->{started} ? $job->{started}->to_epoch : undef,
+    state   => $job->{state},
+    task    => $job->{task}
+  };
 }
 
 sub _update {
@@ -256,6 +269,12 @@ Transition from C<active> to C<finished> state.
   my $info = $backend->job_info($job_id);
 
 Get information about a job.
+
+=head2 list_jobs
+
+  my $batch = $backend->list_jobs($skip, $limit);
+
+Returns the same information as L</"job_info"> but in batches.
 
 =head2 new
 

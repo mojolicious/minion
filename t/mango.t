@@ -116,6 +116,22 @@ is $stats->{failed_jobs},      0, 'one failed job';
 is $stats->{finished_jobs},    2, 'one finished job';
 is $stats->{inactive_jobs},    0, 'no inactive jobs';
 
+# List jobs
+my $batch = $minion->backend->list_jobs(0, 10);
+is $batch->[0]{task},     'fail',     'right task';
+is $batch->[0]{state},    'finished', 'right state';
+is $batch->[0]{restarts}, 1,          'job has been restarted';
+is $batch->[1]{task},     'fail',     'right task';
+is $batch->[1]{state},    'finished', 'right state';
+is $batch->[1]{restarts}, 0,          'job has not been restarted';
+ok !$batch->[2], 'no more results';
+$batch = $minion->backend->list_jobs(0, 1);
+is $batch->[0]{restarts}, 1, 'job has been restarted';
+ok !$batch->[1], 'no more results';
+$batch = $minion->backend->list_jobs(1, 1);
+is $batch->[0]{restarts}, 0, 'job has not been restarted';
+ok !$batch->[1], 'no more results';
+
 # Enqueue, dequeue and perform
 is $minion->job(bson_oid), undef, 'job does not exist';
 $oid = $minion->enqueue(add => [2, 2]);

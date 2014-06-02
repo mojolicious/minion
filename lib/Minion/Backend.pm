@@ -10,6 +10,7 @@ sub enqueue    { croak 'Method "enqueue" not implemented by subclass' }
 sub fail_job   { croak 'Method "fail_job" not implemented by subclass' }
 sub finish_job { croak 'Method "finish_job" not implemented by subclass' }
 sub job_info   { croak 'Method "job_info" not implemented by subclass' }
+sub list_jobs  { croak 'Method "list_jobs" not implemented by subclass' }
 
 sub register_worker {
   croak 'Method "register_worker" not implemented by subclass';
@@ -116,6 +117,13 @@ subclass.
   my $info = $backend->job_info($job_id);
 
 Get information about a job. Meant to be overloaded in a subclass.
+
+=head2 list_jobs
+
+  my $batch = $backend->list_jobs($skip, $limit);
+
+Returns the same information as L</"job_info"> but in batches. Meant to be
+overloaded in a subclass.
 
 =head2 register_worker
 

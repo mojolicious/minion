@@ -66,9 +66,14 @@ sub _info {
 }
 
 sub _list {
-  my $cursor = shift->app->minion->backend->jobs->find->sort({_id => -1});
-  while (my $doc = $cursor->next) {
-    say sprintf '%s  %-8s  %s', @$doc{qw(_id state task)};
+  my $backend = shift->app->minion->backend;
+  my $skip    = 0;
+
+  while (1) {
+    my $batch = $backend->list_jobs($skip, 10);
+    last unless @$batch;
+    $skip += @$batch;
+    say sprintf '%s  %-8s  %s', @$_{qw(id state task)} for @$batch;
   }
 }
 
