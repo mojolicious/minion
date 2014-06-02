@@ -64,9 +64,8 @@ is $job->info->{error}, 'Worker went away.', 'right error';
 
 # Reset
 $minion->backend->reset;
-ok !$minion->backend->jobs->options,          'no jobs';
-ok !$minion->backend->workers->options,       'no workers';
-ok !$minion->backend->notifications->options, 'no notifications';
+ok !$minion->backend->jobs->options,    'no jobs';
+ok !$minion->backend->workers->options, 'no workers';
 $minion->repair;
 
 # Tasks
