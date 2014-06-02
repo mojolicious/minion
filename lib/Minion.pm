@@ -63,8 +63,11 @@ sub new {
   return $self;
 }
 
-sub repair { shift->_delegate('repair') }
-sub reset  { shift->_delegate('reset') }
+sub repair {
+  my $self = shift;
+  $self->backend->repair;
+  return $self;
+}
 
 sub stats { shift->backend->stats }
 
@@ -73,12 +76,6 @@ sub worker {
   my $worker = Minion::Worker->new(minion => $self);
   $self->emit(worker => $worker);
   return $worker;
-}
-
-sub _delegate {
-  my ($self, $method) = @_;
-  $self->backend->$method;
-  return $self;
 }
 
 sub _perform {
@@ -267,12 +264,6 @@ Construct a new L<Minion> object.
 
 Repair worker registry and job queue, all workers on this host should be owned
 by the same user.
-
-=head2 reset
-
-  $minion = $minion->reset;
-
-Reset job queue.
 
 =head2 stats
 
