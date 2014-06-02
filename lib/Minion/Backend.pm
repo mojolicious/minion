@@ -108,7 +108,6 @@ subclass.
 =head2 finish_job
 
   my $bool = $backend->finish_job($job_id);
-  my $bool = $backend->finish_job($job_id, $result);
 
 Transition from C<active> to C<finished> state. Meant to be overloaded in a
 subclass.
@@ -117,14 +116,7 @@ subclass.
 
   my $info = $backend->job_info($job_id);
 
-Get information about a job. You can also append a callback to perform
-operation non-blocking. Meant to be overloaded in a subclass.
-
-  $backend->job_info($job_id => sub {
-    my ($backend, $err, $info) = @_;
-    ...
-  });
-  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+Get information about a job. Meant to be overloaded in a subclass.
 
 =head2 list_jobs
 

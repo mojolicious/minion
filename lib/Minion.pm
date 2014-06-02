@@ -4,12 +4,10 @@ use Mojo::Base 'Mojo::EventEmitter';
 use Carp 'croak';
 use Minion::Job;
 use Minion::Worker;
-use Mojo::IOLoop;
 use Mojo::Loader;
 use Mojo::Server;
 use Mojo::URL;
 use Scalar::Util 'weaken';
-use Time::HiRes 'usleep';
 
 our $VERSION = '0.10';
 
@@ -73,24 +71,6 @@ sub repair {
 
 sub stats { shift->backend->stats }
 
-sub wait_for {
-  my ($self, $id, $cb) = @_;
-
-  # Blocking
-  unless ($cb) {
-    while (1) {
-      my $info = $self->backend->job_info($id);
-      return $info->{result}
-        if !$info->{state} || $info->{state} eq 'finished';
-      croak $info->{error} if $info->{state} eq 'failed';
-      usleep 0.5 * 1000000;
-    }
-  }
-
-  # Non-blocking
-  $self->_wait($id, $cb);
-}
-
 sub worker {
   my $self = shift;
   my $worker = Minion::Worker->new(minion => $self);
@@ -111,21 +91,6 @@ sub _perform {
   return $self;
 }
 
-sub _wait {
-  my ($self, $id, $cb) = @_;
-
-  weaken $self;
-  $self->backend->job_info(
-    $id => sub {
-      my ($backend, $err, $info) = @_;
-      if ($err //= $info->{error}) { return $self->$cb($err) }
-      return $self->$cb(undef, $info->{result})
-        if !$info->{state} || $info->{state} eq 'finished';
-      Mojo::IOLoop->timer(0.5 => sub { $self->_wait($id, $cb) });
-    }
-  );
-}
-
 1;
 
 =encoding utf8
@@ -141,28 +106,16 @@ Minion - Job queue
   # Connect to backend
   my $minion = Minion->new(Mango => 'mongodb://localhost:27017');
 
-  # Add tasks without result
+  # Add tasks
   $minion->add_task(something_slow => sub {
     my ($job, @args) = @_;
     sleep 5;
     say 'This is a background worker process.';
   });
 
-  # Add tasks with result
-  $minion->add_task(slow_add => sub {
-    my ($job, $first, $second) = @_;
-    sleep 5;
-    my $result = $first + $second;
-    $job->finish($result);
-  });
-
   # Enqueue jobs
   $minion->enqueue(something_slow => ['foo', 'bar']);
   $minion->enqueue(something_slow => [1, 2, 3]);
-
-  # Wait for results
-  my $id     = $minion->enqueue(slow_add => [3, 1]);
-  my $result = $minion->wait_for($id);
 
   # Perform jobs automatically for testing
   $minion->auto_perform(1);
@@ -317,19 +270,6 @@ by the same user.
   my $stats = $minion->stats;
 
 Get statistics for jobs and workers.
-
-=head2 wait_for
-
-  my $result = $minion->wait_for($id);
-
-Wait for job to transition to C<failed> or C<finished> state and return
-result. You can also append a callback to perform operation non-blocking.
-
-  $minion->wait_for($id => sub {
-    my ($minion, $err, $result) = @_;
-    ...
-  });
-  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head2 worker
 

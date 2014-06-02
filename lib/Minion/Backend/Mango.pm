@@ -59,17 +59,7 @@ sub fail_job { shift->_update(1, @_) }
 
 sub finish_job { shift->_update(0, @_) }
 
-sub job_info {
-  my ($self, $id, $cb) = @_;
-
-  # Blocking
-  return _info($self->jobs->find_one(bson_oid($id))) unless $cb;
-
-  # Non-blocking
-  weaken $self;
-  $self->jobs->find_one(
-    bson_oid($id) => sub { shift; $self->$cb(shift, _info(shift)) });
-}
+sub job_info { _info(shift->jobs->find_one(bson_oid(shift))) }
 
 sub list_jobs {
   my ($self, $skip, $limit) = @_;
@@ -169,10 +159,10 @@ sub _info {
 }
 
 sub _update {
-  my ($self, $fail, $id, $result) = @_;
+  my ($self, $fail, $id, $err) = @_;
 
   my $doc = {finished => bson_time, state => $fail ? 'failed' : 'finished'};
-  $doc->{$fail ? 'error' : 'result'} = $result if $result;
+  $doc->{error} = $err if $fail;
   return !!$self->jobs->update({_id => $id, state => 'active'},
     {'$set' => $doc})->{n};
 }
@@ -267,7 +257,6 @@ Transition from C<active> to C<failed> state.
 =head2 finish_job
 
   my $bool = $backend->finish_job($job_id);
-  my $bool = $backend->finish_job($job_id, $result);
 
 Transition from C<active> to C<finished> state.
 
@@ -275,14 +264,7 @@ Transition from C<active> to C<finished> state.
 
   my $info = $backend->job_info($job_id);
 
-Get information about a job. You can also append a callback to perform
-operation non-blocking.
-
-  $backend->job_info($job_id => sub {
-    my ($backend, $err, $info) = @_;
-    ...
-  });
-  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+Get information about a job.
 
 =head2 list_jobs
 
