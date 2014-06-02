@@ -39,6 +39,7 @@ isnt $worker2->id, $worker->id, 'new id';
 my $oid = $minion->enqueue('test');
 my $job = $worker2->dequeue;
 is $job->id, $oid, 'right object id';
+is $worker2->info->{jobs}[0], $job->id, 'right object id';
 my $id = $worker2->id;
 undef $worker2;
 is $job->info->{state}, 'active', 'job is still active';

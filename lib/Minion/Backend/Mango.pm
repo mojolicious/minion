@@ -2,7 +2,7 @@ package Minion::Backend::Mango;
 use Mojo::Base 'Minion::Backend';
 
 use Mango;
-use Mango::BSON qw(bson_oid bson_time);
+use Mango::BSON 'bson_time';
 use Scalar::Util 'weaken';
 use Sys::Hostname 'hostname';
 
@@ -13,7 +13,7 @@ has workers =>
   sub { $_[0]->mango->db->collection($_[0]->prefix . '.workers') };
 
 sub dequeue {
-  my ($self, $id) = @_;
+  my ($self, $oid) = @_;
 
   my $doc = {
     query => {
@@ -24,7 +24,7 @@ sub dequeue {
     fields => {args     => 1, task => 1},
     sort   => {priority => -1},
     update =>
-      {'$set' => {started => bson_time, state => 'active', worker => $id}},
+      {'$set' => {started => bson_time, state => 'active', worker => $oid}},
     new => 1
   };
 
@@ -59,7 +59,7 @@ sub fail_job { shift->_update(1, @_) }
 
 sub finish_job { shift->_update(0, @_) }
 
-sub job_info { _info(shift->jobs->find_one(bson_oid(shift))) }
+sub job_info { _info(shift->jobs->find_one(shift)) }
 
 sub list_jobs {
   my ($self, $skip, $limit) = @_;
@@ -77,9 +77,9 @@ sub register_worker {
 }
 
 sub remove_job {
-  my ($self, $id) = @_;
+  my ($self, $oid) = @_;
   return !!$self->jobs->remove(
-    {_id => $id, state => {'$in' => [qw(failed finished inactive)]}})->{n};
+    {_id => $oid, state => {'$in' => [qw(failed finished inactive)]}})->{n};
 }
 
 sub repair {
@@ -107,9 +107,9 @@ sub reset {
 }
 
 sub restart_job {
-  my ($self, $id) = @_;
+  my ($self, $oid) = @_;
   return !!$self->jobs->update(
-    {_id => $id, state => {'$in' => [qw(failed finished)]}},
+    {_id => $oid, state => {'$in' => [qw(failed finished)]}},
     {
       '$inc' => {restarts  => 1},
       '$set' => {restarted => bson_time, state => 'inactive'},
@@ -134,9 +134,12 @@ sub stats {
 sub unregister_worker { shift->workers->remove({_id => shift}) }
 
 sub worker_info {
-  my ($self, $id) = @_;
-  return {} unless my $worker = $self->workers->find_one($id);
-  return {started => $worker->{started}->to_epoch};
+  my ($self, $oid) = @_;
+
+  return {} unless my $worker = $self->workers->find_one($oid);
+  my $jobs = [map { $_->{_id} }
+      @{$self->jobs->find({state => 'active', worker => $oid})->all}];
+  return {jobs => $jobs, started => $worker->{started}->to_epoch};
 }
 
 sub _info {
@@ -147,7 +150,7 @@ sub _info {
     delayed   => $job->{delayed} ? $job->{delayed}->to_epoch : undef,
     error     => $job->{error},
     finished  => $job->{finished} ? $job->{finished}->to_epoch : undef,
-    id        => scalar $job->{_id},
+    id        => $job->{_id},
     priority  => $job->{priority},
     restarted => $job->{restarted} ? $job->{restarted}->to_epoch : undef,
     restarts => $job->{restarts} // 0,
@@ -159,11 +162,11 @@ sub _info {
 }
 
 sub _update {
-  my ($self, $fail, $id, $err) = @_;
+  my ($self, $fail, $oid, $err) = @_;
 
   my $doc = {finished => bson_time, state => $fail ? 'failed' : 'finished'};
   $doc->{error} = $err if $fail;
-  return !!$self->jobs->update({_id => $id, state => 'active'},
+  return !!$self->jobs->update({_id => $oid, state => 'active'},
     {'$set' => $doc})->{n};
 }
 
