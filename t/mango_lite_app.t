@@ -38,16 +38,15 @@ get '/non_blocking_add' => sub {
 
 get '/result' => sub {
   my $self = shift;
-  $self->render(
-    text => $self->minion->backend->job_info($self->param(['id']))->{result});
+  $self->render(text => $self->minion->wait_for($self->param(['id'])));
 };
 
 get '/non_blocking_result' => sub {
   my $self = shift;
-  $self->minion->backend->job_info(
+  $self->minion->wait_for(
     $self->param(['id']) => sub {
-      my ($backend, $err, $info) = @_;
-      $self->render(text => $info->{result});
+      my ($minion, $err, $result) = @_;
+      $self->render(text => $result);
     }
   );
 };

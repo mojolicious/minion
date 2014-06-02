@@ -7,6 +7,7 @@
   - Added support for task results.
   - Added Minion::Backend and Minion::Backend::Mango.
   - Added backend attribute to Minion.
+  - Added wait_for method to Minion.
   - Added info method to Minion::Job.
   - Added info method to Minion::Worker.
 
