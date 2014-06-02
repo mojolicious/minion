@@ -10,6 +10,7 @@
   - Added wait_for method to Minion.
   - Added info method to Minion::Job.
   - Added info method to Minion::Worker.
+  - Added -L and -S commands to job command.
 
 0.09  2014-04-05
   - Added worker event to Minion.

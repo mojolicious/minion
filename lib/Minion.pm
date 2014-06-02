@@ -88,22 +88,7 @@ sub wait_for {
   }
 
   # Non-blocking
-  $self->_try($id, $cb);
-}
-
-sub _try {
-  my ($self, $id, $cb) = @_;
-
-  weaken $self;
-  $self->backend->job_info(
-    $id => sub {
-      my ($backend, $err, $info) = @_;
-      if ($err //= $info->{error}) { return $self->$cb($err) }
-      return $self->$cb(undef, $info->{result})
-        if !$info->{state} || $info->{state} eq 'finished';
-      Mojo::IOLoop->timer(0.5 => sub { $self->_try($id, $cb) });
-    }
-  );
+  $self->_wait($id, $cb);
 }
 
 sub worker {
@@ -124,6 +109,21 @@ sub _perform {
   while (my $job = $worker->dequeue) { $job->perform }
   $worker->unregister;
   return $self;
+}
+
+sub _wait {
+  my ($self, $id, $cb) = @_;
+
+  weaken $self;
+  $self->backend->job_info(
+    $id => sub {
+      my ($backend, $err, $info) = @_;
+      if ($err //= $info->{error}) { return $self->$cb($err) }
+      return $self->$cb(undef, $info->{result})
+        if !$info->{state} || $info->{state} eq 'finished';
+      Mojo::IOLoop->timer(0.5 => sub { $self->_wait($id, $cb) });
+    }
+  );
 }
 
 1;

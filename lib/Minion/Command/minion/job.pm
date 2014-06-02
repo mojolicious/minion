@@ -15,13 +15,15 @@ sub run {
   my $args    = [];
   my $options = {};
   GetOptionsFromArray \@args,
-    'a|args=s'     => sub { $args                = decode_json($_[1]) },
-    'd|delayed=i'  => sub { $options->{delayed}  = $_[1] * 1000 },
-    'e|enqueue=s'  => \my $enqueue,
+    'a|args=s'    => sub { $args               = decode_json($_[1]) },
+    'd|delayed=i' => sub { $options->{delayed} = $_[1] * 1000 },
+    'e|enqueue=s' => \my $enqueue,
+    'L|limit=i' => \(my $limit = 0),
     'p|priority=i' => sub { $options->{priority} = $_[1] },
-    'r|remove'  => \my $remove,
-    'R|restart' => \my $restart,
-    's|stats'   => \my $stats;
+    'r|remove'     => \my $remove,
+    'R|restart'    => \my $restart,
+    's|stats'      => \my $stats,
+    'S|skip=i' => \(my $skip = 0);
   my $id = @args ? shift @args : undef;
 
   # Enqueue
@@ -29,7 +31,7 @@ sub run {
     if $enqueue;
 
   # Show stats or list jobs
-  return $stats ? $self->_stats : $self->_list unless $id;
+  return $stats ? $self->_stats : $self->_list($skip, $limit) unless $id;
   die "Job does not exist.\n" unless my $job = $self->app->minion->job($id);
 
   # Remove job
@@ -66,15 +68,9 @@ sub _info {
 }
 
 sub _list {
-  my $backend = shift->app->minion->backend;
-  my $skip    = 0;
-
-  while (1) {
-    my $batch = $backend->list_jobs($skip, 10);
-    last unless @$batch;
-    $skip += @$batch;
-    say sprintf '%s  %-8s  %s', @$_{qw(id state task)} for @$batch;
-  }
+  my ($self, $skip, $limit) = @_;
+  say sprintf '%s  %-8s  %s', @$_{qw(id state task)}
+    for @{$self->app->minion->backend->list_jobs($skip, $limit)};
 }
 
 sub _stats {
@@ -110,10 +106,13 @@ Minion::Command::minion::job - Minion job command
     -a, --args <JSON array>   Arguments for new job in JSON format.
     -d, --delayed <epoch>     Delay new job until after this point in time.
     -e, --enqueue <name>      New job to be enqueued.
+    -L, --limit <number>      Number of jobs to show when listing them.
     -p, --priority <number>   Priority of new job, defaults to 0.
     -r, --remove              Remove job.
     -R, --restart             Restart job.
     -s, --stats               Show queue statistics.
+    -S, --skip <number>       Number of jobs to skip when listing them,
+                              defaults to 0.
 
 =head1 DESCRIPTION
 
