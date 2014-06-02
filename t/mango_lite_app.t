@@ -58,6 +58,6 @@ $t->get_ok('/count')->status_is(200)->content_is('4');
 $t->get_ok('/non_blocking_increment')->status_is(200)
   ->content_is('Incrementing soon too!');
 $t->get_ok('/count')->status_is(200)->content_is('5');
-app->minion->backend->reset;
+app->minion->reset;
 
 done_testing();

@@ -6,6 +6,7 @@
   - Added support for pluggable backends.
   - Added Minion::Backend and Minion::Backend::Mango.
   - Added backend attribute to Minion.
+  - Added reset method to Minion.
   - Added info method to Minion::Job.
   - Added info method to Minion::Worker.
   - Added -L and -S options to job command.
