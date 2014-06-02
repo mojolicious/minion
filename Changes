@@ -1,4 +1,6 @@
 
+0.11  2014-06-03
+
 0.10  2014-06-02
   - Removed created, delayed, error, finished, priority, restarted, restarts,
     started and state methods from Minion::Job.
