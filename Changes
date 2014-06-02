@@ -8,7 +8,7 @@
   - Added backend attribute to Minion.
   - Added info method to Minion::Job.
   - Added info method to Minion::Worker.
-  - Added -L and -S commands to job command.
+  - Added -L and -S options to job command.
 
 0.09  2014-04-05
   - Added worker event to Minion.
