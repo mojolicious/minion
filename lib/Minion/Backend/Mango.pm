@@ -71,9 +71,7 @@ sub list_jobs {
 sub new { shift->SUPER::new(mango => Mango->new(@_)) }
 
 sub register_worker {
-  my $self = shift;
-  return $self->workers->insert(
-    {host => hostname, pid => $$, started => bson_time});
+  shift->workers->insert({host => hostname, pid => $$, started => bson_time});
 }
 
 sub remove_job {
@@ -101,10 +99,7 @@ sub repair {
   }
 }
 
-sub reset {
-  my $self = shift;
-  $_->options && $_->drop for $self->workers, $self->jobs;
-}
+sub reset { $_->options && $_->drop for $_[0]->workers, $_[0]->jobs }
 
 sub restart_job {
   my ($self, $oid) = @_;
