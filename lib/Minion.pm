@@ -103,17 +103,28 @@ Minion - Job queue
 
   use Minion;
 
-  # Add tasks
+  # Connect to backend
   my $minion = Minion->new(Mango => 'mongodb://localhost:27017');
+
+  # Add tasks without result
   $minion->add_task(something_slow => sub {
     my ($job, @args) = @_;
     sleep 5;
     say 'This is a background worker process.';
   });
 
+  # Add tasks with result
+  $minion->add_task(slow_add => sub {
+    my ($job, $first, $second) = @_;
+    sleep 5;
+    my $result = $first + $second;
+    $job->finish($result);
+  });
+
   # Enqueue jobs
   $minion->enqueue(something_slow => ['foo', 'bar']);
   $minion->enqueue(something_slow => [1, 2, 3]);
+  $minion->enqueue(slow_add => [3, 1]);
 
   # Perform jobs automatically for testing
   $minion->auto_perform(1);

@@ -13,54 +13,59 @@ plugin Minion => {Mango => $ENV{TEST_ONLINE}};
 # Clean up before start
 app->minion->backend->prefix('minion_lite_app_test')->reset;
 
-my $count = app->minion->backend->jobs->insert({count => 0});
 app->minion->add_task(
-  increment => sub {
-    my $job = shift;
-    my $doc = $job->app->minion->backend->jobs->find_one($count);
-    $doc->{count}++;
-    $job->minion->backend->jobs->save($doc);
+  add => sub {
+    my ($job, $first, $second) = @_;
+    $job->finish($first + $second);
   }
 );
 
-get '/increment' => sub {
+get '/add' => sub {
   my $self = shift;
-  $self->minion->enqueue('increment');
-  $self->render(text => 'Incrementing soon!');
+  my $id = $self->minion->enqueue(add => [$self->param([qw(first second)])]);
+  $self->render(text => $id);
 };
 
-get '/non_blocking_increment' => sub {
+get '/non_blocking_add' => sub {
   my $self = shift;
   $self->minion->enqueue(
-    increment => sub {
-      $self->render(text => 'Incrementing soon too!');
+    add => [$self->param([qw(first second)])] => sub {
+      my ($minion, $err, $id) = @_;
+      $self->render(text => $id);
     }
   );
 };
 
-get '/count' => sub {
+get '/result' => sub {
   my $self = shift;
   $self->render(
-    text => $self->minion->backend->jobs->find_one($count)->{count});
+    text => $self->minion->backend->job_info($self->param(['id']))->{result});
+};
+
+get '/non_blocking_result' => sub {
+  my $self = shift;
+  $self->minion->backend->job_info(
+    $self->param(['id']) => sub {
+      my ($backend, $err, $info) = @_;
+      $self->render(text => $info->{result});
+    }
+  );
 };
 
 my $t = Test::Mojo->new;
 
 # Perform jobs automatically
 $t->app->minion->auto_perform(1);
-$t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
-$t->get_ok('/count')->status_is(200)->content_is('1');
-$t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
-$t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
-$t->get_ok('/count')->status_is(200)->content_is('3');
+$t->get_ok('/add' => form => {first => 5, second => 3})->status_is(200);
+my $id = $t->tx->res->text;
+$t->get_ok('/result' => form => {id => $id})->status_is(200)->content_is('8');
 
 # Perform jobs automatically (non-blocking)
-$t->get_ok('/non_blocking_increment')->status_is(200)
-  ->content_is('Incrementing soon too!');
-$t->get_ok('/count')->status_is(200)->content_is('4');
-$t->get_ok('/non_blocking_increment')->status_is(200)
-  ->content_is('Incrementing soon too!');
-$t->get_ok('/count')->status_is(200)->content_is('5');
+$t->get_ok('/non_blocking_add' => form => {first => 1, second => 1})
+  ->status_is(200);
+$id = $t->tx->res->text;
+$t->get_ok('/non_blocking_result' => form => {id => $id})->status_is(200)
+  ->content_is('2');
 app->minion->backend->reset;
 
 done_testing();

@@ -55,14 +55,20 @@ sub enqueue {
   $self->jobs->insert($doc => sub { shift; $self->$cb(@_) });
 }
 
-sub fail_job { shift->_update(@_) }
+sub fail_job { shift->_update(1, @_) }
 
-sub finish_job { shift->_update(@_) }
+sub finish_job { shift->_update(0, @_) }
 
 sub job_info {
-  my ($self, $id) = @_;
-  return {} unless my $job = $self->jobs->find_one(bson_oid($id));
-  return _info($job);
+  my ($self, $id, $cb) = @_;
+
+  # Blocking
+  return _info($self->jobs->find_one(bson_oid($id))) unless $cb;
+
+  # Non-blocking
+  weaken $self;
+  $self->jobs->find_one(
+    bson_oid($id) => sub { shift; $self->$cb(shift, _info(shift)) });
 }
 
 sub list_jobs {
@@ -117,7 +123,7 @@ sub restart_job {
     {
       '$inc' => {restarts  => 1},
       '$set' => {restarted => bson_time, state => 'inactive'},
-      '$unset' => {error => '', finished => '', started => '', worker => ''}
+      '$unset' => {map { $_ => '' } qw(error finished result started worker)}
     }
   )->{n};
 }
@@ -144,17 +150,18 @@ sub worker_info {
 }
 
 sub _info {
-  my $job = shift;
+  my $job = shift // {};
   return {
     args      => $job->{args},
-    created   => $job->{created}->to_epoch,
-    delayed   => $job->{delayed}->to_epoch,
+    created   => $job->{created} ? $job->{created}->to_epoch : undef,
+    delayed   => $job->{delayed} ? $job->{delayed}->to_epoch : undef,
     error     => $job->{error},
     finished  => $job->{finished} ? $job->{finished}->to_epoch : undef,
     id        => scalar $job->{_id},
     priority  => $job->{priority},
     restarted => $job->{restarted} ? $job->{restarted}->to_epoch : undef,
     restarts => $job->{restarts} // 0,
+    result => $job->{result},
     started => $job->{started} ? $job->{started}->to_epoch : undef,
     state   => $job->{state},
     task    => $job->{task}
@@ -162,11 +169,10 @@ sub _info {
 }
 
 sub _update {
-  my ($self, $id, $err) = @_;
+  my ($self, $fail, $id, $result) = @_;
 
-  my $doc
-    = {finished => bson_time, state => defined $err ? 'failed' : 'finished'};
-  $doc->{error} = $err if $err;
+  my $doc = {finished => bson_time, state => $fail ? 'failed' : 'finished'};
+  $doc->{$fail ? 'error' : 'result'} = $result if $result;
   return !!$self->jobs->update({_id => $id, state => 'active'},
     {'$set' => $doc})->{n};
 }
@@ -261,6 +267,7 @@ Transition from C<active> to C<failed> state.
 =head2 finish_job
 
   my $bool = $backend->finish_job($job_id);
+  my $bool = $backend->finish_job($job_id, $result);
 
 Transition from C<active> to C<finished> state.
 
@@ -268,7 +275,14 @@ Transition from C<active> to C<finished> state.
 
   my $info = $backend->job_info($job_id);
 
-Get information about a job.
+Get information about a job. You can also append a callback to perform
+operation non-blocking.
+
+  $backend->job_info($job_id => sub {
+    my ($backend, $err, $info) = @_;
+    ...
+  });
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head2 list_jobs
 

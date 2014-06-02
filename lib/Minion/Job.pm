@@ -16,7 +16,7 @@ sub fail {
 
 sub finish {
   my $self = shift;
-  return $self->minion->backend->finish_job($self->id)
+  return $self->minion->backend->finish_job($self->id, @_)
     ? !!$self->emit('finished')
     : undef;
 }
@@ -156,6 +156,7 @@ Transition from C<active> to C<failed> state.
 =head2 finish
 
   my $bool = $job->finish;
+  my $bool = $job->finish($result);
 
 Transition from C<active> to C<finished> state.
 

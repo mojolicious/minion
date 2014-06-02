@@ -4,6 +4,7 @@
     started and state methods from Minion::Job.
   - Removed started method from Minion::Worker.
   - Added support for pluggable backends.
+  - Added support for task results.
   - Added Minion::Backend and Minion::Backend::Mango.
   - Added backend attribute to Minion.
   - Added info method to Minion::Job.
