@@ -99,6 +99,8 @@ sub repair {
   }
 }
 
+sub reset { $_->options && $_->drop for $_[0]->workers, $_[0]->jobs }
+
 sub restart_job {
   my ($self, $oid) = @_;
   return !!$self->jobs->update(
@@ -291,6 +293,12 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
   $backend->repair;
 
 Repair worker registry and job queue.
+
+=head2 reset
+
+  $backend->reset;
+
+Reset job queue.
 
 =head2 restart_job
 

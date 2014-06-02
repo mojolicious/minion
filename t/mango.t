@@ -16,7 +16,7 @@ is $minion->backend->prefix, 'minion', 'right prefix';
 my $workers = $minion->backend->workers;
 my $jobs    = $minion->backend->prefix('jobs_test')->jobs;
 is $jobs->name, 'jobs_test.jobs', 'right name';
-$_->options && $_->drop for $workers, $jobs;
+$minion->reset;
 
 # Nothing to repair
 my $worker = $minion->repair->worker;
@@ -62,7 +62,11 @@ $worker->unregister;
 $minion->repair;
 is $job->info->{state}, 'failed',            'job is no longer active';
 is $job->info->{error}, 'Worker went away.', 'right error';
-$_->options && $_->drop for $workers, $jobs;
+
+# Reset
+$minion->reset->repair;
+ok !$minion->backend->jobs->options,    'no jobs';
+ok !$minion->backend->workers->options, 'no workers';
 
 # Tasks
 my $add = $jobs->insert({results => []});
@@ -307,6 +311,6 @@ $job->perform;
 is $job->info->{state}, 'failed', 'right state';
 is $job->info->{error}, 'Non-zero exit status.', 'right error';
 $worker->unregister;
-$_->options && $_->drop for $workers, $jobs;
+$minion->reset;
 
 done_testing();

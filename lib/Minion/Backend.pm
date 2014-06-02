@@ -18,6 +18,7 @@ sub register_worker {
 
 sub remove_job  { croak 'Method "remove_job" not implemented by subclass' }
 sub repair      { croak 'Method "repair" not implemented by subclass' }
+sub reset       { croak 'Method "reset" not implemented by subclass' }
 sub restart_job { croak 'Method "restart_job" not implemented by subclass' }
 sub stats       { croak 'Method "stats" not implemented by subclass' }
 
@@ -142,6 +143,12 @@ overloaded in a subclass.
   $backend->repair;
 
 Repair worker registry and job queue. Meant to be overloaded in a subclass.
+
+=head2 reset
+
+  $backend->reset;
+
+Reset job queue. Meant to be overloaded in a subclass.
 
 =head2 restart_job
 
