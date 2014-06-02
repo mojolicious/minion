@@ -18,7 +18,7 @@ sub run {
     'a|args=s'    => sub { $args               = decode_json($_[1]) },
     'd|delayed=i' => sub { $options->{delayed} = $_[1] * 1000 },
     'e|enqueue=s' => \my $enqueue,
-    'L|limit=i' => \(my $limit = 0),
+    'L|limit=i' => \(my $limit = 100),
     'p|priority=i' => sub { $options->{priority} = $_[1] },
     'r|remove'     => \my $remove,
     'R|restart'    => \my $restart,
@@ -106,7 +106,8 @@ Minion::Command::minion::job - Minion job command
     -a, --args <JSON array>   Arguments for new job in JSON format.
     -d, --delayed <epoch>     Delay new job until after this point in time.
     -e, --enqueue <name>      New job to be enqueued.
-    -L, --limit <number>      Number of jobs to show when listing them.
+    -L, --limit <number>      Number of jobs to show when listing them,
+                              defaults to 100.
     -p, --priority <number>   Priority of new job, defaults to 0.
     -r, --remove              Remove job.
     -R, --restart             Restart job.
