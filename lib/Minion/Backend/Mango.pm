@@ -28,7 +28,7 @@ sub dequeue {
     new => 1
   };
 
-  return _info($self->jobs->find_and_modify($doc));
+  return $self->_job_info($self->jobs->find_and_modify($doc));
 }
 
 sub enqueue {
@@ -58,14 +58,10 @@ sub fail_job { shift->_update(1, @_) }
 
 sub finish_job { shift->_update(0, @_) }
 
-sub job_info { _info(shift->jobs->find_one(shift)) }
+sub job_info { $_[0]->_job_info($_[0]->jobs->find_one($_[1])) }
 
-sub list_jobs {
-  my ($self, $skip, $limit) = @_;
-  my $cursor = $self->jobs->find({state => {'$exists' => \1}});
-  $cursor->sort({_id => -1})->skip($skip)->limit($limit);
-  return [map { _info($_) } @{$cursor->all}];
-}
+sub list_jobs    { shift->_list('jobs',    'state', @_) }
+sub list_workers { shift->_list('workers', 'pid',   @_) }
 
 sub new { shift->SUPER::new(mango => Mango->new(@_)) }
 
@@ -128,17 +124,11 @@ sub stats {
 
 sub unregister_worker { shift->workers->remove({_id => shift}) }
 
-sub worker_info {
-  my ($self, $oid) = @_;
+sub worker_info { $_[0]->_worker_info($_[0]->workers->find_one($_[1])) }
 
-  return undef unless my $worker = $self->workers->find_one($oid);
+sub _job_info {
+  my $self = shift;
 
-  my $cursor = $self->jobs->find({state => 'active', worker => $oid});
-  my $jobs = [map { $_->{_id} } @{$cursor->all}];
-  return {jobs => $jobs, started => $worker->{started}->to_epoch};
-}
-
-sub _info {
   return undef unless my $job = shift;
   return {
     args      => $job->{args},
@@ -157,6 +147,15 @@ sub _info {
   };
 }
 
+sub _list {
+  my ($self, $name, $field, $skip, $limit) = @_;
+
+  my $cursor = $self->$name->find({$field => {'$exists' => \1}});
+  $cursor->sort({_id => -1})->skip($skip)->limit($limit);
+  my $sub = $name eq 'jobs' ? \&_job_info : \&_worker_info;
+  return [map { $self->$sub($_) } @{$cursor->all}];
+}
+
 sub _update {
   my ($self, $fail, $oid, $err) = @_;
 
@@ -164,6 +163,21 @@ sub _update {
   $update->{error} = $err if $fail;
   my $query = {_id => $oid, state => 'active'};
   return !!$self->jobs->update($query, {'$set' => $update})->{n};
+}
+
+sub _worker_info {
+  my $self = shift;
+
+  return undef unless my $worker = shift;
+  my $cursor
+    = $self->jobs->find({state => 'active', worker => $worker->{_id}});
+  return {
+    host    => $worker->{host},
+    id      => $worker->{_id},
+    jobs    => [map { $_->{_id} } @{$cursor->all}],
+    pid     => $worker->{pid},
+    started => $worker->{started}->to_epoch
+  };
 }
 
 1;
@@ -270,6 +284,12 @@ Get information about a job or return C<undef> if job does not exist.
   my $batch = $backend->list_jobs($skip, $limit);
 
 Returns the same information as L</"job_info"> but in batches.
+
+=head2 list_workers
+
+  my $batch = $backend->list_workers($skip, $limit);
+
+Returns the same information as L</"worker_info"> but in batches.
 
 =head2 new
 

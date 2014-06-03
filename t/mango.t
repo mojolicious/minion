@@ -25,13 +25,10 @@ isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 # Register and unregister
 $worker->register;
 like $worker->info->{started}, qr/^[\d.]+$/, 'has timestamp';
-ok !$worker->unregister->minion->backend->workers->find_one({pid => $$}),
-  'not registered';
-ok $worker->register->minion->backend->workers->find_one(
-  {host => hostname, pid => $$}), 'is registered';
-ok !$worker->unregister->minion->backend->workers->find_one(
-  {host => hostname, pid => $$}), 'not registered';
-is $worker->info, undef, 'no information';
+is $worker->unregister->info, undef, 'no information';
+is $worker->register->info->{host}, hostname, 'right host';
+is $worker->info->{pid}, $$, 'right pid';
+is $worker->unregister->info, undef, 'no information';
 
 # Repair dead worker
 $minion->add_task(test => sub { });
@@ -63,6 +60,25 @@ $worker->unregister;
 $minion->repair;
 is $job->info->{state}, 'failed',            'job is no longer active';
 is $job->info->{error}, 'Worker went away.', 'right error';
+
+# List workers
+$worker  = $minion->worker->register;
+$worker2 = $minion->worker->register;
+my $batch = $minion->backend->list_workers(0, 10);
+ok $batch->[0]{id},   'has id';
+is $batch->[0]{host}, hostname, 'right host';
+is $batch->[0]{pid},  $$, 'right pid';
+is $batch->[1]{host}, hostname, 'right host';
+is $batch->[1]{pid},  $$, 'right pid';
+ok !$batch->[2], 'no more results';
+$batch = $minion->backend->list_workers(0, 1);
+is $batch->[0]{id}, $worker2->id, 'right id';
+ok !$batch->[1], 'no more results';
+$batch = $minion->backend->list_workers(1, 1);
+is $batch->[0]{id}, $worker->id, 'right id';
+ok !$batch->[1], 'no more results';
+$worker->unregister;
+$worker2->unregister;
 
 # Reset
 $minion->reset->repair;
@@ -118,13 +134,14 @@ is $stats->{finished_jobs},    2, 'one finished job';
 is $stats->{inactive_jobs},    0, 'no inactive jobs';
 
 # List jobs
-my $batch = $minion->backend->list_jobs(0, 10);
-is $batch->[0]{task},     'fail',     'right task';
+$batch = $minion->backend->list_jobs(0, 10);
+ok $batch->[0]{id},       'has id';
+is $batch->[0]{task},     'fail', 'right task';
 is $batch->[0]{state},    'finished', 'right state';
-is $batch->[0]{restarts}, 1,          'job has been restarted';
-is $batch->[1]{task},     'fail',     'right task';
+is $batch->[0]{restarts}, 1, 'job has been restarted';
+is $batch->[1]{task},     'fail', 'right task';
 is $batch->[1]{state},    'finished', 'right state';
-is $batch->[1]{restarts}, 0,          'job has not been restarted';
+is $batch->[1]{restarts}, 0, 'job has not been restarted';
 ok !$batch->[2], 'no more results';
 $batch = $minion->backend->list_jobs(0, 1);
 is $batch->[0]{restarts}, 1, 'job has been restarted';

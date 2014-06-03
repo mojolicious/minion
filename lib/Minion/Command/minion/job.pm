@@ -23,15 +23,18 @@ sub run {
     'r|remove'     => \my $remove,
     'R|restart'    => \my $restart,
     's|stats'      => \my $stats,
-    'S|skip=i' => \(my $skip = 0);
+    'S|skip=i' => \(my $skip = 0),
+    'w|workers' => \my $workers;
   my $id = @args ? shift @args : undef;
 
   # Enqueue
   return say $self->app->minion->enqueue($enqueue, $args, $options)
     if $enqueue;
 
-  # Show stats or list jobs
-  return $stats ? $self->_stats : $self->_list($skip, $limit) unless $id;
+  # Show stats or list jobs/workers
+  return $self->_stats if $stats;
+  my $sub = $workers ? \&_list_workers : \&_list_jobs;
+  return $self->$sub($skip, $limit) unless $id;
   die "Job does not exist.\n" unless my $job = $self->app->minion->job($id);
 
   # Remove job
@@ -67,10 +70,17 @@ sub _info {
   say localtime($finished)->datetime, ' (finished)' if $finished;
 }
 
-sub _list {
+sub _list_jobs {
   my ($self, $skip, $limit) = @_;
   say sprintf '%s  %-8s  %s', @$_{qw(id state task)}
     for @{$self->app->minion->backend->list_jobs($skip, $limit)};
+}
+
+sub _list_workers {
+  my ($self, $skip, $limit) = @_;
+  say sprintf '%s  %-8s  %s', $_->{id}, @{$_->{jobs}} ? 'active' : 'inactive',
+    "$_->{host}:$_->{pid}"
+    for @{$self->app->minion->backend->list_workers($skip, $limit)};
 }
 
 sub _stats {
@@ -99,6 +109,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -p 5
     ./myapp.pl minion job -s
+    ./myapp.pl minion job -w -L 5
     ./myapp.pl minion job 533b4e2b5867b4c72b0a0000
     ./myapp.pl minion job 533b4e2b5867b4c72b0a0000 -r
 
@@ -106,14 +117,15 @@ Minion::Command::minion::job - Minion job command
     -a, --args <JSON array>   Arguments for new job in JSON format.
     -d, --delayed <epoch>     Delay new job until after this point in time.
     -e, --enqueue <name>      New job to be enqueued.
-    -L, --limit <number>      Number of jobs to show when listing them,
-                              defaults to 100.
+    -L, --limit <number>      Number of jobs/workers to show when listing
+                              them, defaults to 100.
     -p, --priority <number>   Priority of new job, defaults to 0.
     -r, --remove              Remove job.
     -R, --restart             Restart job.
     -s, --stats               Show queue statistics.
-    -S, --skip <number>       Number of jobs to skip when listing them,
-                              defaults to 0.
+    -S, --skip <number>       Number of jobs/workers to skip when listing
+                              them, defaults to 0.
+    -w, --workers             List workers instead of jobs.
 
 =head1 DESCRIPTION
 

@@ -5,12 +5,13 @@ use Carp 'croak';
 
 has 'minion';
 
-sub dequeue    { croak 'Method "dequeue" not implemented by subclass' }
-sub enqueue    { croak 'Method "enqueue" not implemented by subclass' }
-sub fail_job   { croak 'Method "fail_job" not implemented by subclass' }
-sub finish_job { croak 'Method "finish_job" not implemented by subclass' }
-sub job_info   { croak 'Method "job_info" not implemented by subclass' }
-sub list_jobs  { croak 'Method "list_jobs" not implemented by subclass' }
+sub dequeue      { croak 'Method "dequeue" not implemented by subclass' }
+sub enqueue      { croak 'Method "enqueue" not implemented by subclass' }
+sub fail_job     { croak 'Method "fail_job" not implemented by subclass' }
+sub finish_job   { croak 'Method "finish_job" not implemented by subclass' }
+sub job_info     { croak 'Method "job_info" not implemented by subclass' }
+sub list_jobs    { croak 'Method "list_jobs" not implemented by subclass' }
+sub list_workers { croak 'Method "list_workers" not implemented by subclass' }
 
 sub register_worker {
   croak 'Method "register_worker" not implemented by subclass';
@@ -124,6 +125,13 @@ be overloaded in a subclass.
   my $batch = $backend->list_jobs($skip, $limit);
 
 Returns the same information as L</"job_info"> but in batches. Meant to be
+overloaded in a subclass.
+
+=head2 list_workers
+
+  my $batch = $backend->list_workers($skip, $limit);
+
+Returns the same information as L</"worker_info"> but in batches. Meant to be
 overloaded in a subclass.
 
 =head2 register_worker
