@@ -216,9 +216,11 @@ isnt $worker->dequeue->id, $oid, 'different object id';
 $worker->unregister;
 
 # Delayed jobs
-$oid = $minion->enqueue(add => [2, 1] => {delayed => (time + 100) * 1000});
+my $epoch = time + 100;
+$oid = $minion->enqueue(add => [2, 1] => {delayed => $epoch});
 is $worker->register->dequeue, undef, 'too early for job';
 $doc = $jobs->find_one($oid);
+is $doc->{delayed}->to_epoch, $epoch, 'right delayed timestamp';
 $doc->{delayed} = bson_time((time - 100) * 1000);
 $jobs->save($doc);
 $job = $worker->dequeue;
