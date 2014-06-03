@@ -117,7 +117,7 @@ Minion - Job queue
 
   # Enqueue jobs
   $minion->enqueue(something_slow => ['foo', 'bar']);
-  $minion->enqueue(something_slow => [1, 2, 3]);
+  $minion->enqueue(something_slow => [1, 2, 3] => {priority => 5});
 
   # Perform jobs automatically for testing
   $minion->auto_perform(1);
@@ -237,7 +237,7 @@ These options are currently available:
 
   delayed => (time + 1) * 1000
 
-Delay job until after this point in time.
+Delay job until after this point in time in milliseconds since the UNIX epoch.
 
 =item priority
 
