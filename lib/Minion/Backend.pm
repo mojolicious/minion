@@ -47,6 +47,8 @@ Minion::Backend - Backend base class
   sub fail_job          {...}
   sub finish_job        {...}
   sub job_info          {...}
+  sub list_jobs         {...}
+  sub list_workers      {...}
   sub register_worker   {...}
   sub remove_job        {...}
   sub repair            {...}
