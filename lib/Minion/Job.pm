@@ -8,17 +8,15 @@ sub app { shift->minion->app }
 
 sub fail {
   my $self = shift;
-  my $err = shift // 'Unknown error.';
-  return $self->minion->backend->fail_job($self->id, $err)
-    ? !!$self->emit(failed => $err)
-    : undef;
+  my $err  = shift // 'Unknown error';
+  my $ok   = $self->minion->backend->fail_job($self->id, $err);
+  return $ok ? !!$self->emit(failed => $err) : undef;
 }
 
 sub finish {
   my $self = shift;
-  return $self->minion->backend->finish_job($self->id)
-    ? !!$self->emit('finished')
-    : undef;
+  my $ok   = $self->minion->backend->finish_job($self->id);
+  return $ok ? !!$self->emit('finished') : undef;
 }
 
 sub info { $_[0]->minion->backend->job_info($_[0]->id) }
@@ -26,7 +24,7 @@ sub info { $_[0]->minion->backend->job_info($_[0]->id) }
 sub perform {
   my $self = shift;
   waitpid $self->_child, 0;
-  $? ? $self->fail('Non-zero exit status.') : $self->finish;
+  $? ? $self->fail('Non-zero exit status') : $self->finish;
 }
 
 sub remove { $_[0]->minion->backend->remove_job($_[0]->id) }
