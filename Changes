@@ -1,4 +1,6 @@
 
+0.14  2014-06-04
+
 0.13  2014-06-03
   - Added list_workers method to Minion::Backend.
   - Added list_workers method to Minion::Backend::Mango.
