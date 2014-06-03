@@ -40,8 +40,7 @@ sub enqueue {
 sub job {
   my ($self, $id) = @_;
 
-  my $job = $self->backend->job_info($id);
-  return undef unless $job->{state};
+  return undef unless my $job = $self->backend->job_info($id);
   return Minion::Job->new(
     args   => $job->{args},
     id     => $id,

@@ -28,8 +28,7 @@ sub dequeue {
     new => 1
   };
 
-  return undef unless my $job = $self->jobs->find_and_modify($doc);
-  return {args => $job->{args}, id => $job->{_id}, task => $job->{task}};
+  return _info($self->jobs->find_and_modify($doc));
 }
 
 sub enqueue {
@@ -63,9 +62,9 @@ sub job_info { _info(shift->jobs->find_one(shift)) }
 
 sub list_jobs {
   my ($self, $skip, $limit) = @_;
-  my $all = $self->jobs->find({state => {'$exists' => \1}})->sort({_id => -1})
-    ->skip($skip)->limit($limit)->all;
-  return [map { _info($_) } @$all];
+  my $cursor = $self->jobs->find({state => {'$exists' => \1}});
+  $cursor->sort({_id => -1})->skip($skip)->limit($limit);
+  return [map { _info($_) } @{$cursor->all}];
 }
 
 sub new { shift->SUPER::new(mango => Mango->new(@_)) }
@@ -76,8 +75,8 @@ sub register_worker {
 
 sub remove_job {
   my ($self, $oid) = @_;
-  return !!$self->jobs->remove(
-    {_id => $oid, state => {'$in' => [qw(failed finished inactive)]}})->{n};
+  my $doc = {_id => $oid, state => {'$in' => [qw(failed finished inactive)]}};
+  return !!$self->jobs->remove($doc)->{n};
 }
 
 sub repair {
@@ -103,14 +102,15 @@ sub reset { $_->options && $_->drop for $_[0]->workers, $_[0]->jobs }
 
 sub restart_job {
   my ($self, $oid) = @_;
-  return !!$self->jobs->update(
-    {_id => $oid, state => {'$in' => [qw(failed finished)]}},
-    {
-      '$inc' => {restarts  => 1},
-      '$set' => {restarted => bson_time, state => 'inactive'},
-      '$unset' => {map { $_ => '' } qw(error finished result started worker)}
-    }
-  )->{n};
+
+  my $query = {_id => $oid, state => {'$in' => [qw(failed finished)]}};
+  my $update = {
+    '$inc' => {restarts  => 1},
+    '$set' => {restarted => bson_time, state => 'inactive'},
+    '$unset' => {map { $_ => '' } qw(error finished result started worker)}
+  };
+
+  return !!$self->jobs->update($query, $update)->{n};
 }
 
 sub stats {
@@ -131,14 +131,15 @@ sub unregister_worker { shift->workers->remove({_id => shift}) }
 sub worker_info {
   my ($self, $oid) = @_;
 
-  return {} unless my $worker = $self->workers->find_one($oid);
-  my $jobs = [map { $_->{_id} }
-      @{$self->jobs->find({state => 'active', worker => $oid})->all}];
+  return undef unless my $worker = $self->workers->find_one($oid);
+
+  my $cursor = $self->jobs->find({state => 'active', worker => $oid});
+  my $jobs = [map { $_->{_id} } @{$cursor->all}];
   return {jobs => $jobs, started => $worker->{started}->to_epoch};
 }
 
 sub _info {
-  my $job = shift // {};
+  return undef unless my $job = shift;
   return {
     args      => $job->{args},
     created   => $job->{created} ? $job->{created}->to_epoch : undef,
@@ -159,10 +160,10 @@ sub _info {
 sub _update {
   my ($self, $fail, $oid, $err) = @_;
 
-  my $doc = {finished => bson_time, state => $fail ? 'failed' : 'finished'};
-  $doc->{error} = $err if $fail;
-  return !!$self->jobs->update({_id => $oid, state => 'active'},
-    {'$set' => $doc})->{n};
+  my $update = {finished => bson_time, state => $fail ? 'failed' : 'finished'};
+  $update->{error} = $err if $fail;
+  my $query = {_id => $oid, state => 'active'};
+  return !!$self->jobs->update($query, {'$set' => $update})->{n};
 }
 
 1;
@@ -262,7 +263,7 @@ Transition from C<active> to C<finished> state.
 
   my $info = $backend->job_info($job_id);
 
-Get information about a job.
+Get information about a job or return C<undef> if job does not exist.
 
 =head2 list_jobs
 
@@ -322,7 +323,7 @@ Unregister worker.
 
   my $info = $backend->worker_info($worker_id);
 
-Get information about a worker.
+Get information about a worker or return C<undef> if worker does not exist.
 
 =head1 SEE ALSO
 

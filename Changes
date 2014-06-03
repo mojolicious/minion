@@ -1,5 +1,6 @@
 
 0.11  2014-06-03
+  - Changed a few return values in Minion::Backend::Mango.
 
 0.10  2014-06-02
   - Removed created, delayed, error, finished, priority, restarted, restarts,

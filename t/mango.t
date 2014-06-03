@@ -31,6 +31,7 @@ ok $worker->register->minion->backend->workers->find_one(
   {host => hostname, pid => $$}), 'is registered';
 ok !$worker->unregister->minion->backend->workers->find_one(
   {host => hostname, pid => $$}), 'not registered';
+is $worker->info, undef, 'no information';
 
 # Repair dead worker
 $minion->add_task(test => sub { });
@@ -192,13 +193,13 @@ $job = $worker->dequeue;
 is $job->info->{state}, 'active', 'right state';
 ok $job->finish, 'job finished';
 ok $job->remove, 'job has been removed';
-is $job->info->{state}, undef, 'no state';
+is $job->info,   undef, 'no information';
 $oid = $minion->enqueue(add => [6, 5]);
 $job = $worker->dequeue;
 is $job->id, $oid, 'right object id';
 ok $job->fail,   'job failed';
 ok $job->remove, 'job has been removed';
-is $job->info->{state}, undef, 'no state';
+is $job->info,   undef, 'no information';
 $oid = $minion->enqueue(add => [5, 5]);
 $job = $minion->job($oid);
 ok $job->remove, 'job has been removed';

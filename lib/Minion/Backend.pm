@@ -116,7 +116,8 @@ subclass.
 
   my $info = $backend->job_info($job_id);
 
-Get information about a job. Meant to be overloaded in a subclass.
+Get information about a job or return C<undef> if job does not exist. Meant to
+be overloaded in a subclass.
 
 =head2 list_jobs
 
@@ -173,7 +174,8 @@ Unregister worker. Meant to be overloaded in a subclass.
 
   my $info = $backend->worker_info($worker_id);
 
-Get information about a worker. Meant to be overloaded in a subclass.
+Get information about a worker or return C<undef> if worker does not exist.
+Meant to be overloaded in a subclass.
 
 =head1 SEE ALSO
 
