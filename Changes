@@ -1,4 +1,6 @@
 
+0.12  2014-06-04
+
 0.11  2014-06-03
   - Changed a few return values in Minion::Backend::Mango.
 

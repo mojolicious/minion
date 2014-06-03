@@ -9,7 +9,7 @@ use Mojo::Server;
 use Mojo::URL;
 use Scalar::Util 'weaken';
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has [qw(auto_perform backend)];
