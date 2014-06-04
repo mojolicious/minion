@@ -13,7 +13,7 @@ has workers =>
   sub { $_[0]->mango->db->collection($_[0]->prefix . '.workers') };
 
 sub dequeue {
-  my ($self, $oid) = @_;
+  my ($self, $id) = @_;
 
   my $doc = {
     query => {
@@ -25,7 +25,7 @@ sub dequeue {
     sort   => {priority => -1},
     update => {
       '$set' =>
-        {started => bson_time, state => 'active', worker => bson_oid($oid)}
+        {started => bson_time, state => 'active', worker => bson_oid($id)}
     },
     new => 1
   };
@@ -72,11 +72,9 @@ sub register_worker {
 }
 
 sub remove_job {
-  my ($self, $oid) = @_;
-  my $doc = {
-    _id   => bson_oid($oid),
-    state => {'$in' => [qw(failed finished inactive)]}
-  };
+  my ($self, $id) = @_;
+  my $doc = {_id => bson_oid($id),
+    state => {'$in' => [qw(failed finished inactive)]}};
   return !!$self->jobs->remove($doc)->{n};
 }
 
@@ -102,10 +100,10 @@ sub repair {
 sub reset { $_->options && $_->drop for $_[0]->workers, $_[0]->jobs }
 
 sub restart_job {
-  my ($self, $oid) = @_;
+  my ($self, $id) = @_;
 
   my $query
-    = {_id => bson_oid($oid), state => {'$in' => [qw(failed finished)]}};
+    = {_id => bson_oid($id), state => {'$in' => [qw(failed finished)]}};
   my $update = {
     '$inc' => {restarts  => 1},
     '$set' => {restarted => bson_time, state => 'inactive'},
@@ -165,11 +163,11 @@ sub _list {
 }
 
 sub _update {
-  my ($self, $fail, $oid, $err) = @_;
+  my ($self, $fail, $id, $err) = @_;
 
   my $update = {finished => bson_time, state => $fail ? 'failed' : 'finished'};
   $update->{error} = $err if $fail;
-  my $query = {_id => bson_oid($oid), state => 'active'};
+  my $query = {_id => bson_oid($id), state => 'active'};
   return !!$self->jobs->update($query, {'$set' => $update})->{n};
 }
 
