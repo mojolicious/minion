@@ -1,4 +1,6 @@
 
+0.15  2014-06-05
+
 0.14  2014-06-04
   - Fixed Minion::Backend::Mango to work with strings in addition to object
     ids.
