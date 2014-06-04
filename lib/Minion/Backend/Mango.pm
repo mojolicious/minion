@@ -262,7 +262,7 @@ perform operation non-blocking.
 
 =head2 fail_job
 
-  my $bool = $backend->fail_job;
+  my $bool = $backend->fail_job($job_id);
   my $bool = $backend->fail_job($job_id, 'Something went wrong!');
 
 Transition from C<active> to C<failed> state.
@@ -323,7 +323,7 @@ Reset job queue.
 
 =head2 restart_job
 
-  my $bool = $backend->restart_job;
+  my $bool = $backend->restart_job($job_id);
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
 
