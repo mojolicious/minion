@@ -2,7 +2,7 @@ package Minion::Backend::Mango;
 use Mojo::Base 'Minion::Backend';
 
 use Mango;
-use Mango::BSON 'bson_time';
+use Mango::BSON qw(bson_time bson_oid);
 use Scalar::Util 'weaken';
 use Sys::Hostname 'hostname';
 
@@ -58,7 +58,7 @@ sub fail_job { shift->_update(1, @_) }
 
 sub finish_job { shift->_update(0, @_) }
 
-sub job_info { $_[0]->_job_info($_[0]->jobs->find_one($_[1])) }
+sub job_info { $_[0]->_job_info($_[0]->jobs->find_one(bson_oid $_[1])) }
 
 sub list_jobs    { shift->_list('jobs',    'state', @_) }
 sub list_workers { shift->_list('workers', 'pid',   @_) }
