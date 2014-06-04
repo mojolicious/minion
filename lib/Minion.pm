@@ -43,7 +43,7 @@ sub job {
   return undef unless my $job = $self->backend->job_info($id);
   return Minion::Job->new(
     args   => $job->{args},
-    id     => $id,
+    id     => $job->{id},
     minion => $self,
     task   => $job->{task}
   );

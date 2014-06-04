@@ -33,15 +33,15 @@ is $worker->unregister->info, undef, 'no information';
 # Repair dead worker
 $minion->add_task(test => sub { });
 my $worker2 = $minion->worker->register;
-isnt $worker2->id("@{[$worker2->id]}")->id, $worker->id, 'new id';
+isnt $worker2->id, $worker->id, 'new id';
 my $oid = $minion->enqueue('test');
 my $job = $worker2->dequeue;
 is $job->id, $oid, 'right object id';
 is $worker2->info->{jobs}[0], $job->id, 'right object id';
-my $id = $worker2->unregister->register->id;
+my $id = $worker2->id;
 undef $worker2;
 is $job->info->{state}, 'active', 'job is still active';
-my $doc = $workers->find_one(bson_oid($id));
+my $doc = $workers->find_one($id);
 ok $doc, 'is registered';
 my $pid = 4000;
 $pid++ while kill 0, $pid;
@@ -167,8 +167,8 @@ like $job->info->{started}, qr/^[\d.]+$/, 'has started timestamp';
 is_deeply $job->args, [2, 2], 'right arguments';
 is $job->info->{state}, 'active', 'right state';
 is $job->task, 'add', 'right task';
-is $workers->find_one($jobs->find_one(bson_oid($job->id))->{worker})->{pid},
-  $$, 'right worker';
+is $workers->find_one($jobs->find_one($job->id)->{worker})->{pid}, $$,
+  'right worker';
 ok !$job->info->{finished}, 'no finished timestamp';
 $job->perform;
 like $job->info->{finished}, qr/^[\d.]+$/, 'has finished timestamp';
