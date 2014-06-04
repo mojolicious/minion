@@ -102,7 +102,7 @@ perform operation non-blocking. Meant to be overloaded in a subclass.
 
 =head2 fail_job
 
-  my $bool = $backend->fail_job;
+  my $bool = $backend->fail_job($job_id);
   my $bool = $backend->fail_job($job_id, 'Something went wrong!');
 
 Transition from C<active> to C<failed> state. Meant to be overloaded in a
@@ -163,7 +163,7 @@ Reset job queue. Meant to be overloaded in a subclass.
 
 =head2 restart_job
 
-  my $bool = $backend->restart_job;
+  my $bool = $backend->restart_job($job_id);
 
 Transition from C<failed> or C<finished> state back to C<inactive>. Meant to
 be overloaded in a subclass.
