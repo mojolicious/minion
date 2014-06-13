@@ -4,6 +4,7 @@ use Mojo::Base 'Minion::Backend';
 use IO::Compress::Gzip 'gzip';
 use IO::Uncompress::Gunzip 'gunzip';
 use List::Util 'first';
+use Mango::BSON 'bson_oid';
 use Mojo::IOLoop;
 use Storable qw(freeze thaw);
 use Sys::Hostname 'hostname';
@@ -43,7 +44,7 @@ sub enqueue {
     args    => $args,
     created => time,
     delayed => $options->{delayed} ? $options->{delayed} : 1,
-    id      => $guard->_id,
+    id      => bson_oid,
     priority => $options->{priority} // 0,
     restarts => 0,
     state    => 'inactive',
@@ -82,10 +83,8 @@ sub list_workers {
 sub new { shift->SUPER::new(file => shift) }
 
 sub register_worker {
-  my $guard = shift->_guard->_write;
-  my $worker
-    = {host => hostname, id => $guard->_id, pid => $$, started => time};
-  $guard->_workers->{$worker->{id}} = $worker;
+  my $worker = {host => hostname, id => bson_oid, pid => $$, started => time};
+  shift->_guard->_write->_workers->{$worker->{id}} = $worker;
   return $worker->{id};
 }
 
@@ -194,14 +193,6 @@ sub new {
 }
 
 sub _data { $_[0]->{data} //= $_[0]->_slurp }
-
-sub _id {
-  my $self = shift;
-  my $id;
-  do { $id = md5_sum(time . rand 999) }
-    while $self->_workers->{$id} || $self->_jobs->{$id};
-  return $id;
-}
 
 sub _jobs { shift->_data->{jobs} //= {} }
 
