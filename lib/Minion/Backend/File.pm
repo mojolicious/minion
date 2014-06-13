@@ -176,7 +176,7 @@ package Minion::Backend::File::_Guard;
 use Mojo::Base -base;
 
 use Fcntl ':flock';
-use Mojo::Util qw(md5_sum slurp spurt);
+use Mojo::Util qw(slurp spurt);
 
 sub DESTROY {
   my $self = shift;
