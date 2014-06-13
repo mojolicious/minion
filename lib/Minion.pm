@@ -9,7 +9,7 @@ use Mojo::Server;
 use Mojo::URL;
 use Scalar::Util 'weaken';
 
-our $VERSION = '0.16';
+our $VERSION = '0.20';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has [qw(auto_perform backend)];
@@ -106,6 +106,7 @@ Minion - Job queue
   use Minion;
 
   # Connect to backend
+  my $minion = Minion->new(File  => '/Users/sri/minion.data');
   my $minion = Minion->new(Mango => 'mongodb://localhost:27017');
 
   # Add tasks
@@ -130,7 +131,8 @@ Minion - Job queue
 
 =head1 DESCRIPTION
 
-L<Minion> is a job queue for the L<Mojolicious> real-time web framework.
+L<Minion> is a job queue for the L<Mojolicious> real-time web framework with
+support for multiple backends.
 
 Background worker processes are usually started with the command
 L<Minion::Command::minion::worker>, which becomes automatically available when

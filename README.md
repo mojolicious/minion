@@ -2,7 +2,7 @@
 # Minion [![Build Status](https://travis-ci.org/kraih/minion.svg?branch=master)](https://travis-ci.org/kraih/minion)
 
   A job queue for the [Mojolicious](http://mojolicio.us) real-time web
-  framework.
+  framework with support for multiple backends.
 
 ```perl
 use Mojolicious::Lite;

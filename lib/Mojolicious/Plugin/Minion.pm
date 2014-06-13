@@ -24,10 +24,12 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
 
 =head1 SYNOPSIS
 
-  # Mojolicious
+  # Mojolicious (choose a backend)
+  $self->plugin(Minion => {File  => '/Users/sri/minion.data'});
   $self->plugin(Minion => {Mango => 'mongodb://127.0.0.1:27017'});
 
-  # Mojolicious::Lite
+  # Mojolicious::Lite (choose a backend)
+  plugin Minion => {File  => '/Users/sri/minion.data'};
   plugin Minion => {Mango => 'mongodb://127.0.0.1:27017'};
 
   # Add tasks to your application
