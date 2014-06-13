@@ -54,7 +54,7 @@ sub new {
 
   my $class = 'Minion::Backend::' . shift;
   my $e     = Mojo::Loader->new->load($class);
-  croak ref $e ? $e : qq{Missing backend "$class"} if $e;
+  croak ref $e ? $e : qq{Backend "$class" missing} if $e;
 
   $self->backend($class->new(@_));
   weaken $self->backend->minion($self)->{minion};

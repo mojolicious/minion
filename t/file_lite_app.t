@@ -10,6 +10,10 @@ use Test::Mojo;
 my $tmpdir = tempdir CLEANUP => 1;
 my $file = catfile $tmpdir, 'minion.data';
 
+# Missing backend
+eval { plugin Minion => {Something => 'fun'} };
+like $@, qr/^Backend "Minion::Backend::Something" missing/, 'right error';
+
 plugin Minion => {File => $file};
 
 my $results = catfile $tmpdir, 'results.data';
