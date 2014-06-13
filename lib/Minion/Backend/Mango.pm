@@ -177,7 +177,7 @@ Minion::Backend::Mango - MongoDB backend
 
 =head1 DESCRIPTION
 
-L<Minion::Backend::Mango> is a L<Mango> backend for L<Minion>.
+L<Minion::Backend::Mango> is a highly scalable L<Mango> backend for L<Minion>.
 
 =head1 ATTRIBUTES
 

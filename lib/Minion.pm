@@ -194,9 +194,10 @@ L</"enqueue">, very useful for testing.
 =head2 backend
 
   my $backend = $minion->backend;
-  $minion     = $minion->backend(Minion::Backend::Mango->new);
+  $minion     = $minion->backend(Minion::Backend::File->new);
 
-Backend.
+Backend, usually a L<Minion::Backend::File> or L<Minion::Backend::Mango>
+object.
 
 =head2 tasks
 
@@ -258,7 +259,7 @@ return C<undef> if job does not exist.
 
 =head2 new
 
-  my $minion = Minion->new(Mango => 'mongodb://127.0.0.1:27017');
+  my $minion = Minion->new(File => '/Users/sri/minion.data');
 
 Construct a new L<Minion> object.
 

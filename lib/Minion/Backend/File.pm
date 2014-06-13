@@ -223,7 +223,8 @@ Minion::Backend::File - File backend
 
 =head1 DESCRIPTION
 
-L<Minion::Backend::File> is a very portable file-based backend for L<Minion>.
+L<Minion::Backend::File> is a highly portable file-based backend for
+L<Minion>.
 
 =head1 ATTRIBUTES
 

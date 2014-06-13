@@ -7,8 +7,7 @@
 ```perl
 use Mojolicious::Lite;
 
-my $uri = 'mongodb://<user>:<pass>@<server>/<database>';
-plugin Minion => {Mango => $uri};
+plugin Minion => {File => '/Users/sri/minion.data'};
 
 # Slow task
 app->minion->add_task(slow_log => sub {
