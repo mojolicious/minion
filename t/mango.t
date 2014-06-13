@@ -47,9 +47,9 @@ my $pid = 4000;
 $pid++ while kill 0, $pid;
 $workers->save({%$doc, pid => $pid});
 $minion->repair;
-ok !$workers->find_one(bson_oid($id)), 'not registered';
-is $job->info->{state}, 'failed',            'job is no longer active';
-is $job->info->{error}, 'Worker went away.', 'right error';
+ok !$minion->backend->worker_info($id), 'not registered';
+is $job->info->{state}, 'failed',           'job is no longer active';
+is $job->info->{error}, 'Worker went away', 'right error';
 
 # Repair abandoned job
 $worker->register;
@@ -58,8 +58,8 @@ $job = $worker->dequeue;
 is $job->id, $id, 'right id';
 $worker->unregister;
 $minion->repair;
-is $job->info->{state}, 'failed',            'job is no longer active';
-is $job->info->{error}, 'Worker went away.', 'right error';
+is $job->info->{state}, 'failed',           'job is no longer active';
+is $job->info->{error}, 'Worker went away', 'right error';
 
 # List workers
 $worker  = $minion->worker->register;
@@ -95,7 +95,6 @@ $minion->add_task(
     $job->minion->backend->jobs->save($doc);
   }
 );
-$minion->add_task(exit => sub { exit 1 });
 $minion->add_task(fail => sub { die "Intentional failure!\n" });
 
 # Stats
@@ -153,11 +152,11 @@ ok !$batch->[1], 'no more results';
 # Enqueue, dequeue and perform
 is $minion->job(bson_oid), undef, 'job does not exist';
 $id = $minion->enqueue(add => [2, 2]);
-$doc = $jobs->find_one({task => 'add'});
-is $doc->{_id}, $id, 'right id';
-is_deeply $doc->{args}, [2, 2], 'right arguments';
-is $doc->{priority}, 0,          'right priority';
-is $doc->{state},    'inactive', 'right state';
+my $info = $minion->job($id)->info;
+is $info->{task}, 'add', 'right task';
+is_deeply $info->{args}, [2, 2], 'right arguments';
+is $info->{priority}, 0,          'right priority';
+is $info->{state},    'inactive', 'right state';
 $worker = $minion->worker;
 is $worker->dequeue, undef, 'not registered';
 ok !$minion->job($id)->info->{started}, 'no started timestamp';
@@ -167,8 +166,8 @@ like $job->info->{started}, qr/^[\d.]+$/, 'has started timestamp';
 is_deeply $job->args, [2, 2], 'right arguments';
 is $job->info->{state}, 'active', 'right state';
 is $job->task, 'add', 'right task';
-is $workers->find_one($jobs->find_one($job->id)->{worker})->{pid}, $$,
-  'right worker';
+$id = $job->info->{worker};
+is $minion->backend->worker_info($id)->{pid}, $$, 'right worker';
 ok !$job->info->{finished}, 'no finished timestamp';
 $job->perform;
 like $job->info->{finished}, qr/^[\d.]+$/, 'has finished timestamp';
@@ -202,9 +201,8 @@ ok $job->restart, 'job restarted';
 is $job->info->{restarts}, 2, 'job has been restarted twice';
 ok !$job->info->{finished}, 'no finished timestamp';
 ok !$job->info->{started},  'no started timestamp';
-$doc = $jobs->find_one($id);
-ok !$doc->{error},  'no error';
-ok !$doc->{worker}, 'no worker';
+ok !$job->info->{error},    'no error';
+ok !$job->info->{worker},   'no worker';
 $job = $worker->dequeue;
 is $job->info->{state}, 'active', 'right state';
 ok $job->finish, 'job finished';
@@ -265,40 +263,6 @@ is $job->info->{priority}, 1, 'right priority';
 ok $job->finish, 'job finished';
 $worker->unregister;
 
-# Events
-my ($failed, $finished) = (0, 0);
-$minion->on(
-  worker => sub {
-    my ($minion, $worker) = @_;
-    $worker->on(
-      dequeue => sub {
-        my ($worker, $job) = @_;
-        $job->on(failed   => sub { $failed++ });
-        $job->on(finished => sub { $finished++ });
-      }
-    );
-  }
-);
-$worker = $minion->worker->register;
-$minion->enqueue(add => [3, 3]);
-$minion->enqueue(add => [4, 3]);
-$job = $worker->dequeue;
-is $failed,   0, 'failed event has not been emitted';
-is $finished, 0, 'finished event has not been emitted';
-$job->finish;
-$job->finish;
-is $failed,   0, 'failed event has not been emitted';
-is $finished, 1, 'finished event has been emitted once';
-$job = $worker->dequeue;
-my $err;
-$job->on(failed => sub { $err = pop });
-$job->fail("test\n");
-$job->fail;
-is $err,      "test\n", 'right error';
-is $failed,   1,        'failed event has been emitted once';
-is $finished, 1,        'finished event has been emitted once';
-$worker->unregister;
-
 # Failed jobs
 $id = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue;
@@ -320,15 +284,6 @@ is $job->id, $id, 'right id';
 $job->perform;
 is $job->info->{state}, 'failed', 'right state';
 is $job->info->{error}, "Intentional failure!\n", 'right error';
-$worker->unregister;
-
-# Exit
-$id  = $minion->enqueue('exit');
-$job = $worker->register->dequeue;
-is $job->id, $id, 'right id';
-$job->perform;
-is $job->info->{state}, 'failed', 'right state';
-is $job->info->{error}, 'Non-zero exit status', 'right error';
 $worker->unregister;
 $minion->reset;
 

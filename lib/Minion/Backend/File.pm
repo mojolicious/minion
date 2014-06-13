@@ -99,23 +99,6 @@ sub remove_job {
   return !!delete $guard->_jobs->{$id};
 }
 
-sub repair {
-  my $self = shift;
-
-  # Check workers on this host (all should be owned by the same user)
-  my $guard   = $self->_guard->_write;
-  my $workers = $guard->_workers;
-  my $host    = hostname;
-  delete $workers->{$_->{id}}
-    for grep { $_->{host} eq $host && !kill 0, $_->{pid} } values %$workers;
-
-  # Abandoned jobs
-  for my $job (values %{$guard->_jobs}) {
-    next if $job->{state} ne 'active' || $workers->{$job->{worker}};
-    @$job{qw(error state)} = ('Worker went away.', 'failed');
-  }
-}
-
 sub reset { shift->_guard->_spurt({}) }
 
 sub restart_job {
@@ -363,12 +346,6 @@ Register worker.
   my $bool = $backend->remove_job($job_id);
 
 Remove C<failed>, C<finished> or C<inactive> job from queue.
-
-=head2 repair
-
-  $backend->repair;
-
-Repair worker registry and job queue.
 
 =head2 reset
 

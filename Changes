@@ -1,6 +1,7 @@
 
 0.20  2014-06-13
   - Added Minion::Backend::File.
+  - Improved Minion::Backend to provide a generic repair method.
 
 0.15  2014-06-04
   - Fixed a few small bugs in Minion::Backend::Mango.

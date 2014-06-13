@@ -47,8 +47,8 @@ $info->{pid} = $pid;
 undef $guard;
 $minion->repair;
 ok !$minion->worker->id($id)->info, 'not registered';
-is $job->info->{state}, 'failed',            'job is no longer active';
-is $job->info->{error}, 'Worker went away.', 'right error';
+is $job->info->{state}, 'failed',           'job is no longer active';
+is $job->info->{error}, 'Worker went away', 'right error';
 
 # Repair abandoned job
 $worker->register;
@@ -57,8 +57,8 @@ $job = $worker->dequeue;
 is $job->id, $id, 'right id';
 $worker->unregister;
 $minion->repair;
-is $job->info->{state}, 'failed',            'job is no longer active';
-is $job->info->{error}, 'Worker went away.', 'right error';
+is $job->info->{state}, 'failed',           'job is no longer active';
+is $job->info->{error}, 'Worker went away', 'right error';
 
 # List workers
 $worker  = $minion->worker->register;
@@ -95,7 +95,6 @@ $minion->add_task(
     store $result, $results;
   }
 );
-$minion->add_task(exit => sub { exit 1 });
 $minion->add_task(fail => sub { die "Intentional failure!\n" });
 
 # Stats
@@ -325,6 +324,7 @@ is $job->info->{error}, "Intentional failure!\n", 'right error';
 $worker->unregister;
 
 # Exit
+$minion->add_task(exit => sub { exit 1 });
 $id  = $minion->enqueue('exit');
 $job = $worker->register->dequeue;
 is $job->id, $id, 'right id';
