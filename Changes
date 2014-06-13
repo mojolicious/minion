@@ -1,4 +1,6 @@
 
+0.21  2014-06-14
+
 0.20  2014-06-13
   - Added Minion::Backend::File.
   - Improved Minion::Backend to provide a generic repair method.
