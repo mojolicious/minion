@@ -121,7 +121,8 @@ sub stats {
 
   my @jobs = values %{$guard->_jobs};
   my %seen;
-  my $active = grep { $_->{state} eq 'active' && !$seen{$_}++ } @jobs;
+  my $active
+    = grep { $_->{state} eq 'active' && !$seen{$_->{worker}}++ } @jobs;
   return {
     active_workers   => $active,
     inactive_workers => values(%{$guard->_workers}) - $active,
