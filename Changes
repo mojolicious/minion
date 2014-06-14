@@ -1,4 +1,6 @@
 
+0.22  2014-06-15
+
 0.21  2014-06-14
   - Added clean_up_after attribute to Minion.
   - Improved performance of repair methods.

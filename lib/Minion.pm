@@ -9,12 +9,12 @@ use Mojo::Server;
 use Mojo::URL;
 use Scalar::Util 'weaken';
 
-our $VERSION = '0.21';
-
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has [qw(auto_perform backend)];
 has clean_up_after => 2592000;
 has tasks => sub { {} };
+
+our $VERSION = '0.22';
 
 sub add_task {
   my ($self, $name, $cb) = @_;
