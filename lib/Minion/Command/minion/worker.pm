@@ -35,6 +35,15 @@ Minion::Command::minion::worker - Minion worker command
 
 L<Minion::Command::minion::worker> starts a L<Minion> worker.
 
+=head1 SIGNALS
+
+The L<Minion::Command::minion::worker> process can be controlled at runtime
+with the following signals.
+
+=head2 INT, TERM
+
+Stop gracefully after finishing the current job.
+
 =head1 ATTRIBUTES
 
 L<Minion::Command::minion::worker> inherits all attributes from
