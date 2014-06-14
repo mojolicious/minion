@@ -144,7 +144,6 @@ sub _job_info {
     priority  => $job->{priority},
     restarted => $job->{restarted} ? $job->{restarted}->to_epoch : undef,
     restarts => $job->{restarts} // 0,
-    result => $job->{result},
     started => $job->{started} ? $job->{started}->to_epoch : undef,
     state   => $job->{state},
     task    => $job->{task}
