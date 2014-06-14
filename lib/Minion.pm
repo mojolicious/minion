@@ -11,7 +11,7 @@ use Scalar::Util 'weaken';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has [qw(auto_perform backend)];
-has clean_up_after => 2592000;
+has clean_up_after => 864000;
 has tasks => sub { {} };
 
 our $VERSION = '0.22';
@@ -207,7 +207,7 @@ object.
 
 Amount of time in seconds after which jobs that have reached the state
 C<finished> will be cleaned up automatically by L</"repair">, defaults to
-C<2592000>.
+C<864000> (10 days).
 
 =head2 tasks
 
@@ -277,8 +277,9 @@ Construct a new L<Minion> object.
 
   $minion = $minion->repair;
 
-Repair worker registry and job queue, all workers on this host should be owned
-by the same user.
+Repair worker registry and job queue. All processes running this method and
+workers on this host should be owned by the same user, so they can check which
+workers are still alive with signals.
 
 =head2 reset
 
