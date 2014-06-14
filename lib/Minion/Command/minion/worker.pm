@@ -33,7 +33,9 @@ Minion::Command::minion::worker - Minion worker command
 
 =head1 DESCRIPTION
 
-L<Minion::Command::minion::worker> starts a L<Minion> worker.
+L<Minion::Command::minion::worker> starts a L<Minion> worker. You can have as
+many workers as you like, but on every host they should all be owned by the
+same user, so they can check which workers are still alive with signals.
 
 =head1 SIGNALS
 
