@@ -1,5 +1,8 @@
 
 0.21  2014-06-14
+  - Added clean_up_after attribute to Minion.
+  - Added -P option to job command.
+  - Improved performance of repair methods.
 
 0.20  2014-06-13
   - Added Minion::Backend::File.

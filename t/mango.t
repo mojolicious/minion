@@ -61,6 +61,24 @@ $minion->repair;
 is $job->info->{state}, 'failed',           'job is no longer active';
 is $job->info->{error}, 'Worker went away', 'right error';
 
+# Repair old jobs
+$worker->register;
+$id = $minion->enqueue('test');
+my $id2 = $minion->enqueue('test');
+my $id3 = $minion->enqueue('test');
+$worker->dequeue->perform for 1 .. 3;
+$doc = $jobs->find_one($id2);
+$doc->{finished} = bson_time(($doc->{finished}->to_epoch - 2592002) * 1000);
+$jobs->save($doc);
+$doc = $jobs->find_one($id3);
+$doc->{finished} = bson_time(($doc->{finished}->to_epoch - 2592002) * 1000);
+$jobs->save($doc);
+$worker->unregister;
+$minion->repair;
+ok $minion->job($id), 'job has not been cleaned up';
+ok !$minion->job($id2), 'job has been cleaned up';
+ok !$minion->job($id3), 'job has been cleaned up';
+
 # List workers
 $worker  = $minion->worker->register;
 $worker2 = $minion->worker->register;

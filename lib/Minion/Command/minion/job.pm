@@ -20,6 +20,7 @@ sub run {
     'e|enqueue=s' => \my $enqueue,
     'L|limit=i' => \(my $limit = 100),
     'p|priority=i' => sub { $options->{priority} = $_[1] },
+    'P|repair'     => \my $repair,
     'r|remove'     => \my $remove,
     'R|restart'    => \my $restart,
     's|stats'      => \my $stats,
@@ -30,6 +31,9 @@ sub run {
   # Enqueue
   return say $self->app->minion->enqueue($enqueue, $args, $options)
     if $enqueue;
+
+  # Repair
+  return $self->app->minion->repair if $repair;
 
   # Show stats or list jobs/workers
   return $self->_stats if $stats;
@@ -120,6 +124,7 @@ Minion::Command::minion::job - Minion job command
     -L, --limit <number>      Number of jobs/workers to show when listing
                               them, defaults to 100.
     -p, --priority <number>   Priority of new job, defaults to 0.
+    -P, --repair              Repair worker registry and job queue.
     -r, --remove              Remove job.
     -R, --restart             Restart job.
     -s, --stats               Show queue statistics.

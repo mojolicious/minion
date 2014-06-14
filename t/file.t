@@ -60,6 +60,22 @@ $minion->repair;
 is $job->info->{state}, 'failed',           'job is no longer active';
 is $job->info->{error}, 'Worker went away', 'right error';
 
+# Repair old jobs
+$worker->register;
+$id = $minion->enqueue('test');
+my $id2 = $minion->enqueue('test');
+my $id3 = $minion->enqueue('test');
+$worker->dequeue->perform for 1 .. 3;
+$guard = $minion->backend->_guard->_write;
+$guard->_jobs->{$id2}{finished} -= 2592002;
+$guard->_jobs->{$id3}{finished} -= 2592002;
+undef $guard;
+$worker->unregister;
+$minion->repair;
+ok $minion->job($id), 'job has not been cleaned up';
+ok !$minion->job($id2), 'job has been cleaned up';
+ok !$minion->job($id3), 'job has been cleaned up';
+
 # List workers
 $worker  = $minion->worker->register;
 $worker2 = $minion->worker->register;

@@ -75,6 +75,29 @@ sub remove_job {
   return !!$self->jobs->remove($doc)->{n};
 }
 
+sub repair {
+  my $self = shift;
+
+  # Check workers on this host (all should be owned by the same user)
+  my $workers = $self->workers;
+  my $cursor = $workers->find({host => hostname});
+  while (my $worker = $cursor->next) {
+    $workers->remove({_id => $worker->{_id}}) unless kill 0, $worker->{pid};
+  }
+
+  # Abandoned jobs
+  my $jobs = $self->jobs;
+  $cursor = $jobs->find({state => 'active'});
+  while (my $job = $cursor->next) {
+    $jobs->save({%$job, state => 'failed', error => 'Worker went away'})
+      unless $workers->find_one($job->{worker});
+  }
+
+  # Old jobs
+  my $after = bson_time((time - $self->minion->clean_up_after) * 1000);
+  $jobs->remove({state => 'finished', finished => {'$lt' => $after}});
+}
+
 sub reset { $_->options && $_->drop for $_[0]->workers, $_[0]->jobs }
 
 sub restart_job {
@@ -289,6 +312,12 @@ Register worker.
   my $bool = $backend->remove_job($job_id);
 
 Remove C<failed>, C<finished> or C<inactive> job from queue.
+
+=head2 repair
+
+  $backend->repair;
+
+Repair worker registry and job queue.
 
 =head2 reset
 

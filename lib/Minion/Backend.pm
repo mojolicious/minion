@@ -18,35 +18,8 @@ sub register_worker {
   croak 'Method "register_worker" not implemented by subclass';
 }
 
-sub remove_job { croak 'Method "remove_job" not implemented by subclass' }
-
-sub repair {
-  my $self = shift;
-
-  # Check workers on this host (all should be owned by the same user)
-  my $host = hostname;
-  my $skip = 0;
-  while (my $batch = $self->list_workers($skip, 100)) {
-    last unless @$batch;
-    $skip += @$batch;
-    for my $worker (@$batch) {
-      next if $worker->{host} ne $host || kill 0, $worker->{pid};
-      $self->unregister_worker($worker->{id});
-    }
-  }
-
-  # Abandoned jobs
-  $skip = 0;
-  while (my $batch = $self->list_jobs($skip, 100)) {
-    last unless @$batch;
-    $skip += @$batch;
-    for my $job (@$batch) {
-      next if $job->{state} ne 'active' || $self->worker_info($job->{worker});
-      $self->fail_job($job->{id}, 'Worker went away');
-    }
-  }
-}
-
+sub remove_job  { croak 'Method "remove_job" not implemented by subclass' }
+sub repair      { croak 'Method "repair" not implemented by subclass' }
 sub reset       { croak 'Method "reset" not implemented by subclass' }
 sub restart_job { croak 'Method "restart_job" not implemented by subclass' }
 sub stats       { croak 'Method "stats" not implemented by subclass' }
@@ -79,6 +52,7 @@ Minion::Backend - Backend base class
   sub list_workers      {...}
   sub register_worker   {...}
   sub remove_job        {...}
+  sub repair            {...}
   sub reset             {...}
   sub restart_job       {...}
   sub stats             {...}
@@ -180,7 +154,7 @@ overloaded in a subclass.
 
   $backend->repair;
 
-Repair worker registry and job queue.
+Repair worker registry and job queue. Meant to be overloaded in a subclass.
 
 =head2 reset
 

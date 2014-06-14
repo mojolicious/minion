@@ -98,6 +98,30 @@ sub remove_job {
   return !!delete $guard->_jobs->{$id};
 }
 
+sub repair {
+  my $self = shift;
+
+  # Check workers on this host (all should be owned by the same user)
+  my $guard   = $self->_guard->_write;
+  my $workers = $guard->_workers;
+  my $host    = hostname;
+  delete $workers->{$_->{id}}
+    for grep { $_->{host} eq $host && !kill 0, $_->{pid} } values %$workers;
+
+  # Abandoned jobs
+  my $jobs = $guard->_jobs;
+  for my $job (values %$jobs) {
+    next if $job->{state} ne 'active' || $workers->{$job->{worker}};
+    @$job{qw(error state)} = ('Worker went away', 'failed');
+  }
+
+  # Old jobs
+  my $after = time - $self->minion->clean_up_after;
+  delete $jobs->{$_->{id}}
+    for grep { $_->{state} eq 'finished' && $_->{finished} < $after }
+    values %$jobs;
+}
+
 sub reset { shift->_guard->_spurt({}) }
 
 sub restart_job {
@@ -193,19 +217,19 @@ sub new {
   return $self;
 }
 
-sub _data { $_[0]->{data} //= $_[0]->_slurp }
+sub _data { $_[0]{data} //= $_[0]->_slurp }
 
 sub _jobs { shift->_data->{jobs} //= {} }
 
-sub _slurp { $_[0]->{backend}->deserialize->(slurp $_[0]->{backend}->file) }
+sub _slurp { $_[0]{backend}->deserialize->(slurp $_[0]{backend}->file) }
 
 sub _spurt {
-  spurt $_[0]->{backend}->serialize->($_[1]), $_[0]->{backend}->file;
+  spurt $_[0]{backend}->serialize->($_[1]), $_[0]{backend}->file;
 }
 
 sub _workers { shift->_data->{workers} //= {} }
 
-sub _write { ++$_[0]->{write} && return $_[0] }
+sub _write { ++$_[0]{write} && return $_[0] }
 
 1;
 
@@ -339,6 +363,12 @@ Register worker.
   my $bool = $backend->remove_job($job_id);
 
 Remove C<failed>, C<finished> or C<inactive> job from queue.
+
+=head2 repair
+
+  $backend->repair;
+
+Repair worker registry and job queue.
 
 =head2 reset
 
