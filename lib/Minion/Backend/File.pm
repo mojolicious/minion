@@ -212,7 +212,7 @@ sub DESTROY {
 sub new {
   my $self = shift->SUPER::new(@_);
   $self->_spurt({}) unless -f (my $file = $self->{backend}->file);
-  open $self->{lock}, '<', $file;
+  open $self->{lock}, '>', "$file.lock";
   flock $self->{lock}, LOCK_EX;
   return $self;
 }

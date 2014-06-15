@@ -1,5 +1,6 @@
 
-0.23  2014-06-16
+0.23  2014-06-15
+  - Fixed Minion::Backend::File Windows support.
 
 0.22  2014-06-15
   - Reduced default clean_up_after value to 10 days.
