@@ -82,7 +82,7 @@ sub repair {
   my $workers = $self->workers;
   my $cursor = $workers->find({host => hostname});
   while (my $worker = $cursor->next) {
-    $workers->remove({_id => $worker->{_id}}) unless kill 0, $worker->{pid};
+    $workers->remove($worker->{_id}) unless kill 0, $worker->{pid};
   }
 
   # Abandoned jobs
@@ -126,7 +126,7 @@ sub stats {
   return $stats;
 }
 
-sub unregister_worker { shift->workers->remove({_id => shift}) }
+sub unregister_worker { shift->workers->remove(shift) }
 
 sub worker_info { $_[0]->_worker_info($_[0]->workers->find_one($_[1])) }
 
