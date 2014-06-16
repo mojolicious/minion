@@ -1,6 +1,8 @@
 package Minion::Job;
 use Mojo::Base 'Mojo::EventEmitter';
 
+use Mojo::IOLoop;
+
 has args => sub { [] };
 has [qw(id minion task)];
 
@@ -37,6 +39,9 @@ sub _child {
   # Parent
   die "Can't fork: $!" unless defined(my $pid = fork);
   return $pid if $pid;
+
+  # Reset event loop
+  Mojo::IOLoop->reset;
 
   # Child
   my $task = $self->task;
