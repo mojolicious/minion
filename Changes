@@ -1,4 +1,6 @@
 
+0.25  2014-06-17
+
 0.24  2014-06-16
   - Improved Minion::Job to reset Mojo::IOLoop.
   - Fixed Windows bugs in tests.

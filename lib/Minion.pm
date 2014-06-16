@@ -14,7 +14,7 @@ has [qw(auto_perform backend)];
 has clean_up_after => 864000;
 has tasks => sub { {} };
 
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 sub add_task {
   my ($self, $name, $cb) = @_;
