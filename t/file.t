@@ -1,5 +1,7 @@
 use Mojo::Base -strict;
 
+BEGIN { $ENV{MOJO_REACTOR} = 'Mojo::Reactor::Poll' }
+
 use Test::More;
 
 use File::Spec::Functions 'catfile';

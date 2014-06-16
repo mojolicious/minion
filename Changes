@@ -1,5 +1,6 @@
 
 0.24  2014-06-16
+  - Fixed Windows bugs in tests.
 
 0.23  2014-06-15
   - Fixed Minion::Backend::File Windows support.
