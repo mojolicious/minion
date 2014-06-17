@@ -1,5 +1,8 @@
 
 0.25  2014-06-17
+  - Removed auto_perform attribute from Minion.
+  - Added perform_jobs method to Minion.
+  - Fixed multiple Windows bugs.
 
 0.24  2014-06-16
   - Improved Minion::Job to reset Mojo::IOLoop.

@@ -10,7 +10,7 @@ use Mojo::URL;
 use Scalar::Util 'weaken';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
-has [qw(auto_perform backend)];
+has 'backend';
 has clean_up_after => 864000;
 has tasks => sub { {} };
 
@@ -27,15 +27,11 @@ sub enqueue {
   my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
 
   # Blocking
-  unless ($cb) {
-    my $id = $self->backend->enqueue(@_);
-    $self->_perform;
-    return $id;
-  }
+  return $self->backend->enqueue(@_) unless $cb;
 
   # Non-blocking
   weaken $self;
-  $self->backend->enqueue(@_ => sub { shift; $self->_perform->$cb(@_) });
+  $self->backend->enqueue(@_ => sub { shift; $self->$cb(@_) });
 }
 
 sub job {
@@ -63,6 +59,13 @@ sub new {
   return $self;
 }
 
+sub perform_jobs {
+  my $self   = shift;
+  my $worker = $self->worker->register;
+  while (my $job = $worker->dequeue) { $job->perform }
+  $worker->unregister;
+}
+
 sub repair { shift->_delegate('repair') }
 sub reset  { shift->_delegate('reset') }
 
@@ -78,19 +81,6 @@ sub worker {
 sub _delegate {
   my ($self, $method) = @_;
   $self->backend->$method;
-  return $self;
-}
-
-sub _perform {
-  my $self = shift;
-
-  # No recursion
-  return $self if !$self->auto_perform || $self->{lock};
-  local $self->{lock} = 1;
-
-  my $worker = $self->worker->register;
-  while (my $job = $worker->dequeue) { $job->perform }
-  $worker->unregister;
   return $self;
 }
 
@@ -121,9 +111,9 @@ Minion - Job queue
   $minion->enqueue(something_slow => ['foo', 'bar']);
   $minion->enqueue(something_slow => [1, 2, 3] => {priority => 5});
 
-  # Perform jobs automatically for testing
-  $minion->auto_perform(1);
+  # Perform jobs for testing
   $minion->enqueue(something_slow => ['foo', 'bar']);
+  $minion->perform_jobs;
 
   # Build more sophisticated workers
   my $worker = $minion->repair->worker->register;
@@ -183,14 +173,6 @@ L<Minion> implements the following attributes.
   $minion = $minion->app(MyApp->new);
 
 Application for job queue, defaults to a L<Mojo::HelloWorld> object.
-
-=head2 auto_perform
-
-  my $bool = $minion->auto_perform;
-  $minion  = $minion->auto_perform($bool);
-
-Perform jobs automatically when a new one has been enqueued with
-L</"enqueue">, very useful for testing.
 
 =head2 backend
 
@@ -272,6 +254,12 @@ return C<undef> if job does not exist.
   my $minion = Minion->new(File => '/Users/sri/minion.data');
 
 Construct a new L<Minion> object.
+
+=head2 perform_jobs
+
+  $minion->perform_jobs;
+
+Perform all jobs, very useful for testing.
 
 =head2 repair
 

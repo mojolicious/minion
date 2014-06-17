@@ -42,9 +42,10 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
   # Start jobs from anywhere in your application (data gets BSON serialized)
   $c->minion->enqueue(slow_log => ['test 123']);
 
-  # Perform jobs automatically in your tests
-  $t->minion->auto_perform(1);
+  # Perform jobs in your tests
   $t->get_ok('/start_slow_log_job')->status_is(200);
+  $t->get_ok('/start_another_job')->status_is(200);
+  $t->app->minion->perform_jobs;
 
 =head1 DESCRIPTION
 
@@ -65,8 +66,8 @@ Get L<Minion> object for application.
   # Add job to the queue
   $c->minion->enqueue(foo => ['bar', 'baz']);
 
-  # Perform jobs automatically for testing
-  $app->minion->auto_perform(1);
+  # Perform jobs for testing
+  $app->minion->perform_jobs;
 
 =head1 METHODS
 

@@ -55,19 +55,22 @@ get '/count' => sub {
 my $t = Test::Mojo->new;
 
 # Perform jobs automatically
-$t->app->minion->auto_perform(1);
 $t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
+$t->app->minion->perform_jobs;
 $t->get_ok('/count')->status_is(200)->content_is('1');
 $t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
 $t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
+$t->app->minion->perform_jobs;
 $t->get_ok('/count')->status_is(200)->content_is('3');
 
 # Perform jobs automatically (non-blocking)
 $t->get_ok('/non_blocking_increment')->status_is(200)
   ->content_is('Incrementing soon too!');
+$t->app->minion->perform_jobs;
 $t->get_ok('/count')->status_is(200)->content_is('4');
 $t->get_ok('/non_blocking_increment')->status_is(200)
   ->content_is('Incrementing soon too!');
+$t->app->minion->perform_jobs;
 $t->get_ok('/count')->status_is(200)->content_is('5');
 
 done_testing();
