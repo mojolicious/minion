@@ -116,7 +116,7 @@ sub repair {
   }
 
   # Old jobs
-  my $after = time - $self->minion->clean_up_after;
+  my $after = time - $self->minion->remove_after;
   delete $jobs->{$_->{id}}
     for grep { $_->{state} eq 'finished' && $_->{finished} < $after }
     values %$jobs;

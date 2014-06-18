@@ -11,7 +11,7 @@ use Scalar::Util 'weaken';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has 'backend';
-has clean_up_after => 864000;
+has remove_after => 864000;
 has tasks => sub { {} };
 
 our $VERSION = '0.26';
@@ -182,13 +182,13 @@ Application for job queue, defaults to a L<Mojo::HelloWorld> object.
 Backend, usually a L<Minion::Backend::File> or L<Minion::Backend::Mango>
 object.
 
-=head2 clean_up_after
+=head2 remove_after
 
-  my $after = $minion->clean_up_after;
-  $minion   = $minion->clean_up_after(86400);
+  my $after = $minion->remove_after;
+  $minion   = $minion->remove_after(86400);
 
 Amount of time in seconds after which jobs that have reached the state
-C<finished> will be cleaned up automatically by L</"repair">, defaults to
+C<finished> will be removed automatically by L</"repair">, defaults to
 C<864000> (10 days).
 
 =head2 tasks

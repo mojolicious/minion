@@ -1,5 +1,6 @@
 
 0.26  2014-06-18
+  - Renamed clean_up_after attribute in Minion to remove_after.
 
 0.25  2014-06-17
   - Removed auto_perform attribute from Minion.

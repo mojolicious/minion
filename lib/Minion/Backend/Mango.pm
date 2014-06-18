@@ -94,7 +94,7 @@ sub repair {
   }
 
   # Old jobs
-  my $after = bson_time((time - $self->minion->clean_up_after) * 1000);
+  my $after = bson_time((time - $self->minion->remove_after) * 1000);
   $jobs->remove({state => 'finished', finished => {'$lt' => $after}});
 }
 
