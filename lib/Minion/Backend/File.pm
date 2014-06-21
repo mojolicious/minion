@@ -43,7 +43,8 @@ sub enqueue {
   my $job = {
     args    => $args,
     created => time,
-    delayed => $options->{delayed} ? $options->{delayed} : 1,
+    delay   => $options->{delay} // 0,
+    delayed => $options->{delay} ? (time + $options->{delay}) : time,
     id      => bson_oid,
     priority => $options->{priority} // 0,
     restarts => 0,
@@ -133,6 +134,7 @@ sub restart_job {
   return undef unless $job->{state} eq 'failed' || $job->{state} eq 'finished';
 
   $job->{restarts} += 1;
+  $job->{delayed} = time + $job->{delay};
   @$job{qw(restarted state)} = (time, 'inactive');
   delete $job->{$_} for qw(error finished result started worker);
   return 1;

@@ -258,17 +258,21 @@ isnt $worker->dequeue->id, $id, 'different id';
 $worker->unregister;
 
 # Delayed jobs
-my $epoch = time + 100;
-$id = $minion->enqueue(add => [2, 1] => {delayed => $epoch});
+$id = $minion->enqueue(add => [2, 1] => {delay => 100});
 is $worker->register->dequeue, undef, 'too early for job';
 $doc = $jobs->find_one($id);
-is $doc->{delayed}->to_epoch, $epoch, 'right delayed timestamp';
+is $doc->{delay}, 100, 'right delay';
+ok $doc->{delayed}->to_epoch > time, 'delayed timestamp';
 $doc->{delayed} = bson_time((time - 100) * 1000);
 $jobs->save($doc);
 $job = $worker->dequeue;
 is $job->id, $id, 'right id';
 like $job->info->{delayed}, qr/^[\d.]+$/, 'has delayed timestamp';
-ok $job->finish, 'job finished';
+ok $job->finish,  'job finished';
+ok $job->restart, 'job restarted';
+ok $minion->job($id)->info->{delayed} > time, 'delayed timestamp';
+ok $job->remove, 'job removed';
+ok !$job->restart, 'job not restarted';
 $worker->unregister;
 
 # Enqueue non-blocking

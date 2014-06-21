@@ -1,5 +1,7 @@
 
-0.27  2014-06-19
+0.27  2014-06-21
+  - Added support for restarting jobs with delays.
+  - Replaced delayed option with delay.
 
 0.26  2014-06-18
   - Renamed clean_up_after attribute in Minion to remove_after.

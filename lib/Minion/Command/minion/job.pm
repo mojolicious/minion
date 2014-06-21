@@ -15,10 +15,10 @@ sub run {
   my $args    = [];
   my $options = {};
   GetOptionsFromArray \@args,
-    'a|args=s'    => sub { $args               = decode_json($_[1]) },
-    'd|delayed=i' => sub { $options->{delayed} = $_[1] * 1000 },
-    'e|enqueue=s' => \my $enqueue,
-    'L|limit=i' => \(my $limit = 100),
+    'a|args=s' => sub { $args = decode_json($_[1]) },
+    'd|delay=i' => sub { $options->{delay} = $_[1] },
+    'e|enqueue=s'  => \my $enqueue,
+    'L|limit=i'    => \(my $limit = 100),
     'p|priority=i' => sub { $options->{priority} = $_[1] },
     'r|remove'     => \my $remove,
     'R|restart'    => \my $restart,
@@ -52,8 +52,9 @@ sub _info {
 
   # Details
   my $info = $job->info;
-  my ($state, $priority, $restarts) = @$info{qw(state priority restarts)};
-  print $info->{task}, " ($state, p$priority, r$restarts)\n",
+  my ($delay, $state, $priority, $restarts)
+    = @$info{qw(delay state priority restarts)};
+  print $info->{task}, " ($state, d:$delay, p:$priority, r:$restarts)\n",
     dumper($info->{args});
   my $err = $info->{error};
   say chomp $err ? $err : $err if $err;
@@ -115,7 +116,7 @@ Minion::Command::minion::job - Minion job command
 
   Options:
     -a, --args <JSON array>   Arguments for new job in JSON format.
-    -d, --delayed <epoch>     Delay new job until after this point in time.
+    -d, --delay <seconds>     Delay new job for this many seconds.
     -e, --enqueue <name>      New job to be enqueued.
     -L, --limit <number>      Number of jobs/workers to show when listing
                               them, defaults to 100.

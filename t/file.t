@@ -260,10 +260,10 @@ isnt $worker->dequeue->id, $id, 'different id';
 $worker->unregister;
 
 # Delayed jobs
-my $epoch = time + 100;
-$id = $minion->enqueue(add => [2, 1] => {delayed => $epoch});
+$id = $minion->enqueue(add => [2, 1] => {delay => 100});
 is $worker->register->dequeue, undef, 'too early for job';
-is $minion->job($id)->info->{delayed}, $epoch, 'right delayed timestamp';
+is $minion->job($id)->info->{delay}, 100, 'right delay';
+ok $minion->job($id)->info->{delayed} > time, 'delayed timestamp';
 $guard           = $minion->backend->_guard->_write;
 $info            = $guard->_jobs->{$id};
 $info->{delayed} = time - 100;
@@ -271,7 +271,11 @@ undef $guard;
 $job = $worker->dequeue;
 is $job->id, $id, 'right id';
 like $job->info->{delayed}, qr/^[\d.]+$/, 'has delayed timestamp';
-ok $job->finish, 'job finished';
+ok $job->finish,  'job finished';
+ok $job->restart, 'job restarted';
+ok $minion->job($id)->info->{delayed} > time, 'delayed timestamp';
+ok $job->remove, 'job removed';
+ok !$job->restart, 'job not restarted';
 $worker->unregister;
 
 # Enqueue non-blocking

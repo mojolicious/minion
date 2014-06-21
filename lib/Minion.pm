@@ -228,11 +228,11 @@ These options are currently available:
 
 =over 2
 
-=item delayed
+=item delay
 
-  delayed => time + 1
+  delay => 10
 
-Delay job until after this point in time in floating seconds since the epoch.
+Delay job for this many seconds from now.
 
 =item priority
 
