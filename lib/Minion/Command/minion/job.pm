@@ -52,9 +52,8 @@ sub _info {
 
   # Details
   my $info = $job->info;
-  my ($delay, $state, $priority, $restarts)
-    = @$info{qw(delay state priority restarts)};
-  print $info->{task}, " ($state, d:$delay, p:$priority, r:$restarts)\n",
+  my ($state, $priority, $restarts) = @$info{qw(state priority restarts)};
+  print $info->{task}, " ($state, p$priority, r$restarts)\n",
     dumper($info->{args});
   my $err = $info->{error};
   say chomp $err ? $err : $err if $err;

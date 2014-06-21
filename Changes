@@ -1,6 +1,5 @@
 
 0.27  2014-06-21
-  - Added support for restarting jobs with delays.
   - Replaced delayed option with delay.
 
 0.26  2014-06-18

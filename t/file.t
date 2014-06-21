@@ -262,7 +262,6 @@ $worker->unregister;
 # Delayed jobs
 $id = $minion->enqueue(add => [2, 1] => {delay => 100});
 is $worker->register->dequeue, undef, 'too early for job';
-is $minion->job($id)->info->{delay}, 100, 'right delay';
 ok $minion->job($id)->info->{delayed} > time, 'delayed timestamp';
 $guard           = $minion->backend->_guard->_write;
 $info            = $guard->_jobs->{$id};
@@ -273,7 +272,7 @@ is $job->id, $id, 'right id';
 like $job->info->{delayed}, qr/^[\d.]+$/, 'has delayed timestamp';
 ok $job->finish,  'job finished';
 ok $job->restart, 'job restarted';
-ok $minion->job($id)->info->{delayed} > time, 'delayed timestamp';
+ok $minion->job($id)->info->{delayed} < time, 'no delayed timestamp';
 ok $job->remove, 'job removed';
 ok !$job->restart, 'job not restarted';
 $worker->unregister;

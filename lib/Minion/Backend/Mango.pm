@@ -38,10 +38,10 @@ sub enqueue {
   my $options = shift // {};
 
   my $doc = {
-    args     => $args,
-    created  => bson_time,
-    delay    => $options->{delay} //= 0,
-    delayed  => bson_time((time + $options->{delay}) * 1000),
+    args    => $args,
+    created => bson_time,
+    delayed =>
+      bson_time($options->{delay} ? ((time + $options->{delay}) * 1000) : 1),
     priority => $options->{priority} // 0,
     state    => 'inactive',
     task     => $task
@@ -104,13 +104,10 @@ sub reset { $_->options && $_->drop for $_[0]->workers, $_[0]->jobs }
 sub restart_job {
   my ($self, $oid) = @_;
 
-  return undef unless my $job = $self->job_info($oid);
-  my $query   = {_id => $oid, state => {'$in' => [qw(failed finished)]}};
-  my $delayed = bson_time((time + $job->{delay}) * 1000);
-  my $update  = {
-    '$inc' => {restarts => 1},
-    '$set' =>
-      {delayed => $delayed, restarted => bson_time, state => 'inactive'},
+  my $query = {_id => $oid, state => {'$in' => [qw(failed finished)]}};
+  my $update = {
+    '$inc' => {restarts  => 1},
+    '$set' => {restarted => bson_time, state => 'inactive'},
     '$unset' => {map { $_ => '' } qw(error finished result started worker)}
   };
 
@@ -141,7 +138,6 @@ sub _job_info {
   return {
     args      => $job->{args},
     created   => $job->{created} ? $job->{created}->to_epoch : undef,
-    delay     => $job->{delay},
     delayed   => $job->{delayed} ? $job->{delayed}->to_epoch : undef,
     error     => $job->{error},
     finished  => $job->{finished} ? $job->{finished}->to_epoch : undef,
