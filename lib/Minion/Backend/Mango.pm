@@ -41,7 +41,7 @@ sub enqueue {
     args    => $args,
     created => bson_time,
     delayed =>
-      bson_time($options->{delay} ? ((time + $options->{delay}) * 1000) : 1),
+      bson_time($options->{delay} ? (time + $options->{delay}) * 1000 : 1),
     priority => $options->{priority} // 0,
     state    => 'inactive',
     task     => $task
