@@ -18,9 +18,9 @@ app->minion->add_task(slow_log => sub {
 
 # Perform job in a background worker process
 get '/log' => sub {
-  my $self = shift;
-  $self->minion->enqueue(slow_log => [$self->param('msg') // 'no message']);
-  $self->render(text => 'Your message will be logged soon.');
+  my $c = shift;
+  $c->minion->enqueue(slow_log => [$c->param('msg') // 'no message']);
+  $c->render(text => 'Your message will be logged soon.');
 };
 
 app->start;

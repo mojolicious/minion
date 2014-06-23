@@ -36,20 +36,20 @@ app->minion->add_task(
 );
 
 get '/increment' => sub {
-  my $self = shift;
-  $self->minion->enqueue('increment');
-  $self->render(text => 'Incrementing soon!');
+  my $c = shift;
+  $c->minion->enqueue('increment');
+  $c->render(text => 'Incrementing soon!');
 };
 
 get '/non_blocking_increment' => sub {
-  my $self = shift;
-  $self->minion->enqueue(
-    increment => sub { $self->render(text => 'Incrementing soon too!') });
+  my $c = shift;
+  $c->minion->enqueue(
+    increment => sub { $c->render(text => 'Incrementing soon too!') });
 };
 
 get '/count' => sub {
-  my $self = shift;
-  $self->render(text => retrieve($results)->{count});
+  my $c = shift;
+  $c->render(text => retrieve($results)->{count});
 };
 
 my $t = Test::Mojo->new;
