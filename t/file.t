@@ -10,7 +10,6 @@ use Minion;
 use Mojo::IOLoop;
 use Storable qw(retrieve store);
 use Sys::Hostname 'hostname';
-use Time::HiRes 'usleep';
 
 # Clean up before start
 my $tmpdir = tempdir CLEANUP => 1;
@@ -356,20 +355,6 @@ is $job->id, $id, 'right id';
 $job->perform;
 is $job->info->{state}, 'failed', 'right state';
 is $job->info->{error}, "Intentional failure!\n", 'right error';
-$worker->unregister;
-
-# TERM
-my $forever = catfile $tmpdir, 'forever.data';
-$minion->add_task(
-  forever => sub { store {}, $forever; usleep 0.1 * 1000000 while 1 });
-$id  = $minion->enqueue('forever');
-$job = $worker->register->dequeue;
-is $job->id, $id, 'right id';
-$job->on(
-  spawn => sub { usleep 0.1 * 1000000 until -f $forever; kill 'TERM', pop });
-$job->perform;
-is $job->info->{state}, 'failed', 'right state';
-is $job->info->{error}, 'Received TERM signal', 'right error';
 $worker->unregister;
 
 # Exit

@@ -1,6 +1,6 @@
 
 0.28  2014-06-27
-  - Improved Minion::Job to stop gracefully after receiving a TERM signal.
+  - Added spawn event to Minion::Job.
 
 0.27  2014-06-21
   - Replaced delayed option with delay.
