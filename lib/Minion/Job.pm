@@ -38,12 +38,14 @@ sub _child {
 
   # Parent
   die "Can't fork: $!" unless defined(my $pid = fork);
-  return $pid if $pid;
+  $self->emit(spawn => $pid) and return $pid if $pid;
+
+  # Child
+  local $SIG{TERM} = sub { exit $self->fail('Received TERM signal') ? 0 : 1 };
 
   # Reset event loop
   Mojo::IOLoop->reset;
 
-  # Child
   my $task = $self->task;
   $self->app->log->debug(qq{Performing job "$task" (@{[$self->id]}:$$).});
   my $cb = $self->minion->tasks->{$task};
@@ -68,6 +70,15 @@ Minion::Job - Minion job
 =head1 DESCRIPTION
 
 L<Minion::Job> is a container for L<Minion> jobs.
+
+=head1 SIGNALS
+
+The L<Minion::Job> process in which this job is processed can be controlled at
+runtime with the following signals.
+
+=head2 TERM
+
+Fail job immediately.
 
 =head1 EVENTS
 
@@ -101,6 +112,21 @@ Emitted after this job transitioned to the C<finished> state.
     my $job = shift;
     my $id = $job->id;
     say "Job $id is finished.";
+  });
+
+=head2 spawn
+
+  $job->on(spawn => sub {
+    my ($job, $pid) = @_;
+    ...
+  });
+
+Emitted after a process has been spawned to process this job.
+
+  $job->on(spawn => sub {
+    my ($job, $pid) = @_;
+    my $id = $job->id;
+    say "Job $id running in process $pid";
   });
 
 =head1 ATTRIBUTES

@@ -10,6 +10,7 @@ use Minion;
 use Mojo::IOLoop;
 use Storable qw(retrieve store);
 use Sys::Hostname 'hostname';
+use Time::HiRes 'usleep';
 
 # Clean up before start
 my $tmpdir = tempdir CLEANUP => 1;
@@ -298,6 +299,7 @@ ok $job->finish, 'job finished';
 $worker->unregister;
 
 # Events
+$pid = $$;
 my ($failed, $finished) = (0, 0);
 $minion->on(
   worker => sub {
@@ -307,6 +309,7 @@ $minion->on(
         my ($worker, $job) = @_;
         $job->on(failed   => sub { $failed++ });
         $job->on(finished => sub { $finished++ });
+        $job->on(spawn    => sub { $pid = pop });
       }
     );
   }
@@ -318,9 +321,10 @@ $job = $worker->dequeue;
 is $failed,   0, 'failed event has not been emitted';
 is $finished, 0, 'finished event has not been emitted';
 $job->finish;
-$job->finish;
+$job->perform;
 is $failed,   0, 'failed event has not been emitted';
 is $finished, 1, 'finished event has been emitted once';
+isnt $pid, $$, 'new process id';
 $job = $worker->dequeue;
 my $err;
 $job->on(failed => sub { $err = pop });
@@ -352,6 +356,20 @@ is $job->id, $id, 'right id';
 $job->perform;
 is $job->info->{state}, 'failed', 'right state';
 is $job->info->{error}, "Intentional failure!\n", 'right error';
+$worker->unregister;
+
+# TERM
+my $forever = catfile $tmpdir, 'forever.data';
+$minion->add_task(
+  forever => sub { store {}, $forever; usleep 0.1 * 1000000 while 1 });
+$id  = $minion->enqueue('forever');
+$job = $worker->register->dequeue;
+is $job->id, $id, 'right id';
+$job->on(
+  spawn => sub { usleep 0.1 * 1000000 until -f $forever; kill 'TERM', pop });
+$job->perform;
+is $job->info->{state}, 'failed', 'right state';
+is $job->info->{error}, 'Received TERM signal', 'right error';
 $worker->unregister;
 
 # Exit
