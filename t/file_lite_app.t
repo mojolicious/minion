@@ -60,7 +60,7 @@ $t->app->minion->perform_jobs;
 $t->get_ok('/count')->status_is(200)->content_is('1');
 $t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
 $t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
-$t->app->minion->perform_jobs;
+Mojo::IOLoop->delay(sub { $t->app->minion->perform_jobs })->wait;
 $t->get_ok('/count')->status_is(200)->content_is('3');
 
 # Perform jobs automatically (non-blocking)
