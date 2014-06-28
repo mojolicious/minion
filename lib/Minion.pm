@@ -14,7 +14,7 @@ has 'backend';
 has remove_after => 864000;
 has tasks => sub { {} };
 
-our $VERSION = '0.28';
+our $VERSION = '0.29';
 
 sub add_task {
   my ($self, $name, $cb) = @_;

@@ -1,4 +1,6 @@
 
+0.29  2014-06-29
+
 0.28  2014-06-28
   - Added spawn event to Minion::Job.
 
