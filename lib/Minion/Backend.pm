@@ -18,11 +18,11 @@ sub register_worker {
   croak 'Method "register_worker" not implemented by subclass';
 }
 
-sub remove_job  { croak 'Method "remove_job" not implemented by subclass' }
-sub repair      { croak 'Method "repair" not implemented by subclass' }
-sub reset       { croak 'Method "reset" not implemented by subclass' }
-sub restart_job { croak 'Method "restart_job" not implemented by subclass' }
-sub stats       { croak 'Method "stats" not implemented by subclass' }
+sub remove_job { croak 'Method "remove_job" not implemented by subclass' }
+sub repair     { croak 'Method "repair" not implemented by subclass' }
+sub reset      { croak 'Method "reset" not implemented by subclass' }
+sub retry_job  { croak 'Method "retry_job" not implemented by subclass' }
+sub stats      { croak 'Method "stats" not implemented by subclass' }
 
 sub unregister_worker {
   croak 'Method "unregister_worker" not implemented by subclass';
@@ -54,7 +54,7 @@ Minion::Backend - Backend base class
   sub remove_job        {...}
   sub repair            {...}
   sub reset             {...}
-  sub restart_job       {...}
+  sub retry_job         {...}
   sub stats             {...}
   sub unregister_worker {...}
   sub worker_info       {...}
@@ -162,9 +162,9 @@ Repair worker registry and job queue. Meant to be overloaded in a subclass.
 
 Reset job queue. Meant to be overloaded in a subclass.
 
-=head2 restart_job
+=head2 retry_job
 
-  my $bool = $backend->restart_job($job_id);
+  my $bool = $backend->retry_job($job_id);
 
 Transition from C<failed> or C<finished> state back to C<inactive>. Meant to
 be overloaded in a subclass.

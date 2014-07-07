@@ -145,7 +145,7 @@ is $minion->stats->{finished_jobs}, 2, 'two finished jobs';
 $job = $worker->dequeue;
 ok $job->fail, 'job failed';
 is $minion->stats->{failed_jobs}, 1, 'one failed job';
-ok $job->restart, 'job restarted';
+ok $job->retry, 'job retried';
 is $minion->stats->{failed_jobs}, 0, 'no failed jobs';
 ok $worker->dequeue->finish, 'job finished';
 $worker->unregister;
@@ -159,22 +159,22 @@ is $stats->{inactive_jobs},    0, 'no inactive jobs';
 
 # List jobs
 $batch = $minion->backend->list_jobs(0, 10);
-ok $batch->[0]{id},       'has id';
-is $batch->[0]{task},     'fail', 'right task';
-is $batch->[0]{state},    'finished', 'right state';
-is $batch->[0]{restarts}, 1, 'job has been restarted';
-is $batch->[1]{task},     'fail', 'right task';
-is $batch->[1]{state},    'finished', 'right state';
-is $batch->[1]{restarts}, 0, 'job has not been restarted';
-is $batch->[2]{task},     'fail', 'right task';
-is $batch->[2]{state},    'finished', 'right state';
-is $batch->[2]{restarts}, 0, 'job has not been restarted';
+ok $batch->[0]{id},      'has id';
+is $batch->[0]{task},    'fail', 'right task';
+is $batch->[0]{state},   'finished', 'right state';
+is $batch->[0]{retries}, 1, 'job has been retried';
+is $batch->[1]{task},    'fail', 'right task';
+is $batch->[1]{state},   'finished', 'right state';
+is $batch->[1]{retries}, 0, 'job has not been retried';
+is $batch->[2]{task},    'fail', 'right task';
+is $batch->[2]{state},   'finished', 'right state';
+is $batch->[2]{retries}, 0, 'job has not been retried';
 ok !$batch->[3], 'no more results';
 $batch = $minion->backend->list_jobs(0, 1);
-is $batch->[0]{restarts}, 1, 'job has been restarted';
+is $batch->[0]{retries}, 1, 'job has been retried';
 ok !$batch->[1], 'no more results';
 $batch = $minion->backend->list_jobs(1, 1);
-is $batch->[0]{restarts}, 0, 'job has not been restarted';
+is $batch->[0]{retries}, 0, 'job has not been retried';
 ok !$batch->[1], 'no more results';
 
 # Enqueue, dequeue and perform
@@ -209,26 +209,26 @@ is_deeply $job->args, [2, 2], 'right arguments';
 is $job->info->{state}, 'finished', 'right state';
 is $job->task, 'add', 'right task';
 
-# Restart and remove
+# Retry and remove
 $id = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue;
-is $job->info->{restarts}, 0, 'job has not been restarted';
+is $job->info->{retries}, 0, 'job has not been retried';
 is $job->id, $id, 'right id';
 ok $job->finish, 'job finished';
 ok !$worker->dequeue, 'no more jobs';
 $job = $minion->job($id);
-ok !$job->info->{restarted}, 'no restarted timestamp';
-ok $job->restart, 'job restarted';
-like $job->info->{restarted}, qr/^[\d.]+$/, 'has restarted timestamp';
-is $job->info->{state},       'inactive',   'right state';
-is $job->info->{restarts},    1,            'job has been restarted once';
+ok !$job->info->{retried}, 'no retried timestamp';
+ok $job->retry, 'job retried';
+like $job->info->{retried}, qr/^[\d.]+$/, 'has retried timestamp';
+is $job->info->{state},     'inactive',   'right state';
+is $job->info->{retries},   1,            'job has been retried once';
 $job = $worker->dequeue;
-ok !$job->restart, 'job not restarted';
+ok !$job->retry, 'job not retried';
 is $job->id, $id, 'right id';
 ok !$job->remove, 'job has not been removed';
-ok $job->fail,    'job failed';
-ok $job->restart, 'job restarted';
-is $job->info->{restarts}, 2, 'job has been restarted twice';
+ok $job->fail,  'job failed';
+ok $job->retry, 'job retried';
+is $job->info->{retries}, 2, 'job has been retried twice';
 ok !$job->info->{finished}, 'no finished timestamp';
 ok !$job->info->{started},  'no started timestamp';
 ok !$job->info->{error},    'no error';
@@ -270,11 +270,11 @@ undef $guard;
 $job = $worker->dequeue;
 is $job->id, $id, 'right id';
 like $job->info->{delayed}, qr/^[\d.]+$/, 'has delayed timestamp';
-ok $job->finish,  'job finished';
-ok $job->restart, 'job restarted';
+ok $job->finish, 'job finished';
+ok $job->retry,  'job retried';
 ok $minion->job($id)->info->{delayed} < time, 'no delayed timestamp';
 ok $job->remove, 'job removed';
-ok !$job->restart, 'job not restarted';
+ok !$job->retry, 'job not retried';
 $worker->unregister;
 
 # Enqueue non-blocking

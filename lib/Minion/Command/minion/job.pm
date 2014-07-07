@@ -21,7 +21,7 @@ sub run {
     'L|limit=i'    => \(my $limit = 100),
     'p|priority=i' => sub { $options->{priority} = $_[1] },
     'r|remove'     => \my $remove,
-    'R|restart'    => \my $restart,
+    'R|retry'      => \my $retry,
     's|stats'      => \my $stats,
     'S|skip=i' => \(my $skip = 0),
     'w|workers' => \my $workers;
@@ -40,8 +40,8 @@ sub run {
   # Remove job
   return $job->remove ? 1 : die "Job is active.\n" if $remove;
 
-  # Restart job
-  return $job->restart ? 1 : die "Job is active.\n" if $restart;
+  # Retry job
+  return $job->retry ? 1 : die "Job is active.\n" if $retry;
 
   # Job info
   $self->_info($job);
@@ -52,8 +52,8 @@ sub _info {
 
   # Details
   my $info = $job->info;
-  my ($state, $priority, $restarts) = @$info{qw(state priority restarts)};
-  print $info->{task}, " ($state, p$priority, r$restarts)\n",
+  my ($state, $priority, $retries) = @$info{qw(state priority retries)};
+  print $info->{task}, " ($state, p$priority, r$retries)\n",
     dumper($info->{args});
   my $err = $info->{error};
   say chomp $err ? $err : $err if $err;
@@ -62,8 +62,8 @@ sub _info {
   say localtime($info->{created})->datetime, ' (created)';
   my $delayed = $info->{delayed};
   say localtime($delayed)->datetime, ' (delayed)' if $delayed > time;
-  my $restarted = $info->{restarted};
-  say localtime($restarted)->datetime, ' (restarted)' if $restarted;
+  my $retried = $info->{retried};
+  say localtime($retried)->datetime, ' (retried)' if $retried;
   my $started = $info->{started};
   say localtime($started)->datetime, ' (started)' if $started;
   my $finished = $info->{finished};
@@ -121,7 +121,7 @@ Minion::Command::minion::job - Minion job command
                               them, defaults to 100.
     -p, --priority <number>   Priority of new job, defaults to 0.
     -r, --remove              Remove job.
-    -R, --restart             Restart job.
+    -R, --retry               Retry job.
     -s, --stats               Show queue statistics.
     -S, --skip <number>       Number of jobs/workers to skip when listing
                               them, defaults to 0.

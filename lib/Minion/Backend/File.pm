@@ -46,7 +46,7 @@ sub enqueue {
     delayed => $options->{delay} ? (time + $options->{delay}) : 1,
     id      => bson_oid,
     priority => $options->{priority} // 0,
-    restarts => 0,
+    retries  => 0,
     state    => 'inactive',
     task     => $task
   };
@@ -124,7 +124,7 @@ sub repair {
 
 sub reset { shift->_guard->_spurt({}) }
 
-sub restart_job {
+sub retry_job {
   my ($self, $id) = @_;
 
   my $guard = $self->_guard->_write;
@@ -132,8 +132,8 @@ sub restart_job {
   return undef unless my $job = $guard->_jobs->{$id};
   return undef unless $job->{state} eq 'failed' || $job->{state} eq 'finished';
 
-  $job->{restarts} += 1;
-  @$job{qw(restarted state)} = (time, 'inactive');
+  $job->{retries} += 1;
+  @$job{qw(retried state)} = (time, 'inactive');
   delete $job->{$_} for qw(error finished result started worker);
   return 1;
 }
@@ -376,9 +376,9 @@ Repair worker registry and job queue.
 
 Reset job queue.
 
-=head2 restart_job
+=head2 retry_job
 
-  my $bool = $backend->restart_job($job_id);
+  my $bool = $backend->retry_job($job_id);
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
 

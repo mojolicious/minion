@@ -101,13 +101,13 @@ sub repair {
 
 sub reset { $_->options && $_->drop for $_[0]->workers, $_[0]->jobs }
 
-sub restart_job {
+sub retry_job {
   my ($self, $oid) = @_;
 
   my $query = {_id => $oid, state => {'$in' => [qw(failed finished)]}};
   my $update = {
-    '$inc' => {restarts  => 1},
-    '$set' => {restarted => bson_time, state => 'inactive'},
+    '$inc' => {retries => 1},
+    '$set' => {retried => bson_time, state => 'inactive'},
     '$unset' => {map { $_ => '' } qw(error finished result started worker)}
   };
 
@@ -136,15 +136,15 @@ sub _job_info {
 
   return undef unless my $job = shift;
   return {
-    args      => $job->{args},
-    created   => $job->{created} ? $job->{created}->to_epoch : undef,
-    delayed   => $job->{delayed} ? $job->{delayed}->to_epoch : undef,
-    error     => $job->{error},
-    finished  => $job->{finished} ? $job->{finished}->to_epoch : undef,
-    id        => $job->{_id},
-    priority  => $job->{priority},
-    restarted => $job->{restarted} ? $job->{restarted}->to_epoch : undef,
-    restarts => $job->{restarts} // 0,
+    args     => $job->{args},
+    created  => $job->{created} ? $job->{created}->to_epoch : undef,
+    delayed  => $job->{delayed} ? $job->{delayed}->to_epoch : undef,
+    error    => $job->{error},
+    finished => $job->{finished} ? $job->{finished}->to_epoch : undef,
+    id       => $job->{_id},
+    priority => $job->{priority},
+    retried  => $job->{retried} ? $job->{retried}->to_epoch : undef,
+    retries => $job->{retries} // 0,
     started => $job->{started} ? $job->{started}->to_epoch : undef,
     state   => $job->{state},
     task    => $job->{task}
@@ -325,9 +325,9 @@ Repair worker registry and job queue.
 
 Reset job queue.
 
-=head2 restart_job
+=head2 retry_job
 
-  my $bool = $backend->restart_job($job_id);
+  my $bool = $backend->retry_job($job_id);
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
 

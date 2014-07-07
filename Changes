@@ -1,5 +1,8 @@
 
-0.29  2014-06-29
+0.29  2014-07-07
+  - Renamed restart_job methods to retry_job in Minion::Backend,
+    Minion::Backend::File and Minion::Backend::Mango.
+  - Renamed restart method to retry in Minion::Job.
 
 0.28  2014-06-28
   - Added spawn event to Minion::Job.
