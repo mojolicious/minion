@@ -1,4 +1,6 @@
 
+0.30  2014-07-08
+
 0.29  2014-07-07
   - Renamed restart_job methods to retry_job in Minion::Backend,
     Minion::Backend::File and Minion::Backend::Mango.
