@@ -154,7 +154,8 @@ overloaded in a subclass.
 
   $backend->repair;
 
-Repair worker registry and job queue. Meant to be overloaded in a subclass.
+Repair worker registry and job queue if necessary. Meant to be overloaded in a
+subclass.
 
 =head2 reset
 

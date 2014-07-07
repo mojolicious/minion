@@ -3,6 +3,7 @@
   - Renamed restart_job methods to retry_job in Minion::Backend,
     Minion::Backend::File and Minion::Backend::Mango.
   - Renamed restart method to retry in Minion::Job.
+  - Improved worker command to repair in regular intervals.
 
 0.28  2014-06-28
   - Added spawn event to Minion::Job.

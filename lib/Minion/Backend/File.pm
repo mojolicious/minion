@@ -368,7 +368,7 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
 
   $backend->repair;
 
-Repair worker registry and job queue.
+Repair worker registry and job queue if necessary.
 
 =head2 reset
 

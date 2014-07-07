@@ -9,10 +9,23 @@ sub run {
 
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
 
-  my $worker = $self->app->minion->repair->worker->register;
+  my $app    = $self->app;
+  my $minion = $app->minion;
+  my $worker = $minion->worker->register;
   while (!$self->{finished}) {
-    if   (my $job = $worker->dequeue) { $job->perform }
-    else                              { sleep 5 }
+
+    # Repair in regular intervals
+    if (($self->{next} // 0) <= time) {
+      $self->{next} = time + $minion->remove_after;
+      $app->log->debug('Checking worker registry and job queue.')
+        and $minion->repair;
+    }
+
+    # Perform job
+    if (my $job = $worker->dequeue) { $job->perform }
+
+    # Wait for new jobs
+    else { sleep 5 }
   }
   $worker->unregister;
 }
