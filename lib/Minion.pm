@@ -117,7 +117,7 @@ Minion - Job queue
 
   # Build more sophisticated workers
   my $worker = $minion->repair->worker->register;
-  if (my $job = $worker->dequeue(2)) { $job->perform }
+  if (my $job = $worker->dequeue(3)) { $job->perform }
   $worker->unregister;
 
 =head1 DESCRIPTION

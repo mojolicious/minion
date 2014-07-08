@@ -23,10 +23,10 @@ sub dequeue {
   # Await notifications
   my $end = bson_time->to_epoch + $timeout;
   my $job;
-  $self->_await
-    until ($job = $self->_try($oid)) || bson_time->to_epoch >= $end;
+  do { $self->_await and $job = $self->_try($oid) }
+    while !$job && bson_time->to_epoch < $end;
 
-  return undef unless $self->_job_info($job);
+  return undef unless $self->_job_info($job ||= $self->_try($oid));
   return {args => $job->{args}, id => $job->{_id}, task => $job->{task}};
 }
 
@@ -173,7 +173,9 @@ sub _await {
   my $cursor
     = $self->notifications->find({_id => {'$gt' => $last}, c => 'created'})
     ->tailable(1)->await_data(1);
-  if (my $doc = $cursor->next || $cursor->next) { $self->{last} = $doc->{_id} }
+  return undef unless my $doc = $cursor->next || $cursor->next;
+  $self->{last} = $doc->{_id};
+  return 1;
 }
 
 sub _list {
