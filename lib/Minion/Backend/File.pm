@@ -166,12 +166,17 @@ sub _try {
 
   my $guard = $self->_guard;
 
+  # Make sure file has been updated
+  my $last = $self->{last};
+  my ($size, $mtime) = (stat $self->file)[7, 9];
+  return undef if $last && $last->[0] == $size && $last->[1] == $mtime;
+
   my @ready = grep { $_->{state} eq 'inactive' } values %{$guard->_jobs};
   my $now = time;
   @ready = grep { $_->{delayed} < $now } @ready;
   @ready = sort { $a->{created} <=> $b->{created} } @ready;
   @ready = sort { $b->{priority} <=> $a->{priority} } @ready;
-  return undef
+  return !($self->{last} = [$size, $mtime])
     unless my $job = first { $self->minion->tasks->{$_->{task}} } @ready;
 
   $guard->_write;
