@@ -22,7 +22,7 @@ sub run {
     }
 
     # Perform job
-    if (my $job = $worker->dequeue(3)) { $job->perform }
+    if (my $job = $worker->dequeue(5)) { $job->perform }
   }
   $worker->unregister;
 }
