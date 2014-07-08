@@ -36,6 +36,9 @@ sub enqueue {
   my $args    = shift // [];
   my $options = shift // {};
 
+  # Capped collection for notifications
+  $self->_notifications;
+
   my $doc = {
     args    => $args,
     created => bson_time,
@@ -45,9 +48,6 @@ sub enqueue {
     state    => 'inactive',
     task     => $task
   };
-
-  # Capped collection for notifications
-  $self->_notifications;
 
   # Non-blocking
   return Mojo::IOLoop->delay(
@@ -173,7 +173,7 @@ sub _await {
   my $cursor
     = $self->notifications->find({_id => {'$gt' => $last}, c => 'created'})
     ->tailable(1)->await_data(1);
-  if (my $n = $cursor->next || $cursor->next) { $self->{last} = $n->{_id} }
+  if (my $doc = $cursor->next || $cursor->next) { $self->{last} = $doc->{_id} }
 }
 
 sub _list {
