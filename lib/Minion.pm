@@ -62,7 +62,7 @@ sub new {
 sub perform_jobs {
   my $self   = shift;
   my $worker = $self->worker->register;
-  while (my $job = $worker->dequeue) { $job->perform }
+  while (my $job = $worker->dequeue(0)) { $job->perform }
   $worker->unregister;
 }
 
@@ -117,7 +117,7 @@ Minion - Job queue
 
   # Build more sophisticated workers
   my $worker = $minion->repair->worker->register;
-  if (my $job = $worker->dequeue) { $job->perform }
+  if (my $job = $worker->dequeue(2)) { $job->perform }
   $worker->unregister;
 
 =head1 DESCRIPTION

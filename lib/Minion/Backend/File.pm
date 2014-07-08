@@ -8,28 +8,16 @@ use Mango::BSON 'bson_oid';
 use Mojo::IOLoop;
 use Storable qw(freeze thaw);
 use Sys::Hostname 'hostname';
-use Time::HiRes 'time';
+use Time::HiRes qw(time usleep);
 
 has deserialize => sub { \&_deserialize };
 has 'file';
 has serialize => sub { \&_serialize };
 
 sub dequeue {
-  my ($self, $id) = @_;
-
-  my $guard = $self->_guard;
-
-  my @ready = grep { $_->{state} eq 'inactive' } values %{$guard->_jobs};
-  my $now = time;
-  @ready = grep { $_->{delayed} < $now } @ready;
-  @ready = sort { $a->{created} <=> $b->{created} } @ready;
-  @ready = sort { $b->{priority} <=> $a->{priority} } @ready;
-  return undef
-    unless my $job = first { $self->minion->tasks->{$_->{task}} } @ready;
-
-  $guard->_write;
-  @$job{qw(started state worker)} = (time, 'active', $id);
-  return $job;
+  my ($self, $id, $timeout) = @_;
+  usleep $timeout * 1000000 unless my $job = $self->_try($id);
+  return $job || $self->_try($id);
 }
 
 sub enqueue {
@@ -173,6 +161,24 @@ sub _serialize {
   return $compressed;
 }
 
+sub _try {
+  my ($self, $id) = @_;
+
+  my $guard = $self->_guard;
+
+  my @ready = grep { $_->{state} eq 'inactive' } values %{$guard->_jobs};
+  my $now = time;
+  @ready = grep { $_->{delayed} < $now } @ready;
+  @ready = sort { $a->{created} <=> $b->{created} } @ready;
+  @ready = sort { $b->{priority} <=> $a->{priority} } @ready;
+  return undef
+    unless my $job = first { $self->minion->tasks->{$_->{task}} } @ready;
+
+  $guard->_write;
+  @$job{qw(started state worker)} = (time, 'active', $id);
+  return $job;
+}
+
 sub _update {
   my ($self, $fail, $id, $err) = @_;
 
@@ -295,10 +301,10 @@ implements the following new ones.
 
 =head2 dequeue
 
-  my $info = $backend->dequeue($worker_id);
+  my $info = $backend->dequeue($worker_id, 0.5);
 
-Dequeue job and transition from C<inactive> to C<active> state or return
-C<undef> if queue was empty.
+Wait for job, dequeue it and transition from C<inactive> to C<active> state or
+return C<undef> if queue was empty.
 
 =head2 enqueue
 

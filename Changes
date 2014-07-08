@@ -1,5 +1,7 @@
 
 0.30  2014-07-08
+  - Added timeout argument to dequeue methods in Minion::Backend::File,
+    Minion::Backend::Mango and Minion::Worker.
 
 0.29  2014-07-07
   - Renamed restart_job methods to retry_job in Minion::Backend,

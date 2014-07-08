@@ -8,27 +8,28 @@ use Sys::Hostname 'hostname';
 
 has jobs => sub { $_[0]->mango->db->collection($_[0]->prefix . '.jobs') };
 has 'mango';
+has notifications =>
+  sub { $_[0]->mango->db->collection($_[0]->prefix . '.notifications') };
 has prefix => 'minion';
 has workers =>
   sub { $_[0]->mango->db->collection($_[0]->prefix . '.workers') };
 
 sub dequeue {
-  my ($self, $oid) = @_;
+  my ($self, $oid, $timeout) = @_;
 
-  my $doc = {
-    query => {
-      delayed => {'$lt' => bson_time},
-      state   => 'inactive',
-      task    => {'$in' => [keys %{$self->minion->tasks}]}
-    },
-    fields => {args     => 1, task => 1},
-    sort   => {priority => -1},
-    update =>
-      {'$set' => {started => bson_time, state => 'active', worker => $oid}},
-    new => 1
-  };
+  # Capped collection for notifications
+  $self->_notifications;
 
-  return $self->_job_info($self->jobs->find_and_modify($doc));
+  # Await notifications
+  my $job;
+  unless ($job = $self->_try($oid)) {
+    my $end = bson_time->to_epoch + $timeout;
+    $self->_await
+      until ($job = $self->_try($oid)) || bson_time->to_epoch >= $end;
+  }
+
+  return undef unless $self->_job_info($job);
+  return {args => $job->{args}, id => $job->{_id}, task => $job->{task}};
 }
 
 sub enqueue {
@@ -47,12 +48,28 @@ sub enqueue {
     task     => $task
   };
 
-  # Blocking
-  return $self->jobs->insert($doc) unless $cb;
+  # Capped collection for notifications
+  $self->_notifications;
 
   # Non-blocking
-  weaken $self;
-  $self->jobs->insert($doc => sub { shift; $self->$cb(@_) });
+  return Mojo::IOLoop->delay(
+    sub { $self->jobs->insert($doc => shift->begin) },
+    sub {
+      my ($delay, $err, $oid) = @_;
+      return $self->pass($oid, $err) if $err;
+      $delay->pass($oid);
+      $self->notifications->insert({c => 'created'} => $delay->begin);
+    },
+    sub {
+      my ($delay, $oid, $err) = @_;
+      $self->$cb($err, $oid);
+    }
+  ) if $cb;
+
+  # Blocking
+  my $oid = $self->jobs->insert($doc);
+  $self->notifications->insert({c => 'created'});
+  return $oid;
 }
 
 sub fail_job { shift->_update(1, @_) }
@@ -151,6 +168,16 @@ sub _job_info {
   };
 }
 
+sub _await {
+  my $self = shift;
+
+  my $last = $self->{last} //= bson_oid(0 x 24);
+  my $cursor
+    = $self->notifications->find({_id => {'$gt' => $last}, c => 'created'})
+    ->tailable(1)->await_data(1);
+  if (my $n = $cursor->next || $cursor->next) { $self->{last} = $n->{_id} }
+}
+
 sub _list {
   my ($self, $name, $field, $skip, $limit) = @_;
 
@@ -158,6 +185,36 @@ sub _list {
   $cursor->sort({_id => -1})->skip($skip)->limit($limit);
   my $sub = $name eq 'jobs' ? \&_job_info : \&_worker_info;
   return [map { $self->$sub($_) } @{$cursor->all}];
+}
+
+sub _notifications {
+  my $self = shift;
+
+  # We can only await data if there's a document in the collection
+  $self->{capped} ? return : $self->{capped}++;
+  my $notifications = $self->notifications;
+  return if $notifications->options;
+  $notifications->create({capped => \1, max => 8, size => 1048576});
+  $notifications->insert({});
+}
+
+sub _try {
+  my ($self, $oid) = @_;
+
+  my $doc = {
+    query => {
+      delayed => {'$lt' => bson_time},
+      state   => 'inactive',
+      task    => {'$in' => [keys %{$self->minion->tasks}]}
+    },
+    fields => {args     => 1, task => 1},
+    sort   => {priority => -1},
+    update =>
+      {'$set' => {started => bson_time, state => 'active', worker => $oid}},
+    new => 1
+  };
+
+  return $self->jobs->find_and_modify($doc);
 }
 
 sub _update {
@@ -222,6 +279,14 @@ L</"prefix">.
 
 L<Mango> object used to store collections.
 
+=head2 notifications
+
+  my $notifications = $backend->notifications;
+  $backend          = $backend->notifications(Mango::Collection->new);
+
+L<Mango::Collection> object for C<notifications> collection, defaults to one
+based on L</"prefix">.
+
 =head2 prefix
 
   my $prefix = $backend->prefix;
@@ -244,10 +309,10 @@ implements the following new ones.
 
 =head2 dequeue
 
-  my $info = $backend->dequeue($worker_id);
+  my $info = $backend->dequeue($worker_id, 0.5);
 
-Dequeue job and transition from C<inactive> to C<active> state or return
-C<undef> if queue was empty.
+Wait for job, dequeue it and transition from C<inactive> to C<active> state or
+return C<undef> if queue was empty.
 
 =head2 enqueue
 

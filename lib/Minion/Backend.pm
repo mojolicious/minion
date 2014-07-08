@@ -81,10 +81,10 @@ following new ones.
 
 =head2 dequeue
 
-  my $info = $backend->dequeue($worker_id);
+  my $info = $backend->dequeue($worker_id, 0.5);
 
-Dequeue job and transition from C<inactive> to C<active> state or return
-C<undef> if queue was empty. Meant to be overloaded in a subclass.
+Wait for job, dequeue it and transition from C<inactive> to C<active> state or
+return C<undef> if queue was empty. Meant to be overloaded in a subclass.
 
 =head2 enqueue
 

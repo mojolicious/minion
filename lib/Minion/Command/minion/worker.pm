@@ -22,10 +22,7 @@ sub run {
     }
 
     # Perform job
-    if (my $job = $worker->dequeue) { $job->perform }
-
-    # Wait for new jobs
-    else { sleep 5 }
+    if (my $job = $worker->dequeue(2)) { $job->perform }
   }
   $worker->unregister;
 }

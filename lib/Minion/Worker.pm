@@ -4,13 +4,13 @@ use Mojo::Base 'Mojo::EventEmitter';
 has [qw(id minion)];
 
 sub dequeue {
-  my $self = shift;
+  my ($self, $timeout) = @_;
 
   # Worker not registered
   return undef unless my $id = $self->id;
 
   my $minion = $self->minion;
-  return undef unless my $job = $minion->backend->dequeue($id);
+  return undef unless my $job = $minion->backend->dequeue($id, $timeout);
   $job = Minion::Job->new(
     args   => $job->{args},
     id     => $job->{id},
@@ -94,10 +94,10 @@ implements the following new ones.
 
 =head2 dequeue
 
-  my $job = $worker->dequeue;
+  my $job = $worker->dequeue(0.5);
 
-Dequeue L<Minion::Job> object and transition from C<inactive> to C<active>
-state or return C<undef> if queue was empty.
+Wait for job, dequeue L<Minion::Job> object and transition from C<inactive> to
+C<active> state or return C<undef> if queue was empty.
 
 =head2 info
 
