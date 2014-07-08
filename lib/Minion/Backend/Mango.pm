@@ -21,12 +21,10 @@ sub dequeue {
   $self->_notifications;
 
   # Await notifications
+  my $end = bson_time->to_epoch + $timeout;
   my $job;
-  unless ($job = $self->_try($oid)) {
-    my $end = bson_time->to_epoch + $timeout;
-    $self->_await
-      until ($job = $self->_try($oid)) || bson_time->to_epoch >= $end;
-  }
+  $self->_await
+    until ($job = $self->_try($oid)) || bson_time->to_epoch >= $end;
 
   return undef unless $self->_job_info($job);
   return {args => $job->{args}, id => $job->{_id}, task => $job->{task}};
