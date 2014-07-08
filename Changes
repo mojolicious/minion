@@ -1,7 +1,6 @@
 
 0.31  2014-07-09
-  - Reduced CPU usage of Minion::Backend::File and Minion::Backend::Mango when
-    waiting for new jobs.
+  - Reduced CPU usage of Minion::Backend::Mango when waiting for new jobs.
 
 0.30  2014-07-08
   - Added timeout argument to dequeue methods in Minion::Backend::File,
