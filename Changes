@@ -1,4 +1,6 @@
 
+0.32  2014-07-10
+
 0.31  2014-07-09
   - Reduced CPU usage of Minion::Backend::Mango when waiting for new jobs.
 
