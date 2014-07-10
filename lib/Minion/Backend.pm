@@ -101,6 +101,24 @@ perform operation non-blocking. Meant to be overloaded in a subclass.
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
+These options are currently available:
+
+=over 2
+
+=item delay
+
+  delay => 10
+
+Delay job for this many seconds from now.
+
+=item priority
+
+  priority => 5
+
+Job priority, defaults to C<0>.
+
+=back
+
 =head2 fail_job
 
   my $bool = $backend->fail_job($job_id);
@@ -126,10 +144,28 @@ be overloaded in a subclass.
 =head2 list_jobs
 
   my $batch = $backend->list_jobs($skip, $limit);
-  my $batch = $backend->list_jobs($skip, $limit, $state);
+  my $batch = $backend->list_jobs($skip, $limit, {state => 'inactive'});
 
 Returns the same information as L</"job_info"> but in batches. Meant to be
 overloaded in a subclass.
+
+These options are currently available:
+
+=over 2
+
+=item state
+
+  state => 'inactive'
+
+List only jobs in this state.
+
+=item task
+
+  task => 'test'
+
+List only jobs for this task.
+
+=back
 
 =head2 list_workers
 

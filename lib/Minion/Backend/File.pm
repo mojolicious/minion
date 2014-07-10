@@ -54,10 +54,13 @@ sub finish_job { shift->_update(0, @_) }
 sub job_info { shift->_guard->_jobs->{shift()} }
 
 sub list_jobs {
-  my ($self, $skip, $limit, $state) = @_;
+  my ($self, $skip, $limit, $options) = @_;
+
   my $guard = $self->_guard;
   my @jobs = sort { $b->{created} <=> $a->{created} } values %{$guard->_jobs};
-  @jobs = grep { $_->{state} eq $state } @jobs if $state;
+  @jobs = grep { $_->{state} eq $options->{state} } @jobs if $options->{state};
+  @jobs = grep { $_->{task} eq $options->{task} } @jobs   if $options->{task};
+
   return [grep {defined} @jobs[$skip .. ($skip + $limit - 1)]];
 }
 
@@ -322,6 +325,24 @@ perform operation non-blocking.
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
+These options are currently available:
+
+=over 2
+
+=item delay
+
+  delay => 10
+
+Delay job for this many seconds from now.
+
+=item priority
+
+  priority => 5
+
+Job priority, defaults to C<0>.
+
+=back
+
 =head2 fail_job
 
   my $bool = $backend->fail_job($job_id);
@@ -344,8 +365,27 @@ Get information about a job or return C<undef> if job does not exist.
 =head2 list_jobs
 
   my $batch = $backend->list_jobs($skip, $limit);
+  my $batch = $backend->list_jobs($skip, $limit, {state => 'inactive'});
 
 Returns the same information as L</"job_info"> but in batches.
+
+These options are currently available:
+
+=over 2
+
+=item state
+
+  state => 'inactive'
+
+List only jobs in this state.
+
+=item task
+
+  task => 'test'
+
+List only jobs for this task.
+
+=back
 
 =head2 list_workers
 

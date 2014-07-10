@@ -77,10 +77,13 @@ sub finish_job { shift->_update(0, @_) }
 sub job_info { $_[0]->_job_info($_[0]->jobs->find_one(bson_oid($_[1]))) }
 
 sub list_jobs {
-  my ($self, $skip, $limit, $state) = @_;
-  my $cursor
-    = $self->jobs->find({state => $state ? $state : {'$exists' => \1}});
+  my ($self, $skip, $limit, $options) = @_;
+
+  my $cursor = $self->jobs->find({state => {'$exists' => \1}});
+  $cursor->query->{state} = $options->{state} if $options->{state};
+  $cursor->query->{task}  = $options->{task}  if $options->{task};
   $cursor->sort({_id => -1})->skip($skip)->limit($limit);
+
   return [map { $self->_job_info($_) } @{$cursor->all}];
 }
 
@@ -332,6 +335,24 @@ perform operation non-blocking.
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
+These options are currently available:
+
+=over 2
+
+=item delay
+
+  delay => 10
+
+Delay job for this many seconds from now.
+
+=item priority
+
+  priority => 5
+
+Job priority, defaults to C<0>.
+
+=back
+
 =head2 fail_job
 
   my $bool = $backend->fail_job($job_id);
@@ -354,9 +375,27 @@ Get information about a job or return C<undef> if job does not exist.
 =head2 list_jobs
 
   my $batch = $backend->list_jobs($skip, $limit);
-  my $batch = $backend->list_jobs($skip, $limit, $state);
+  my $batch = $backend->list_jobs($skip, $limit, {state => 'inactive'});
 
 Returns the same information as L</"job_info"> but in batches.
+
+These options are currently available:
+
+=over 2
+
+=item state
+
+  state => 'inactive'
+
+List only jobs in this state.
+
+=item task
+
+  task => 'test'
+
+List only jobs for this task.
+
+=back
 
 =head2 list_workers
 
