@@ -1,4 +1,6 @@
 
+0.34  2014-07-11
+
 0.33  2014-07-10
   - Replaced state argument of list_jobs methods in Minion::Backend::File and
     Minion::Backend::Mango with more versatile options argument.
