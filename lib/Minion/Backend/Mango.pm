@@ -76,8 +76,20 @@ sub finish_job { shift->_update(0, @_) }
 
 sub job_info { $_[0]->_job_info($_[0]->jobs->find_one(bson_oid($_[1]))) }
 
-sub list_jobs    { shift->_list('jobs',    'state', @_) }
-sub list_workers { shift->_list('workers', 'pid',   @_) }
+sub list_jobs {
+  my ($self, $skip, $limit, $state) = @_;
+  my $cursor
+    = $self->jobs->find({state => $state ? $state : {'$exists' => \1}});
+  $cursor->sort({_id => -1})->skip($skip)->limit($limit);
+  return [map { $self->_job_info($_) } @{$cursor->all}];
+}
+
+sub list_workers {
+  my ($self, $skip, $limit) = @_;
+  my $cursor = $self->workers->find({pid => {'$exists' => \1}});
+  $cursor->sort({_id => -1})->skip($skip)->limit($limit);
+  return [map { $self->_worker_info($_) } @{$cursor->all}];
+}
 
 sub new { shift->SUPER::new(mango => Mango->new(@_)) }
 
@@ -176,16 +188,6 @@ sub _job_info {
     state   => $job->{state},
     task    => $job->{task}
   };
-}
-
-sub _list {
-  my ($self, $name, $field, $skip, $limit, $state) = @_;
-
-  my $cursor = $self->$name->find({$field => {'$exists' => \1}});
-  $cursor->query->{state} = $state if $state;
-  $cursor->sort({_id => -1})->skip($skip)->limit($limit);
-  my $sub = $name eq 'jobs' ? \&_job_info : \&_worker_info;
-  return [map { $self->$sub($_) } @{$cursor->all}];
 }
 
 sub _notifications {
