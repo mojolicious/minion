@@ -166,24 +166,35 @@ is $stats->{finished_jobs},    3, 'three finished jobs';
 is $stats->{inactive_jobs},    0, 'no inactive jobs';
 
 # List jobs
+$id = $minion->enqueue('fail');
 $batch = $minion->backend->list_jobs(0, 10);
 ok $batch->[0]{id},      'has id';
 is $batch->[0]{task},    'fail', 'right task';
-is $batch->[0]{state},   'finished', 'right state';
-is $batch->[0]{retries}, 1, 'job has been retried';
+is $batch->[0]{state},   'inactive', 'right state';
+is $batch->[0]{retries}, 0, 'job has not been retried';
 is $batch->[1]{task},    'fail', 'right task';
 is $batch->[1]{state},   'finished', 'right state';
-is $batch->[1]{retries}, 0, 'job has not been retried';
+is $batch->[1]{retries}, 1, 'job has been retried';
 is $batch->[2]{task},    'fail', 'right task';
 is $batch->[2]{state},   'finished', 'right state';
 is $batch->[2]{retries}, 0, 'job has not been retried';
-ok !$batch->[3], 'no more results';
+is $batch->[3]{task},    'fail', 'right task';
+is $batch->[3]{state},   'finished', 'right state';
+is $batch->[3]{retries}, 0, 'job has not been retried';
+ok !$batch->[4], 'no more results';
+$batch = $minion->backend->list_jobs(0, 10, 'inactive');
+is $batch->[0]{state},   'inactive', 'right state';
+is $batch->[0]{retries}, 0,          'job has not been retried';
+ok !$batch->[1], 'no more results';
 $batch = $minion->backend->list_jobs(0, 1);
-is $batch->[0]{retries}, 1, 'job has been retried';
+is $batch->[0]{state},   'inactive', 'right state';
+is $batch->[0]{retries}, 0,          'job has not been retried';
 ok !$batch->[1], 'no more results';
 $batch = $minion->backend->list_jobs(1, 1);
-is $batch->[0]{retries}, 0, 'job has not been retried';
+is $batch->[0]{state},   'finished', 'right state';
+is $batch->[0]{retries}, 1,          'job has been retried';
 ok !$batch->[1], 'no more results';
+ok $minion->job($id)->remove, 'job removed';
 
 # Enqueue, dequeue and perform
 is $minion->job(12345), undef, 'job does not exist';

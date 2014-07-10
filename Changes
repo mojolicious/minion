@@ -1,5 +1,8 @@
 
 0.32  2014-07-10
+  - Added state argument to list_jobs methods in Minion::Backend::File and
+    Minion::Backend::Mango.
+  - Added -T option to job command.
 
 0.31  2014-07-09
   - Reduced CPU usage of Minion::Backend::Mango when waiting for new jobs.

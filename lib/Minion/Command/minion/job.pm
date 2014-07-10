@@ -24,6 +24,7 @@ sub run {
     'R|retry'      => \my $retry,
     's|stats'      => \my $stats,
     'S|skip=i' => \(my $skip = 0),
+    'T|state=s' => \(my $state),
     'w|workers' => \my $workers;
   my $id = @args ? shift @args : undef;
 
@@ -34,7 +35,7 @@ sub run {
   # Show stats or list jobs/workers
   return $self->_stats if $stats;
   my $sub = $workers ? \&_list_workers : \&_list_jobs;
-  return $self->$sub($skip, $limit) unless $id;
+  return $self->$sub($skip, $limit, $state) unless $id;
   die "Job does not exist.\n" unless my $job = $self->app->minion->job($id);
 
   # Remove job
@@ -71,9 +72,9 @@ sub _info {
 }
 
 sub _list_jobs {
-  my ($self, $skip, $limit) = @_;
+  my ($self, $skip, $limit, $state) = @_;
   say sprintf '%s  %-8s  %s', @$_{qw(id state task)}
-    for @{$self->app->minion->backend->list_jobs($skip, $limit)};
+    for @{$self->app->minion->backend->list_jobs($skip, $limit, $state)};
 }
 
 sub _list_workers {
@@ -106,6 +107,7 @@ Minion::Command::minion::job - Minion job command
   Usage: APPLICATION minion job [ID]
 
     ./myapp.pl minion job
+    ./myapp.pl minion job -T inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -p 5
     ./myapp.pl minion job -s
@@ -125,6 +127,7 @@ Minion::Command::minion::job - Minion job command
     -s, --stats               Show queue statistics.
     -S, --skip <number>       Number of jobs/workers to skip when listing
                               them, defaults to 0.
+    -T, --state <state>       List only jobs in this state.
     -w, --workers             List workers instead of jobs.
 
 =head1 DESCRIPTION

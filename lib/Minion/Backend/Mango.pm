@@ -146,6 +146,18 @@ sub unregister_worker { shift->workers->remove(shift) }
 
 sub worker_info { $_[0]->_worker_info($_[0]->workers->find_one($_[1])) }
 
+sub _await {
+  my $self = shift;
+
+  my $last = $self->{last} //= bson_oid(0 x 24);
+  my $cursor
+    = $self->notifications->find({_id => {'$gt' => $last}, c => 'created'})
+    ->tailable(1)->await_data(1);
+  return undef unless my $doc = $cursor->next || $cursor->next;
+  $self->{last} = $doc->{_id};
+  return 1;
+}
+
 sub _job_info {
   my $self = shift;
 
@@ -166,22 +178,11 @@ sub _job_info {
   };
 }
 
-sub _await {
-  my $self = shift;
-
-  my $last = $self->{last} //= bson_oid(0 x 24);
-  my $cursor
-    = $self->notifications->find({_id => {'$gt' => $last}, c => 'created'})
-    ->tailable(1)->await_data(1);
-  return undef unless my $doc = $cursor->next || $cursor->next;
-  $self->{last} = $doc->{_id};
-  return 1;
-}
-
 sub _list {
-  my ($self, $name, $field, $skip, $limit) = @_;
+  my ($self, $name, $field, $skip, $limit, $state) = @_;
 
   my $cursor = $self->$name->find({$field => {'$exists' => \1}});
+  $cursor->query->{state} = $state if $state;
   $cursor->sort({_id => -1})->skip($skip)->limit($limit);
   my $sub = $name eq 'jobs' ? \&_job_info : \&_worker_info;
   return [map { $self->$sub($_) } @{$cursor->all}];
@@ -351,6 +352,7 @@ Get information about a job or return C<undef> if job does not exist.
 =head2 list_jobs
 
   my $batch = $backend->list_jobs($skip, $limit);
+  my $batch = $backend->list_jobs($skip, $limit, $state);
 
 Returns the same information as L</"job_info"> but in batches.
 

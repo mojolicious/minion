@@ -54,9 +54,10 @@ sub finish_job { shift->_update(0, @_) }
 sub job_info { shift->_guard->_jobs->{shift()} }
 
 sub list_jobs {
-  my ($self, $skip, $limit) = @_;
+  my ($self, $skip, $limit, $state) = @_;
   my $guard = $self->_guard;
   my @jobs = sort { $b->{created} <=> $a->{created} } values %{$guard->_jobs};
+  @jobs = grep { $_->{state} eq $state } @jobs if $state;
   return [grep {defined} @jobs[$skip .. ($skip + $limit - 1)]];
 }
 

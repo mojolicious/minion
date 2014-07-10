@@ -126,6 +126,7 @@ be overloaded in a subclass.
 =head2 list_jobs
 
   my $batch = $backend->list_jobs($skip, $limit);
+  my $batch = $backend->list_jobs($skip, $limit, $state);
 
 Returns the same information as L</"job_info"> but in batches. Meant to be
 overloaded in a subclass.
