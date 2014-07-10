@@ -1,4 +1,6 @@
 
+0.33  2014-07-11
+
 0.32  2014-07-10
   - Added state argument to list_jobs methods in Minion::Backend::File and
     Minion::Backend::Mango.
