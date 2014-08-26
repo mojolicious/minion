@@ -1,5 +1,6 @@
 
-0.34  2014-08-16
+0.34  2014-08-26
+  - Improved job command to show higher precision times.
 
 0.33  2014-07-10
   - Replaced state argument of list_jobs methods in Minion::Backend::File and

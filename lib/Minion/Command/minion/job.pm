@@ -2,9 +2,9 @@ package Minion::Command::minion::job;
 use Mojo::Base 'Mojolicious::Command';
 
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
+use Mojo::Date;
 use Mojo::JSON 'decode_json';
 use Mojo::Util 'dumper';
-use Time::Piece 'localtime';
 
 has description => 'Manage Minion jobs.';
 has usage => sub { shift->extract_usage };
@@ -61,15 +61,15 @@ sub _info {
   say chomp $err ? $err : $err if $err;
 
   # Timing
-  say localtime($info->{created})->datetime, ' (created)';
+  say Mojo::Date->new($info->{created})->to_datetime, ' (created)';
   my $delayed = $info->{delayed};
-  say localtime($delayed)->datetime, ' (delayed)' if $delayed > time;
+  say Mojo::Date->new($delayed)->to_datetime, ' (delayed)' if $delayed > time;
   my $retried = $info->{retried};
-  say localtime($retried)->datetime, ' (retried)' if $retried;
+  say Mojo::Date->new($retried)->to_datetime, ' (retried)' if $retried;
   my $started = $info->{started};
-  say localtime($started)->datetime, ' (started)' if $started;
+  say Mojo::Date->new($started)->to_datetime, ' (started)' if $started;
   my $finished = $info->{finished};
-  say localtime($finished)->datetime, ' (finished)' if $finished;
+  say Mojo::Date->new($finished)->to_datetime, ' (finished)' if $finished;
 }
 
 sub _list_jobs {
