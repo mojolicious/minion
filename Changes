@@ -1,5 +1,5 @@
 
-0.35  2014-08-27
+0.35  2014-09-06
 
 0.34  2014-08-26
   - Improved job command to show higher precision times.
@@ -56,7 +56,7 @@
   - Improved performance of repair methods.
 
 0.20  2014-06-13
-  - Added Minion::Backend::File.
+  - Added module Minion::Backend::File.
   - Improved Minion::Backend to provide a generic repair method.
 
 0.15  2014-06-04
@@ -81,7 +81,7 @@
     started and state methods from Minion::Job.
   - Removed started method from Minion::Worker.
   - Added support for pluggable backends.
-  - Added Minion::Backend and Minion::Backend::Mango.
+  - Added modules Minion::Backend and Minion::Backend::Mango.
   - Added backend attribute to Minion.
   - Added reset method to Minion.
   - Added info method to Minion::Job.
@@ -113,7 +113,7 @@
 0.04  2014-04-02
   - Removed all_jobs and one_job methods from Minion::Job.
   - Removed repair method from Minion::Worker;
-  - Added Minion::Command::minion::job.
+  - Added module Minion::Command::minion::job.
   - Added auto_perform attribute to Minion.
   - Added repair method to Minion.
   - Added created, error, finished, remove, restart, restarts and started
