@@ -1,5 +1,6 @@
 
 0.35  2014-09-06
+  - Improved Minion::Backend::File to write less often.
 
 0.34  2014-08-26
   - Improved job command to show higher precision times.

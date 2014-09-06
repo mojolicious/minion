@@ -26,8 +26,6 @@ sub enqueue {
   my $args    = shift // [];
   my $options = shift // {};
 
-  my $guard = $self->_guard->_write;
-
   my $job = {
     args    => $args,
     created => time,
@@ -38,6 +36,8 @@ sub enqueue {
     state    => 'inactive',
     task     => $task
   };
+
+  my $guard = $self->_guard->_write;
 
   # Blocking
   $guard->_jobs->{$job->{id}} = $job;
@@ -83,11 +83,12 @@ sub register_worker {
 sub remove_job {
   my ($self, $id) = @_;
 
-  my $guard = $self->_guard->_write;
+  my $guard = $self->_guard;
   return undef unless my $job = $guard->_jobs->{$id};
   return undef
     unless grep { $job->{state} eq $_ } qw(failed finished inactive);
-  return !!delete $guard->_jobs->{$id};
+
+  return !!delete $guard->_write->_jobs->{$id};
 }
 
 sub repair {
@@ -119,11 +120,11 @@ sub reset { shift->_guard->_spurt({}) }
 sub retry_job {
   my ($self, $id) = @_;
 
-  my $guard = $self->_guard->_write;
-
+  my $guard = $self->_guard;
   return undef unless my $job = $guard->_jobs->{$id};
   return undef unless $job->{state} eq 'failed' || $job->{state} eq 'finished';
 
+  $guard->_write;
   $job->{retries} += 1;
   @$job{qw(retried state)} = (time, 'inactive');
   delete $job->{$_} for qw(error finished result started worker);
@@ -134,8 +135,7 @@ sub stats {
   my $self = shift;
 
   my $guard = $self->_guard;
-
-  my @jobs = values %{$guard->_jobs};
+  my @jobs  = values %{$guard->_jobs};
   my %seen;
   my $active
     = grep { $_->{state} eq 'active' && !$seen{$_->{worker}}++ } @jobs;
@@ -169,9 +169,8 @@ sub _try {
   my ($self, $id) = @_;
 
   my $guard = $self->_guard;
-
   my @ready = grep { $_->{state} eq 'inactive' } values %{$guard->_jobs};
-  my $now = time;
+  my $now   = time;
   @ready = grep { $_->{delayed} < $now } @ready;
   @ready = sort { $a->{created} <=> $b->{created} } @ready;
   @ready = sort { $b->{priority} <=> $a->{priority} } @ready;
@@ -186,11 +185,11 @@ sub _try {
 sub _update {
   my ($self, $fail, $id, $err) = @_;
 
-  my $guard = $self->_guard->_write;
-
+  my $guard = $self->_guard;
   return undef unless my $job = $guard->_jobs->{$id};
   return undef unless $job->{state} eq 'active';
 
+  $guard->_write;
   $job->{finished} = time;
   $job->{state}    = $fail ? 'failed' : 'finished';
   $job->{error}    = $err if $err;
