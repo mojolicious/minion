@@ -18,7 +18,8 @@ WriteMakefile(
       license     => 'http://www.opensource.org/licenses/artistic-license-2.0',
       MailingList => 'http://groups.google.com/group/mojolicious',
       repository  => 'http://github.com/kraih/minion',
-      bugtracker  => 'http://github.com/kraih/minion/issues'
+      bugtracker  => 'http://github.com/kraih/minion/issues',
+      x_IRC       => 'irc://irc.perl.org/#mojo'
     },
     no_index => {directory => ['t']}
   },
