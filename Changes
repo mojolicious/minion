@@ -1,5 +1,7 @@
 
-0.36  2014-09-07
+0.36  2014-09-21
+  - Updated Makefile.PL for version 2 of the CPAN distribution metadata
+    specification.
 
 0.35  2014-09-06
   - Improved Minion::Backend::File to write less often.
