@@ -1,5 +1,7 @@
 
-0.38  2014-09-23
+0.38  2014-10-04
+  - Removed support for non-blocking enqueue.
+  - Removed Minion::Backend::Mango.
 
 0.37  2014-09-22
   - Fixed packaging bug.

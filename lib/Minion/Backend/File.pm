@@ -4,8 +4,6 @@ use Mojo::Base 'Minion::Backend';
 use IO::Compress::Gzip 'gzip';
 use IO::Uncompress::Gunzip 'gunzip';
 use List::Util 'first';
-use Mango::BSON 'bson_oid';
-use Mojo::IOLoop;
 use Storable qw(freeze thaw);
 use Sys::Hostname 'hostname';
 use Time::HiRes qw(time usleep);
@@ -22,29 +20,24 @@ sub dequeue {
 
 sub enqueue {
   my ($self, $task) = (shift, shift);
-  my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
   my $args    = shift // [];
   my $options = shift // {};
+
+  my $guard = $self->_guard->_write;
 
   my $job = {
     args    => $args,
     created => time,
     delayed => $options->{delay} ? (time + $options->{delay}) : 1,
-    id      => bson_oid,
+    id      => $guard->_id,
     priority => $options->{priority} // 0,
     retries  => 0,
     state    => 'inactive',
     task     => $task
   };
-
-  my $guard = $self->_guard->_write;
-
-  # Blocking
   $guard->_jobs->{$job->{id}} = $job;
-  return $job->{id} unless $cb;
 
-  # Non-blocking
-  Mojo::IOLoop->next_tick(sub { $self->$cb(undef, $job->{id}) });
+  return $job->{id};
 }
 
 sub fail_job { shift->_update(1, @_) }
@@ -75,8 +68,10 @@ sub list_workers {
 sub new { shift->SUPER::new(file => shift) }
 
 sub register_worker {
-  my $worker = {host => hostname, id => bson_oid, pid => $$, started => time};
-  shift->_guard->_write->_workers->{$worker->{id}} = $worker;
+  my $guard = shift->_guard->_write;
+  my $worker
+    = {host => hostname, id => $guard->_id, pid => $$, started => time};
+  $guard->_workers->{$worker->{id}} = $worker;
   return $worker->{id};
 }
 
@@ -210,7 +205,7 @@ package Minion::Backend::File::_Guard;
 use Mojo::Base -base;
 
 use Fcntl ':flock';
-use Mojo::Util qw(slurp spurt);
+use Mojo::Util qw(md5_sum slurp spurt);
 
 sub DESTROY {
   my $self = shift;
@@ -227,6 +222,14 @@ sub new {
 }
 
 sub _data { $_[0]{data} //= $_[0]->_slurp }
+
+sub _id {
+  my $self = shift;
+  my $id;
+  do { $id = md5_sum(time . rand 999) }
+    while $self->_workers->{$id} || $self->_jobs->{$id};
+  return $id;
+}
 
 sub _jobs { shift->_data->{jobs} //= {} }
 
@@ -315,14 +318,7 @@ return C<undef> if queue was empty.
   my $job_id = $backend->enqueue(foo => [@args]);
   my $job_id = $backend->enqueue(foo => [@args] => {priority => 1});
 
-Enqueue a new job with C<inactive> state. You can also append a callback to
-perform operation non-blocking.
-
-  $backend->enqueue(foo => sub {
-    my ($backend, $err, $job_id) = @_;
-    ...
-  });
-  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+Enqueue a new job with C<inactive> state.
 
 These options are currently available:
 

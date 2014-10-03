@@ -92,14 +92,8 @@ return C<undef> if queue was empty. Meant to be overloaded in a subclass.
   my $job_id = $backend->enqueue(foo => [@args]);
   my $job_id = $backend->enqueue(foo => [@args] => {priority => 1});
 
-Enqueue a new job with C<inactive> state. You can also append a callback to
-perform operation non-blocking. Meant to be overloaded in a subclass.
-
-  $backend->enqueue(foo => sub {
-    my ($backend, $err, $job_id) = @_;
-    ...
-  });
-  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+Enqueue a new job with C<inactive> state. Meant to be overloaded in a
+subclass.
 
 These options are currently available:
 

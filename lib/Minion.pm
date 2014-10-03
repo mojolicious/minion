@@ -22,17 +22,7 @@ sub add_task {
   return $self;
 }
 
-sub enqueue {
-  my $self = shift;
-  my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
-
-  # Blocking
-  return $self->backend->enqueue(@_) unless $cb;
-
-  # Non-blocking
-  weaken $self;
-  $self->backend->enqueue(@_ => sub { shift; $self->$cb(@_) });
-}
+sub enqueue { shift->backend->enqueue(@_) }
 
 sub job {
   my ($self, $id) = @_;
@@ -98,7 +88,6 @@ Minion - Job queue
 
   # Connect to backend
   my $minion = Minion->new(File  => '/Users/sri/minion.data');
-  my $minion = Minion->new(Mango => 'mongodb://localhost:27017');
 
   # Add tasks
   $minion->add_task(something_slow => sub {
@@ -179,8 +168,7 @@ Application for job queue, defaults to a L<Mojo::HelloWorld> object.
   my $backend = $minion->backend;
   $minion     = $minion->backend(Minion::Backend::File->new);
 
-Backend, usually a L<Minion::Backend::File> or L<Minion::Backend::Mango>
-object.
+Backend, usually a L<Minion::Backend::File> object.
 
 =head2 remove_after
 
@@ -215,14 +203,7 @@ Register a new task.
   my $id = $minion->enqueue(foo => [@args]);
   my $id = $minion->enqueue(foo => [@args] => {priority => 1});
 
-Enqueue a new job with C<inactive> state. You can also append a callback to
-perform operation non-blocking.
-
-  $minion->enqueue(foo => sub {
-    my ($minion, $err, $id) = @_;
-    ...
-  });
-  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+Enqueue a new job with C<inactive> state.
 
 These options are currently available:
 

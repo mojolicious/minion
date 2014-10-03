@@ -7,7 +7,6 @@ use Test::More;
 use File::Spec::Functions 'catfile';
 use File::Temp 'tempdir';
 use Minion;
-use Mojo::IOLoop;
 use Storable qw(retrieve store);
 use Sys::Hostname 'hostname';
 use Time::HiRes 'time';
@@ -298,26 +297,6 @@ ok $job->retry,  'job retried';
 ok $minion->job($id)->info->{delayed} < time, 'no delayed timestamp';
 ok $job->remove, 'job removed';
 ok !$job->retry, 'job not retried';
-$worker->unregister;
-
-# Enqueue non-blocking
-my ($fail, $result) = @_;
-$minion->enqueue(
-  add => [23] => {priority => 1} => sub {
-    my ($minion, $err, $id) = @_;
-    $fail   = $err;
-    $result = $id;
-    Mojo::IOLoop->stop;
-  }
-);
-Mojo::IOLoop->start;
-ok !$fail, 'no error';
-$worker = $minion->worker->register;
-$job    = $worker->dequeue(0);
-is $job->id, $result, 'right id';
-is_deeply $job->args, [23], 'right arguments';
-is $job->info->{priority}, 1, 'right priority';
-ok $job->finish, 'job finished';
 $worker->unregister;
 
 # Events

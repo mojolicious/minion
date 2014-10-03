@@ -5,6 +5,7 @@ BEGIN { $ENV{MOJO_REACTOR} = 'Mojo::Reactor::Poll' }
 use Test::More;
 use File::Spec::Functions 'catfile';
 use File::Temp 'tempdir';
+use Mojo::IOLoop;
 use Mojolicious::Lite;
 use Storable qw(store retrieve);
 use Test::Mojo;
@@ -41,12 +42,6 @@ get '/increment' => sub {
   $c->render(text => 'Incrementing soon!');
 };
 
-get '/non_blocking_increment' => sub {
-  my $c = shift;
-  $c->minion->enqueue(
-    increment => sub { $c->render(text => 'Incrementing soon too!') });
-};
-
 get '/count' => sub {
   my $c = shift;
   $c->render(text => retrieve($results)->{count});
@@ -62,15 +57,5 @@ $t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
 $t->get_ok('/increment')->status_is(200)->content_is('Incrementing soon!');
 Mojo::IOLoop->delay(sub { $t->app->minion->perform_jobs })->wait;
 $t->get_ok('/count')->status_is(200)->content_is('3');
-
-# Perform jobs automatically (non-blocking)
-$t->get_ok('/non_blocking_increment')->status_is(200)
-  ->content_is('Incrementing soon too!');
-$t->app->minion->perform_jobs;
-$t->get_ok('/count')->status_is(200)->content_is('4');
-$t->get_ok('/non_blocking_increment')->status_is(200)
-  ->content_is('Incrementing soon too!');
-$t->app->minion->perform_jobs;
-$t->get_ok('/count')->status_is(200)->content_is('5');
 
 done_testing();
