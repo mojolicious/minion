@@ -128,10 +128,6 @@ L<Minion::Command::minion::job>.
 Note that this whole distribution is EXPERIMENTAL and will change without
 warning!
 
-Most of the API is not changing much anymore, but you should wait for a stable
-1.0 release before using any of the modules in this distribution in a
-production environment.
-
 =head1 EVENTS
 
 L<Minion> inherits all events from L<Mojo::EventEmitter> and can emit the
