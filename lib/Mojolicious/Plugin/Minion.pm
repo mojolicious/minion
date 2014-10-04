@@ -37,7 +37,7 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
     $job->app->log->debug(qq{Received message "$msg".});
   });
 
-  # Start jobs from anywhere in your application (data gets BSON serialized)
+  # Start jobs from anywhere in your application
   $c->minion->enqueue(slow_log => ['test 123']);
 
   # Perform jobs in your tests

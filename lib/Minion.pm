@@ -199,7 +199,8 @@ Register a new task.
   my $id = $minion->enqueue(foo => [@args]);
   my $id = $minion->enqueue(foo => [@args] => {priority => 1});
 
-Enqueue a new job with C<inactive> state.
+Enqueue a new job with C<inactive> state. Arguments get serialized, so you
+shouldn't send objects.
 
 These options are currently available:
 

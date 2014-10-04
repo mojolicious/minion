@@ -113,8 +113,8 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -p 5
     ./myapp.pl minion job -s
     ./myapp.pl minion job -w -L 5
-    ./myapp.pl minion job 533b4e2b5867b4c72b0a0000
-    ./myapp.pl minion job 533b4e2b5867b4c72b0a0000 -r
+    ./myapp.pl minion job acbd18db4cc2f85cedef654fccc4a4d8
+    ./myapp.pl minion job acbd18db4cc2f85cedef654fccc4a4d8 -r
 
   Options:
     -a, --args <JSON array>   Arguments for new job in JSON format.
