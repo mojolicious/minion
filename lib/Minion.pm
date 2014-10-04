@@ -111,8 +111,8 @@ Minion - Job queue
 
 =head1 DESCRIPTION
 
-L<Minion> is a job queue for the L<Mojolicious> real-time web framework with
-support for multiple backends.
+L<Minion> is a job queue for the L<Mojolicious|http://mojolicio.us> real-time
+web framework with support for multiple backends.
 
 Background worker processes are usually started with the command
 L<Minion::Command::minion::worker>, which becomes automatically available when

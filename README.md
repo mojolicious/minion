@@ -6,19 +6,19 @@
 
 ```perl
 use Mojolicious::Lite;
+use 5.20.0;
+use experimental 'signatures';
 
 plugin Minion => {File => '/Users/sri/minion.data'};
 
 # Slow task
-app->minion->add_task(slow_log => sub {
-  my ($job, $msg) = @_;
+app->minion->add_task(slow_log => sub ($job, $msg) {
   sleep 5;
   $job->app->log->debug(qq{Received message "$msg".});
 });
 
 # Perform job in a background worker process
-get '/log' => sub {
-  my $c = shift;
+get '/log' => sub ($c) {
   $c->minion->enqueue(slow_log => [$c->param('msg') // 'no message']);
   $c->render(text => 'Your message will be logged soon.');
 };
