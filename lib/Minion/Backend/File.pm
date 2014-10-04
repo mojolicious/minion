@@ -86,11 +86,13 @@ sub register_worker {
 sub remove_job {
   my ($self, $id) = @_;
 
-  return undef unless my $job = $self->_jobs->{$id};
-  return undef
-    unless grep { $job->{state} eq $_ } qw(failed finished inactive);
+  my $db = $self->db;
+  $db->lock_exclusive;
+  delete $self->_jobs->{$id}
+    if my $removed = !!$self->_job($id, 'failed', 'finished', 'inactive');
+  $db->unlock;
 
-  return !!delete $self->_jobs->{$id};
+  return $removed;
 }
 
 sub repair {
@@ -124,33 +126,36 @@ sub reset { shift->db->clear }
 sub retry_job {
   my ($self, $id) = @_;
 
-  return undef unless my $job = $self->_jobs->{$id};
-  return undef unless $job->{state} eq 'failed' || $job->{state} eq 'finished';
-
   my $db = $self->db;
   $db->lock_exclusive;
-  $job->{retries} += 1;
-  @$job{qw(retried state)} = (time, 'inactive');
-  delete $job->{$_} for qw(error finished result started worker);
+  my $job = $self->_job($id, 'failed', 'finished');
+  if ($job) {
+    $job->{retries} += 1;
+    @$job{qw(retried state)} = (time, 'inactive');
+    delete $job->{$_} for qw(error finished result started worker);
+  }
   $db->unlock;
 
-  return 1;
+  return !!$job;
 }
 
 sub stats {
   my $self = shift;
 
-  my @jobs = values %{$self->_jobs};
-  my %seen;
-  my $active
-    = grep { $_->{state} eq 'active' && !$seen{$_->{worker}}++ } @jobs;
+  my (%seen, %states);
+  my $active = grep {
+         ++$states{$_->{state}}
+      && $_->{state} eq 'active'
+      && !$seen{$_->{worker}}++
+  } values %{$self->_jobs};
+
   return {
     active_workers   => $active,
-    inactive_workers => values(%{$self->_workers}) - $active,
-    active_jobs      => scalar(grep { $_->{state} eq 'active' } @jobs),
-    inactive_jobs    => scalar(grep { $_->{state} eq 'inactive' } @jobs),
-    failed_jobs      => scalar(grep { $_->{state} eq 'failed' } @jobs),
-    finished_jobs    => scalar(grep { $_->{state} eq 'finished' } @jobs),
+    inactive_workers => keys(%{$self->_workers}) - $active,
+    active_jobs      => $states{active} || 0,
+    inactive_jobs    => $states{inactive} || 0,
+    failed_jobs      => $states{failed} || 0,
+    finished_jobs    => $states{finished} || 0,
   };
 }
 
@@ -164,6 +169,12 @@ sub _id {
   do { $id = md5_sum(time . rand 999) }
     while $self->_workers->{$id} || $self->_jobs->{$id};
   return $id;
+}
+
+sub _job {
+  my ($self, $id) = (shift, shift);
+  return undef unless my $job = $self->_jobs->{$id};
+  return grep({ $job->{state} eq $_ } @_) ? $job : undef;
 }
 
 sub _jobs { shift->db->{jobs} //= {} }
@@ -188,28 +199,26 @@ sub _try {
 sub _update {
   my ($self, $fail, $id, $err) = @_;
 
-  return undef unless my $job = $self->_jobs->{$id};
-  return undef unless $job->{state} eq 'active';
-
   my $db = $self->db;
   $db->lock_exclusive;
-  $job->{finished} = time;
-  $job->{state}    = $fail ? 'failed' : 'finished';
-  $job->{error}    = $err if $err;
+  my $job = $self->_job($id, 'active');
+  if ($job) {
+    $job->{finished} = time;
+    $job->{state}    = $fail ? 'failed' : 'finished';
+    $job->{error}    = $err if $err;
+  }
   $db->unlock;
 
-  return 1;
+  return !!$job;
 }
 
 sub _worker_info {
   my ($self, $id) = @_;
 
   return undef unless $id && (my $worker = $self->_workers->{$id});
-  my @jobs = values %{$self->_jobs};
-  return {
-    %{$worker->export},
-    jobs => [map { $_->{id} } grep { $_->{worker} eq $id } @jobs]
-  };
+  my @jobs
+    = map { $_->{id} } grep { $_->{worker} eq $id } values %{$self->_jobs};
+  return {%{$worker->export}, jobs => \@jobs};
 }
 
 sub _workers { shift->db->{workers} //= {} }
