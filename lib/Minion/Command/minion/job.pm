@@ -19,11 +19,11 @@ sub run {
     'd|delay=i'    => \$options->{delay},
     'e|enqueue=s'  => \my $enqueue,
     'L|limit=i'    => \(my $limit = 100),
+    'o|offset=i'   => \(my $offset = 0),
     'p|priority=i' => \$options->{priority},
     'r|remove'     => \my $remove,
     'R|retry'      => \my $retry,
     's|stats'      => \my $stats,
-    'S|skip=i'     => \(my $skip = 0),
     't|task=s'     => \$options->{task},
     'T|state=s'    => \$options->{state},
     'w|workers'    => \my $workers;
@@ -36,7 +36,7 @@ sub run {
   # Show stats or list jobs/workers
   return $self->_stats if $stats;
   my $sub = $workers ? \&_list_workers : \&_list_jobs;
-  return $self->$sub($skip, $limit, $options) unless $id;
+  return $self->$sub($offset, $limit, $options) unless $id;
   die "Job does not exist.\n" unless my $job = $self->app->minion->job($id);
 
   # Remove job
@@ -73,16 +73,16 @@ sub _info {
 }
 
 sub _list_jobs {
-  my ($self, $skip, $limit, $options) = @_;
+  my ($self, $offset, $limit, $options) = @_;
   say sprintf '%s  %-8s  %s', @$_{qw(id state task)}
-    for @{$self->app->minion->backend->list_jobs($skip, $limit, $options)};
+    for @{$self->app->minion->backend->list_jobs($offset, $limit, $options)};
 }
 
 sub _list_workers {
-  my ($self, $skip, $limit) = @_;
+  my ($self, $offset, $limit) = @_;
   say sprintf '%s  %-8s  %s', $_->{id}, @{$_->{jobs}} ? 'active' : 'inactive',
     "$_->{host}:$_->{pid}"
-    for @{$self->app->minion->backend->list_workers($skip, $limit)};
+    for @{$self->app->minion->backend->list_workers($offset, $limit)};
 }
 
 sub _stats {
@@ -122,12 +122,12 @@ Minion::Command::minion::job - Minion job command
     -e, --enqueue <name>      New job to be enqueued.
     -L, --limit <number>      Number of jobs/workers to show when listing
                               them, defaults to 100.
+    -o, --offset <number>     Number of jobs/workers to skip when listing
+                              them, defaults to 0.
     -p, --priority <number>   Priority of new job, defaults to 0.
     -r, --remove              Remove job.
     -R, --retry               Retry job.
     -s, --stats               Show queue statistics.
-    -S, --skip <number>       Number of jobs/workers to skip when listing
-                              them, defaults to 0.
     -t, --task <name>         List only jobs for this task.
     -T, --state <state>       List only jobs in this state.
     -w, --workers             List workers instead of jobs.

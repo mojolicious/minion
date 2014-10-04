@@ -137,8 +137,8 @@ be overloaded in a subclass.
 
 =head2 list_jobs
 
-  my $batch = $backend->list_jobs($skip, $limit);
-  my $batch = $backend->list_jobs($skip, $limit, {state => 'inactive'});
+  my $batch = $backend->list_jobs($offset, $limit);
+  my $batch = $backend->list_jobs($offset, $limit, {state => 'inactive'});
 
 Returns the same information as L</"job_info"> but in batches. Meant to be
 overloaded in a subclass.
@@ -163,7 +163,7 @@ List only jobs for this task.
 
 =head2 list_workers
 
-  my $batch = $backend->list_workers($skip, $limit);
+  my $batch = $backend->list_workers($offset, $limit);
 
 Returns the same information as L</"worker_info"> but in batches. Meant to be
 overloaded in a subclass.

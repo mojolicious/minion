@@ -7,13 +7,12 @@ use Test::More;
 use File::Spec::Functions 'catfile';
 use File::Temp 'tempdir';
 use Minion;
-use Storable qw(retrieve store);
 use Sys::Hostname 'hostname';
 use Time::HiRes 'time';
 
 # Clean up before start
 my $tmpdir = tempdir CLEANUP => 1;
-my $file = catfile $tmpdir, 'minion.data';
+my $file = catfile $tmpdir, 'minion.db';
 my $minion = Minion->new(File => $file);
 $minion->reset;
 
@@ -40,13 +39,11 @@ is $worker2->info->{jobs}[0], $job->id, 'right id';
 $id = $worker2->id;
 undef $worker2;
 is $job->info->{state}, 'active', 'job is still active';
-my $guard = $minion->backend->_guard->_write;
-my $info  = $guard->_workers->{$id};
+my $info = $minion->backend->db->{workers}->{$id};
 ok $info, 'is registered';
 my $pid = 4000;
 $pid++ while kill 0, $pid;
 $info->{pid} = $pid;
-undef $guard;
 $minion->repair;
 ok !$minion->worker->id($id)->info, 'not registered';
 is $job->info->{state}, 'failed',           'job is no longer active';
@@ -68,10 +65,8 @@ $id = $minion->enqueue('test');
 my $id2 = $minion->enqueue('test');
 my $id3 = $minion->enqueue('test');
 $worker->dequeue(0)->perform for 1 .. 3;
-$guard = $minion->backend->_guard->_write;
-$guard->_jobs->{$id2}{finished} -= 864001;
-$guard->_jobs->{$id3}{finished} -= 864001;
-undef $guard;
+$minion->backend->db->{jobs}{$id2}{finished} -= 864001;
+$minion->backend->db->{jobs}{$id3}{finished} -= 864001;
 $worker->unregister;
 $minion->repair;
 ok $minion->job($id), 'job has not been cleaned up';
@@ -99,8 +94,8 @@ $worker2->unregister;
 
 # Reset
 $minion->reset->repair;
-ok !keys %{$minion->backend->_guard->_jobs},    'no jobs';
-ok !keys %{$minion->backend->_guard->_workers}, 'no workers';
+ok !keys %{$minion->backend->db->{jobs}},    'no jobs';
+ok !keys %{$minion->backend->db->{workers}}, 'no workers';
 
 # Wait for job
 my $before = time;
@@ -110,14 +105,10 @@ ok !!(($before + 0.5) <= time), 'waited for jobs';
 $worker->unregister;
 
 # Tasks
-my $results = catfile $tmpdir, 'results.data';
-store [], $results;
 $minion->add_task(
   add => sub {
     my ($job, $first, $second) = @_;
-    my $result = retrieve $results;
-    push @$result, $first + $second;
-    store $result, $results;
+    push @{$job->minion->backend->db->{results}}, $first + $second;
   }
 );
 $minion->add_task(fail => sub { die "Intentional failure!\n" });
@@ -208,9 +199,7 @@ is_deeply $info->{args}, [2, 2], 'right arguments';
 is $info->{priority}, 0,          'right priority';
 is $info->{state},    'inactive', 'right state';
 $worker = $minion->worker;
-$before = (stat $minion->backend->file)[9];
 is $worker->dequeue(0), undef, 'not registered';
-is $before, (stat $minion->backend->file)[9], 'file has not changed';
 ok !$minion->job($id)->info->{started}, 'no started timestamp';
 $job = $worker->register->dequeue(0);
 like $job->info->{created}, qr/^[\d.]+$/, 'has created timestamp';
@@ -223,7 +212,7 @@ is $minion->backend->worker_info($id)->{pid}, $$, 'right worker';
 ok !$job->info->{finished}, 'no finished timestamp';
 $job->perform;
 like $job->info->{finished}, qr/^[\d.]+$/, 'has finished timestamp';
-is_deeply retrieve($results), [4], 'right result';
+is_deeply $minion->backend->db->{results}, [4], 'right result';
 is $job->info->{state}, 'finished', 'right state';
 $worker->unregister;
 $job = $minion->job($job->id);
@@ -285,11 +274,9 @@ $worker->unregister;
 $id = $minion->enqueue(add => [2, 1] => {delay => 100});
 is $worker->register->dequeue(0), undef, 'too early for job';
 ok $minion->job($id)->info->{delayed} > time, 'delayed timestamp';
-$guard           = $minion->backend->_guard->_write;
-$info            = $guard->_jobs->{$id};
+$info            = $minion->backend->db->{jobs}{$id};
 $info->{delayed} = time - 100;
-undef $guard;
-$job = $worker->dequeue(0);
+$job             = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 like $job->info->{delayed}, qr/^[\d.]+$/, 'has delayed timestamp';
 ok $job->finish, 'job finished';

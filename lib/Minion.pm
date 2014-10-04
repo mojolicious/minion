@@ -87,7 +87,7 @@ Minion - Job queue
   use Minion;
 
   # Connect to backend
-  my $minion = Minion->new(File  => '/Users/sri/minion.data');
+  my $minion = Minion->new(File  => '/Users/sri/minion.db');
 
   # Add tasks
   $minion->add_task(something_slow => sub {
@@ -228,7 +228,7 @@ return C<undef> if job does not exist.
 
 =head2 new
 
-  my $minion = Minion->new(File => '/Users/sri/minion.data');
+  my $minion = Minion->new(File => '/Users/sri/minion.db');
 
 Construct a new L<Minion> object.
 

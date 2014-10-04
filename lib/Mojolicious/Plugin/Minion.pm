@@ -25,12 +25,10 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
 =head1 SYNOPSIS
 
   # Mojolicious (choose a backend)
-  $self->plugin(Minion => {File  => '/Users/sri/minion.data'});
-  $self->plugin(Minion => {Mango => 'mongodb://127.0.0.1:27017'});
+  $self->plugin(Minion => {File  => '/Users/sri/minion.db'});
 
   # Mojolicious::Lite (choose a backend)
-  plugin Minion => {File  => '/Users/sri/minion.data'};
-  plugin Minion => {Mango => 'mongodb://127.0.0.1:27017'};
+  plugin Minion => {File  => '/Users/sri/minion.db'};
 
   # Add tasks to your application
   app->minion->add_task(slow_log => sub {
@@ -76,7 +74,7 @@ L<Mojolicious::Plugin> and implements the following new ones.
 
 =head2 register
 
-  $plugin->register(Mojolicious->new, {Mango => 'mongodb://127.0.0.1:27017'});
+  $plugin->register(Mojolicious->new, {File => '/Users/sri/minion.db'});
 
 Register plugin in L<Mojolicious> application.
 

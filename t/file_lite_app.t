@@ -7,11 +7,10 @@ use File::Spec::Functions 'catfile';
 use File::Temp 'tempdir';
 use Mojo::IOLoop;
 use Mojolicious::Lite;
-use Storable qw(store retrieve);
 use Test::Mojo;
 
 my $tmpdir = tempdir CLEANUP => 1;
-my $file = catfile $tmpdir, 'minion.data';
+my $file = catfile $tmpdir, 'minion.db';
 
 # Missing backend
 eval { plugin Minion => {Something => 'fun'} };
@@ -19,16 +18,12 @@ like $@, qr/^Backend "Minion::Backend::Something" missing/, 'right error';
 
 plugin Minion => {File => $file};
 
-my $results = catfile $tmpdir, 'results.data';
-store {count => 0}, $results;
 app->minion->add_task(
   increment => sub {
     my $job = shift;
     Mojo::IOLoop->next_tick(
       sub {
-        my $result = retrieve $results;
-        $result->{count}++;
-        store $result, $results;
+        $job->minion->backend->db->{counter}++;
         Mojo::IOLoop->stop;
       }
     );
@@ -44,7 +39,7 @@ get '/increment' => sub {
 
 get '/count' => sub {
   my $c = shift;
-  $c->render(text => retrieve($results)->{count});
+  $c->render(text => $c->minion->backend->db->{counter});
 };
 
 my $t = Test::Mojo->new;
