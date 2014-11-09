@@ -77,18 +77,15 @@ sub list_jobs {
   push(@bind, $options->{state}) if $options->{state};
   push(@bind, $options->{task}) if $options->{task};
 
-  my $the_end = $limit ? "LIMIT ?" : "";
-  push(@bind, $limit) if $limit;
-
-  $the_end .= " OFFSET ?" if $offset;
-  push(@bind, $offset) if $offset;
+  push(@bind, $limit, $offset);
 
   my $sql = qq(
     SELECT * 
     FROM job 
     $where
     ORDER BY id DESC
-    $the_end
+    LIMIT ?
+    OFFSET ?
   );
 
   return $self->pg->db->query($sql, @bind)->hashes;
@@ -146,27 +143,21 @@ sub repair {
     WHERE state = 'active'
   );
 
-  my $jobs = $db->query($sql)->hashes;
-  for my $job (@$jobs) {
+  my $results = $db->query($sql);
+  while (my $job = $results->hash) {
     next if $workers->{$job->{worker}};
     $db->query("UPDATE job SET error = ?, state = ? WHERE id = ?", 'Worker went away', 'failed', $job->{id});
   }
 
   # Old jobs
   $sql = qq(
-    SELECT * 
+    DELETE
     FROM job 
     WHERE state = 'finished'
         AND finished < ?
   );
   my $after = time - $self->minion->remove_after;
-  $jobs = $db->query($sql, $after)->hashes;
-  push(@del_jobs, $_->{id}) for @$jobs;
-
-  if (@del_jobs) {
-      my $q = join(", ", map({"?"} (1 .. scalar(@del_jobs))));
-      $db->query("DELETE FROM job WHERE id IN ($q)", @del_jobs);
-  }
+  $db->query($sql, $after);
 }
 
 sub _try {
