@@ -33,9 +33,10 @@ sub enqueue {
   };
 
   my $q = join(", ", map({"?"} (1 .. 7)));
+  my @bind = ($job->{args}, $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task});
   my $db = $self->pg->db;
   my $ret = $db->query("INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES ($q) RETURNING id",
-      $job->{args}, $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}
+      @bind
   )->hash;
 
   return $ret->{id};
@@ -59,7 +60,9 @@ sub _job {
 }
 
 sub job_info {
-  return shift->pg->db->query("SELECT * FROM job WHERE id = ?", shift)->hash;
+  my $job = shift->pg->db->query("SELECT * FROM job WHERE id = ?", shift)->hash;
+  $job->{args} = decode_json($job->{args}) if $job;
+  return $job;
 }
 
 sub list_jobs {
@@ -84,7 +87,7 @@ sub list_jobs {
     SELECT * 
     FROM job 
     $where
-    ORDER BY created
+    ORDER BY id DESC
     $the_end
   );
 
@@ -130,6 +133,12 @@ sub repair {
   push(@del_workers, $_->{id})
     for grep { $_->{host} eq $host && !kill 0, $_->{pid} } values %$workers;
 
+  if (@del_workers) {
+      my $q = join(", ", map({"?"} (1 .. scalar(@del_workers))));
+      $db->query("DELETE FROM worker WHERE id IN ($q)", @del_workers);
+      $workers = $self->_workers;
+  }
+
   # Abandoned jobs
   my $sql = qq(
     SELECT * 
@@ -154,11 +163,6 @@ sub repair {
   $jobs = $db->query($sql, $after)->hashes;
   push(@del_jobs, $_->{id}) for @$jobs;
 
-  # Remove the data
-  if (@del_workers) {
-      my $q = join(", ", map({"?"} (1 .. scalar(@del_workers))));
-      $db->query("DELETE FROM worker WHERE id IN ($q)", @del_workers);
-  }
   if (@del_jobs) {
       my $q = join(", ", map({"?"} (1 .. scalar(@del_jobs))));
       $db->query("DELETE FROM job WHERE id IN ($q)", @del_jobs);
@@ -180,9 +184,9 @@ sub _try {
     SELECT * 
     FROM job 
     WHERE state = 'inactive'
-        AND to_timestamp(delayed::int) < now()
+        AND to_timestamp((delayed::real)::int) < now()
         AND task in ($q)
-    ORDER BY created, priority
+    ORDER BY priority DESC, created
     LIMIT 1
     FOR UPDATE
   );
@@ -210,8 +214,8 @@ sub _update {
         
         my $db = $self->pg->db;
         $db->query(
-            "UPDATE job SET args = ?, created = ?, delayed = ?, priority = ?, retries = ?, state = ?, task = ?, finished = ? WHERE id = ?",
-            encode_json($job->{args}), $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}, $job->{finished}, $job->{id}
+            "UPDATE job SET args = ?, created = ?, delayed = ?, priority = ?, retries = ?, state = ?, task = ?, finished = ?, error = ? WHERE id = ?",
+            ref $job->{args} ? encode_json($job->{args}) : $job->{args}, $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}, $job->{finished}, $job->{error}, $job->{id}
         );
     }
 
@@ -239,7 +243,7 @@ sub remove_job {
       SELECT * 
       FROM job 
       WHERE state IN ('failed', 'finished', 'inactive')
-        WHERE ID = ?
+        AND id = ?
     );
     my $job = $db->query($sql, $id)->hash;
     if ($job) {
@@ -316,12 +320,12 @@ sub _worker_info {
   return undef unless $id && (my $worker = $self->_workers->{$id});
 
   my $sql = qq(
-    SELECT * 
+    SELECT id
     FROM job 
     WHERE worker = ?
   );
 
-  my $jobs = $self->pg->db->query($sql, $id)->hashes;
+  my $jobs = $self->pg->db->query($sql, $id)->array;
 
   return {%{$worker}, jobs => $jobs};
 }
