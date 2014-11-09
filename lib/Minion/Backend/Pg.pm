@@ -169,12 +169,15 @@ sub _try {
 
   my $db = $self->pg->db;
 
+  my $tx = $db->begin;
+
   my $sql = qq(
     SELECT * 
     FROM job 
     WHERE state = 'inactive'
         AND to_timestamp(delayed::int) < now()
     ORDER BY created, priority
+    FOR UPDATE
   );
 
   my $jobs = $db->query($sql)->hashes;
@@ -182,7 +185,6 @@ sub _try {
   $job->{args} = decode_json($job->{args}) if $job;
 
   if ($job) {
-    my $tx = $self->pg->db->begin;
     $tx->dbh->do(
         "UPDATE job SET started = ?, state = ?, worker = ? WHERE id = ?", undef, 
         time, 'active', $id, $job->{id}
@@ -277,8 +279,6 @@ sub reset {
 
 sub retry_job {
   my ($self, $id) = @_;
-
-  my $pg = $self->pg;
 
   my $tx = $self->pg->db->begin;
   $tx->dbh->do("SELECT * FROM job WHERE state IN ('failed', 'finished') FOR UPDATE");
