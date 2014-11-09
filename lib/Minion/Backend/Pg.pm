@@ -33,17 +33,12 @@ sub enqueue {
   };
 
   my $q = $self->question(7);
-  my $tx = $self->pg->db->begin;
-  $tx->dbh->do(
-      "INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES ($q)", undef, 
+  my $db = $self->pg->db;
+  my $ret = $db->query("INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES ($q) RETURNING id",
       $job->{args}, $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}
-  );
-  my $id = $tx->dbh->last_insert_id(undef, undef, "job", undef);
-  $tx->commit;
+  )->hash;
 
-  $job->{id} = $id;
-
-  return $job->{id};
+  return $ret->{id};
 }
 
 sub _job {
@@ -94,14 +89,11 @@ sub register_worker {
 
   my $worker = {host => hostname, id => $self->_worker_id, pid => $$, started => time};
 
-  my $tx = $self->pg->db->begin;
-  $tx->dbh->do(
-      "UPDATE worker SET host = ?, pid = ?, started = ? WHERE id = ?", undef, 
+  my $db = $self->pg->db;
+  $db->query(
+      "UPDATE worker SET host = ?, pid = ?, started = ? WHERE id = ?", 
       $worker->{host}, $worker->{pid}, $worker->{started}, $worker->{id}
   );
-  $tx->commit;
-
-  # $self->_workers->{$worker->{id}} = $worker;
 
   return $worker->{id};
 }
@@ -145,23 +137,17 @@ sub repair {
     for grep { $_->{state} eq 'finished' && $_->{finished} < $after }
     values %$jobs;
 
+  my $db = $self->pg->db;
+
   # Remove the data
-  my $tx = $self->pg->db->begin;
   my $q = $self->question(scalar(@del_workers));
   if (@del_workers) {
-      $tx->dbh->do(
-          "DELETE FROM worker WHERE id IN ($q)", undef,
-          @del_workers
-      );
+      $db->query("DELETE FROM worker WHERE id IN ($q)", @del_workers);
   }
   if (@del_jobs) {
       $q = $self->question(scalar(@del_jobs));
-      $tx->dbh->do(
-          "DELETE FROM job WHERE id IN ($q)", undef,
-          @del_jobs
-      );
+      $db->query("DELETE FROM job WHERE id IN ($q)", @del_jobs);
   }
-  $tx->commit if (@del_workers || @del_jobs);
 }
 
 sub _try {
@@ -185,10 +171,7 @@ sub _try {
   $job->{args} = decode_json($job->{args}) if $job;
 
   if ($job) {
-    $tx->dbh->do(
-        "UPDATE job SET started = ?, state = ?, worker = ? WHERE id = ?", undef, 
-        time, 'active', $id, $job->{id}
-    );
+    $db->query("UPDATE job SET started = ?, state = ?, worker = ? WHERE id = ?", time, 'active', $id, $job->{id});
     $tx->commit;
   }
 
