@@ -32,7 +32,7 @@ sub enqueue {
     task     => $task
   };
 
-  my $q = $self->question(7);
+  my $q = join(", ", map({"?"} (1 .. 7)));
   my $db = $self->pg->db;
   my $ret = $db->query("INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES ($q) RETURNING id",
       $job->{args}, $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}
@@ -72,14 +72,6 @@ sub list_workers {
   return [map { $self->_worker_info($_->{id}) } @workers];
 }
 
-sub question
-{
-    my $self = shift;
-    my $nbr = shift;
-
-    return(join(", ", map({"?"} (1 .. $nbr))));
-}
-
 sub new { 
     shift->SUPER::new(pg => Mojo::Pg->new(@_));
 }
@@ -87,30 +79,14 @@ sub new {
 sub register_worker {
   my $self = shift;
 
-  my $worker = {host => hostname, id => $self->_worker_id, pid => $$, started => time};
+  my $worker = {host => hostname, pid => $$, started => time};
 
   my $db = $self->pg->db;
-  $db->query(
-      "UPDATE worker SET host = ?, pid = ?, started = ? WHERE id = ?", 
-      $worker->{host}, $worker->{pid}, $worker->{started}, $worker->{id}
-  );
+  my $ret = $db->query("INSERT INTO worker (host, pid, started) VALUES (?, ?, ?) RETURNING id",
+      $worker->{host}, $worker->{pid}, $worker->{started}
+  )->hash;
 
-  return $worker->{id};
-}
-
-sub _worker_id {
-    my $self = shift;
-
-    my $q = $self->question(3);
-    my $tx = $self->pg->db->begin;
-    $tx->dbh->do(
-        "INSERT INTO worker (host, pid, started) VALUES ($q)", undef, 
-        "_stub", "_stub", "_stub"
-    );
-    my $id = $tx->dbh->last_insert_id(undef, undef, "worker", undef);
-    $tx->commit;
-
-    return $id;
+  return $ret->{id};
 }
 
 sub repair {
@@ -140,12 +116,12 @@ sub repair {
   my $db = $self->pg->db;
 
   # Remove the data
-  my $q = $self->question(scalar(@del_workers));
   if (@del_workers) {
+      my $q = join(", ", map({"?"} (1 .. scalar(@del_workers))));
       $db->query("DELETE FROM worker WHERE id IN ($q)", @del_workers);
   }
   if (@del_jobs) {
-      $q = $self->question(scalar(@del_jobs));
+      my $q = join(", ", map({"?"} (1 .. scalar(@del_jobs))));
       $db->query("DELETE FROM job WHERE id IN ($q)", @del_jobs);
   }
 }
@@ -202,12 +178,11 @@ sub _update {
         $job->{state}    = $fail ? 'failed' : 'finished';
         $job->{error}    = $err if $err;
         
-        my $tx = $self->pg->db->begin;
-        $tx->dbh->do(
-            "UPDATE job SET args = ?, created = ?, delayed = ?, priority = ?, retries = ?, state = ?, task = ?, finished = ? WHERE id = ?", undef, 
+        my $db = $self->pg->db;
+        $db->query(
+            "UPDATE job SET args = ?, created = ?, delayed = ?, priority = ?, retries = ?, state = ?, task = ?, finished = ? WHERE id = ?",
             encode_json($job->{args}), $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}, $job->{finished}, $job->{id}
         );
-        $tx->commit;
     }
 
   return !!$job;
@@ -221,12 +196,8 @@ sub unregister_worker {
     my $self = shift;
     my $id = shift;
 
-    my $tx = $self->pg->db->begin;
-    $tx->dbh->do(
-        "DELETE FROM worker WHERE id = ?", undef,
-        $id
-    );
-    $tx->commit;
+    my $db = $self->pg->db;
+    $db->query("DELETE FROM worker WHERE id = ?", $id);
 }
 
 sub remove_job {
@@ -263,17 +234,14 @@ sub reset {
 sub retry_job {
   my ($self, $id) = @_;
 
-  my $tx = $self->pg->db->begin;
-  $tx->dbh->do("SELECT * FROM job WHERE state IN ('failed', 'finished') FOR UPDATE");
-
   my $job = $self->_job($id, 'failed', 'finished');
+
   if ($job) {
     $job->{retries} += 1;
-    $tx->dbh->do(
-        "UPDATE job SET retries = ?, retried = ?, state = ?, error = ?, finished = ?, result = ?, started = ?, worker = ? WHERE id = ?", undef, 
+    $self->pg->db->query(
+        "UPDATE job SET retries = ?, retried = ?, state = ?, error = ?, finished = ?, result = ?, started = ?, worker = ? WHERE id = ?",
         $job->{retries}, time, 'inactive', "", "", "", "", "", $job->{id}
     );
-    $tx->commit;
   }
 
   return !!$job;
