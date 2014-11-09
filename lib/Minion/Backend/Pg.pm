@@ -67,6 +67,31 @@ sub _job_id {
     return $id;
 }
 
+sub job_info {
+  return shift->pg->db->query("SELECT * FROM job WHERE id = ?", shift)->hash;
+}
+
+sub list_jobs {
+  my ($self, $offset, $limit, $options) = @_;
+
+  my @jobs = sort { $b->{created} <=> $a->{created} } values %{$self->_jobs};
+  @jobs = grep { $_->{state} eq $options->{state} } @jobs if $options->{state};
+  @jobs = grep { $_->{task} eq $options->{task} } @jobs   if $options->{task};
+  @jobs = grep {defined} @jobs[$offset .. ($offset + $limit - 1)];
+
+  return \@jobs;
+}
+
+sub list_workers {
+  my ($self, $offset, $limit) = @_;
+
+  my @workers
+    = sort { $b->{started} <=> $a->{started} } values %{$self->_workers};
+  @workers = grep {defined} @workers[$offset .. ($offset + $limit - 1)];
+
+  return [map { $self->_worker_info($_->{id}) } @workers];
+}
+
 sub question
 {
     my $self = shift;
@@ -76,14 +101,12 @@ sub question
 }
 
 sub new { 
-    $DB::single = 1;
     shift->SUPER::new(pg => Mojo::Pg->new('postgresql://username:password@localhost/jobs?AutoCommit=0'));
 }
 
 sub register_worker {
   my $self = shift;
 
-  $DB::single = 1;
   my $worker = {host => hostname, id => $self->_worker_id, pid => $$, started => time};
 
   my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
@@ -102,7 +125,6 @@ sub _worker_id {
     my $self = shift;
 
     my $q = $self->question(3);
-    $DB::single = 1;
     my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
     $tx->dbh->do(
         "INSERT INTO worker (host, pid, started) VALUES ($q)", undef, 
@@ -117,16 +139,13 @@ sub _worker_id {
 sub repair {
   my $self = shift;
 
-  return;
-
-  ### One day this will work
+  my (@del_workers, @del_jobs);
 
   # Check workers on this host (all should be owned by the same user)
   my $pg = $self->pg;
-  # $pg->lock_exclusive;
   my $workers = $self->_workers;
   my $host    = hostname;
-  delete $workers->{$_->{id}}
+  push(@del_workers, $_->{id})
     for grep { $_->{host} eq $host && !kill 0, $_->{pid} } values %$workers;
 
   # Abandoned jobs
@@ -138,10 +157,27 @@ sub repair {
 
   # Old jobs
   my $after = time - $self->minion->remove_after;
-  delete $jobs->{$_->{id}}
+  push(@del_jobs, $_->{id})
     for grep { $_->{state} eq 'finished' && $_->{finished} < $after }
     values %$jobs;
-    # $pg->unlock;
+
+  # Remove the data
+  my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
+  my $q = $self->question(scalar(@del_workers));
+  if (@del_workers) {
+      $tx->dbh->do(
+          "DELETE FROM worker WHERE id IN ($q)", undef,
+          @del_workers
+      );
+  }
+  if (@del_jobs) {
+      $q = $self->question(scalar(@del_jobs));
+      $tx->dbh->do(
+          "DELETE FROM job WHERE id IN ($q)", undef,
+          @del_jobs
+      );
+  }
+  $tx->commit if (@del_workers || @del_jobs);
 }
 
 sub _try {
@@ -149,15 +185,12 @@ sub _try {
 
   my $pg = $self->pg;
 
-  $DB::single = 1;
-
   my @ready = grep { $_->{state} eq 'inactive' } values %{$self->_jobs};
   my $now = time;
   @ready = grep { $_->{delayed} < $now } @ready;
   @ready = sort { $a->{created} <=> $b->{created} } @ready;
   @ready = sort { $b->{priority} <=> $a->{priority} } @ready;
   my $job = first { $self->minion->tasks->{$_->{task}} } @ready;
-  #  @$job{qw(started state worker)} = (time, 'active', $id) if $job;
 
   if ($job) {
     my $tx = Mojo::Pg::Transaction->new(dbh => $pg->db->dbh);
@@ -174,7 +207,6 @@ sub _try {
 sub _jobs {
     my ($self, $id) = @_;
 
-    $DB::single = 1;
     my $jobs = $self->pg->db->query("SELECT * FROM job ORDER BY id")->hashes;
 
     my %jobs;
@@ -189,8 +221,6 @@ sub _jobs {
 sub _update {
     my ($self, $fail, $id, $err) = @_;
     
-    $DB::single = 1;
-
     my $job = $self->_job($id, 'active');
 
     if ($job) {
@@ -200,8 +230,8 @@ sub _update {
         
         my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
         $tx->dbh->do(
-            "UPDATE job SET args = ?, created = ?, delayed = ?, priority = ?, retries = ?, state = ?, task = ? WHERE id = ?", undef, 
-            encode_json($job->{args}), $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}, $job->{id}
+            "UPDATE job SET args = ?, created = ?, delayed = ?, priority = ?, retries = ?, state = ?, task = ?, finished = ? WHERE id = ?", undef, 
+            encode_json($job->{args}), $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}, $job->{finished}, $job->{id}
         );
         $tx->commit;
     }
@@ -228,7 +258,6 @@ sub unregister_worker {
 sub remove_job {
     my ($self, $id) = @_;
     
-    $DB::single = 1;
     my $removed = !!$self->_job($id, 'failed', 'finished', 'inactive');
     if ($removed) {
         my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
@@ -242,54 +271,74 @@ sub remove_job {
     return $removed;
 }
 
+sub reset { 
+    my $tx = Mojo::Pg::Transaction->new(dbh => shift->pg->db->dbh);
+    $tx->dbh->do("DELETE FROM job");
+    $tx->dbh->do("DELETE FROM worker");
+    $tx->commit;
+}
+
+sub retry_job {
+  my ($self, $id) = @_;
+
+  my $pg = $self->pg;
+
+  my $tx = Mojo::Pg::Transaction->new(dbh => $pg->db->dbh);
+  $tx->dbh->do("SELECT * FROM job WHERE state IN ('failed', 'finished') FOR UPDATE");
+
+  my $job = $self->_job($id, 'failed', 'finished');
+  if ($job) {
+    $job->{retries} += 1;
+    $tx->dbh->do(
+        "UPDATE job SET retries = ?, retried = ?, state = ?, error = ?, finished = ?, result = ?, started = ?, worker = ? WHERE id = ?", undef, 
+        $job->{retries}, time, 'inactive', "", "", "", "", "", $job->{id}
+    );
+    $tx->commit;
+  }
+
+  return !!$job;
+}
+
+sub stats {
+  my $self = shift;
+
+  my (%seen, %states);
+  my $active = grep {
+         ++$states{$_->{state}}
+      && $_->{state} eq 'active'
+      && !$seen{$_->{worker}}++
+  } values %{$self->_jobs};
+
+  return {
+    active_workers   => $active,
+    inactive_workers => keys(%{$self->_workers}) - $active,
+    active_jobs      => $states{active} || 0,
+    inactive_jobs    => $states{inactive} || 0,
+    failed_jobs      => $states{failed} || 0,
+    finished_jobs    => $states{finished} || 0,
+  };
+}
+
+sub worker_info { shift->_worker_info(@_) }
+
+sub _worker_info {
+  my ($self, $id) = @_;
+
+  return undef unless $id && (my $worker = $self->_workers->{$id});
+  my @jobs
+    = map { $_->{id} } grep { $_->{worker} eq $id } values %{$self->_jobs};
+  return {%{$worker}, jobs => \@jobs};
+}
+
+sub _workers { 
+    my $workers = shift->pg->db->query("SELECT * FROM worker ORDER BY id")->hashes;
+
+    my %workers;
+    foreach my $worker (@{ $workers }) {
+        $workers{$$worker{id}} = $worker;
+    }
+
+    return(\%workers);
+}
+
 1;
-
-__END__
-BEGIN;
-CREATE TABLE job(
-  id serial not null PRIMARY KEY,
-  args json NOT NULL,
-  started VARCHAR(64),
-  error VARCHAR(64),
-  worker VARCHAR(64),
-  created VARCHAR(64) NOT NULL,
-  delayed VARCHAR(64) NOT NULL,
-  priority VARCHAR(64) NOT NULL,
-  retries VARCHAR(64) NOT NULL,
-  state VARCHAR(64) NOT NULL,
-  task VARCHAR(64) NOT NULL,
-  updated timestamp default CURRENT_TIMESTAMP,
-  inserted timestamp default CURRENT_TIMESTAMP
-);
-
-CREATE TRIGGER user_timestamp BEFORE INSERT OR UPDATE ON job
-FOR EACH ROW EXECUTE PROCEDURE update_timestamp();
-
-GRANT SELECT ON TABLE job TO username;
-GRANT INSERT ON TABLE job TO username;
-GRANT UPDATE ON TABLE job TO username;
-GRANT DELETE ON TABLE job TO username;
-
-GRANT USAGE, SELECT ON SEQUENCE job_id_seq TO username;
-COMMIT;
-
-BEGIN;
-CREATE TABLE worker(
-  id serial not null PRIMARY KEY,
-  host VARCHAR(64) NOT NULL,
-  pid VARCHAR(64) NOT NULL,
-  started VARCHAR(64) NOT NULL,
-  updated timestamp default CURRENT_TIMESTAMP,
-  inserted timestamp default CURRENT_TIMESTAMP
-);
-
-CREATE TRIGGER user_timestamp BEFORE INSERT OR UPDATE ON worker
-FOR EACH ROW EXECUTE PROCEDURE update_timestamp();
-
-GRANT SELECT ON TABLE worker TO username;
-GRANT INSERT ON TABLE worker TO username;
-GRANT UPDATE ON TABLE worker TO username;
-GRANT DELETE ON TABLE worker TO username;
-
-GRANT USAGE, SELECT ON SEQUENCE worker_id_seq TO username;
-COMMIT;
