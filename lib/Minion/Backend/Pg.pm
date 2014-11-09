@@ -213,21 +213,17 @@ sub remove_job {
     );
     my $job = $db->query($sql, $id)->hash;
     if ($job) {
-        my $tx = $db->begin;
-        $tx->dbh->do(
-            "DELETE FROM job WHERE id = ?", undef,
-            $id
-        );
-        $tx->commit;
+        $db->query("DELETE FROM job WHERE id = ?", $id);
     }
     
     return !!$job;
 }
 
 sub reset { 
-    my $tx = shift->pg->db->begin;
-    $tx->dbh->do("DELETE FROM job");
-    $tx->dbh->do("DELETE FROM worker");
+    my $db = shift->pg->db;
+    my $tx = $db->begin;
+    $db->query("DELETE FROM job");
+    $db->query("DELETE FROM worker");
     $tx->commit;
 }
 
@@ -274,7 +270,7 @@ sub _worker_info {
 
   return undef unless $id && (my $worker = $self->_workers->{$id});
   my @jobs
-    = map { $_->{id} } grep { $_->{worker} eq $id } values %{$self->_jobs};
+    = map { $_->{id} } grep { defined $_->{worker} && $_->{worker} eq $id } values %{$self->_jobs};
   return {%{$worker}, jobs => \@jobs};
 }
 
