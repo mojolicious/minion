@@ -33,9 +33,7 @@ sub enqueue {
   };
 
   my $q = $self->question(7);
-  my $db = $self->pg->db;
-  my $tx = Mojo::Pg::Transaction->new(dbh => $db->dbh);
-  $tx->db->begin;
+  my $tx = $self->pg->db->begin;
   $tx->dbh->do(
       "INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES ($q)", undef, 
       $job->{args}, $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}
@@ -96,7 +94,7 @@ sub register_worker {
 
   my $worker = {host => hostname, id => $self->_worker_id, pid => $$, started => time};
 
-  my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
+  my $tx = $self->pg->db->begin;
   $tx->dbh->do(
       "UPDATE worker SET host = ?, pid = ?, started = ? WHERE id = ?", undef, 
       $worker->{host}, $worker->{pid}, $worker->{started}, $worker->{id}
@@ -112,7 +110,7 @@ sub _worker_id {
     my $self = shift;
 
     my $q = $self->question(3);
-    my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
+    my $tx = $self->pg->db->begin;
     $tx->dbh->do(
         "INSERT INTO worker (host, pid, started) VALUES ($q)", undef, 
         "_stub", "_stub", "_stub"
@@ -129,7 +127,6 @@ sub repair {
   my (@del_workers, @del_jobs);
 
   # Check workers on this host (all should be owned by the same user)
-  my $pg = $self->pg;
   my $workers = $self->_workers;
   my $host    = hostname;
   push(@del_workers, $_->{id})
@@ -149,7 +146,7 @@ sub repair {
     values %$jobs;
 
   # Remove the data
-  my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
+  my $tx = $self->pg->db->begin;
   my $q = $self->question(scalar(@del_workers));
   if (@del_workers) {
       $tx->dbh->do(
@@ -177,7 +174,7 @@ sub _try {
     FROM job 
     WHERE state = 'inactive'
         AND to_timestamp(delayed::int) < now()
-    ORDER BY created, priorirty
+    ORDER BY created, priority
   );
 
   my $jobs = $db->query($sql)->hashes;
@@ -185,7 +182,7 @@ sub _try {
   $job->{args} = decode_json($job->{args}) if $job;
 
   if ($job) {
-    my $tx = Mojo::Pg::Transaction->new(dbh => $pg->db->dbh);
+    my $tx = $self->pg->db->begin;
     $tx->dbh->do(
         "UPDATE job SET started = ?, state = ?, worker = ? WHERE id = ?", undef, 
         time, 'active', $id, $job->{id}
@@ -220,7 +217,7 @@ sub _update {
         $job->{state}    = $fail ? 'failed' : 'finished';
         $job->{error}    = $err if $err;
         
-        my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
+        my $tx = $self->pg->db->begin;
         $tx->dbh->do(
             "UPDATE job SET args = ?, created = ?, delayed = ?, priority = ?, retries = ?, state = ?, task = ?, finished = ? WHERE id = ?", undef, 
             encode_json($job->{args}), $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}, $job->{finished}, $job->{id}
@@ -239,7 +236,7 @@ sub unregister_worker {
     my $self = shift;
     my $id = shift;
 
-    my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
+    my $tx = $self->pg->db->begin;
     $tx->dbh->do(
         "DELETE FROM worker WHERE id = ?", undef,
         $id
@@ -250,9 +247,17 @@ sub unregister_worker {
 sub remove_job {
     my ($self, $id) = @_;
     
-    my $removed = !!$self->_job($id, 'failed', 'finished', 'inactive');
-    if ($removed) {
-        my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
+    my $db = $self->pg->db;
+    
+    my $sql = qq(
+      SELECT * 
+      FROM job 
+      WHERE state IN ('failed', 'finished', 'inactive')
+        WHERE ID = ?
+    );
+    my $job = $db->query($sql, $id)->hash;
+    if ($job) {
+        my $tx = $db->begin;
         $tx->dbh->do(
             "DELETE FROM job WHERE id = ?", undef,
             $id
@@ -260,11 +265,11 @@ sub remove_job {
         $tx->commit;
     }
     
-    return $removed;
+    return !!$job;
 }
 
 sub reset { 
-    my $tx = Mojo::Pg::Transaction->new(dbh => shift->pg->db->dbh);
+    my $tx = shift->pg->db->begin;
     $tx->dbh->do("DELETE FROM job");
     $tx->dbh->do("DELETE FROM worker");
     $tx->commit;
@@ -275,7 +280,7 @@ sub retry_job {
 
   my $pg = $self->pg;
 
-  my $tx = Mojo::Pg::Transaction->new(dbh => $pg->db->dbh);
+  my $tx = $self->pg->db->begin;
   $tx->dbh->do("SELECT * FROM job WHERE state IN ('failed', 'finished') FOR UPDATE");
 
   my $job = $self->_job($id, 'failed', 'finished');
