@@ -43,8 +43,19 @@ sub enqueue {
 
 sub _job {
   my ($self, $id) = (shift, shift);
-  return undef unless my $job = $self->_jobs->{$id};
-  return grep({ $job->{state} eq $_ } @_) ? $job : undef;
+
+  my @states = @_;
+  my $q = join(", ", map({"?"} (1 .. scalar(@states))));
+
+  my $sql = qq(
+    SELECT * 
+    FROM job 
+    WHERE id = ?
+        AND state in ($q)
+    LIMIT 1
+  );
+
+  return $self->pg->db->query($sql, $id, @states)->hash;
 }
 
 sub job_info {
@@ -54,12 +65,30 @@ sub job_info {
 sub list_jobs {
   my ($self, $offset, $limit, $options) = @_;
 
-  my @jobs = sort { $b->{created} <=> $a->{created} } values %{$self->_jobs};
-  @jobs = grep { $_->{state} eq $options->{state} } @jobs if $options->{state};
-  @jobs = grep { $_->{task} eq $options->{task} } @jobs   if $options->{task};
-  @jobs = grep {defined} @jobs[$offset .. ($offset + $limit - 1)];
+  my (@and, @bind);
 
-  return \@jobs;
+  push(@and, "state = ?") if $options->{state};
+  push(@and, "task = ?") if $options->{task};
+
+  my $where = @and ? ("WHERE " . join(" AND ", @and)) : "";
+  push(@bind, $options->{state}) if $options->{state};
+  push(@bind, $options->{task}) if $options->{task};
+
+  my $the_end = $limit ? "LIMIT ?" : "";
+  push(@bind, $limit) if $limit;
+
+  $the_end .= " OFFSET ?" if $offset;
+  push(@bind, $offset) if $offset;
+
+  my $sql = qq(
+    SELECT * 
+    FROM job 
+    $where
+    ORDER BY created
+    $the_end
+  );
+
+  return $self->pg->db->query($sql, @bind)->hashes;
 }
 
 sub list_workers {
@@ -93,6 +122,7 @@ sub repair {
   my $self = shift;
 
   my (@del_workers, @del_jobs);
+  my $db = $self->pg->db;
 
   # Check workers on this host (all should be owned by the same user)
   my $workers = $self->_workers;
@@ -101,19 +131,28 @@ sub repair {
     for grep { $_->{host} eq $host && !kill 0, $_->{pid} } values %$workers;
 
   # Abandoned jobs
-  my $jobs = $self->_jobs;
-  for my $job (values %$jobs) {
-    next if $job->{state} ne 'active' || $workers->{$job->{worker}};
-    @$job{qw(error state)} = ('Worker went away', 'failed');
+  my $sql = qq(
+    SELECT * 
+    FROM job 
+    WHERE state = 'active'
+  );
+
+  my $jobs = $db->query($sql)->hashes;
+  for my $job (@$jobs) {
+    next if $workers->{$job->{worker}};
+    $db->query("UPDATE job SET error = ?, state = ? WHERE id = ?", 'Worker went away', 'failed', $job->{id});
   }
 
   # Old jobs
+  $sql = qq(
+    SELECT * 
+    FROM job 
+    WHERE state = 'finished'
+        AND finished < ?
+  );
   my $after = time - $self->minion->remove_after;
-  push(@del_jobs, $_->{id})
-    for grep { $_->{state} eq 'finished' && $_->{finished} < $after }
-    values %$jobs;
-
-  my $db = $self->pg->db;
+  $jobs = $db->query($sql, $after)->hashes;
+  push(@del_jobs, $_->{id}) for @$jobs;
 
   # Remove the data
   if (@del_workers) {
@@ -133,17 +172,22 @@ sub _try {
 
   my $tx = $db->begin;
 
+  my $tasks = $self->minion->tasks;
+  my @tasks = keys(%$tasks);
+  my $q = join(", ", map({"?"} (1 .. scalar(@tasks))));
+
   my $sql = qq(
     SELECT * 
     FROM job 
     WHERE state = 'inactive'
         AND to_timestamp(delayed::int) < now()
+        AND task in ($q)
     ORDER BY created, priority
+    LIMIT 1
     FOR UPDATE
   );
 
-  my $jobs = $db->query($sql)->hashes;
-  my $job = first { $self->minion->tasks->{$_->{task}} } @$jobs;
+  my $job = $db->query($sql, @tasks)->hash;
   $job->{args} = decode_json($job->{args}) if $job;
 
   if ($job) {
@@ -152,20 +196,6 @@ sub _try {
   }
 
   return $job ? $job : undef;
-}
-
-sub _jobs {
-    my ($self, $id) = @_;
-
-    my $jobs = $self->pg->db->query("SELECT * FROM job ORDER BY id")->hashes;
-
-    my %jobs;
-    foreach my $job (@{ $jobs }) {
-        $job->{args} = decode_json($job->{args});
-        $jobs{$$job{id}} = $job;
-    }
-
-    return(\%jobs);
 }
 
 sub _update {
@@ -246,12 +276,27 @@ sub retry_job {
 sub stats {
   my $self = shift;
 
-  my (%seen, %states);
-  my $active = grep {
-         ++$states{$_->{state}}
-      && $_->{state} eq 'active'
-      && !$seen{$_->{worker}}++
-  } values %{$self->_jobs};
+  my $db = $self->pg->db;
+
+  my $sql = qq(
+    SELECT count(distinct worker) as active
+    FROM job 
+    WHERE state = 'active'
+  );
+  my $ret = $db->query($sql)->hash;
+  my $active = $ret->{active};
+
+  $sql = qq(
+    SELECT state, count(state) 
+    FROM job 
+    GROUP BY 1
+  );
+  my $states = $db->query($sql)->arrays;
+  my %states;
+
+  foreach my $state (@$states) {
+    $states{$$state[0]} = $$state[1];
+  }
 
   return {
     active_workers   => $active,
@@ -269,9 +314,16 @@ sub _worker_info {
   my ($self, $id) = @_;
 
   return undef unless $id && (my $worker = $self->_workers->{$id});
-  my @jobs
-    = map { $_->{id} } grep { defined $_->{worker} && $_->{worker} eq $id } values %{$self->_jobs};
-  return {%{$worker}, jobs => \@jobs};
+
+  my $sql = qq(
+    SELECT * 
+    FROM job 
+    WHERE worker = ?
+  );
+
+  my $jobs = $self->pg->db->query($sql, $id)->hashes;
+
+  return {%{$worker}, jobs => $jobs};
 }
 
 sub _workers { 
