@@ -22,26 +22,28 @@ sub enqueue {
   my $args    = shift // [];
   my $options = shift // {};
 
-  my $pg = $self->pg;
   my $job = {
     args    => encode_json($args),
     created => time,
     delayed => $options->{delay} ? (time + $options->{delay}) : 1,
-    id      => $self->_job_id,
     priority => $options->{priority} // 0,
     retries  => 0,
     state    => 'inactive',
     task     => $task
   };
 
-  $self->_jobs->{$job->{id}} = $job;
-
-  my $tx = Mojo::Pg::Transaction->new(dbh => $pg->db->dbh);
+  my $q = $self->question(7);
+  my $db = $self->pg->db;
+  my $tx = Mojo::Pg::Transaction->new(dbh => $db->dbh);
+  $tx->db->begin;
   $tx->dbh->do(
-      "UPDATE job SET args = ?, created = ?, delayed = ?, priority = ?, retries = ?, state = ?, task = ? WHERE id = ?", undef, 
-      $job->{args}, $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}, $job->{id}
+      "INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES ($q)", undef, 
+      $job->{args}, $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}
   );
+  my $id = $tx->dbh->last_insert_id(undef, undef, "job", undef);
   $tx->commit;
+
+  $job->{id} = $id;
 
   return $job->{id};
 }
@@ -50,21 +52,6 @@ sub _job {
   my ($self, $id) = (shift, shift);
   return undef unless my $job = $self->_jobs->{$id};
   return grep({ $job->{state} eq $_ } @_) ? $job : undef;
-}
-
-sub _job_id {
-    my $self = shift;
-
-    my $q = $self->question(7);
-    my $tx = Mojo::Pg::Transaction->new(dbh => $self->pg->db->dbh);
-    $tx->dbh->do(
-        "INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES ($q)", undef, 
-        '{"_stub":"_stub"}', "_stub", "_stub", "_stub", "_stub", "_stub", "_stub"
-    );
-    my $id = $tx->dbh->last_insert_id(undef, undef, "job", undef);
-    $tx->commit;
-
-    return $id;
 }
 
 sub job_info {
@@ -101,7 +88,7 @@ sub question
 }
 
 sub new { 
-    shift->SUPER::new(pg => Mojo::Pg->new('postgresql://username:password@localhost/jobs?AutoCommit=0'));
+    shift->SUPER::new(pg => Mojo::Pg->new(@_));
 }
 
 sub register_worker {
@@ -183,14 +170,19 @@ sub repair {
 sub _try {
   my ($self, $id) = @_;
 
-  my $pg = $self->pg;
+  my $db = $self->pg->db;
 
-  my @ready = grep { $_->{state} eq 'inactive' } values %{$self->_jobs};
-  my $now = time;
-  @ready = grep { $_->{delayed} < $now } @ready;
-  @ready = sort { $a->{created} <=> $b->{created} } @ready;
-  @ready = sort { $b->{priority} <=> $a->{priority} } @ready;
-  my $job = first { $self->minion->tasks->{$_->{task}} } @ready;
+  my $sql = qq(
+    SELECT * 
+    FROM job 
+    WHERE state = 'inactive'
+        AND to_timestamp(delayed::int) < now()
+    ORDER BY created, priorirty
+  );
+
+  my $jobs = $db->query($sql)->hashes;
+  my $job = first { $self->minion->tasks->{$_->{task}} } @$jobs;
+  $job->{args} = decode_json($job->{args}) if $job;
 
   if ($job) {
     my $tx = Mojo::Pg::Transaction->new(dbh => $pg->db->dbh);
@@ -201,7 +193,7 @@ sub _try {
     $tx->commit;
   }
 
-  return $job ? $job : undef;   # export?
+  return $job ? $job : undef;
 }
 
 sub _jobs {
