@@ -62,7 +62,7 @@ sub job_info {
   my $job = shift->pg->db->query(
     qq(
         SELECT 
-            id, EXTRACT(EPOCH FROM started) as started, error, worker, args,
+            id, EXTRACT(EPOCH FROM started) as started, result, worker, args,
             EXTRACT(EPOCH FROM created) as created, delayed, priority, retries, state, task, 
             EXTRACT(EPOCH FROM finished) as finished, EXTRACT(EPOCH FROM retried) as retried
         FROM job 
@@ -70,6 +70,7 @@ sub job_info {
     ), shift
   )->hash;
   $job->{args} = decode_json($job->{args}) if $job;
+  $job->{result} = decode_json($job->{result}) if $job && $job->{result};
   return $job;
 }
 
@@ -153,7 +154,7 @@ sub repair {
   my $results = $db->query($sql);
   while (my $job = $results->hash) {
     next if $workers->{$job->{worker}};
-    $db->query("UPDATE job SET error = ?, state = ? WHERE id = ?", 'Worker went away', 'failed', $job->{id});
+    $db->query("UPDATE job SET result = ?, state = ? WHERE id = ?", encode_json('Worker went away'), 'failed', $job->{id});
   }
 
   # Old jobs
@@ -201,18 +202,18 @@ sub _try {
 }
 
 sub _update {
-    my ($self, $fail, $id, $err) = @_;
+    my ($self, $fail, $id, $result) = @_;
     
     my $job = $self->_job($id, 'active');
 
     if ($job) {
-        $job->{state}    = $fail ? 'failed' : 'finished';
-        $job->{error}    = $err if $err;
+        $job->{state}  = $fail ? 'failed' : 'finished';
+        $job->{result} = encode_json($result);
         
         my $db = $self->pg->db;
         $db->query(
-            "UPDATE job SET finished = now(), state = ?, error = ? WHERE id = ?",
-            $job->{state}, $job->{error}, $job->{id}
+            "UPDATE job SET finished = now(), state = ?, result = ? WHERE id = ?",
+            $job->{state}, $job->{result}, $job->{id}
         );
     }
 
@@ -266,8 +267,8 @@ sub retry_job {
   if ($job) {
     $job->{retries} += 1;
     $self->pg->db->query(
-        "UPDATE job SET retries = ?, retried = now(), state = ?, error = ?, finished = null, started = null, worker = ? WHERE id = ?",
-        $job->{retries}, 'inactive', "", 0, $job->{id}
+        "UPDATE job SET retries = ?, retried = now(), state = ?, result = null, finished = null, started = null, worker = ? WHERE id = ?",
+        $job->{retries}, 'inactive', 0, $job->{id}
     );
   }
 

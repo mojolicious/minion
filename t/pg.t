@@ -53,7 +53,7 @@ $minion->backend->pg->db->query("UPDATE worker SET pid = ? WHERE id = ?", $pid, 
 $minion->repair;
 ok !$minion->backend->worker_info($id), 'not registered';
 is $job->info->{state}, 'failed',           'job is no longer active';
-is $job->info->{error}, 'Worker went away', 'right error';
+is $job->info->{result}, 'Worker went away', 'right result';
 
 # Repair abandoned job
 $worker->register;
@@ -63,7 +63,7 @@ is $job->id, $id, 'right id';
 $worker->unregister;
 $minion->repair;
 is $job->info->{state}, 'failed',           'job is no longer active';
-is $job->info->{error}, 'Worker went away', 'right error';
+is $job->info->{result}, 'Worker went away', 'right result';
 
 # Repair old jobs
 $worker->register;
@@ -118,8 +118,7 @@ $worker->unregister;
 $minion->add_task(
   add => sub {
     my ($job, $first, $second) = @_;
-    my $result = [$first + $second];
-    # $job->minion->backend->pg->db->query("UPDATE job SET result = ? WHERE id = ?", encode_json($result), $job->id);
+    $job->finish({added => $first + $second});
   }
 );
 $minion->add_task(fail => sub { die "Intentional failure!\n" });
@@ -222,8 +221,7 @@ is $minion->backend->worker_info($id)->{pid}, $$, 'right worker';
 ok !$job->info->{finished}, 'no finished timestamp';
 $job->perform;
 like $job->info->{finished}, qr/^[\d.]+$/, 'has finished timestamp';
-### $ret = $minion->backend->pg->db->query("SELECT result FROM job WHERE id = ?", $job->id)->hash;
-### is_deeply decode_json($ret->{result}), [4], 'right result';
+is_deeply $job->info->{result}, {added => 4}, 'right result';
 is $job->info->{state}, 'finished', 'right state';
 $worker->unregister;
 $job = $minion->job($job->id);
@@ -253,7 +251,7 @@ ok $job->retry, 'job retried';
 is $job->info->{retries}, 2, 'job has been retried twice';
 ok !$job->info->{finished}, 'no finished timestamp';
 ok !$job->info->{started},  'no started timestamp';
-ok !$job->info->{error},    'no error';
+ok !$job->info->{result},    'no result';
 ok !$job->info->{worker},   'no worker';
 $job = $worker->dequeue(0);
 is $job->info->{state}, 'active', 'right state';
@@ -322,23 +320,23 @@ $worker->unregister;
 $id = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
-is $job->info->{error}, undef, 'no error';
+is $job->info->{result}, undef, 'no result';
 ok $job->fail, 'job failed';
 ok !$job->finish, 'job not finished';
 is $job->info->{state}, 'failed',        'right state';
-is $job->info->{error}, 'Unknown error', 'right error';
+is $job->info->{result}, 'Unknown error', 'right result';
 $id = $minion->enqueue(add => [6, 7]);
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 ok $job->fail('Something bad happened!'), 'job failed';
 is $job->info->{state}, 'failed', 'right state';
-is $job->info->{error}, 'Something bad happened!', 'right error';
+is $job->info->{result}, 'Something bad happened!', 'right result';
 $id  = $minion->enqueue('fail');
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 $job->perform;
 is $job->info->{state}, 'failed', 'right state';
-is $job->info->{error}, "Intentional failure!\n", 'right error';
+is $job->info->{result}, "Intentional failure!\n", 'right result';
 $worker->unregister;
 $minion->reset;
 
