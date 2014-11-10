@@ -6,9 +6,8 @@ use List::Util 'first';
 use Mojo::Util qw(md5_sum);
 use Mojo::JSON qw(encode_json decode_json);
 use Sys::Hostname 'hostname';
-use Time::HiRes qw(time usleep);
+use Time::HiRes qw(usleep);
 use Mojo::Pg;
-use POSIX 'strftime';
 
 has 'pg';
 
@@ -25,7 +24,6 @@ sub enqueue {
 
   my $job = {
     args    => encode_json($args),
-    created => time,
     delayed => $options->{delay} ? (time + $options->{delay}) : 1,
     priority => $options->{priority} // 0,
     retries  => 0,
@@ -34,9 +32,11 @@ sub enqueue {
   };
 
   my $q = join(", ", map({"?"} (1 .. 7)));
-  my @bind = ($job->{args}, $self->timestamp($job->{created}), $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task});
+  my @bind = ($job->{args}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task});
   my $db = $self->pg->db;
-  my $ret = $db->query("INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES ($q) RETURNING id", @bind)->hash;
+  my $ret = $db->query(
+      "INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES (?, now(), ?, ?, ?, ?, ?) RETURNING id", @bind
+  )->hash;
 
   return $ret->{id};
 }
@@ -115,11 +115,11 @@ sub new {
 sub register_worker {
   my $self = shift;
 
-  my $worker = {host => hostname, pid => $$, started => time};
+  my $worker = {host => hostname, pid => $$};
 
   my $db = $self->pg->db;
-  my $ret = $db->query("INSERT INTO worker (host, pid, started) VALUES (?, ?, ?) RETURNING id",
-      $worker->{host}, $worker->{pid}, $self->timestamp($worker->{started})
+  my $ret = $db->query("INSERT INTO worker (host, pid, started) VALUES (?, ?, now()) RETURNING id",
+      $worker->{host}, $worker->{pid}
   )->hash;
 
   return $ret->{id};
@@ -161,14 +161,10 @@ sub repair {
     DELETE
     FROM job 
     WHERE state = 'finished'
-        AND finished < ?
+        AND finished < to_timestamp(?)
   );
   my $after = time - $self->minion->remove_after;
-  $db->query($sql, $self->timestamp($after));
-}
-
-sub timestamp {
-    return strftime("%Y-%m-%d %H:%M:%S", localtime(pop));
+  $db->query($sql, $after);
 }
 
 sub _try {
@@ -197,7 +193,7 @@ sub _try {
   $job->{args} = decode_json($job->{args}) if $job;
 
   if ($job) {
-    $db->query("UPDATE job SET started = ?, state = ?, worker = ? WHERE id = ?", $self->timestamp(time), 'active', $id, $job->{id});
+    $db->query("UPDATE job SET started = now(), state = ?, worker = ? WHERE id = ?", 'active', $id, $job->{id});
     $tx->commit;
   }
 
@@ -210,14 +206,13 @@ sub _update {
     my $job = $self->_job($id, 'active');
 
     if ($job) {
-        $job->{finished} = time;
         $job->{state}    = $fail ? 'failed' : 'finished';
         $job->{error}    = $err if $err;
         
         my $db = $self->pg->db;
         $db->query(
-            "UPDATE job SET finished = ?, state = ?, error = ? WHERE id = ?",
-            $self->timestamp($job->{finished}), $job->{state}, $job->{error}, $job->{id}
+            "UPDATE job SET finished = now(), state = ?, error = ? WHERE id = ?",
+            $job->{state}, $job->{error}, $job->{id}
         );
     }
 
@@ -271,8 +266,8 @@ sub retry_job {
   if ($job) {
     $job->{retries} += 1;
     $self->pg->db->query(
-        "UPDATE job SET retries = ?, retried = ?, state = ?, error = ?, finished = null, started = null, worker = ? WHERE id = ?",
-        $job->{retries}, $self->timestamp(time), 'inactive', "", 0, $job->{id}
+        "UPDATE job SET retries = ?, retried = now(), state = ?, error = ?, finished = null, started = null, worker = ? WHERE id = ?",
+        $job->{retries}, 'inactive', "", 0, $job->{id}
     );
   }
 
