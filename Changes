@@ -1,5 +1,6 @@
 
-0.40  2014-10-06
+0.40  2014-10-10
+  - Added support for job results.
 
 0.39  2014-10-05
   - Added DBM::Deep support to Minion::Backend::File.

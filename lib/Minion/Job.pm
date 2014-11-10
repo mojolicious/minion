@@ -16,9 +16,9 @@ sub fail {
 }
 
 sub finish {
-  my $self = shift;
-  my $ok   = $self->minion->backend->finish_job($self->id);
-  return $ok ? !!$self->emit('finished') : undef;
+  my ($self, $result) = @_;
+  my $ok = $self->minion->backend->finish_job($self->id, $result);
+  return $ok ? !!$self->emit(finished => $result) : undef;
 }
 
 sub info { $_[0]->minion->backend->job_info($_[0]->id) }
@@ -91,14 +91,14 @@ Emitted after this job transitioned to the C<failed> state.
 =head2 finished
 
   $job->on(finished => sub {
-    my $job = shift;
+    my ($job, $result) = @_;
     ...
   });
 
 Emitted after this job transitioned to the C<finished> state.
 
   $job->on(finished => sub {
-    my $job = shift;
+    my ($job, $result) = @_;
     my $id = $job->id;
     say "Job $id is finished.";
   });
@@ -168,12 +168,15 @@ Get application from L<Minion/"app">.
 
   my $bool = $job->fail;
   my $bool = $job->fail('Something went wrong!');
+  my $bool = $job->fail({msg => 'Something went wrong!'});
 
 Transition from C<active> to C<failed> state.
 
 =head2 finish
 
   my $bool = $job->finish;
+  my $bool = $job->finish('All went well!');
+  my $bool = $job->finish({msg => 'All went well!'});
 
 Transition from C<active> to C<finished> state.
 

@@ -117,6 +117,7 @@ Job priority, defaults to C<0>.
 
   my $bool = $backend->fail_job($job_id);
   my $bool = $backend->fail_job($job_id, 'Something went wrong!');
+  my $bool = $backend->fail_job($job_id, {msg => 'Something went wrong!'});
 
 Transition from C<active> to C<failed> state. Meant to be overloaded in a
 subclass.
@@ -124,6 +125,8 @@ subclass.
 =head2 finish_job
 
   my $bool = $backend->finish_job($job_id);
+  my $bool = $backend->finish_job($job_id, 'All went well!');
+  my $bool = $backend->finish_job($job_id, {msg => 'All went well!'});
 
 Transition from C<active> to C<finished> state. Meant to be overloaded in a
 subclass.
