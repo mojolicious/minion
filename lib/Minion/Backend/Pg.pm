@@ -8,6 +8,7 @@ use Mojo::JSON qw(encode_json decode_json);
 use Sys::Hostname 'hostname';
 use Time::HiRes qw(time usleep);
 use Mojo::Pg;
+use POSIX 'strftime';
 
 has 'pg';
 
@@ -33,11 +34,9 @@ sub enqueue {
   };
 
   my $q = join(", ", map({"?"} (1 .. 7)));
-  my @bind = ($job->{args}, $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task});
+  my @bind = ($job->{args}, $self->timestamp($job->{created}), $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task});
   my $db = $self->pg->db;
-  my $ret = $db->query("INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES ($q) RETURNING id",
-      @bind
-  )->hash;
+  my $ret = $db->query("INSERT INTO job (args, created, delayed, priority, retries, state, task) VALUES ($q) RETURNING id", @bind)->hash;
 
   return $ret->{id};
 }
@@ -60,7 +59,16 @@ sub _job {
 }
 
 sub job_info {
-  my $job = shift->pg->db->query("SELECT * FROM job WHERE id = ?", shift)->hash;
+  my $job = shift->pg->db->query(
+    qq(
+        SELECT 
+            id, EXTRACT(EPOCH FROM started) as started, error, worker, args,
+            EXTRACT(EPOCH FROM created) as created, delayed, priority, retries, state, task, 
+            EXTRACT(EPOCH FROM finished) as finished, EXTRACT(EPOCH FROM retried) as retried
+        FROM job 
+        WHERE id = ?
+    ), shift
+  )->hash;
   $job->{args} = decode_json($job->{args}) if $job;
   return $job;
 }
@@ -94,8 +102,7 @@ sub list_jobs {
 sub list_workers {
   my ($self, $offset, $limit) = @_;
 
-  my @workers
-    = sort { $b->{started} <=> $a->{started} } values %{$self->_workers};
+  my @workers = sort { $b->{id} <=> $a->{id} } values %{$self->_workers};
   @workers = grep {defined} @workers[$offset .. ($offset + $limit - 1)];
 
   return [map { $self->_worker_info($_->{id}) } @workers];
@@ -112,7 +119,7 @@ sub register_worker {
 
   my $db = $self->pg->db;
   my $ret = $db->query("INSERT INTO worker (host, pid, started) VALUES (?, ?, ?) RETURNING id",
-      $worker->{host}, $worker->{pid}, $worker->{started}
+      $worker->{host}, $worker->{pid}, $self->timestamp($worker->{started})
   )->hash;
 
   return $ret->{id};
@@ -157,7 +164,11 @@ sub repair {
         AND finished < ?
   );
   my $after = time - $self->minion->remove_after;
-  $db->query($sql, $after);
+  $db->query($sql, $self->timestamp($after));
+}
+
+sub timestamp {
+    return strftime("%Y-%m-%d %H:%M:%S", localtime(pop));
 }
 
 sub _try {
@@ -186,7 +197,7 @@ sub _try {
   $job->{args} = decode_json($job->{args}) if $job;
 
   if ($job) {
-    $db->query("UPDATE job SET started = ?, state = ?, worker = ? WHERE id = ?", time, 'active', $id, $job->{id});
+    $db->query("UPDATE job SET started = ?, state = ?, worker = ? WHERE id = ?", $self->timestamp(time), 'active', $id, $job->{id});
     $tx->commit;
   }
 
@@ -205,8 +216,8 @@ sub _update {
         
         my $db = $self->pg->db;
         $db->query(
-            "UPDATE job SET args = ?, created = ?, delayed = ?, priority = ?, retries = ?, state = ?, task = ?, finished = ?, error = ? WHERE id = ?",
-            ref $job->{args} ? encode_json($job->{args}) : $job->{args}, $job->{created}, $job->{delayed}, $job->{priority}, $job->{retries}, $job->{state}, $job->{task}, $job->{finished}, $job->{error}, $job->{id}
+            "UPDATE job SET finished = ?, state = ?, error = ? WHERE id = ?",
+            $self->timestamp($job->{finished}), $job->{state}, $job->{error}, $job->{id}
         );
     }
 
@@ -260,8 +271,8 @@ sub retry_job {
   if ($job) {
     $job->{retries} += 1;
     $self->pg->db->query(
-        "UPDATE job SET retries = ?, retried = ?, state = ?, error = ?, finished = ?, result = ?, started = ?, worker = ? WHERE id = ?",
-        $job->{retries}, time, 'inactive', "", "", "", "", "", $job->{id}
+        "UPDATE job SET retries = ?, retried = ?, state = ?, error = ?, finished = null, started = null, worker = ? WHERE id = ?",
+        $job->{retries}, $self->timestamp(time), 'inactive', "", 0, $job->{id}
     );
   }
 
@@ -322,7 +333,7 @@ sub _worker_info {
 }
 
 sub _workers { 
-    my $workers = shift->pg->db->query("SELECT * FROM worker ORDER BY id")->hashes;
+    my $workers = shift->pg->db->query("SELECT id, host, pid, EXTRACT(EPOCH FROM started) as started FROM worker")->hashes;
 
     my %workers;
     foreach my $worker (@{ $workers }) {
