@@ -57,8 +57,7 @@ sub _info {
   my ($state, $priority, $retries) = @$info{qw(state priority retries)};
   print $info->{task}, " ($state, p$priority, r$retries)\n",
     dumper($info->{args});
-  my $err = $info->{error};
-  say chomp $err ? $err : $err if $err;
+  if (my $result = $info->{result}) { print dumper $result }
 
   # Timing
   say Mojo::Date->new($info->{created})->to_datetime, ' (created)';
