@@ -1,4 +1,6 @@
 
+0.41  2014-10-12
+
 0.40  2014-10-11
   - Added PostgreSQL support with Mojo::Pg. (bpmedley, sri)
   - Added support for job results.
