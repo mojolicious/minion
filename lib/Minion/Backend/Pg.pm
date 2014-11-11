@@ -234,14 +234,14 @@ __DATA__
 create table minion_jobs (
   id bigserial not null primary key,
   args json not null,
-  created timestamp not null,
-  delayed timestamp not null,
-  finished timestamp,
+  created timestamp with time zone not null,
+  delayed timestamp with time zone not null,
+  finished timestamp with time zone,
   priority int not null,
   result json,
-  retried timestamp,
+  retried timestamp with time zone,
   retries int not null,
-  started timestamp,
+  started timestamp with time zone,
   state text not null,
   task text not null,
   worker bigint
@@ -250,7 +250,7 @@ create table minion_workers (
   id bigserial not null primary key,
   host text not null,
   pid int not null,
-  started timestamp not null
+  started timestamp with time zone not null
 );
 -- 1 down
 drop table minion_jobs;

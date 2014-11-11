@@ -70,7 +70,7 @@ my $finished = $minion->backend->pg->db->query(
 )->hash->{finished};
 $minion->backend->pg->db->query(
   'update minion_jobs set finished = to_timestamp(?) where id = ?',
-  $finished - ($minion->remove_after * 2), $id2);
+  $finished - ($minion->remove_after + 1), $id2);
 $finished = $minion->backend->pg->db->query(
   'select extract(epoch from finished) as finished
    from minion_jobs
@@ -78,7 +78,7 @@ $finished = $minion->backend->pg->db->query(
 )->hash->{finished};
 $minion->backend->pg->db->query(
   'update minion_jobs set finished = to_timestamp(?) where id = ?',
-  $finished - ($minion->remove_after * 2), $id3);
+  $finished - ($minion->remove_after + 1), $id3);
 $worker->unregister;
 $minion->repair;
 ok $minion->job($id), 'job has not been cleaned up';
