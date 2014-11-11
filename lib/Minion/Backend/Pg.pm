@@ -231,7 +231,7 @@ __DATA__
 
 @@ minion
 -- 1 up
-create table minion_jobs (
+create table if not exists minion_jobs (
   id bigserial not null primary key,
   args json not null,
   created timestamp with time zone not null,
@@ -246,15 +246,15 @@ create table minion_jobs (
   task text not null,
   worker bigint
 );
-create table minion_workers (
+create table if not exists minion_workers (
   id bigserial not null primary key,
   host text not null,
   pid int not null,
   started timestamp with time zone not null
 );
 -- 1 down
-drop table minion_jobs;
-drop table minion_workers;
+drop table if exists minion_jobs;
+drop table if exists minion_workers;
 
 __END__
 
@@ -272,7 +272,9 @@ Minion::Backend::Pg - PostgreSQL backend
 
 =head1 DESCRIPTION
 
-L<Minion::Backend::Pg> is a backend for L<Minion> based on L<Mojo::Pg>.
+L<Minion::Backend::Pg> is a backend for L<Minion> based on L<Mojo::Pg>. All
+necessary tables will be created automatically with a set of migrations named
+C<minion>.
 
 =head1 ATTRIBUTES
 
