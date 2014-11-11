@@ -1,19 +1,16 @@
 use Mojo::Base -strict;
 
-BEGIN { $ENV{MOJO_REACTOR} = 'Mojo::Reactor::Poll' }
-
 use Test::More;
 
-use File::Spec::Functions 'catfile';
-use File::Temp 'tempdir';
+plan skip_all => 'set TEST_ONLINE to enable this test'
+  unless $ENV{TEST_ONLINE};
+
 use Minion;
 use Sys::Hostname 'hostname';
 use Time::HiRes 'time';
 
 # Clean up before start
-my $tmpdir = tempdir CLEANUP => 1;
-my $file = catfile $tmpdir, 'minion.db';
-my $minion = Minion->new(File => $file);
+my $minion = Minion->new(Pg => $ENV{TEST_ONLINE});
 $minion->reset;
 
 # Nothing to repair
@@ -39,13 +36,14 @@ is $worker2->info->{jobs}[0], $job->id, 'right id';
 $id = $worker2->id;
 undef $worker2;
 is $job->info->{state}, 'active', 'job is still active';
-my $info = $minion->backend->db->{workers}->{$id};
-ok $info, 'is registered';
+ok !!$minion->backend->worker_info($id), 'is registered';
 my $pid = 4000;
 $pid++ while kill 0, $pid;
-$info->{pid} = $pid;
+$minion->backend->pg->db->query(
+  'update minion_workers set pid = ? where id = ?',
+  $pid, $id);
 $minion->repair;
-ok !$minion->worker->id($id)->info, 'not registered';
+ok !$minion->backend->worker_info($id), 'not registered';
 is $job->info->{state},  'failed',           'job is no longer active';
 is $job->info->{result}, 'Worker went away', 'right result';
 
@@ -65,8 +63,22 @@ $id = $minion->enqueue('test');
 my $id2 = $minion->enqueue('test');
 my $id3 = $minion->enqueue('test');
 $worker->dequeue(0)->perform for 1 .. 3;
-$minion->backend->db->{jobs}{$id2}{finished} -= $minion->remove_after * 2;
-$minion->backend->db->{jobs}{$id3}{finished} -= $minion->remove_after * 2;
+my $finished = $minion->backend->pg->db->query(
+  'select extract(epoch from finished) as finished
+   from minion_jobs
+   where id = ?', $id2
+)->hash->{finished};
+$minion->backend->pg->db->query(
+  'update minion_jobs set finished = to_timestamp(?) where id = ?',
+  $finished - ($minion->remove_after * 2), $id2);
+$finished = $minion->backend->pg->db->query(
+  'select extract(epoch from finished) as finished
+   from minion_jobs
+   where id = ?', $id3
+)->hash->{finished};
+$minion->backend->pg->db->query(
+  'update minion_jobs set finished = to_timestamp(?) where id = ?',
+  $finished - ($minion->remove_after * 2), $id3);
 $worker->unregister;
 $minion->repair;
 ok $minion->job($id), 'job has not been cleaned up';
@@ -94,8 +106,11 @@ $worker2->unregister;
 
 # Reset
 $minion->reset->repair;
-ok !keys %{$minion->backend->db->{jobs}},    'no jobs';
-ok !keys %{$minion->backend->db->{workers}}, 'no workers';
+ok !$minion->backend->pg->db->query(
+  'select count(id) as count from minion_jobs')->hash->{count}, 'no jobs';
+ok !$minion->backend->pg->db->query(
+  'select count(id) as count from minion_workers')->hash->{count},
+  'no workers';
 
 # Wait for job
 my $before = time;
@@ -195,7 +210,7 @@ ok $minion->job($id)->remove, 'job removed';
 is $minion->job(12345), undef, 'job does not exist';
 $id = $minion->enqueue(add => [2, 2]);
 ok $minion->job($id), 'job does exist';
-$info = $minion->job($id)->info;
+my $info = $minion->job($id)->info;
 is_deeply $info->{args}, [2, 2], 'right arguments';
 is $info->{priority}, 0,          'right priority';
 is $info->{state},    'inactive', 'right state';
@@ -275,9 +290,10 @@ $worker->unregister;
 $id = $minion->enqueue(add => [2, 1] => {delay => 100});
 is $worker->register->dequeue(0), undef, 'too early for job';
 ok $minion->job($id)->info->{delayed} > time, 'delayed timestamp';
-$info            = $minion->backend->db->{jobs}{$id};
-$info->{delayed} = time - 100;
-$job             = $worker->dequeue(0);
+$minion->backend->pg->db->query(
+  "update minion_jobs set delayed = now() - interval '1 day' where id = ?",
+  $id);
+$job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 like $job->info->{delayed}, qr/^[\d.]+$/, 'has delayed timestamp';
 ok $job->finish, 'job finished';
@@ -285,46 +301,6 @@ ok $job->retry,  'job retried';
 ok $minion->job($id)->info->{delayed} < time, 'no delayed timestamp';
 ok $job->remove, 'job removed';
 ok !$job->retry, 'job not retried';
-$worker->unregister;
-
-# Events
-$pid = $$;
-my ($failed, $finished) = (0, 0);
-$minion->on(
-  worker => sub {
-    my ($minion, $worker) = @_;
-    $worker->on(
-      dequeue => sub {
-        my ($worker, $job) = @_;
-        $job->on(failed   => sub { $failed++ });
-        $job->on(finished => sub { $finished++ });
-        $job->on(spawn    => sub { $pid = pop });
-      }
-    );
-  }
-);
-$worker = $minion->worker->register;
-$minion->enqueue(add => [3, 3]);
-$minion->enqueue(add => [4, 3]);
-$job = $worker->dequeue(0);
-is $failed,   0, 'failed event has not been emitted';
-is $finished, 0, 'finished event has not been emitted';
-my $result;
-$job->on(finished => sub { $result = pop });
-$job->finish('Everything is fine!');
-$job->perform;
-is $result,   'Everything is fine!', 'right result';
-is $failed,   0,                     'failed event has not been emitted';
-is $finished, 1,                     'finished event has been emitted once';
-isnt $pid, $$, 'new process id';
-$job = $worker->dequeue(0);
-my $err;
-$job->on(failed => sub { $err = pop });
-$job->fail("test\n");
-$job->fail;
-is $err,      "test\n", 'right error';
-is $failed,   1,        'failed event has been emitted once';
-is $finished, 1,        'finished event has been emitted once';
 $worker->unregister;
 
 # Failed jobs
@@ -348,16 +324,6 @@ is $job->id, $id, 'right id';
 $job->perform;
 is $job->info->{state}, 'failed', 'right state';
 is $job->info->{result}, "Intentional failure!\n", 'right result';
-$worker->unregister;
-
-# Exit
-$minion->add_task(exit => sub { exit 1 });
-$id  = $minion->enqueue('exit');
-$job = $worker->register->dequeue(0);
-is $job->id, $id, 'right id';
-$job->perform;
-is $job->info->{state}, 'failed', 'right state';
-is $job->info->{result}, 'Non-zero exit status', 'right result';
 $worker->unregister;
 $minion->reset;
 

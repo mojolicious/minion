@@ -6,10 +6,14 @@ perl:
   - "5.14"
   - "5.12"
   - "5.10"
+addons:
+  postgresql: "9.3"
 env:
-  - "HARNESS_OPTIONS=j9 TEST_POD=1"
+  - "HARNESS_OPTIONS=j9 TEST_POD=1 TEST_ONLINE=postgresql://postgres@/minion_test"
 install:
-  - "cpanm -n Test::Pod Test::Pod::Coverage"
+  - "cpanm -n Mojo::Pg Test::Pod Test::Pod::Coverage"
   - "cpanm -n --installdeps ."
+before_script:
+  - psql -c 'create database minion_test;' -U postgres
 notifications:
   email: false

@@ -38,8 +38,7 @@ sub enqueue {
   return $job->{id};
 }
 
-sub fail_job { shift->_update(1, @_) }
-
+sub fail_job   { shift->_update(1, @_) }
 sub finish_job { shift->_update(0, @_) }
 
 sub job_info {

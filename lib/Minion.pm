@@ -87,7 +87,8 @@ Minion - Job queue
   use Minion;
 
   # Connect to backend
-  my $minion = Minion->new(File  => '/Users/sri/minion.db');
+  my $minion = Minion->new(File => '/Users/sri/minion.db');
+  my $minion = Minion->new(Pg   => 'postgresql://postgres@/test');
 
   # Add tasks
   $minion->add_task(something_slow => sub {
@@ -164,7 +165,7 @@ Application for job queue, defaults to a L<Mojo::HelloWorld> object.
   my $backend = $minion->backend;
   $minion     = $minion->backend(Minion::Backend::File->new);
 
-Backend, usually a L<Minion::Backend::File> object.
+Backend, usually a L<Minion::Backend::File> or L<Minion::Backend::Pg> object.
 
 =head2 remove_after
 
@@ -268,6 +269,16 @@ Build L<Minion::Worker> object.
 =head1 AUTHOR
 
 Sebastian Riedel, C<sri@cpan.org>.
+
+=head1 CREDITS
+
+In alphabetical order:
+
+=over 2
+
+Brian Medley
+
+=back
 
 =head1 COPYRIGHT AND LICENSE
 
