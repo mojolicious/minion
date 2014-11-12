@@ -63,7 +63,7 @@ sub list_jobs {
      limit ?
      offset ?", @values, $limit, $offset
   );
-  return [$results->arrays->map(sub { $self->job_info($_->[0]) })->each];
+  return $results->arrays->map(sub { $self->job_info($_->[0]) })->to_array;
 }
 
 sub list_workers {
