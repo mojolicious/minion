@@ -35,7 +35,7 @@ app->start;
 
   All you need is a oneliner, it takes less than a minute.
 
-    $ curl -L cpanmin.us | perl - -n Minion
+    $ curl -L https://cpanmin.us | perl - -n Minion
 
   And if you already have `cpanm` installed with a secure toolchain.
 
