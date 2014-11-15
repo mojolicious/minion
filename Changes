@@ -1,4 +1,6 @@
 
+0.42  2014-10-16
+
 0.41  2014-10-15
   - Improved Minion::Backend::Pg performance.
 
