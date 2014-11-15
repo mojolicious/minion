@@ -69,8 +69,7 @@ sub list_jobs {
 sub list_workers {
   my ($self, $offset, $limit) = @_;
   my @workers = sort { $b->{id} <=> $a->{id} } values %{$self->_workers};
-  @workers = grep {defined} @workers[$offset .. ($offset + $limit - 1)];
-  return [map { $self->_worker_info($_->{id}) } @workers];
+  return [grep {defined} @workers[$offset .. ($offset + $limit - 1)]];
 }
 
 sub new {
@@ -106,10 +105,7 @@ sub repair {
   my $host    = hostname;
   my @dead    = map { $_->{id} }
     grep { $_->{host} eq $host && !kill 0, $_->{pid} } values %$workers;
-  if (@dead) {
-    $db->query("delete from minion_workers where id = any (?)", \@dead);
-    $workers = $self->_workers;
-  }
+  $db->query("delete from minion_workers where id = any (?)", \@dead) if @dead;
 
   # Abandoned jobs
   $db->query(
@@ -148,11 +144,12 @@ sub stats {
   my $self = shift;
 
   my $db     = $self->pg->db;
+  my $all    = $db->query('select count(*) from minion_workers')->array->[0];
   my $active = $db->query(
-    "select count(distinct worker) as active
+    "select count(distinct worker)
      from minion_jobs
      where state = 'active'"
-  )->hash->{active};
+  )->array->[0];
 
   my $states
     = $db->query('select state, count(state) from minion_jobs group by 1')
@@ -160,7 +157,7 @@ sub stats {
 
   return {
     active_workers   => $active,
-    inactive_workers => keys(%{$self->_workers}) - $active,
+    inactive_workers => $all - $active,
     active_jobs      => $states->{active} || 0,
     inactive_jobs    => $states->{inactive} || 0,
     failed_jobs      => $states->{failed} || 0,
@@ -172,7 +169,7 @@ sub unregister_worker {
   shift->pg->db->query('delete from minion_workers where id = ?', shift);
 }
 
-sub worker_info { shift->_worker_info(@_) }
+sub worker_info { shift->_workers->{shift() // ''} }
 
 sub _try {
   my ($self, $id) = @_;
@@ -210,53 +207,16 @@ sub _update {
   )->rows;
 }
 
-sub _worker_info {
-  my ($self, $id) = @_;
-
-  return undef unless $id && (my $worker = $self->_workers->{$id});
-  my $jobs
-    = $self->pg->db->query('select id from minion_jobs where worker = ?', $id);
-  return {%$worker, jobs => $jobs->array};
-}
-
 sub _workers {
   shift->pg->db->query(
-    'select id, host, pid, extract(epoch from started) as started
+    'select id, array(
+       select id from minion_jobs where worker = minion_workers.id
+     ) as jobs, host, pid, extract(epoch from started) as started
      from minion_workers'
   )->hashes->reduce(sub { $a->{$b->{id}} = $b; $a }, {});
 }
 
 1;
-__DATA__
-
-@@ minion
--- 1 up
-create table if not exists minion_jobs (
-  id bigserial not null primary key,
-  args json not null,
-  created timestamp with time zone not null,
-  delayed timestamp with time zone not null,
-  finished timestamp with time zone,
-  priority int not null,
-  result json,
-  retried timestamp with time zone,
-  retries int not null,
-  started timestamp with time zone,
-  state text not null,
-  task text not null,
-  worker bigint
-);
-create table if not exists minion_workers (
-  id bigserial not null primary key,
-  host text not null,
-  pid int not null,
-  started timestamp with time zone not null
-);
--- 1 down
-drop table if exists minion_jobs;
-drop table if exists minion_workers;
-
-__END__
 
 =encoding utf8
 
@@ -438,3 +398,32 @@ Get information about a worker or return C<undef> if worker does not exist.
 L<Minion>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
 
 =cut
+
+__DATA__
+
+@@ minion
+-- 1 up
+create table if not exists minion_jobs (
+  id bigserial not null primary key,
+  args json not null,
+  created timestamp with time zone not null,
+  delayed timestamp with time zone not null,
+  finished timestamp with time zone,
+  priority int not null,
+  result json,
+  retried timestamp with time zone,
+  retries int not null,
+  started timestamp with time zone,
+  state text not null,
+  task text not null,
+  worker bigint
+);
+create table if not exists minion_workers (
+  id bigserial not null primary key,
+  host text not null,
+  pid int not null,
+  started timestamp with time zone not null
+);
+-- 1 down
+drop table if exists minion_jobs;
+drop table if exists minion_workers;
