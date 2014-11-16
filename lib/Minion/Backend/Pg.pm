@@ -14,12 +14,10 @@ sub dequeue {
   if (my $job = $self->_try($id)) { return $job }
 
   my $db = $self->pg->db;
-  $db->on(notification => sub { Mojo::IOLoop->stop });
-  $db->listen('minion.job');
+  $db->listen('minion.job')->on(notification => sub { Mojo::IOLoop->stop });
   my $timer = Mojo::IOLoop->timer($timeout => sub { Mojo::IOLoop->stop });
   Mojo::IOLoop->start;
-  $db->unlisten('*');
-  Mojo::IOLoop->remove($timer);
+  $db->unlisten('*') and Mojo::IOLoop->remove($timer);
   undef $db;
 
   return $self->_try($id);
