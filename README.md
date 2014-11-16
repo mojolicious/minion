@@ -35,6 +35,6 @@ app->start;
 
   All you need is a oneliner, it takes less than a minute.
 
-    $ curl -L https://cpanmin.us | perl - --mirror https://cpan.metacpan.org --mirror-only -n Minion
+    $ curl -L https://cpanmin.us | perl - -M https://cpan.metacpan.org -n Minion
 
   We recommend the use of a [Perlbrew](http://perlbrew.pl) environment.
