@@ -203,7 +203,7 @@ sub _try {
        select id
        from minion_jobs
        where state = 'inactive' and delayed < now() and task = any (?)
-         and pg_try_advisory_lock(id)
+         and pg_try_advisory_xact_lock(id)
        order by priority desc, created
        limit 1
        for update
