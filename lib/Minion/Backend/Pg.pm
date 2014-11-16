@@ -443,7 +443,9 @@ begin
   return null;
 end;
 $$ language plpgsql;
+set client_min_messages to warning;
 drop trigger if exists minion_jobs_insert_trigger on minion_jobs;
+set client_min_messages to notice;
 create trigger minion_jobs_insert_trigger after insert on minion_jobs
   for each row execute procedure notify_minion_jobs_insert();
 
