@@ -12,8 +12,9 @@ use Sys::Hostname 'hostname';
 use Time::HiRes 'time';
 
 # Clean up before start
+Minion->new(Pg => $ENV{TEST_ONLINE})->backend->pg->migrations->migrate(0);
 my $minion = Minion->new(Pg => $ENV{TEST_ONLINE});
-$minion->backend->pg->migrations->migrate(0)->migrate;
+$minion->reset;
 
 # Nothing to repair
 my $worker = $minion->repair->worker;
