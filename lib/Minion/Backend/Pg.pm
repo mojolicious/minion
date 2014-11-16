@@ -55,21 +55,26 @@ sub list_jobs {
   push @and, 'task = ?' and push @values, $options->{task} if $options->{task};
   my $where = @and ? 'where ' . join(' and ', @and) : '';
 
-  my $results = $self->pg->db->query(
+  return $self->pg->db->query(
     "select id
      from minion_jobs
      $where
      order by id desc
      limit ?
      offset ?", @values, $limit, $offset
-  );
-  return $results->arrays->map(sub { $self->job_info($_->[0]) })->to_array;
+  )->arrays->map(sub { $self->job_info($_->[0]) })->to_array;
 }
 
 sub list_workers {
   my ($self, $offset, $limit) = @_;
-  my @workers = sort { $b->{id} <=> $a->{id} } values %{$self->_workers};
-  return [grep {defined} @workers[$offset .. ($offset + $limit - 1)]];
+
+  return $self->pg->db->query(
+    'select id
+     from minion_workers
+     order by id desc
+     limit ?
+     offset ?', $limit, $offset
+  )->arrays->map(sub { $self->worker_info($_->[0]) })->to_array;
 }
 
 sub new {
@@ -100,11 +105,11 @@ sub repair {
   my $self = shift;
 
   # Check workers on this host (all should be owned by the same user)
-  my $workers = $self->_workers;
-  my $db      = $self->pg->db;
-  my $host    = hostname;
-  my @dead    = map { $_->{id} }
-    grep { $_->{host} eq $host && !kill 0, $_->{pid} } values %$workers;
+  my $db = $self->pg->db;
+  my $workers
+    = $db->query('select id, host, pid from minion_workers where host = ?',
+    hostname)->hashes;
+  my @dead = map { $_->{id} } grep { !kill 0, $_->{pid} } $workers->each;
   $db->query("delete from minion_workers where id = any (?)", \@dead) if @dead;
 
   # Abandoned jobs
@@ -118,8 +123,7 @@ sub repair {
   # Old jobs
   $db->query(
     "delete from minion_jobs
-     where state = 'finished'
-       and finished < now() - interval '1 second' * ?",
+     where state = 'finished' and finished < now() - interval '1 second' * ?",
     $self->minion->remove_after
   );
 }
@@ -169,7 +173,15 @@ sub unregister_worker {
   shift->pg->db->query('delete from minion_workers where id = ?', shift);
 }
 
-sub worker_info { shift->_workers->{shift() // ''} }
+sub worker_info {
+  shift->pg->db->query(
+    'select id, array(
+       select id from minion_jobs where worker = minion_workers.id
+     ) as jobs, host, pid, extract(epoch from started) as started
+     from minion_workers
+     where id = ?', shift
+  )->hash;
+}
 
 sub _try {
   my ($self, $id) = @_;
@@ -205,15 +217,6 @@ sub _update {
      where id = ? and state = 'active'
      returning 1", encode_json($result), $fail ? 'failed' : 'finished', $id
   )->rows;
-}
-
-sub _workers {
-  shift->pg->db->query(
-    'select id, array(
-       select id from minion_jobs where worker = minion_workers.id
-     ) as jobs, host, pid, extract(epoch from started) as started
-     from minion_workers'
-  )->hashes->reduce(sub { $a->{$b->{id}} = $b; $a }, {});
 }
 
 1;
