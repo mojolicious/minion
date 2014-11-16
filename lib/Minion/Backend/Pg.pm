@@ -5,7 +5,6 @@ use Mojo::IOLoop;
 use Mojo::JSON qw(decode_json encode_json);
 use Mojo::Pg;
 use Sys::Hostname 'hostname';
-use Time::HiRes 'time';
 
 has 'pg';
 
