@@ -207,14 +207,15 @@ sub _try {
      limit 1
      for update", [keys %{$self->minion->tasks}]
     )->hash;
-  $job->{args} = decode_json $job->{args};
 
   $db->query(
     "update minion_jobs
      set started = now(), state = 'active', worker = ?
      where id = ?", $id, $job->{id}
   );
+
   $tx->commit;
+  $job->{args} = decode_json $job->{args};
 
   return $job;
 }
