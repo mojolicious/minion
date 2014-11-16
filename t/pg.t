@@ -1,5 +1,7 @@
 use Mojo::Base -strict;
 
+BEGIN { $ENV{MOJO_REACTOR} = 'Mojo::Reactor::Poll' }
+
 use Test::More;
 
 plan skip_all => 'set TEST_ONLINE to enable this test'
@@ -11,7 +13,7 @@ use Time::HiRes 'time';
 
 # Clean up before start
 my $minion = Minion->new(Pg => $ENV{TEST_ONLINE});
-$minion->reset;
+$minion->backend->pg->migrations->migrate(0)->migrate;
 
 # Nothing to repair
 my $worker = $minion->repair->worker;

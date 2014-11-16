@@ -1,17 +1,29 @@
 package Minion::Backend::Pg;
 use Mojo::Base 'Minion::Backend';
 
+use Mojo::IOLoop;
 use Mojo::JSON qw(decode_json encode_json);
 use Mojo::Pg;
 use Sys::Hostname 'hostname';
-use Time::HiRes 'usleep';
+use Time::HiRes 'time';
 
 has 'pg';
 
 sub dequeue {
   my ($self, $id, $timeout) = @_;
-  usleep $timeout * 1000000 unless my $job = $self->_try($id);
-  return $job || $self->_try($id);
+
+  if (my $job = $self->_try($id)) { return $job }
+
+  my $db = $self->pg->db;
+  $db->on(notification => sub { Mojo::IOLoop->stop });
+  $db->listen('minion.job');
+  my $timer = Mojo::IOLoop->timer($timeout => sub { Mojo::IOLoop->stop });
+  Mojo::IOLoop->start;
+  $db->unlisten('*');
+  Mojo::IOLoop->remove($timer);
+  undef $db;
+
+  return $self->_try($id);
 }
 
 sub enqueue {
@@ -19,7 +31,8 @@ sub enqueue {
   my $args    = shift // [];
   my $options = shift // {};
 
-  return $self->pg->db->query(
+  my $db = $self->pg->db;
+  return $db->query(
     "insert into minion_jobs
        (args, created, delayed, priority, retries, state, task)
      values
@@ -427,6 +440,17 @@ create table if not exists minion_workers (
   pid int not null,
   started timestamp with time zone not null
 );
+create or replace function notify_minion_jobs_insert() returns trigger as $$
+begin
+  perform pg_notify('minion.job', '');
+  return null;
+end;
+$$ language plpgsql;
+drop trigger if exists minion_jobs_insert_trigger on minion_jobs;
+create trigger minion_jobs_insert_trigger after insert on minion_jobs
+  for each row execute procedure notify_minion_jobs_insert();
+
 -- 1 down
 drop table if exists minion_jobs;
+drop function if exists notify_minion_jobs_insert();
 drop table if exists minion_workers;
