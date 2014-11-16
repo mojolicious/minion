@@ -196,25 +196,21 @@ sub worker_info {
 sub _try {
   my ($self, $id) = @_;
 
-  my $db = $self->pg->db;
-  my $tx = $db->begin;
-
-  return undef
-    unless my $job = $db->query(
-    "select id, args, task from minion_jobs
-     where state = 'inactive' and delayed < now() and task = any (?)
-     order by priority desc, created
-     limit 1
-     for update", [keys %{$self->minion->tasks}]
-    )->hash;
-
-  $db->query(
+  return undef unless my $job = $self->pg->db->query(
     "update minion_jobs
      set started = now(), state = 'active', worker = ?
-     where id = ?", $id, $job->{id}
-  );
-
-  $tx->commit;
+     from (
+       select id
+       from minion_jobs
+       where state = 'inactive' and delayed < now() and task = any (?)
+         and pg_try_advisory_lock(id)
+       order by priority desc, created
+       limit 1
+       for update
+     ) job
+     where minion_jobs.id = job.id
+     returning minion_jobs.id, args, task", $id, [keys %{$self->minion->tasks}]
+  )->hash;
   $job->{args} = decode_json $job->{args};
 
   return $job;
