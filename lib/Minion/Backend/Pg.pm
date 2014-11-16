@@ -199,13 +199,14 @@ sub _try {
   my $db = $self->pg->db;
   my $tx = $db->begin;
 
-  return undef unless my $job = $db->query(
-    "select * from minion_jobs
+  return undef
+    unless my $job = $db->query(
+    "select id, args, task from minion_jobs
      where state = 'inactive' and delayed < now() and task = any (?)
      order by priority desc, created
      limit 1
      for update", [keys %{$self->minion->tasks}]
-  )->hash;
+    )->hash;
   $job->{args} = decode_json $job->{args};
 
   $db->query(
@@ -438,10 +439,10 @@ create table if not exists minion_workers (
   started timestamp with time zone not null
 );
 create or replace function notify_minion_jobs_insert() returns trigger as $$
-begin
-  perform pg_notify('minion.job', '');
-  return null;
-end;
+  begin
+    perform pg_notify('minion.job', '');
+    return null;
+  end;
 $$ language plpgsql;
 set client_min_messages to warning;
 drop trigger if exists minion_jobs_insert_trigger on minion_jobs;
