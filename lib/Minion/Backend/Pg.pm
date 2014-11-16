@@ -146,11 +146,11 @@ sub reset {
 sub retry_job {
   !!shift->pg->db->query(
     "update minion_jobs
-       set finished = null, result = null, retried = now(),
-         retries = retries + 1, started = null, state = 'inactive',
-         worker = null
-       where id = ? and state in ('failed', 'finished')
-       returning 1", shift
+     set finished = null, result = null, retried = now(),
+       retries = retries + 1, started = null, state = 'inactive',
+       worker = null
+     where id = ? and state in ('failed', 'finished')
+     returning 1", shift
   )->rows;
 }
 
