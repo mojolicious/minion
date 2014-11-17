@@ -1,5 +1,6 @@
 
-0.44  2014-10-18
+0.44  2014-10-17
+  - Fixed bug where jobs could not be dequeued inside a running event loop.
 
 0.43  2014-10-17
   - Fixed bug where advisory locks would run out of shared memory.

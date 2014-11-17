@@ -8,6 +8,7 @@ plan skip_all => 'set TEST_ONLINE to enable this test'
   unless $ENV{TEST_ONLINE};
 
 use Minion;
+use Mojo::IOLoop;
 use Sys::Hostname 'hostname';
 use Time::HiRes 'time';
 
@@ -337,6 +338,12 @@ $job->perform;
 is $job->info->{state}, 'failed', 'right state';
 is $job->info->{result}, "Intentional failure!\n", 'right result';
 $worker->unregister;
+
+# Perform job in a running event loop
+$id = $minion->enqueue(add => [8, 9]);
+Mojo::IOLoop->delay(sub { $minion->perform_jobs })->wait;
+is $minion->job($id)->info->{state}, 'finished', 'right state';
+is_deeply $minion->job($id)->info->{result}, {added => 17}, 'right result';
 $minion->reset;
 
 done_testing();

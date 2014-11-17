@@ -11,7 +11,7 @@ has 'pg';
 sub dequeue {
   my ($self, $id, $timeout) = @_;
 
-  if (my $job = $self->_try($id)) { return $job }
+  if ((my $job = $self->_try($id)) || Mojo::IOLoop->is_running) { return $job }
 
   my $db = $self->pg->db;
   $db->listen('minion.job')->on(notification => sub { Mojo::IOLoop->stop });
