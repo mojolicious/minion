@@ -1,6 +1,7 @@
 
 0.42  2014-10-16
-  - Improved Minion::Backend::Pg performance. (bpmedley, sri)
+  - Improved Minion::Backend::Pg performance with advisory locks and
+    notifications. (bpmedley, sri)
 
 0.41  2014-10-15
   - Improved Minion::Backend::Pg performance.
