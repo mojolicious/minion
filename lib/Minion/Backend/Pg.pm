@@ -425,7 +425,7 @@ create table if not exists minion_jobs (
   task text not null,
   worker bigint
 );
-create index on minion_jobs (priority DESC, created ASC);
+create index on minion_jobs (priority DESC, created);
 create table if not exists minion_workers (
   id bigserial not null primary key,
   host text not null,
