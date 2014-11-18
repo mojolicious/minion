@@ -79,12 +79,9 @@ sub list_workers {
   my ($self, $offset, $limit) = @_;
 
   return $self->pg->db->query(
-    'select id
-     from minion_workers
-     order by id desc
-     limit ?
-     offset ?', $limit, $offset
-  )->arrays->map(sub { $self->worker_info($_->[0]) })->to_array;
+    'select id from minion_workers order by id desc limit ? offset ?',
+    $limit, $offset)->arrays->map(sub { $self->worker_info($_->[0]) })
+    ->to_array;
 }
 
 sub new {
@@ -428,6 +425,7 @@ create table if not exists minion_jobs (
   task text not null,
   worker bigint
 );
+create index on minion_jobs (priority DESC, created ASC);
 create table if not exists minion_workers (
   id bigserial not null primary key,
   host text not null,
