@@ -1,22 +1,24 @@
 
-0.45  2014-10-18
+0.46  2014-11-19
+
+0.45  2014-11-18
   - Improved dequeue performance in Minion::Backend::Pg significantly.
     (bpmedley)
 
-0.44  2014-10-17
+0.44  2014-11-17
   - Fixed bug where jobs could not be dequeued inside a running event loop.
 
-0.43  2014-10-17
+0.43  2014-11-17
   - Fixed bug where advisory locks would run out of shared memory.
 
-0.42  2014-10-16
+0.42  2014-11-16
   - Improved Minion::Backend::Pg performance with advisory locks and
     notifications. (bpmedley, sri)
 
-0.41  2014-10-15
+0.41  2014-11-15
   - Improved Minion::Backend::Pg performance.
 
-0.40  2014-10-11
+0.40  2014-11-11
   - Added PostgreSQL support with Mojo::Pg. (bpmedley, sri)
   - Added support for job results.
   - Added Minion::Backend::Pg. (bpmedley, sri)
