@@ -14,7 +14,7 @@ has 'backend';
 has remove_after => 864000;
 has tasks => sub { {} };
 
-our $VERSION = '0.46';
+our $VERSION = '1.0';
 
 sub add_task {
   my ($self, $name, $cb) = @_;
@@ -125,9 +125,6 @@ Jobs can be managed right from the command line with
 L<Minion::Command::minion::job>.
 
   $ ./myapp.pl minion job
-
-Note that this whole distribution is EXPERIMENTAL and will change without
-warning!
 
 =head1 EVENTS
 
