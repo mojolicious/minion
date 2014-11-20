@@ -113,7 +113,8 @@ Minion - Job queue
 =head1 DESCRIPTION
 
 L<Minion> is a job queue for the L<Mojolicious|http://mojolicio.us> real-time
-web framework with support for multiple backends.
+web framework with support for multiple backends, such as L<DBM::Deep> and
+L<PostgreSQL|http://www.postgresql.org>.
 
 A job queue allows you to process time and/or computationally intensive tasks
 in background processes, outside of the request/response lifecycle. Among

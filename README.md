@@ -2,7 +2,9 @@
 # Minion [![Build Status](https://travis-ci.org/kraih/minion.svg?branch=master)](https://travis-ci.org/kraih/minion)
 
   A job queue for the [Mojolicious](http://mojolicio.us) real-time web
-  framework with support for multiple backends.
+  framework with support for multiple backends, such as
+  [DBM::Deep](https://metacpan.org/release/DBM-Deep) and
+  [PostgreSQL](http://www.postgresql.org).
 
 ```perl
 use Mojolicious::Lite;
