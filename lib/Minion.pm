@@ -133,7 +133,7 @@ can imagine that's not super fast.
   });
 
   # Perform job in a background worker process
-  get '/poke/mojo' => sub {
+  get '/' => sub {
     my $c = shift;
     $c->minion->enqueue('poke_mojo');
     $c->render(text => 'We will poke mojolicio.us for you soon.');
