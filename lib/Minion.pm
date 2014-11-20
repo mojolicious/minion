@@ -117,26 +117,26 @@ web framework with support for multiple backends.
 
 A job queue allows you to process time and/or computationally intensive tasks
 in background processes, outside of the request/response lifecycle. Among
-those tasks are image resizing, spam filtering, HTTP downloads, building
-tarballs, warming caches and basically everything else you can imagine that's
-not super fast.
+those tasks you'll commonly find image resizing, spam filtering, HTTP
+downloads, building tarballs, warming caches and basically everything else you
+can imagine that's not super fast.
 
   use Mojolicious::Lite;
 
-  plugin Minion => {File => '/Users/sri/minion.db'};
+  plugin Minion => {Pg => 'postgresql://postgres@/test'};
 
   # Slow task
-  app->minion->add_task(slow_log => sub {
-    my ($job, $msg) = @_;
-    sleep 5;
-    $job->app->log->debug(qq{Received message "$msg".});
+  app->minion->add_task(poke_mojo => sub {
+    my $job = shift;
+    $job->app->ua->get('mojolicio.us');
+    $job->app->log->debug('We have poked mojolicio.us for a visitor.');
   });
 
   # Perform job in a background worker process
-  get '/log' => sub {
+  get '/poke/mojo' => sub {
     my $c = shift;
-    $c->minion->enqueue(slow_log => [$c->param('msg') // 'no message']);
-    $c->render(text => 'Your message will be logged soon.');
+    $c->minion->enqueue('poke_mojo');
+    $c->render(text => 'We will poke mojolicio.us for you soon.');
   };
 
   app->start;
