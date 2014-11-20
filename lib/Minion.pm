@@ -123,7 +123,7 @@ can imagine that's not super fast.
 
   use Mojolicious::Lite;
 
-  plugin Minion => {Pg => 'postgresql://postgres@/test'};
+  plugin Minion => {Pg => 'postgresql://sri:s3cret@localhost/test'};
 
   # Slow task
   app->minion->add_task(poke_mojo => sub {
