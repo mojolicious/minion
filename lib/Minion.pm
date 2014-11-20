@@ -115,6 +115,12 @@ Minion - Job queue
 L<Minion> is a job queue for the L<Mojolicious|http://mojolicio.us> real-time
 web framework with support for multiple backends.
 
+A job queue allows you to process time and/or computationally intensive tasks
+in background processes, outside of the request/response lifecycle. Among
+those tasks are image resizing, spam filtering, HTTP downloads, building
+tarballs, warming caches and basically everything else you can imagine that's
+not super fast.
+
 Background worker processes are usually started with the command
 L<Minion::Command::minion::worker>, which becomes automatically available when
 an application loads the plugin L<Mojolicious::Plugin::Minion>.
