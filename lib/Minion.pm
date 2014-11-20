@@ -121,6 +121,26 @@ those tasks are image resizing, spam filtering, HTTP downloads, building
 tarballs, warming caches and basically everything else you can imagine that's
 not super fast.
 
+  use Mojolicious::Lite;
+
+  plugin Minion => {File => '/Users/sri/minion.db'};
+
+  # Slow task
+  app->minion->add_task(slow_log => sub {
+    my ($job, $msg) = @_;
+    sleep 5;
+    $job->app->log->debug(qq{Received message "$msg".});
+  });
+
+  # Perform job in a background worker process
+  get '/log' => sub {
+    my $c = shift;
+    $c->minion->enqueue(slow_log => [$c->param('msg') // 'no message']);
+    $c->render(text => 'Your message will be logged soon.');
+  };
+
+  app->start;
+
 Background worker processes are usually started with the command
 L<Minion::Command::minion::worker>, which becomes automatically available when
 an application loads the plugin L<Mojolicious::Plugin::Minion>.
