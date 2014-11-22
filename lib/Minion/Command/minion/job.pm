@@ -4,7 +4,7 @@ use Mojo::Base 'Mojolicious::Command';
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
 use Mojo::Date;
 use Mojo::JSON 'decode_json';
-use Mojo::Util 'dumper';
+use Mojo::Util qw(dumper tablify);
 
 has description => 'Manage Minion jobs.';
 has usage => sub { shift->extract_usage };
@@ -35,8 +35,8 @@ sub run {
 
   # Show stats or list jobs/workers
   return $self->_stats if $stats;
-  my $sub = $workers ? \&_list_workers : \&_list_jobs;
-  return $self->$sub($offset, $limit, $options) unless $id;
+  return $self->_list_workers($offset, $limit) if !$id && $workers;
+  return $self->_list_jobs($offset, $limit, $options) if !$id;
   die "Job does not exist.\n" unless my $job = $self->app->minion->job($id);
 
   # Remove job
@@ -72,16 +72,13 @@ sub _info {
 }
 
 sub _list_jobs {
-  my ($self, $offset, $limit, $options) = @_;
-  say sprintf '%s  %-8s  %s', @$_{qw(id state task)}
-    for @{$self->app->minion->backend->list_jobs($offset, $limit, $options)};
+  my $jobs = shift->app->minion->backend->list_jobs(@_);
+  print tablify [map { [@$_{qw(id state task)}] } @$jobs];
 }
 
 sub _list_workers {
-  my ($self, $offset, $limit) = @_;
-  say sprintf '%s  %-8s  %s', $_->{id}, @{$_->{jobs}} ? 'active' : 'inactive',
-    "$_->{host}:$_->{pid}"
-    for @{$self->app->minion->backend->list_workers($offset, $limit)};
+  my $workers = shift->app->minion->backend->list_workers(@_);
+  print tablify [map { [_worker()] } @$workers];
 }
 
 sub _stats {
@@ -92,6 +89,10 @@ sub _stats {
   say "Active jobs:      $stats->{active_jobs}";
   say "Failed jobs:      $stats->{failed_jobs}";
   say "Finished jobs:    $stats->{finished_jobs}";
+}
+
+sub _worker {
+  $_->{id}, @{$_->{jobs}} ? 'active' : 'inactive', "$_->{host}:$_->{pid}";
 }
 
 1;
