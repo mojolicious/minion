@@ -59,19 +59,13 @@ sub job_info {
 sub list_jobs {
   my ($self, $offset, $limit, $options) = @_;
 
-  my (@and, @values);
-  push @and, 'state = ?' and push @values, $options->{state}
-    if $options->{state};
-  push @and, 'task = ?' and push @values, $options->{task} if $options->{task};
-  my $where = @and ? 'where ' . join(' and ', @and) : '';
-
   return $self->pg->db->query(
-    "select id
+    'select id
      from minion_jobs
-     $where
+     where (state = $1 or $1 is null) and (task = $2 or $2 is null)
      order by id desc
-     limit ?
-     offset ?", @values, $limit, $offset
+     limit $3
+     offset $4', @$options{qw(state task)}, $limit, $offset
   )->arrays->map(sub { $self->job_info($_->[0]) })->to_array;
 }
 
