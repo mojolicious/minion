@@ -21,10 +21,10 @@ sub run {
     'l|limit=i'    => \(my $limit = 100),
     'o|offset=i'   => \(my $offset = 0),
     'p|priority=i' => \$options->{priority},
-    'r|remove'     => \my $remove,
     'R|retry'      => \my $retry,
-    's|stats'      => \my $stats,
+    'r|remove'     => \my $remove,
     'S|state=s'    => \$options->{state},
+    's|stats'      => \my $stats,
     't|task=s'     => \$options->{task},
     'w|workers'    => \my $workers;
   my $id = @args ? shift @args : undef;
@@ -126,10 +126,10 @@ Minion::Command::minion::job - Minion job command
     -o, --offset <number>     Number of jobs/workers to skip when listing
                               them, defaults to 0.
     -p, --priority <number>   Priority of new job, defaults to 0.
-    -r, --remove              Remove job.
     -R, --retry               Retry job.
-    -s, --stats               Show queue statistics.
+    -r, --remove              Remove job.
     -S, --state <state>       List only jobs in this state.
+    -s, --stats               Show queue statistics.
     -t, --task <name>         List only jobs for this task.
     -w, --workers             List workers instead of jobs.
 
