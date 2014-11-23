@@ -1,6 +1,6 @@
 
 1.02  2014-11-22
-  - Renamed -L option to -l.
+  - Renamed -L and -T options to -l and -S.
   - Improved job command table formatting.
 
 1.01  2014-11-20

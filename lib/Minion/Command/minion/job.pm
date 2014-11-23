@@ -24,8 +24,8 @@ sub run {
     'r|remove'     => \my $remove,
     'R|retry'      => \my $retry,
     's|stats'      => \my $stats,
+    'S|state=s'    => \$options->{state},
     't|task=s'     => \$options->{task},
-    'T|state=s'    => \$options->{state},
     'w|workers'    => \my $workers;
   my $id = @args ? shift @args : undef;
 
@@ -108,13 +108,14 @@ Minion::Command::minion::job - Minion job command
   Usage: APPLICATION minion job [ID]
 
     ./myapp.pl minion job
-    ./myapp.pl minion job -t test -T inactive
+    ./myapp.pl minion job -t test -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -p 5
     ./myapp.pl minion job -s
     ./myapp.pl minion job -w -l 5
     ./myapp.pl minion job acbd18db4cc2f85cedef654fccc4a4d8
     ./myapp.pl minion job acbd18db4cc2f85cedef654fccc4a4d8 -r
+    ./myapp.pl minion job acbd18db4cc2f85cedef654fccc4a4d8 -R
 
   Options:
     -a, --args <JSON array>   Arguments for new job in JSON format.
@@ -128,8 +129,8 @@ Minion::Command::minion::job - Minion job command
     -r, --remove              Remove job.
     -R, --retry               Retry job.
     -s, --stats               Show queue statistics.
+    -S, --state <state>       List only jobs in this state.
     -t, --task <name>         List only jobs for this task.
-    -T, --state <state>       List only jobs in this state.
     -w, --workers             List workers instead of jobs.
 
 =head1 DESCRIPTION
