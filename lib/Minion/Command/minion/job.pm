@@ -18,7 +18,7 @@ sub run {
     'a|args=s' => sub { $args = decode_json($_[1]) },
     'd|delay=i'    => \$options->{delay},
     'e|enqueue=s'  => \my $enqueue,
-    'L|limit=i'    => \(my $limit = 100),
+    'l|limit=i'    => \(my $limit = 100),
     'o|offset=i'   => \(my $offset = 0),
     'p|priority=i' => \$options->{priority},
     'r|remove'     => \my $remove,
@@ -112,7 +112,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -p 5
     ./myapp.pl minion job -s
-    ./myapp.pl minion job -w -L 5
+    ./myapp.pl minion job -w -l 5
     ./myapp.pl minion job acbd18db4cc2f85cedef654fccc4a4d8
     ./myapp.pl minion job acbd18db4cc2f85cedef654fccc4a4d8 -r
 
@@ -120,7 +120,7 @@ Minion::Command::minion::job - Minion job command
     -a, --args <JSON array>   Arguments for new job in JSON format.
     -d, --delay <seconds>     Delay new job for this many seconds.
     -e, --enqueue <name>      New job to be enqueued.
-    -L, --limit <number>      Number of jobs/workers to show when listing
+    -l, --limit <number>      Number of jobs/workers to show when listing
                               them, defaults to 100.
     -o, --offset <number>     Number of jobs/workers to skip when listing
                               them, defaults to 0.
