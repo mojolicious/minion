@@ -35,15 +35,15 @@ sub run {
 
   # Show stats or list jobs/workers
   return $self->_stats if $stats;
-  return $self->_list_workers($offset, $limit) if !$id && $workers;
-  return $self->_list_jobs($offset, $limit, $options) if !$id;
+  return $self->_list_workers($offset, $limit) if $workers;
+  return $self->_list_jobs($offset, $limit, $options) unless defined $id;
   die "Job does not exist.\n" unless my $job = $self->app->minion->job($id);
 
   # Remove job
-  return $job->remove ? 1 : die "Job is active.\n" if $remove;
+  return $job->remove || die "Job is active.\n" if $remove;
 
   # Retry job
-  return $job->retry ? 1 : die "Job is active.\n" if $retry;
+  return $job->retry || die "Job is active.\n" if $retry;
 
   # Job info
   $self->_info($job);
@@ -55,8 +55,8 @@ sub _info {
   # Details
   my $info = $job->info;
   my ($state, $priority, $retries) = @$info{qw(state priority retries)};
-  print $info->{task}, " ($state, p$priority, r$retries)\n",
-    dumper($info->{args});
+  say $info->{task}, " ($state, p$priority, r$retries)";
+  print dumper $info->{args};
   if (my $result = $info->{result}) { print dumper $result }
 
   # Timing
