@@ -108,7 +108,7 @@ Minion::Command::minion::job - Minion job command
   Usage: APPLICATION minion job [ID]
 
     ./myapp.pl minion job
-    ./myapp.pl minion job -t test -S inactive
+    ./myapp.pl minion job -t foo -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -p 5
     ./myapp.pl minion job -s
