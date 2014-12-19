@@ -105,7 +105,7 @@ Minion::Command::minion::job - Minion job command
 
 =head1 SYNOPSIS
 
-  Usage: APPLICATION minion job [ID] [OPTIONS]
+  Usage: APPLICATION minion job [OPTIONS] [ID]
 
     ./myapp.pl minion job
     ./myapp.pl minion job -t foo -S inactive
@@ -113,9 +113,9 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -p 5
     ./myapp.pl minion job -s
     ./myapp.pl minion job -w -l 5
-    ./myapp.pl minion job acbd18db4cc2f85cedef654fccc4a4d8
-    ./myapp.pl minion job acbd18db4cc2f85cedef654fccc4a4d8 -r
-    ./myapp.pl minion job acbd18db4cc2f85cedef654fccc4a4d8 -R
+    ./myapp.pl minion job 10023
+    ./myapp.pl minion job -R 10023
+    ./myapp.pl minion job -r 10023
 
   Options:
     -a, --args <JSON array>   Arguments for new job in JSON format.
