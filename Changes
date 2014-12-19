@@ -1,5 +1,6 @@
 
-1.03  2014-12-18
+1.03  2014-12-19
+  - Added -t option to worker command.
 
 1.02  2014-11-22
   - Renamed -L and -T options to -l and -S.

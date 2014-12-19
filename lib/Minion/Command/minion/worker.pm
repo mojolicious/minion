@@ -1,16 +1,24 @@
 package Minion::Command::minion::worker;
 use Mojo::Base 'Mojolicious::Command';
 
+use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
+
 has description => 'Start Minion worker.';
 has usage => sub { shift->extract_usage };
 
 sub run {
-  my $self = shift;
+  my ($self, @args) = @_;
+
+  GetOptionsFromArray \@args, 't|task=s' => \my @tasks;
+
+  # Limit tasks
+  my $app    = $self->app;
+  my $minion = $app->minion;
+  my $tasks  = $minion->tasks;
+  %$tasks = map { $tasks->{$_} ? ($_ => $tasks->{$_}) : () } @tasks if @tasks;
 
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
 
-  my $app    = $self->app;
-  my $minion = $app->minion;
   my $worker = $minion->worker->register;
   while (!$self->{finished}) {
 
@@ -39,7 +47,13 @@ Minion::Command::minion::worker - Minion worker command
 
   Usage: APPLICATION minion worker
 
+    ./myapp.pl minion worker
     ./myapp.pl minion worker -m production
+    ./myapp.pl minion worker -t foo -t bar
+
+  Options:
+    -t, --task <name>   One or more tasks to handle, defaults to handling all
+                        tasks.
 
 =head1 DESCRIPTION
 
