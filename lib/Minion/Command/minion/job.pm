@@ -105,7 +105,7 @@ Minion::Command::minion::job - Minion job command
 
 =head1 SYNOPSIS
 
-  Usage: APPLICATION minion job [ID]
+  Usage: APPLICATION minion job [ID] [OPTIONS]
 
     ./myapp.pl minion job
     ./myapp.pl minion job -t foo -S inactive

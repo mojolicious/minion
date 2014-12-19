@@ -45,7 +45,7 @@ Minion::Command::minion::worker - Minion worker command
 
 =head1 SYNOPSIS
 
-  Usage: APPLICATION minion worker
+  Usage: APPLICATION minion worker [OPTIONS]
 
     ./myapp.pl minion worker
     ./myapp.pl minion worker -m production
