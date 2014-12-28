@@ -406,25 +406,25 @@ __DATA__
 @@ minion
 -- 1 up
 create table if not exists minion_jobs (
-  id bigserial not null primary key,
-  args json not null,
-  created timestamp with time zone not null,
-  delayed timestamp with time zone not null,
+  id       bigserial not null primary key,
+  args     json not null,
+  created  timestamp with time zone not null,
+  delayed  timestamp with time zone not null,
   finished timestamp with time zone,
   priority int not null,
-  result json,
-  retried timestamp with time zone,
-  retries int not null,
-  started timestamp with time zone,
-  state text not null,
-  task text not null,
-  worker bigint
+  result   json,
+  retried  timestamp with time zone,
+  retries  int not null,
+  started  timestamp with time zone,
+  state    text not null,
+  task     text not null,
+  worker   bigint
 );
 create index on minion_jobs (priority DESC, created);
 create table if not exists minion_workers (
-  id bigserial not null primary key,
-  host text not null,
-  pid int not null,
+  id      bigserial not null primary key,
+  host    text not null,
+  pid     int not null,
   started timestamp with time zone not null
 );
 create or replace function minion_jobs_insert_notify() returns trigger as $$
