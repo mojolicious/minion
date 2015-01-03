@@ -52,7 +52,7 @@ sub job_info {
        extract(epoch from started) as started, state, task, worker
      from minion_jobs where id = ?', shift
     )->hash;
-  map { $job->{$_} and $job->{$_} = decode_json $job->{$_} } qw(args result);
+  $job->{$_} and $job->{$_} = decode_json $job->{$_} for qw(args result);
   return $job;
 }
 
