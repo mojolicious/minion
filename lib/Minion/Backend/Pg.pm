@@ -2,7 +2,6 @@ package Minion::Backend::Pg;
 use Mojo::Base 'Minion::Backend';
 
 use Mojo::IOLoop;
-use Mojo::JSON qw(decode_json encode_json);
 use Mojo::Pg;
 use Sys::Hostname 'hostname';
 
@@ -34,7 +33,7 @@ sub enqueue {
        (args, created, delayed, priority, retries, state, task)
      values
        (?, now(), (now() + (interval '1 second' * ?)), ?, ?, ?, ?)
-     returning id", encode_json($args), $options->{delay} // 0,
+     returning id", {json => $args}, $options->{delay} // 0,
     $options->{priority} // 0, 0, 'inactive', $task
   )->hash->{id};
 }
@@ -43,17 +42,14 @@ sub fail_job   { shift->_update(1, @_) }
 sub finish_job { shift->_update(0, @_) }
 
 sub job_info {
-  return undef
-    unless my $job = shift->pg->db->query(
+  shift->pg->db->query(
     'select id, args, extract(epoch from created) as created,
        extract(epoch from delayed) as delayed,
        extract(epoch from finished) as finished, priority, result,
        extract(epoch from retried) as retried, retries,
        extract(epoch from started) as started, state, task, worker
      from minion_jobs where id = ?', shift
-    )->hash;
-  $job->{$_} and $job->{$_} = decode_json $job->{$_} for qw(args result);
-  return $job;
+  )->expand->hash;
 }
 
 sub list_jobs {
@@ -187,7 +183,7 @@ sub worker_info {
 sub _try {
   my ($self, $id) = @_;
 
-  return undef unless my $job = $self->pg->db->query(
+  return $self->pg->db->query(
     "update minion_jobs
      set started = now(), state = 'active', worker = ?
      from (
@@ -200,10 +196,7 @@ sub _try {
      ) job
      where minion_jobs.id = job.id
      returning minion_jobs.id, args, task", $id, [keys %{$self->minion->tasks}]
-  )->hash;
-  $job->{args} = decode_json $job->{args};
-
-  return $job;
+  )->expand->hash;
 }
 
 sub _update {
@@ -213,7 +206,7 @@ sub _update {
     "update minion_jobs
      set finished = now(), result = ?, state = ?
      where id = ? and state = 'active'
-     returning 1", encode_json($result), $fail ? 'failed' : 'finished', $id
+     returning 1", {json => $result}, $fail ? 'failed' : 'finished', $id
   )->rows;
 }
 
