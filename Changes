@@ -1,4 +1,6 @@
 
+1.05  2015-01-04
+
 1.04  2015-01-03
   - Improved Minion::Backend::Pg to use new JSON features of Mojo::Pg.
 
