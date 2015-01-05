@@ -102,19 +102,22 @@ sub repair {
   my $self = shift;
 
   # Check workers on this host (all should be owned by the same user)
-  my $db = $self->pg->db;
+  my $db   = $self->pg->db;
+  my $host = hostname;
   my $workers
     = $db->query('select id, host, pid from minion_workers where host = ?',
-    hostname)->hashes;
+    $host)->hashes;
   my @dead = map { $_->{id} } grep { !kill 0, $_->{pid} } $workers->each;
   $db->query("delete from minion_workers where id = any (?)", \@dead) if @dead;
 
   # Abandoned jobs
   $db->query(
     "update minion_jobs as j
-     set result = to_json('Worker went away'::text), state = 'failed'
+     set result = to_json('Worker could not be found by ' || ?),
+       state = 'failed'
      where state = 'active'
-       and not exists(select 1 from minion_workers where id = j.worker)"
+       and not exists(select 1 from minion_workers where id = j.worker)",
+    "$host:$$"
   );
 
   # Old jobs

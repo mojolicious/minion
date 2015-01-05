@@ -25,7 +25,8 @@ isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 $worker->register;
 like $worker->info->{started}, qr/^[\d.]+$/, 'has timestamp';
 is $worker->unregister->info, undef, 'no information';
-is $worker->register->info->{host}, hostname, 'right host';
+my $host = hostname;
+is $worker->register->info->{host}, $host, 'right host';
 is $worker->info->{pid}, $$, 'right pid';
 is $worker->unregister->info, undef, 'no information';
 
@@ -47,8 +48,9 @@ $pid++ while kill 0, $pid;
 $info->{pid} = $pid;
 $minion->repair;
 ok !$minion->worker->id($id)->info, 'not registered';
-is $job->info->{state},  'failed',           'job is no longer active';
-is $job->info->{result}, 'Worker went away', 'right result';
+is $job->info->{state}, 'failed', 'job is no longer active';
+is $job->info->{result}, "Worker could not be found by $host:$$",
+  'right result';
 
 # Repair abandoned job
 $worker->register;
@@ -57,8 +59,9 @@ $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 $worker->unregister;
 $minion->repair;
-is $job->info->{state},  'failed',           'job is no longer active';
-is $job->info->{result}, 'Worker went away', 'right result';
+is $job->info->{state}, 'failed', 'job is no longer active';
+is $job->info->{result}, "Worker could not be found by $host:$$",
+  'right result';
 
 # Repair old jobs
 $worker->register;
@@ -79,11 +82,11 @@ $worker  = $minion->worker->register;
 $worker2 = $minion->worker->register;
 my $batch = $minion->backend->list_workers(0, 10);
 ok $batch->[0]{id},   'has id';
-is $batch->[0]{host}, hostname, 'right host';
+is $batch->[0]{host}, $host, 'right host';
 is $batch->[0]{pid},  $$, 'right pid';
 like $batch->[0]->{started}, qr/^[\d.]+$/, 'has timestamp';
-is $batch->[1]{host}, hostname, 'right host';
-is $batch->[1]{pid}, $$, 'right pid';
+is $batch->[1]{host}, $host, 'right host';
+is $batch->[1]{pid},  $$,    'right pid';
 ok !$batch->[2], 'no more results';
 $batch = $minion->backend->list_workers(0, 1);
 is $batch->[0]{id}, $worker2->id, 'right id';
