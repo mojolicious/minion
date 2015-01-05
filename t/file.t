@@ -49,8 +49,7 @@ $info->{pid} = $pid;
 $minion->repair;
 ok !$minion->worker->id($id)->info, 'not registered';
 is $job->info->{state}, 'failed', 'job is no longer active';
-is $job->info->{result}, "Worker could not be found by $host:$$",
-  'right result';
+is $job->info->{result}, "Worker not found by $host:$$", 'right result';
 
 # Repair abandoned job
 $worker->register;
@@ -60,8 +59,7 @@ is $job->id, $id, 'right id';
 $worker->unregister;
 $minion->repair;
 is $job->info->{state}, 'failed', 'job is no longer active';
-is $job->info->{result}, "Worker could not be found by $host:$$",
-  'right result';
+is $job->info->{result}, "Worker not found by $host:$$", 'right result';
 
 # Repair old jobs
 $worker->register;
