@@ -272,7 +272,7 @@ Perform all jobs, very useful for testing.
 
 Repair worker registry and job queue if necessary. All processes running this
 method and workers on this host should be owned by the same user, so they can
-check which workers are still alive with signals.
+send each other signals to check which workers are still alive.
 
 =head2 reset
 
