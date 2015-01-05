@@ -1,4 +1,6 @@
 
+1.06  2015-01-06
+
 1.05  2015-01-05
   - Improved repair method in Minion::Backend::File and Minion::Backend::Pg to
     mention the current process in results of failed jobs.
