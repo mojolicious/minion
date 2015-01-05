@@ -105,8 +105,8 @@ sub repair {
   my $db   = $self->pg->db;
   my $host = hostname;
   my $workers
-    = $db->query('select id, host, pid from minion_workers where host = ?',
-    $host)->hashes;
+    = $db->query('select id, pid from minion_workers where host = ?', $host)
+    ->hashes;
   my @dead = map { $_->{id} } grep { !kill 0, $_->{pid} } $workers->each;
   $db->query("delete from minion_workers where id = any (?)", \@dead) if @dead;
 
