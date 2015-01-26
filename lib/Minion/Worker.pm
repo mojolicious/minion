@@ -61,7 +61,7 @@ the following new ones.
     ...
   });
 
-Emitted in the worker process when a job has been dequeued.
+Emitted in the worker process after a job has been dequeued.
 
   $worker->on(dequeue => sub {
     my ($worker, $job) = @_;
