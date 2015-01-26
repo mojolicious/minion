@@ -3,7 +3,7 @@ use Mojo::Base 'Mojolicious::Command';
 
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
 
-has description => 'Start Minion worker.';
+has description => 'Start Minion worker';
 has usage => sub { shift->extract_usage };
 
 sub run {
@@ -53,7 +53,7 @@ Minion::Command::minion::worker - Minion worker command
 
   Options:
     -t, --task <name>   One or more tasks to handle, defaults to handling all
-                        tasks.
+                        tasks
 
 =head1 DESCRIPTION
 
@@ -79,14 +79,14 @@ L<Mojolicious::Command> and implements the following new ones.
 =head2 description
 
   my $description = $worker->description;
-  $worker         = $worker->description('Foo!');
+  $worker         = $worker->description('Foo');
 
 Short description of this command, used for the command list.
 
 =head2 usage
 
   my $usage = $worker->usage;
-  $worker   = $worker->usage('Foo!');
+  $worker   = $worker->usage('Foo');
 
 Usage information for this command, used for the help screen.
 

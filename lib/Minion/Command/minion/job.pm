@@ -6,7 +6,7 @@ use Mojo::Date;
 use Mojo::JSON 'decode_json';
 use Mojo::Util qw(dumper tablify);
 
-has description => 'Manage Minion jobs.';
+has description => 'Manage Minion jobs';
 has usage => sub { shift->extract_usage };
 
 sub run {
@@ -118,20 +118,20 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -r 10023
 
   Options:
-    -a, --args <JSON array>   Arguments for new job in JSON format.
-    -d, --delay <seconds>     Delay new job for this many seconds.
-    -e, --enqueue <name>      New job to be enqueued.
+    -a, --args <JSON array>   Arguments for new job in JSON format
+    -d, --delay <seconds>     Delay new job for this many seconds
+    -e, --enqueue <name>      New job to be enqueued
     -l, --limit <number>      Number of jobs/workers to show when listing
-                              them, defaults to 100.
+                              them, defaults to 100
     -o, --offset <number>     Number of jobs/workers to skip when listing
-                              them, defaults to 0.
-    -p, --priority <number>   Priority of new job, defaults to 0.
-    -R, --retry               Retry job.
-    -r, --remove              Remove job.
-    -S, --state <state>       List only jobs in this state.
-    -s, --stats               Show queue statistics.
-    -t, --task <name>         List only jobs for this task.
-    -w, --workers             List workers instead of jobs.
+                              them, defaults to 0
+    -p, --priority <number>   Priority of new job, defaults to 0
+    -R, --retry               Retry job
+    -r, --remove              Remove job
+    -S, --state <state>       List only jobs in this state
+    -s, --stats               Show queue statistics
+    -t, --task <name>         List only jobs for this task
+    -w, --workers             List workers instead of jobs
 
 =head1 DESCRIPTION
 
@@ -145,14 +145,14 @@ L<Mojolicious::Command> and implements the following new ones.
 =head2 description
 
   my $description = $job->description;
-  $job            = $job->description('Foo!');
+  $job            = $job->description('Foo');
 
 Short description of this command, used for the command list.
 
 =head2 usage
 
   my $usage = $job->usage;
-  $job      = $job->usage('Foo!');
+  $job      = $job->usage('Foo');
 
 Usage information for this command, used for the help screen.
 

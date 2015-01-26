@@ -1,7 +1,7 @@
 package Minion::Command::minion;
 use Mojo::Base 'Mojolicious::Commands';
 
-has description => 'Minion job queue.';
+has description => 'Minion job queue';
 has hint        => <<EOF;
 
 See 'APPLICATION minion help COMMAND' for more information on a specific
@@ -36,21 +36,21 @@ L<Mojolicious::Commands> and implements the following new ones.
 =head2 description
 
   my $description = $minion->description;
-  $minion         = $minion->description('Foo!');
+  $minion         = $minion->description('Foo');
 
 Short description of this command, used for the command list.
 
 =head2 hint
 
   my $hint = $minion->hint;
-  $minion  = $minion->hint('Foo!');
+  $minion  = $minion->hint('Foo');
 
 Short hint shown after listing available L<Minion> commands.
 
 =head2 message
 
   my $msg = $minion->message;
-  $minion = $minion->message('Bar!');
+  $minion = $minion->message('Bar');
 
 Short usage message shown before listing available L<Minion> commands.
 
