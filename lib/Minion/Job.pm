@@ -81,7 +81,8 @@ following new ones.
     ...
   });
 
-Emitted after this job transitioned to the C<failed> state.
+Emitted in the worker process managing this job or the process performing it,
+after it has transitioned to the C<failed> state.
 
   $job->on(failed => sub {
     my ($job, $err) = @_;
@@ -95,7 +96,8 @@ Emitted after this job transitioned to the C<failed> state.
     ...
   });
 
-Emitted after this job transitioned to the C<finished> state.
+Emitted in the worker process managing this job or the process performing it,
+after it has transitioned to the C<finished> state.
 
   $job->on(finished => sub {
     my ($job, $result) = @_;
@@ -110,7 +112,8 @@ Emitted after this job transitioned to the C<finished> state.
     ...
   });
 
-Emitted after a process has been spawned to process this job.
+Emitted in the worker process managing this job, after a new process has been
+spawned for processing.
 
   $job->on(spawn => sub {
     my ($job, $pid) = @_;
@@ -185,6 +188,12 @@ Transition from C<active> to C<finished> state.
   my $info = $job->info;
 
 Get job information.
+
+  # Check job state
+  my $state = $job->info->{state};
+
+  # Get job result
+  my $result = $job->info->{result};
 
 =head2 perform
 

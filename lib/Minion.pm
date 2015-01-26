@@ -167,7 +167,7 @@ following new ones.
     ...
   });
 
-Emitted when a new worker is created.
+Emitted in the worker process after it has been created.
 
   $minion->on(worker => sub {
     my ($minion, $worker) = @_;
@@ -253,6 +253,12 @@ Job priority, defaults to C<0>.
 
 Get L<Minion::Job> object without making any changes to the actual job or
 return C<undef> if job does not exist.
+
+  # Check job state
+  my $state = $minion->job($id)->info->{state};
+
+  # Get job result
+  my $result = $minion->job($id)->info->{result};
 
 =head2 new
 
