@@ -128,8 +128,9 @@ sub repair {
 }
 
 sub reset {
-  shift->pg->db->do('delete from minion_jobs')
-    ->do('delete from minion_workers');
+  my $db = shift->pg->db;
+  $db->query('delete from minion_jobs');
+  $db->query('delete from minion_workers');
 }
 
 sub retry_job {
