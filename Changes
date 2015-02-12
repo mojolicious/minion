@@ -1,4 +1,6 @@
 
+1.08  2015-02-13
+
 1.07  2015-02-12
   - Updated Minion::Backend::Pg for Mojo::Pg 1.08.
 
