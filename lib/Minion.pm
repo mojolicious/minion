@@ -4,7 +4,7 @@ use Mojo::Base 'Mojo::EventEmitter';
 use Carp 'croak';
 use Minion::Job;
 use Minion::Worker;
-use Mojo::Loader;
+use Mojo::Loader 'load_class';
 use Mojo::Server;
 use Mojo::URL;
 use Scalar::Util 'weaken';
@@ -40,7 +40,7 @@ sub new {
   my $self = shift->SUPER::new;
 
   my $class = 'Minion::Backend::' . shift;
-  my $e     = Mojo::Loader->new->load($class);
+  my $e     = load_class $class;
   croak ref $e ? $e : qq{Backend "$class" missing} if $e;
 
   $self->backend($class->new(@_));
