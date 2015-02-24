@@ -121,10 +121,10 @@ Minion::Command::minion::job - Minion job command
     -a, --args <JSON array>   Arguments for new job in JSON format
     -d, --delay <seconds>     Delay new job for this many seconds
     -e, --enqueue <name>      New job to be enqueued
-    -l, --limit <number>      Number of jobs/workers to show when listing
-                              them, defaults to 100
-    -o, --offset <number>     Number of jobs/workers to skip when listing
-                              them, defaults to 0
+    -l, --limit <number>      Number of jobs/workers to show when listing them,
+                              defaults to 100
+    -o, --offset <number>     Number of jobs/workers to skip when listing them,
+                              defaults to 0
     -p, --priority <number>   Priority of new job, defaults to 0
     -R, --retry               Retry job
     -r, --remove              Remove job

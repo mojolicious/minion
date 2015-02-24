@@ -231,8 +231,8 @@ Minion::Backend::Pg - PostgreSQL backend
 
 L<Minion::Backend::Pg> is a backend for L<Minion> based on L<Mojo::Pg>. All
 necessary tables will be created automatically with a set of migrations named
-C<minion>. Note that this backend uses many bleeding edge features, so only
-the latest, stable version of PostgreSQL is fully supported.
+C<minion>. Note that this backend uses many bleeding edge features, so only the
+latest, stable version of PostgreSQL is fully supported.
 
 =head1 ATTRIBUTES
 

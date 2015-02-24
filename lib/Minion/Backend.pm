@@ -92,8 +92,7 @@ return C<undef> if queue was empty. Meant to be overloaded in a subclass.
   my $job_id = $backend->enqueue(foo => [@args]);
   my $job_id = $backend->enqueue(foo => [@args] => {priority => 1});
 
-Enqueue a new job with C<inactive> state. Meant to be overloaded in a
-subclass.
+Enqueue a new job with C<inactive> state. Meant to be overloaded in a subclass.
 
 These options are currently available:
 
@@ -201,8 +200,8 @@ Reset job queue. Meant to be overloaded in a subclass.
 
   my $bool = $backend->retry_job($job_id);
 
-Transition from C<failed> or C<finished> state back to C<inactive>. Meant to
-be overloaded in a subclass.
+Transition from C<failed> or C<finished> state back to C<inactive>. Meant to be
+overloaded in a subclass.
 
 =head2 stats
 

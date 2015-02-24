@@ -119,10 +119,10 @@ web framework with support for multiple backends, such as L<DBM::Deep> and
 L<PostgreSQL|http://www.postgresql.org>.
 
 A job queue allows you to process time and/or computationally intensive tasks
-in background processes, outside of the request/response lifecycle. Among
-those tasks you'll commonly find image resizing, spam filtering, HTTP
-downloads, building tarballs, warming caches and basically everything else you
-can imagine that's not super fast.
+in background processes, outside of the request/response lifecycle. Among those
+tasks you'll commonly find image resizing, spam filtering, HTTP downloads,
+building tarballs, warming caches and basically everything else you can imagine
+that's not super fast.
 
   use Mojolicious::Lite;
 

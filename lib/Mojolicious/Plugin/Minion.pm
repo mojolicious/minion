@@ -49,8 +49,8 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Plugin::Minion> is a L<Mojolicious> plugin for the L<Minion>
-job queue.
+L<Mojolicious::Plugin::Minion> is a L<Mojolicious> plugin for the L<Minion> job
+queue.
 
 =head1 HELPERS
 
