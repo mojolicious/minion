@@ -298,6 +298,38 @@ Get statistics for jobs and workers.
 
 Build L<Minion::Worker> object.
 
+=head1 REFERENCE
+
+This is the class hierarchy of the L<Minion> distribution.
+
+=over 2
+
+=item * L<Mojolicious::Plugin::Minion>
+
+=item * L<Minion>
+
+=item * L<Minion::Backend>
+
+=over 2
+
+=item * L<Minion::Backend::File>
+
+=item * L<Minion::Backend::Pg>
+
+=back
+
+=item * L<Minion::Command::minion>
+
+=item * L<Minion::Command::minion::job>
+
+=item * L<Minion::Command::minion::worker>
+
+=item * L<Minion::Job>
+
+=item * L<Minion::Worker>
+
+=back
+
 =head1 AUTHOR
 
 Sebastian Riedel, C<sri@cpan.org>.
