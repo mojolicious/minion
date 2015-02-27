@@ -36,7 +36,7 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
   app->minion->add_task(slow_log => sub {
     my ($job, $msg) = @_;
     sleep 5;
-    $job->app->log->debug(qq{Received message "$msg".});
+    $job->app->log->debug(qq{Received message "$msg"});
   });
 
   # Start jobs from anywhere in your application

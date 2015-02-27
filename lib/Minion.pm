@@ -132,7 +132,7 @@ that's not super fast.
   app->minion->add_task(poke_mojo => sub {
     my $job = shift;
     $job->app->ua->get('mojolicio.us');
-    $job->app->log->debug('We have poked mojolicio.us for a visitor.');
+    $job->app->log->debug('We have poked mojolicio.us for a visitor');
   });
 
   # Perform job in a background worker process

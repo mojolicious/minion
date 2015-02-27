@@ -16,7 +16,7 @@ plugin Minion => {File => '/Users/sri/minion.db'};
 # Slow task
 app->minion->add_task(slow_log => sub ($job, $msg) {
   sleep 5;
-  $job->app->log->debug(qq{Received message "$msg".});
+  $job->app->log->debug(qq{Received message "$msg"});
 });
 
 # Perform job in a background worker process

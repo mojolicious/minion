@@ -22,6 +22,6 @@ WriteMakefile(
     },
     no_index => {directory => ['t']}
   },
-  PREREQ_PM => {Mojolicious => '5.81', 'DBM::Deep' => '2.0011'},
+  PREREQ_PM => {Mojolicious => '6.0', 'DBM::Deep' => '2.0011'},
   test      => {TESTS       => 't/*.t t/*/*.t'}
 );

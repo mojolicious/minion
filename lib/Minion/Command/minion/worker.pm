@@ -25,7 +25,7 @@ sub run {
     # Repair in regular intervals
     if (($self->{next} // 0) <= time) {
       $self->{next} = time + $minion->remove_after;
-      $app->log->debug('Checking worker registry and job queue.')
+      $app->log->debug('Checking worker registry and job queue')
         and $minion->repair;
     }
 
