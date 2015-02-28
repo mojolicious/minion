@@ -177,11 +177,12 @@ sub unregister_worker {
 
 sub worker_info {
   shift->pg->db->query(
-    'select id, extract(epoch from notified) as notified, array(
-       select id from minion_jobs where worker = minion_workers.id
+    "select id, extract(epoch from notified) as notified, array(
+       select id from minion_jobs
+         where worker = minion_workers.id and state = 'active'
      ) as jobs, host, pid, extract(epoch from started) as started
      from minion_workers
-     where id = ?', shift
+     where id = ?", shift
   )->hash;
 }
 

@@ -78,7 +78,7 @@ sub _list_jobs {
 
 sub _list_workers {
   my $workers = shift->app->minion->backend->list_workers(@_);
-  print tablify [map { [_worker()] } @$workers];
+  print tablify [map { [_worker($_)] } @$workers];
 }
 
 sub _stats {
@@ -92,7 +92,13 @@ sub _stats {
 }
 
 sub _worker {
-  $_->{id}, @{$_->{jobs}} ? 'active' : 'inactive', "$_->{host}:$_->{pid}";
+  my $worker = shift;
+
+  my $notified = Mojo::Date->new($_->{notified})->to_datetime;
+  my $name     = $worker->{host} . ':' . $worker->{pid};
+  my $state    = @{$worker->{jobs}} ? 'active' : 'inactive';
+
+  return $worker->{id}, $state, $name, $notified;
 }
 
 1;

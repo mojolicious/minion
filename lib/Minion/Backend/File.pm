@@ -218,8 +218,9 @@ sub _worker_info {
   my ($self, $id) = @_;
 
   return undef unless $id && (my $worker = $self->_workers->{$id});
-  my @jobs
-    = map { $_->{id} } grep { $_->{worker} eq $id } values %{$self->_jobs};
+  my $jobs = $self->_jobs;
+  my @jobs = map { $_->{id} }
+    grep { $_->{worker} eq $id && $_->{state} eq 'active' } values %$jobs;
   return {%{$worker->export}, jobs => \@jobs};
 }
 
