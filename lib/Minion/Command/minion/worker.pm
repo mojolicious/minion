@@ -20,14 +20,18 @@ sub run {
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
 
   my $worker = $minion->worker;
+  @$self{qw(register repair)} = (0, 0);
   while (!$self->{finished}) {
-    $worker->register;
+
+    # Send heartbeats in regular intervals
+    $worker->register and $self->{register} = time + 5
+      if $self->{register} < time;
 
     # Repair in regular intervals
-    if (($self->{next} // 0) <= time) {
-      $self->{next} = time + $minion->remove_after;
-      $app->log->debug('Checking worker registry and job queue')
-        and $minion->repair;
+    if ($self->{repair} < time) {
+      $app->log->debug('Checking worker registry and job queue');
+      $minion->repair;
+      $self->{repair} = time + $minion->remove_after;
     }
 
     # Perform job
