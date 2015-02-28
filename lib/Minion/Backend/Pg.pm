@@ -30,9 +30,9 @@ sub enqueue {
   my $db = $self->pg->db;
   return $db->query(
     "insert into minion_jobs
-       (args, delayed, priority, retries, state, task)
+       (args, created, delayed, priority, retries, state, task)
      values
-       (?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?)
+       (?, now(), (now() + (interval '1 second' * ?)), ?, ?, ?, ?)
      returning id", {json => $args}, $options->{delay} // 0,
     $options->{priority} // 0, 0, 'inactive', $task
   )->hash->{id};
@@ -89,8 +89,10 @@ sub register_worker {
     = 'update minion_workers set notified = now() where id = ? returning 1';
   return $id if $id && $self->pg->db->query($sql, $id)->rows;
 
-  $sql = 'insert into minion_workers (host, pid) values (?, ?) returning id';
-  return $self->pg->db->query($sql, hostname, $$)->hash->{id};
+  return $self->pg->db->query(
+    'insert into minion_workers (host, notified, pid, started)
+     values (?, now(), ?, now()) returning id', hostname, $$
+  )->hash->{id};
 }
 
 sub remove_job {
@@ -444,7 +446,5 @@ drop function if exists minion_jobs_insert_notify();
 drop table if exists minion_workers;
 
 -- 2 up
-alter table minion_jobs alter column created set default now();
 alter table minion_workers
-  add column notified timestamp with time zone not null default now();
-alter table minion_workers alter column started set default now();
+  add column notified timestamp with time zone not null;
