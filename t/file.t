@@ -51,8 +51,8 @@ ok $info, 'is registered';
 $info->{notified} = time - ($minion->missing_after + 1);
 $minion->repair;
 ok !$minion->worker->id($id)->info, 'not registered';
-is $job->info->{state}, 'failed', 'job is no longer active';
-is $job->info->{result}, "Worker not found by $host:$$", 'right result';
+is $job->info->{state},  'failed',           'job is no longer active';
+is $job->info->{result}, 'Worker went away', 'right result';
 
 # Repair abandoned job
 $worker->register;
@@ -61,8 +61,8 @@ $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 $worker->unregister;
 $minion->repair;
-is $job->info->{state}, 'failed', 'job is no longer active';
-is $job->info->{result}, "Worker not found by $host:$$", 'right result';
+is $job->info->{state},  'failed',           'job is no longer active';
+is $job->info->{result}, 'Worker went away', 'right result';
 
 # Repair old jobs
 $worker->register;

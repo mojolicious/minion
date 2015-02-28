@@ -54,8 +54,8 @@ $minion->backend->pg->db->query(
 );
 $minion->repair;
 ok !$minion->backend->worker_info($id), 'not registered';
-is $job->info->{state}, 'failed', 'job is no longer active';
-is $job->info->{result}, "Worker not found by $host:$$", 'right result';
+is $job->info->{state},  'failed',           'job is no longer active';
+is $job->info->{result}, 'Worker went away', 'right result';
 
 # Repair abandoned job
 $worker->register;
@@ -64,8 +64,8 @@ $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 $worker->unregister;
 $minion->repair;
-is $job->info->{state}, 'failed', 'job is no longer active';
-is $job->info->{result}, "Worker not found by $host:$$", 'right result';
+is $job->info->{state},  'failed',           'job is no longer active';
+is $job->info->{result}, 'Worker went away', 'right result';
 
 # Repair old jobs
 $worker->register;

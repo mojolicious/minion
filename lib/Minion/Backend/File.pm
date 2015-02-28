@@ -110,10 +110,9 @@ sub repair {
 
   # Abandoned jobs
   my $jobs = $self->_jobs;
-  my $host = hostname;
   for my $job (values %$jobs) {
     next if $job->{state} ne 'active' || $workers->{$job->{worker}};
-    @$job{qw(result state)} = ("Worker not found by $host:$$", 'failed');
+    @$job{qw(result state)} = ('Worker went away', 'failed');
   }
 
   # Old jobs

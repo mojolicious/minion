@@ -115,10 +115,9 @@ sub repair {
   # Abandoned jobs
   $db->query(
     "update minion_jobs as j
-     set result = to_json('Worker not found by ' || ?), state = 'failed'
+     set result = to_json('Worker went away'::text), state = 'failed'
      where state = 'active'
-       and not exists(select 1 from minion_workers where id = j.worker)",
-    hostname . ":$$"
+       and not exists(select 1 from minion_workers where id = j.worker)"
   );
 
   # Old jobs
