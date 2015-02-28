@@ -1,7 +1,7 @@
 
 1.09  2015-02-28
   - Added support for monitoring workers with heartbeats instead of signals.
-  - Added dead_after attribute to Minion.
+  - Added missing_after attribute to Minion.
   - Fixed bug where workers were considered active even if they had no active
     jobs assigned.
 

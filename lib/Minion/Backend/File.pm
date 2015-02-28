@@ -105,8 +105,8 @@ sub repair {
   $db->lock_exclusive;
   my $workers = $self->_workers;
   my $minion  = $self->minion;
-  my $dead    = time - $minion->dead_after;
-  $_->{notified} < $dead and delete $workers->{$_->{id}} for values %$workers;
+  my $after   = time - $minion->missing_after;
+  $_->{notified} < $after and delete $workers->{$_->{id}} for values %$workers;
 
   # Abandoned jobs
   my $jobs = $self->_jobs;
@@ -117,9 +117,9 @@ sub repair {
   }
 
   # Old jobs
-  my $remove = time - $minion->remove_after;
+  $after = time - $minion->remove_after;
   delete $jobs->{$_->{id}}
-    for grep { $_->{state} eq 'finished' && $_->{finished} < $remove }
+    for grep { $_->{state} eq 'finished' && $_->{finished} < $after }
     values %$jobs;
   $db->unlock;
 }

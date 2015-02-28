@@ -109,7 +109,7 @@ sub repair {
   my $minion = $self->minion;
   $db->query(
     "delete from minion_workers
-     where notified < now() - interval '1 second' * ?", $minion->dead_after
+     where notified < now() - interval '1 second' * ?", $minion->missing_after
   );
 
   # Abandoned jobs

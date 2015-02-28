@@ -35,7 +35,7 @@ is $worker->register->info->{host}, $host, 'right host';
 is $worker->info->{pid}, $$, 'right pid';
 is $worker->unregister->info, undef, 'no information';
 
-# Repair dead worker
+# Repair missing worker
 $minion->add_task(test => sub { });
 my $worker2 = $minion->worker->register;
 isnt $worker2->id, $worker->id, 'new id';
@@ -50,7 +50,7 @@ ok !!$minion->backend->worker_info($id), 'is registered';
 $minion->backend->pg->db->query(
   "update minion_workers
    set notified = now() - interval '1 second' * ? where id = ?",
-  $minion->dead_after + 1, $id
+  $minion->missing_after + 1, $id
 );
 $minion->repair;
 ok !$minion->backend->worker_info($id), 'not registered';

@@ -11,9 +11,9 @@ use Scalar::Util 'weaken';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has 'backend';
-has dead_after   => 86400;
-has remove_after => 864000;
-has tasks        => sub { {} };
+has missing_after => 86400;
+has remove_after  => 864000;
+has tasks         => sub { {} };
 
 our $VERSION = '1.09';
 
@@ -194,13 +194,14 @@ Application for job queue, defaults to a L<Mojo::HelloWorld> object.
 
 Backend, usually a L<Minion::Backend::File> or L<Minion::Backend::Pg> object.
 
-=head2 dead_after
+=head2 missing_after
 
-  my $after = $minion->dead_after;
-  $minion   = $minion->dead_after(172800);
+  my $after = $minion->missing_after;
+  $minion   = $minion->missing_after(172800);
 
 Amount of time in seconds after which workers that have not been active will be
-considered dead by L</"repair">, defaults to C<86400> (1 day).
+considered missing and removed from the registry by L</"repair">, defaults to
+C<86400> (1 day).
 
 =head2 remove_after
 
