@@ -156,10 +156,11 @@ L<Minion::Command::minion::job>.
 
   $ ./myapp.pl minion job
 
-Every job can fail or succeed, but not get lost, the system is eventual
-consistent and will preserve job results for as long as you like. Individual
-workers can fail while processing a job, but the system will detect this and
-ensure that no job is left in an uncertain state.
+Every job can fail or succeed, but not get lost, the system is eventually
+consistent and will preserve job results for as long as you like, depending on
+L</"remove_after">. While individual workers can fail in the middle of
+processing a job, the system will detect this and ensure that no job is left in
+an uncertain state, depending on L</"missing_after">.
 
 =head1 EVENTS
 
