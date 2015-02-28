@@ -156,6 +156,11 @@ L<Minion::Command::minion::job>.
 
   $ ./myapp.pl minion job
 
+Every job can fail or succeed, but not get lost, the system is eventual
+consistent and will preserve job results for as long as you like. Individual
+workers can fail while processing a job, but the system will detect this and
+ensure that no job is left in an uncertain state.
+
 =head1 EVENTS
 
 L<Minion> inherits all events from L<Mojo::EventEmitter> and can emit the
