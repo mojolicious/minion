@@ -445,7 +445,6 @@ drop table if exists minion_workers;
 
 -- 2 up
 alter table minion_jobs alter column created set default current_timestamp;
-alter table minion_workers
-  add column
+alter table minion_workers add column
   notified timestamp with time zone not null default current_timestamp;
 alter table minion_workers alter column started set default current_timestamp;
