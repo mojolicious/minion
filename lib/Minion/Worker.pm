@@ -23,7 +23,7 @@ sub dequeue {
 
 sub info { $_[0]->minion->backend->worker_info($_[0]->id) }
 
-sub register { $_[0]->id($_[0]->minion->backend->register_worker) }
+sub register { $_[0]->id($_[0]->minion->backend->register_worker($_[0]->id)) }
 
 sub unregister {
   my $self = shift;

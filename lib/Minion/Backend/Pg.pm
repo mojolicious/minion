@@ -30,9 +30,9 @@ sub enqueue {
   my $db = $self->pg->db;
   return $db->query(
     "insert into minion_jobs
-       (args, created, delayed, priority, retries, state, task)
+       (args, delayed, priority, retries, state, task)
      values
-       (?, now(), (now() + (interval '1 second' * ?)), ?, ?, ?, ?)
+       (?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?)
      returning id", {json => $args}, $options->{delay} // 0,
     $options->{priority} // 0, 0, 'inactive', $task
   )->hash->{id};
@@ -83,11 +83,14 @@ sub new {
 }
 
 sub register_worker {
-  shift->pg->db->query(
-    'insert into minion_workers (host, pid, started)
-     values (?, ?, now())
-     returning id', hostname, $$
-  )->hash->{id};
+  my ($self, $id) = @_;
+
+  my $sql
+    = 'update minion_workers set notified = now() where id = ? returning 1';
+  return $id if $id && $self->pg->db->query($sql, $id)->rows;
+
+  $sql = 'insert into minion_workers (host, pid) values (?, ?) returning id';
+  return $self->pg->db->query($sql, hostname, $$)->hash->{id};
 }
 
 sub remove_job {
@@ -101,14 +104,13 @@ sub remove_job {
 sub repair {
   my $self = shift;
 
-  # Check workers on this host (all should be owned by the same user)
-  my $db   = $self->pg->db;
-  my $host = hostname;
-  my $workers
-    = $db->query('select id, pid from minion_workers where host = ?', $host)
-    ->hashes;
-  my @dead = map { $_->{id} } grep { !kill 0, $_->{pid} } $workers->each;
-  $db->query("delete from minion_workers where id = any (?)", \@dead) if @dead;
+  # Check worker registry
+  my $db     = $self->pg->db;
+  my $minion = $self->minion;
+  $db->query(
+    "delete from minion_workers
+     where notified < now() - interval '1 second' * ?", $minion->dead_after
+  );
 
   # Abandoned jobs
   $db->query(
@@ -116,14 +118,14 @@ sub repair {
      set result = to_json('Worker not found by ' || ?), state = 'failed'
      where state = 'active'
        and not exists(select 1 from minion_workers where id = j.worker)",
-    "$host:$$"
+    hostname . ":$$"
   );
 
   # Old jobs
   $db->query(
     "delete from minion_jobs
      where state = 'finished' and finished < now() - interval '1 second' * ?",
-    $self->minion->remove_after
+    $minion->remove_after
   );
 }
 
@@ -175,7 +177,7 @@ sub unregister_worker {
 
 sub worker_info {
   shift->pg->db->query(
-    'select id, array(
+    'select id, extract(epoch from notified) as notified, array(
        select id from minion_jobs where worker = minion_workers.id
      ) as jobs, host, pid, extract(epoch from started) as started
      from minion_workers
@@ -346,8 +348,9 @@ Construct a new L<Minion::Backend::Pg> object.
 =head2 register_worker
 
   my $worker_id = $backend->register_worker;
+  my $worker_id = $backend->register_worker($worker_id);
 
-Register worker.
+Register worker or send heartbeat to show that this worker is still alive.
 
 =head2 remove_job
 
@@ -439,3 +442,9 @@ create trigger minion_jobs_insert_trigger after insert on minion_jobs
 drop table if exists minion_jobs;
 drop function if exists minion_jobs_insert_notify();
 drop table if exists minion_workers;
+
+-- 2 up
+alter table minion_jobs alter column created set default now();
+alter table minion_workers
+  add column notified timestamp with time zone not null default now();
+alter table minion_workers alter column started set default now();

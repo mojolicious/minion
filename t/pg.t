@@ -24,6 +24,11 @@ isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 # Register and unregister
 $worker->register;
 like $worker->info->{started}, qr/^[\d.]+$/, 'has timestamp';
+my $notified = $worker->info->{notified};
+like $notified, qr/^[\d.]+$/, 'has timestamp';
+my $id = $worker->id;
+is $worker->register->id, $id, 'same id';
+ok $worker->register->info->{notified} > $notified, 'new timestamp';
 is $worker->unregister->info, undef, 'no information';
 my $host = hostname;
 is $worker->register->info->{host}, $host, 'right host';
@@ -34,7 +39,7 @@ is $worker->unregister->info, undef, 'no information';
 $minion->add_task(test => sub { });
 my $worker2 = $minion->worker->register;
 isnt $worker2->id, $worker->id, 'new id';
-my $id  = $minion->enqueue('test');
+$id = $minion->enqueue('test');
 my $job = $worker2->dequeue(0);
 is $job->id, $id, 'right id';
 is $worker2->info->{jobs}[0], $job->id, 'right id';
@@ -42,11 +47,11 @@ $id = $worker2->id;
 undef $worker2;
 is $job->info->{state}, 'active', 'job is still active';
 ok !!$minion->backend->worker_info($id), 'is registered';
-my $pid = 4000;
-$pid++ while kill 0, $pid;
 $minion->backend->pg->db->query(
-  'update minion_workers set pid = ? where id = ?',
-  $pid, $id);
+  "update minion_workers
+   set notified = now() - interval '1 second' * ? where id = ?",
+  $minion->dead_after + 1, $id
+);
 $minion->repair;
 ok !$minion->backend->worker_info($id), 'not registered';
 is $job->info->{state}, 'failed', 'job is no longer active';

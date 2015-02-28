@@ -19,8 +19,9 @@ sub run {
 
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
 
-  my $worker = $minion->worker->register;
+  my $worker = $minion->worker;
   while (!$self->{finished}) {
+    $worker->register;
 
     # Repair in regular intervals
     if (($self->{next} // 0) <= time) {
@@ -58,9 +59,7 @@ Minion::Command::minion::worker - Minion worker command
 =head1 DESCRIPTION
 
 L<Minion::Command::minion::worker> starts a L<Minion> worker. You can have as
-many workers as you like, but on every host they should all be owned by the
-same user, so they can send each other signals to check which workers are still
-alive.
+many workers as you like.
 
 =head1 SIGNALS
 

@@ -173,8 +173,10 @@ overloaded in a subclass.
 =head2 register_worker
 
   my $worker_id = $backend->register_worker;
+  my $worker_id = $backend->register_worker($worker_id);
 
-Register worker. Meant to be overloaded in a subclass.
+Register worker or send heartbeat to show that this worker is still alive.
+Meant to be overloaded in a subclass.
 
 =head2 remove_job
 

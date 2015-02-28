@@ -11,8 +11,9 @@ use Scalar::Util 'weaken';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has 'backend';
+has dead_after   => 86400;
 has remove_after => 864000;
-has tasks => sub { {} };
+has tasks        => sub { {} };
 
 our $VERSION = '1.09';
 
@@ -193,6 +194,14 @@ Application for job queue, defaults to a L<Mojo::HelloWorld> object.
 
 Backend, usually a L<Minion::Backend::File> or L<Minion::Backend::Pg> object.
 
+=head2 dead_after
+
+  my $after = $minion->dead_after;
+  $minion   = $minion->dead_after(172800);
+
+Amount of time in seconds after which workers that have not been active will be
+considered dead by L</"repair">, defaults to C<86400> (1 day).
+
 =head2 remove_after
 
   my $after = $minion->remove_after;
@@ -276,9 +285,7 @@ Perform all jobs, very useful for testing.
 
   $minion = $minion->repair;
 
-Repair worker registry and job queue if necessary. All processes running this
-method and workers on this host should be owned by the same user, so they can
-send each other signals to check which workers are still alive.
+Repair worker registry and job queue if necessary.
 
 =head2 reset
 

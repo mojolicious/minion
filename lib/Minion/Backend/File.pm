@@ -70,13 +70,16 @@ sub list_workers {
 sub new { shift->SUPER::new(db => DBM::Deep->new(@_)) }
 
 sub register_worker {
-  my $self = shift;
+  my ($self, $id) = @_;
 
   my $db = $self->db;
   $db->lock_exclusive;
-  my $worker
-    = {host => hostname, id => $self->_id, pid => $$, started => time};
-  $self->_workers->{$worker->{id}} = $worker;
+  my $worker = $id ? $self->_workers->{$id} : undef;
+  unless ($worker) {
+    $worker = {host => hostname, id => $self->_id, pid => $$, started => time};
+    $self->_workers->{$worker->{id}} = $worker;
+  }
+  $worker->{notified} = time;
   $db->unlock;
 
   return $worker->{id};
@@ -97,25 +100,26 @@ sub remove_job {
 sub repair {
   my $self = shift;
 
-  # Check workers on this host (all should be owned by the same user)
+  # Check worker registry
   my $db = $self->db;
   $db->lock_exclusive;
   my $workers = $self->_workers;
-  my $host    = hostname;
-  delete $workers->{$_->{id}}
-    for grep { $_->{host} eq $host && !kill 0, $_->{pid} } values %$workers;
+  my $minion  = $self->minion;
+  my $dead    = time - $minion->dead_after;
+  $_->{notified} < $dead and delete $workers->{$_->{id}} for values %$workers;
 
   # Abandoned jobs
   my $jobs = $self->_jobs;
+  my $host = hostname;
   for my $job (values %$jobs) {
     next if $job->{state} ne 'active' || $workers->{$job->{worker}};
     @$job{qw(result state)} = ("Worker not found by $host:$$", 'failed');
   }
 
   # Old jobs
-  my $after = time - $self->minion->remove_after;
+  my $remove = time - $minion->remove_after;
   delete $jobs->{$_->{id}}
-    for grep { $_->{state} eq 'finished' && $_->{finished} < $after }
+    for grep { $_->{state} eq 'finished' && $_->{finished} < $remove }
     values %$jobs;
   $db->unlock;
 }
@@ -352,8 +356,9 @@ Construct a new L<Minion::Backend::File> object.
 =head2 register_worker
 
   my $worker_id = $backend->register_worker;
+  my $worker_id = $backend->register_worker($worker_id);
 
-Register worker.
+Register worker or send heartbeat to show that this worker is still alive.
 
 =head2 remove_job
 
