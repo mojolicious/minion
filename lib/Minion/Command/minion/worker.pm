@@ -9,7 +9,9 @@ has usage => sub { shift->extract_usage };
 sub run {
   my ($self, @args) = @_;
 
-  GetOptionsFromArray \@args, 't|task=s' => \my @tasks;
+  GetOptionsFromArray \@args,
+    'I|heartbeat-interval=i' => \(my $interval = 60),
+    't|task=s' => \my @tasks;
 
   # Limit tasks
   my $app    = $self->app;
@@ -24,7 +26,7 @@ sub run {
   while (!$self->{finished}) {
 
     # Send heartbeats in regular intervals
-    $worker->register and $self->{register} = time + 5
+    $worker->register and $self->{register} = time + $interval
       if $self->{register} < time;
 
     # Repair in regular intervals
@@ -53,12 +55,13 @@ Minion::Command::minion::worker - Minion worker command
   Usage: APPLICATION minion worker [OPTIONS]
 
     ./myapp.pl minion worker
-    ./myapp.pl minion worker -m production
+    ./myapp.pl minion worker -m production -I 15
     ./myapp.pl minion worker -t foo -t bar
 
   Options:
-    -t, --task <name>   One or more tasks to handle, defaults to handling all
-                        tasks
+    -I, --heartbeat-interval <seconds>   Heartbeat interval, defaults to 60
+    -t, --task <name>                    One or more tasks to handle, defaults
+                                         to handling all tasks
 
 =head1 DESCRIPTION
 
