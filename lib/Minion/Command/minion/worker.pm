@@ -10,7 +10,7 @@ sub run {
   my ($self, @args) = @_;
 
   GetOptionsFromArray \@args,
-    'I|heartbeat-interval=i' => \(my $interval = 60),
+    'I|heartbeat-interval=i' => \($self->{interval} = 60),
     't|task=s' => \my @tasks;
 
   # Limit tasks
@@ -21,25 +21,32 @@ sub run {
 
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
 
-  my $worker = $minion->worker;
+  # Log fatal errors
+  my $worker = $self->{worker} = $minion->worker;
   @$self{qw(register repair)} = (0, 0);
-  while (!$self->{finished}) {
-
-    # Send heartbeats in regular intervals
-    $worker->register and $self->{register} = time + $interval
-      if $self->{register} < time;
-
-    # Repair in regular intervals
-    if ($self->{repair} < time) {
-      $app->log->debug('Checking worker registry and job queue');
-      $minion->repair;
-      $self->{repair} = time + $minion->remove_after;
-    }
-
-    # Perform job
-    if (my $job = $worker->dequeue(5)) { $job->perform }
-  }
+  eval { $self->_work until $self->{finished}; 1 }
+    or $app->log->fatal("Worker error: $@");
   $worker->unregister;
+}
+
+sub _work {
+  my $self = shift;
+
+  # Send heartbeats in regular intervals
+  $self->{worker}->register and $self->{register} = time + $self->{interval}
+    if $self->{register} < time;
+
+  # Repair in regular intervals
+  if ($self->{repair} < time) {
+    my $app = $self->app;
+    $app->log->debug('Checking worker registry and job queue');
+    my $minion = $app->minion;
+    $minion->repair;
+    $self->{repair} = time + $minion->remove_after;
+  }
+
+  # Perform job
+  if (my $job = $self->{worker}->dequeue(5)) { $job->perform }
 }
 
 1;
