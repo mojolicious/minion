@@ -205,7 +205,7 @@ Backend, usually a L<Minion::Backend::File> or L<Minion::Backend::Pg> object.
   my $after = $minion->missing_after;
   $minion   = $minion->missing_after(172800);
 
-Amount of time in seconds after which workers that have not been active will be
+Amount of time in seconds after which workers without a heartbeat will be
 considered missing and removed from the registry by L</"repair">, defaults to
 C<86400> (1 day).
 

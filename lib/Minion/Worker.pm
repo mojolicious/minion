@@ -109,7 +109,7 @@ Get worker information.
 
   $worker = $worker->register;
 
-Register worker.
+Register worker or send heartbeat to show that this worker is still alive.
 
 =head2 unregister
 
