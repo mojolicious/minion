@@ -134,7 +134,7 @@ sub retry_job {
   if ($job) {
     $job->{retries} += 1;
     @$job{qw(retried state)} = (time, 'inactive');
-    delete $job->{$_} for qw(finished result started worker);
+    delete @$job{qw(finished result started worker)};
   }
   $db->unlock;
 

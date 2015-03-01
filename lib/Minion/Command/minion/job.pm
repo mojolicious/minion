@@ -93,9 +93,9 @@ sub _stats {
 sub _worker {
   my $worker = shift;
 
-  my $notified = Mojo::Date->new($_->{notified})->to_datetime;
-  my $name     = $worker->{host} . ':' . $worker->{pid};
   my $state    = @{$worker->{jobs}} ? 'active' : 'inactive';
+  my $name     = $worker->{host} . ':' . $worker->{pid};
+  my $notified = Mojo::Date->new($_->{notified})->to_datetime;
 
   return $worker->{id}, $state, $name, $notified;
 }
