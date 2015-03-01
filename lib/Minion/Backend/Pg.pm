@@ -54,8 +54,7 @@ sub list_jobs {
   my ($self, $offset, $limit, $options) = @_;
 
   return $self->pg->db->query(
-    'select id
-     from minion_jobs
+    'select id from minion_jobs
      where (state = $1 or $1 is null) and (task = $2 or $2 is null)
      order by id desc
      limit $3
@@ -187,8 +186,7 @@ sub _try {
     "update minion_jobs
      set started = now(), state = 'active', worker = ?
      from (
-       select id
-       from minion_jobs
+       select id from minion_jobs
        where state = 'inactive' and delayed < now() and task = any (?)
        order by priority desc, created
        limit 1
