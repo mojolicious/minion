@@ -144,12 +144,12 @@ sub retry_job {
 sub stats {
   my $self = shift;
 
+  my $active = 0;
   my (%seen, %states);
-  my $active = grep {
-         ++$states{$_->{state}}
-      && $_->{state} eq 'active'
-      && !$seen{$_->{worker}}++
-  } values %{$self->_jobs};
+  for my $job (values %{$self->_jobs}) {
+    $states{$job->{state}}++;
+    $active++ if $job->{state} eq 'active' && !$seen{$job->{worker}}++;
+  }
 
   return {
     active_workers   => $active,

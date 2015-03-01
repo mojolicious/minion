@@ -12,8 +12,7 @@ has usage => sub { shift->extract_usage };
 sub run {
   my ($self, @args) = @_;
 
-  my $args    = [];
-  my $options = {};
+  my ($args, $options) = ([], {});
   GetOptionsFromArray \@args,
     'a|args=s' => sub { $args = decode_json($_[1]) },
     'd|delay=i'    => \$options->{delay},

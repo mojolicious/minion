@@ -17,11 +17,7 @@ has tasks         => sub { {} };
 
 our $VERSION = '1.09';
 
-sub add_task {
-  my ($self, $name, $cb) = @_;
-  $self->tasks->{$name} = $cb;
-  return $self;
-}
+sub add_task { ($_[0]->tasks->{$_[1]} = $_[2]) and return $_[0] }
 
 sub enqueue { shift->backend->enqueue(@_) }
 
