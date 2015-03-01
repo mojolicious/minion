@@ -192,10 +192,12 @@ sub _try {
     "update minion_jobs
      set started = now(), state = 'active', worker = ?
      from (
-       select id
-       from minion_jobs
-       where state = 'inactive' and delayed < now() and task = any (?)
-       order by priority desc, created
+       select jobs.id
+       from (
+         select * from minion_jobs
+         where state = 'inactive' and delayed < now() and task = any (?)
+         order by priority desc, created
+       ) jobs
        limit 1
        for update
      ) job
