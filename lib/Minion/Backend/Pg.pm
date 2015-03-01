@@ -29,12 +29,10 @@ sub enqueue {
 
   my $db = $self->pg->db;
   return $db->query(
-    "insert into minion_jobs
-       (args, delayed, priority, retries, state, task)
-     values
-       (?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?)
+    "insert into minion_jobs (args, delayed, priority, task)
+     values (?, (now() + (interval '1 second' * ?)), ?, ?)
      returning id", {json => $args}, $options->{delay} // 0,
-    $options->{priority} // 0, 0, 'inactive', $task
+    $options->{priority} // 0, $task
   )->hash->{id};
 }
 
@@ -189,15 +187,13 @@ sub _try {
     "update minion_jobs
      set started = now(), state = 'active', worker = ?
      from (
-       select jobs.id
-       from (
-         select * from minion_jobs
-         where state = 'inactive' and delayed < now() and task = any (?)
-         order by priority desc, created
-       ) jobs
+       select id
+       from minion_jobs
+       where state = 'inactive' and delayed < now() and task = any (?)
+       order by priority desc, created
        limit 1
        for update
-     ) job
+     ) as job
      where minion_jobs.id = job.id
      returning minion_jobs.id, args, task", $id, [keys %{$self->minion->tasks}]
   )->expand->hash;
@@ -444,6 +440,8 @@ drop table if exists minion_workers;
 
 -- 2 up
 alter table minion_jobs alter column created set default current_timestamp;
+alter table minion_jobs alter column state set default 'inactive';
+alter table minion_jobs alter column retries set default 0;
 alter table minion_workers add column
   notified timestamp with time zone not null default current_timestamp;
 alter table minion_workers alter column started set default current_timestamp;
