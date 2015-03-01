@@ -68,10 +68,9 @@ sub list_jobs {
 sub list_workers {
   my ($self, $offset, $limit) = @_;
 
-  return $self->pg->db->query(
-    'select id from minion_workers order by id desc limit ? offset ?',
-    $limit, $offset)->arrays->map(sub { $self->worker_info($_->[0]) })
-    ->to_array;
+  my $sql = 'select id from minion_workers order by id desc limit ? offset ?';
+  return $self->pg->db->query($sql, $limit, $offset)
+    ->arrays->map(sub { $self->worker_info($_->[0]) })->to_array;
 }
 
 sub new {
@@ -148,16 +147,14 @@ sub retry_job {
 sub stats {
   my $self = shift;
 
-  my $db     = $self->pg->db;
-  my $all    = $db->query('select count(*) from minion_workers')->array->[0];
-  my $active = $db->query(
-    "select count(distinct worker)
-     from minion_jobs
-     where state = 'active'"
-  )->array->[0];
+  my $db  = $self->pg->db;
+  my $all = $db->query('select count(*) from minion_workers')->array->[0];
+  my $sql
+    = "select count(distinct worker) from minion_jobs where state = 'active'";
+  my $active = $db->query($sql)->array->[0];
 
-  my $states
-    = $db->query('select state, count(state) from minion_jobs group by 1')
+  $sql = 'select state, count(state) from minion_jobs group by 1';
+  my $states = $db->query($sql)
     ->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
 
   return {
