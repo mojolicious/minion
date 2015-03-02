@@ -111,7 +111,8 @@ sub repair {
   # Abandoned jobs
   $db->query(
     "update minion_jobs as j
-     set result = to_json('Worker went away'::text), state = 'failed'
+     set finished = now(), result = to_json('Worker went away'::text),
+       state = 'failed'
      where state = 'active'
        and not exists(select 1 from minion_workers where id = j.worker)"
   );
@@ -169,11 +170,12 @@ sub unregister_worker {
 
 sub worker_info {
   shift->pg->db->query(
-    'select id, extract(epoch from notified) as notified, array(
-       select id from minion_jobs where worker = minion_workers.id
+    "select id, extract(epoch from notified) as notified, array(
+       select id from minion_jobs
+       where state = 'active' and worker = minion_workers.id
      ) as jobs, host, pid, extract(epoch from started) as started
      from minion_workers
-     where id = ?', shift
+     where id = ?", shift
   )->hash;
 }
 
@@ -199,7 +201,7 @@ sub _update {
 
   return !!$self->pg->db->query(
     "update minion_jobs
-     set finished = now(), result = ?, state = ?, worker = null
+     set finished = now(), result = ?, state = ?
      where id = ? and state = 'active'
      returning 1", {json => $result}, $fail ? 'failed' : 'finished', $id
   )->rows;

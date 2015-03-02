@@ -112,7 +112,7 @@ sub repair {
   my $jobs = $self->_jobs;
   for my $job (values %$jobs) {
     next if $job->{state} ne 'active' || $workers->{$job->{worker}};
-    @$job{qw(result state)} = ('Worker went away', 'failed');
+    @$job{qw(finished result state)} = (time, 'Worker went away', 'failed');
   }
 
   # Old jobs
@@ -207,7 +207,6 @@ sub _update {
   if ($job) {
     @$job{qw(finished result)} = (time, $result);
     $job->{state} = $fail ? 'failed' : 'finished';
-    delete $job->{worker};
   }
   $db->unlock;
 
@@ -218,8 +217,9 @@ sub _worker_info {
   my ($self, $id) = @_;
 
   return undef unless $id && (my $worker = $self->_workers->{$id});
+  my $jobs = $self->_jobs;
   my @jobs = map { $_->{id} }
-    grep { $_->{worker} && $_->{worker} eq $id } values %{$self->_jobs};
+    grep { $_->{state} eq 'active' && $_->{worker} eq $id } values %$jobs;
   return {%{$worker->export}, jobs => \@jobs};
 }
 

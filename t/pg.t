@@ -54,8 +54,9 @@ $minion->backend->pg->db->query(
 );
 $minion->repair;
 ok !$minion->backend->worker_info($id), 'not registered';
-is $job->info->{state},  'failed',           'job is no longer active';
-is $job->info->{result}, 'Worker went away', 'right result';
+like $job->info->{finished}, qr/^[\d.]+$/,       'has finished timestamp';
+is $job->info->{state},      'failed',           'job is no longer active';
+is $job->info->{result},     'Worker went away', 'right result';
 
 # Repair abandoned job
 $worker->register;

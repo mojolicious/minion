@@ -51,8 +51,9 @@ ok $info, 'is registered';
 $info->{notified} = time - ($minion->missing_after + 1);
 $minion->repair;
 ok !$minion->worker->id($id)->info, 'not registered';
-is $job->info->{state},  'failed',           'job is no longer active';
-is $job->info->{result}, 'Worker went away', 'right result';
+like $job->info->{finished}, qr/^[\d.]+$/,       'has finished timestamp';
+is $job->info->{state},      'failed',           'job is no longer active';
+is $job->info->{result},     'Worker went away', 'right result';
 
 # Repair abandoned job
 $worker->register;
