@@ -1,4 +1,6 @@
 
+1.10  2015-03-03
+
 1.09  2015-03-02
   - Added support for monitoring workers with heartbeats instead of signals.
   - Added missing_after attribute to Minion.
