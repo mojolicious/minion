@@ -134,8 +134,7 @@ sub retry_job {
   !!shift->pg->db->query(
     "update minion_jobs
      set finished = null, result = null, retried = now(),
-       retries = retries + 1, started = null, state = 'inactive',
-       worker = null
+       retries = retries + 1, started = null, state = 'inactive', worker = null
      where id = ? and state in ('failed', 'finished')
      returning 1", shift
   )->rows;
@@ -172,7 +171,7 @@ sub worker_info {
   shift->pg->db->query(
     "select id, extract(epoch from notified) as notified, array(
        select id from minion_jobs
-         where worker = minion_workers.id and state = 'active'
+       where worker = minion_workers.id and state = 'active'
      ) as jobs, host, pid, extract(epoch from started) as started
      from minion_workers
      where id = ?", shift
