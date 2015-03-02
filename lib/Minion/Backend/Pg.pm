@@ -185,15 +185,14 @@ sub _try {
   return $self->pg->db->query(
     "update minion_jobs
      set started = now(), state = 'active', worker = ?
-     from (
+     where id = (
        select id from minion_jobs
        where state = 'inactive' and delayed < now() and task = any (?)
        order by priority desc, created
        limit 1
        for update
-     ) as job
-     where minion_jobs.id = job.id
-     returning minion_jobs.id, args, task", $id, [keys %{$self->minion->tasks}]
+     )
+     returning id, args, task", $id, [keys %{$self->minion->tasks}]
   )->expand->hash;
 }
 
