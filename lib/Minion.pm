@@ -314,8 +314,6 @@ This is the class hierarchy of the L<Minion> distribution.
 
 =over 2
 
-=item * L<Mojolicious::Plugin::Minion>
-
 =item * L<Minion>
 
 =item * L<Minion::Backend>
@@ -337,6 +335,8 @@ This is the class hierarchy of the L<Minion> distribution.
 =item * L<Minion::Job>
 
 =item * L<Minion::Worker>
+
+=item * L<Mojolicious::Plugin::Minion>
 
 =back
 
