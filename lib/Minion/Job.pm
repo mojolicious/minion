@@ -2,6 +2,7 @@ package Minion::Job;
 use Mojo::Base 'Mojo::EventEmitter';
 
 use Mojo::IOLoop;
+use POSIX 'WNOHANG';
 
 has args => sub { [] };
 has [qw(id minion task)];
@@ -23,9 +24,17 @@ sub finish {
 
 sub info { $_[0]->minion->backend->job_info($_[0]->id) }
 
+sub is_finished {
+  my ($self, $pid) = @_;
+  my $result = waitpid($pid, WNOHANG);
+  return undef if $result == 0 || $result == -1;
+  $? ? $self->fail('Non-zero exit status') : $self->finish;
+  return 1;
+}
+
 sub perform {
   my $self = shift;
-  waitpid $self->_child, 0;
+  waitpid $self->start, 0;
   $? ? $self->fail('Non-zero exit status') : $self->finish;
 }
 
@@ -33,7 +42,7 @@ sub remove { $_[0]->minion->backend->remove_job($_[0]->id) }
 
 sub retry { $_[0]->minion->backend->retry_job($_[0]->id) }
 
-sub _child {
+sub start {
   my $self = shift;
 
   # Parent
@@ -195,6 +204,12 @@ Get job information.
   # Get job result
   my $result = $job->info->{result};
 
+=head2 is_finished
+
+  my $bool = $job->is_finished($pid);
+
+Check if job performed with L</"start"> is finished.
+
 =head2 perform
 
   $job->perform;
@@ -212,6 +227,12 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
   my $bool = $job->retry;
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
+
+=head2 start
+
+  my $pid = $job->start;
+
+Perform job in new process, but do not wait for it to finish.
 
 =head1 SEE ALSO
 

@@ -9,7 +9,7 @@ use File::Temp 'tempdir';
 use Minion;
 use Mojo::IOLoop;
 use Sys::Hostname 'hostname';
-use Time::HiRes 'time';
+use Time::HiRes qw(time usleep);
 
 # Clean up before start
 my $tmpdir = tempdir CLEANUP => 1;
@@ -307,7 +307,7 @@ $worker->unregister;
 # Events
 my $pid;
 my ($failed, $finished) = (0, 0);
-$minion->on(
+$minion->once(
   worker => sub {
     my ($minion, $worker) = @_;
     $worker->on(
@@ -373,7 +373,7 @@ Mojo::IOLoop->delay(sub { $minion->perform_jobs })->wait;
 is $minion->job($id)->info->{state}, 'finished', 'right state';
 is_deeply $minion->job($id)->info->{result}, {added => 17}, 'right result';
 
-# Exit
+# Non-zero exit status
 $minion->add_task(exit => sub { exit 1 });
 $id  = $minion->enqueue('exit');
 $job = $worker->register->dequeue(0);
@@ -381,6 +381,32 @@ is $job->id, $id, 'right id';
 $job->perform;
 is $job->info->{state}, 'failed', 'right state';
 is $job->info->{result}, 'Non-zero exit status', 'right result';
+$worker->unregister;
+
+# Perform jobs concurrently (with non-zero exit status)
+$id  = $minion->enqueue(add => [10, 11]);
+$id2 = $minion->enqueue(add => [12, 13]);
+$id3 = $minion->enqueue('exit');
+$worker = $minion->worker->register;
+$job    = $worker->dequeue(0);
+$job2   = $worker->dequeue(0);
+my $job3 = $worker->dequeue(0);
+$pid = $job->start;
+my $pid2 = $job2->start;
+my $pid3 = $job3->start;
+my ($first, $second, $third);
+do {
+  usleep 50000;
+  $first++  if $job->is_finished($pid);
+  $second++ if $job2->is_finished($pid2);
+  $third++  if $job3->is_finished($pid3);
+} until $first && $second && $third;
+is $minion->job($id)->info->{state}, 'finished', 'right state';
+is_deeply $minion->job($id)->info->{result}, {added => 21}, 'right result';
+is $minion->job($id2)->info->{state}, 'finished', 'right state';
+is_deeply $minion->job($id2)->info->{result}, {added => 25}, 'right result';
+is $minion->job($id3)->info->{state}, 'failed', 'right state';
+is $minion->job($id3)->info->{result}, 'Non-zero exit status', 'right result';
 $worker->unregister;
 $minion->reset;
 

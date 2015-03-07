@@ -1,5 +1,10 @@
 
-1.10  2015-03-06
+1.10  2015-03-07
+  - Added support for performing multiple jobs concurrently with a single
+    worker. (bpmedley, sri)
+  - Added is_finished and start methods to Minion::Job. (bpmedley, sri)
+  - Added -j option to worker command. (bpmedley, sri)
+  - Fixed concurrency bugs in Minion::Backend::File.
 
 1.09  2015-03-02
   - Added support for monitoring workers with heartbeats instead of signals.

@@ -11,7 +11,7 @@ use Minion;
 use Mojo::IOLoop;
 use Mojo::Pg;
 use Sys::Hostname 'hostname';
-use Time::HiRes 'time';
+use Time::HiRes qw(time usleep);
 
 # Clean up before start
 my $pg = Mojo::Pg->new($ENV{TEST_ONLINE});
@@ -357,6 +357,26 @@ $id = $minion->enqueue(add => [8, 9]);
 Mojo::IOLoop->delay(sub { $minion->perform_jobs })->wait;
 is $minion->job($id)->info->{state}, 'finished', 'right state';
 is_deeply $minion->job($id)->info->{result}, {added => 17}, 'right result';
+
+# Perform jobs concurrently
+$id  = $minion->enqueue(add => [10, 11]);
+$id2 = $minion->enqueue(add => [12, 13]);
+$worker = $minion->worker->register;
+$job    = $worker->dequeue(0);
+$job2   = $worker->dequeue(0);
+my $pid  = $job->start;
+my $pid2 = $job2->start;
+my ($first, $second);
+do {
+  usleep 50000;
+  $first++  if $job->is_finished($pid);
+  $second++ if $job2->is_finished($pid2);
+} until $first && $second;
+is $minion->job($id)->info->{state}, 'finished', 'right state';
+is_deeply $minion->job($id)->info->{result}, {added => 21}, 'right result';
+is $minion->job($id2)->info->{state}, 'finished', 'right state';
+is_deeply $minion->job($id2)->info->{result}, {added => 25}, 'right result';
+$worker->unregister;
 $minion->reset;
 
 done_testing();

@@ -2,7 +2,6 @@ package Minion::Backend;
 use Mojo::Base -base;
 
 use Carp 'croak';
-use Sys::Hostname 'hostname';
 
 has 'minion';
 

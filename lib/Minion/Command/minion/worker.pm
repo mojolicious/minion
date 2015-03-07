@@ -11,7 +11,8 @@ sub run {
 
   GetOptionsFromArray \@args,
     'I|heartbeat-interval=i' => \($self->{interval} = 60),
-    't|task=s' => \my @tasks;
+    'j|jobs=i'               => \($self->{max}      = 4),
+    't|task=s'               => \my @tasks;
 
   # Limit tasks
   my $app    = $self->app;
@@ -20,11 +21,12 @@ sub run {
   %$tasks = map { $tasks->{$_} ? ($_ => $tasks->{$_}) : () } @tasks if @tasks;
 
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
+  local $SIG{CHLD} = 'DEFAULT';
 
   # Log fatal errors
   my $worker = $self->{worker} = $minion->worker;
   @$self{qw(register repair)} = (0, 0);
-  eval { $self->_work until $self->{finished}; 1 }
+  eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
     or $app->log->fatal("Worker error: $@");
   $worker->unregister;
 }
@@ -45,8 +47,15 @@ sub _work {
     $self->{repair} = time + $minion->remove_after;
   }
 
-  # Perform job
-  if (my $job = $self->{worker}->dequeue(5)) { $job->perform }
+  # Check if jobs are finished
+  my $jobs = $self->{jobs} ||= {};
+  $jobs->{$_}->is_finished($_) and delete $jobs->{$_} for keys %$jobs;
+
+  # Wait if job limit has been reached
+  if ($self->{max} == keys %$jobs) { sleep 1 }
+
+  # Try to get more jobs
+  elsif (my $job = $self->{worker}->dequeue(5)) { $jobs->{$job->start} = $job }
 }
 
 1;
@@ -62,11 +71,13 @@ Minion::Command::minion::worker - Minion worker command
   Usage: APPLICATION minion worker [OPTIONS]
 
     ./myapp.pl minion worker
-    ./myapp.pl minion worker -m production -I 15
+    ./myapp.pl minion worker -m production -I 15 -j 10
     ./myapp.pl minion worker -t foo -t bar
 
   Options:
     -I, --heartbeat-interval <seconds>   Heartbeat interval, defaults to 60
+    -j, --jobs <number>                  Number of jobs to perform
+                                         concurrently, defaults to 4
     -t, --task <name>                    One or more tasks to handle, defaults
                                          to handling all tasks
 
@@ -82,7 +93,7 @@ with the following signals.
 
 =head2 INT, TERM
 
-Stop gracefully after finishing the current job.
+Stop gracefully after finishing the current jobs.
 
 =head1 ATTRIBUTES
 

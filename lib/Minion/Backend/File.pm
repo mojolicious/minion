@@ -7,7 +7,11 @@ use Mojo::Util 'md5_sum';
 use Sys::Hostname 'hostname';
 use Time::HiRes qw(time usleep);
 
-has 'db';
+sub db {
+  my $self = shift;
+  @$self{qw(db pid)} = (undef, $$) if ($self->{pid} //= $$) ne $$;
+  return $self->{db} ||= DBM::Deep->new(@{$self->{args}});
+}
 
 sub dequeue {
   my ($self, $id, $timeout) = @_;
@@ -20,9 +24,8 @@ sub enqueue {
   my $args    = shift // [];
   my $options = shift // {};
 
-  my $db = $self->db;
-  $db->lock_exclusive;
-  my $job = {
+  my $guard = $self->_exclusive;
+  my $job   = {
     args    => $args,
     created => time,
     delayed => $options->{delay} ? (time + $options->{delay}) : 1,
@@ -33,7 +36,6 @@ sub enqueue {
     task     => $task
   };
   $self->_jobs->{$job->{id}} = $job;
-  $db->unlock;
 
   return $job->{id};
 }
@@ -67,33 +69,27 @@ sub list_workers {
   return [map { $self->_worker_info($_->{id}) } @workers];
 }
 
-sub new { shift->SUPER::new(db => DBM::Deep->new(@_)) }
+sub new { shift->SUPER::new(args => [@_]) }
 
 sub register_worker {
   my ($self, $id) = @_;
 
-  my $db = $self->db;
-  $db->lock_exclusive;
+  my $guard = $self->_exclusive;
   my $worker = $id ? $self->_workers->{$id} : undef;
   unless ($worker) {
     $worker = {host => hostname, id => $self->_id, pid => $$, started => time};
     $self->_workers->{$worker->{id}} = $worker;
   }
   $worker->{notified} = time;
-  $db->unlock;
 
   return $worker->{id};
 }
 
 sub remove_job {
   my ($self, $id) = @_;
-
-  my $db = $self->db;
-  $db->lock_exclusive;
+  my $guard = $self->_exclusive;
   delete $self->_jobs->{$id}
     if my $removed = !!$self->_job($id, 'failed', 'finished', 'inactive');
-  $db->unlock;
-
   return $removed;
 }
 
@@ -101,8 +97,7 @@ sub repair {
   my $self = shift;
 
   # Check worker registry
-  my $db = $self->db;
-  $db->lock_exclusive;
+  my $guard   = $self->_exclusive;
   my $workers = $self->_workers;
   my $minion  = $self->minion;
   my $after   = time - $minion->missing_after;
@@ -120,7 +115,6 @@ sub repair {
   delete $jobs->{$_->{id}}
     for grep { $_->{state} eq 'finished' && $_->{finished} < $after }
     values %$jobs;
-  $db->unlock;
 }
 
 sub reset { shift->db->clear }
@@ -128,17 +122,12 @@ sub reset { shift->db->clear }
 sub retry_job {
   my ($self, $id) = @_;
 
-  my $db = $self->db;
-  $db->lock_exclusive;
-  my $job = $self->_job($id, 'failed', 'finished');
-  if ($job) {
-    $job->{retries} += 1;
-    @$job{qw(retried state)} = (time, 'inactive');
-    delete @$job{qw(finished result started worker)};
-  }
-  $db->unlock;
-
-  return !!$job;
+  my $guard = $self->_exclusive;
+  return undef unless my $job = $self->_job($id, 'failed', 'finished');
+  $job->{retries} += 1;
+  @$job{qw(retried state)} = (time, 'inactive');
+  delete @$job{qw(finished result started worker)};
+  return 1;
 }
 
 sub stats {
@@ -165,6 +154,12 @@ sub unregister_worker { delete shift->_workers->{shift()} }
 
 sub worker_info { shift->_worker_info(@_) }
 
+sub _exclusive {
+  my $guard = Minion::Backend::File::_Guard->new(db => shift->db);
+  $guard->{db}->lock_exclusive;
+  return $guard;
+}
+
 sub _id {
   my $self = shift;
   my $id;
@@ -184,16 +179,14 @@ sub _jobs { shift->db->{jobs} //= {} }
 sub _try {
   my ($self, $id) = @_;
 
-  my $db = $self->db;
-  $db->lock_exclusive;
+  my $guard = $self->_exclusive;
   my @ready = grep { $_->{state} eq 'inactive' } values %{$self->_jobs};
-  my $now = time;
+  my $now   = time;
   @ready = grep { $_->{delayed} < $now } @ready;
   @ready = sort { $a->{created} <=> $b->{created} } @ready;
   @ready = sort { $b->{priority} <=> $a->{priority} } @ready;
   my $job = first { $self->minion->tasks->{$_->{task}} } @ready;
   @$job{qw(started state worker)} = (time, 'active', $id) if $job;
-  $db->unlock;
 
   return $job ? $job->export : undef;
 }
@@ -201,16 +194,11 @@ sub _try {
 sub _update {
   my ($self, $fail, $id, $result) = @_;
 
-  my $db = $self->db;
-  $db->lock_exclusive;
-  my $job = $self->_job($id, 'active');
-  if ($job) {
-    @$job{qw(finished result)} = (time, $result);
-    $job->{state} = $fail ? 'failed' : 'finished';
-  }
-  $db->unlock;
-
-  return !!$job;
+  my $guard = $self->_exclusive;
+  return undef unless my $job = $self->_job($id, 'active');
+  @$job{qw(finished result)} = (time, $result);
+  $job->{state} = $fail ? 'failed' : 'finished';
+  return 1;
 }
 
 sub _worker_info {
@@ -224,6 +212,11 @@ sub _worker_info {
 }
 
 sub _workers { shift->db->{workers} //= {} }
+
+package Minion::Backend::File::_Guard;
+use Mojo::Base -base;
+
+sub DESTROY { shift->{db}->unlock }
 
 1;
 
@@ -246,20 +239,18 @@ L<DBM::Deep>.
 
 =head1 ATTRIBUTES
 
-L<Minion::Backend::File> inherits all attributes from L<Minion::Backend> and
-implements the following new ones.
-
-=head2 db
-
-  my $db   = $backend->db;
-  $backend = $backend->db(DBM::Deep->new);
-
-L<DBM::Deep> object used to store all data.
+L<Minion::Backend::File> inherits all attributes from L<Minion::Backend>.
 
 =head1 METHODS
 
 L<Minion::Backend::File> inherits all methods from L<Minion::Backend> and
 implements the following new ones.
+
+=head2 db
+
+  my $db = $backend->db;
+
+L<DBM::Deep> object used to store all data.
 
 =head2 dequeue
 
