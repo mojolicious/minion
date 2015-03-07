@@ -1,5 +1,5 @@
 
-1.10  2015-03-07
+1.10  2015-03-08
   - Added support for performing multiple jobs concurrently with a single
     worker. (bpmedley, sri)
   - Added is_finished and start methods to Minion::Job. (bpmedley, sri)

@@ -104,12 +104,12 @@ ok !$minion->job($id3), 'job has been cleaned up';
 $worker  = $minion->worker->register;
 $worker2 = $minion->worker->register;
 my $batch = $minion->backend->list_workers(0, 10);
-ok $batch->[0]{id},   'has id';
-is $batch->[0]{host}, $host, 'right host';
-is $batch->[0]{pid},  $$, 'right pid';
-like $batch->[0]->{started}, qr/^[\d.]+$/, 'has timestamp';
-is $batch->[1]{host}, $host, 'right host';
-is $batch->[1]{pid},  $$,    'right pid';
+ok $batch->[0]{id},        'has id';
+is $batch->[0]{host},      $host, 'right host';
+is $batch->[0]{pid},       $$, 'right pid';
+like $batch->[0]{started}, qr/^[\d.]+$/, 'has timestamp';
+is $batch->[1]{host},      $host, 'right host';
+is $batch->[1]{pid},       $$, 'right pid';
 ok !$batch->[2], 'no more results';
 $batch = $minion->backend->list_workers(0, 1);
 is $batch->[0]{id}, $worker2->id, 'right id';
@@ -135,7 +135,7 @@ is $worker->dequeue(0.5), undef, 'no jobs yet';
 ok !!(($before + 0.5) <= time), 'waited for jobs';
 $worker->unregister;
 
-# Tasks
+# Stats
 $minion->add_task(
   add => sub {
     my ($job, $first, $second) = @_;
@@ -143,8 +143,6 @@ $minion->add_task(
   }
 );
 $minion->add_task(fail => sub { die "Intentional failure!\n" });
-
-# Stats
 my $stats = $minion->stats;
 is $stats->{active_workers},   0, 'no active workers';
 is $stats->{inactive_workers}, 0, 'no inactive workers';

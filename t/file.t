@@ -46,7 +46,7 @@ is $worker2->info->{jobs}[0], $job->id, 'right id';
 $id = $worker2->id;
 undef $worker2;
 is $job->info->{state}, 'active', 'job is still active';
-my $info = $minion->backend->db->{workers}->{$id};
+my $info = $minion->backend->db->{workers}{$id};
 ok $info, 'is registered';
 $info->{notified} = time - ($minion->missing_after + 1);
 $minion->repair;
@@ -83,12 +83,12 @@ ok !$minion->job($id3), 'job has been cleaned up';
 $worker  = $minion->worker->register;
 $worker2 = $minion->worker->register;
 my $batch = $minion->backend->list_workers(0, 10);
-ok $batch->[0]{id},   'has id';
-is $batch->[0]{host}, $host, 'right host';
-is $batch->[0]{pid},  $$, 'right pid';
-like $batch->[0]->{started}, qr/^[\d.]+$/, 'has timestamp';
-is $batch->[1]{host}, $host, 'right host';
-is $batch->[1]{pid},  $$,    'right pid';
+ok $batch->[0]{id},        'has id';
+is $batch->[0]{host},      $host, 'right host';
+is $batch->[0]{pid},       $$, 'right pid';
+like $batch->[0]{started}, qr/^[\d.]+$/, 'has timestamp';
+is $batch->[1]{host},      $host, 'right host';
+is $batch->[1]{pid},       $$, 'right pid';
 ok !$batch->[2], 'no more results';
 $batch = $minion->backend->list_workers(0, 1);
 is $batch->[0]{id}, $worker2->id, 'right id';
@@ -111,7 +111,7 @@ is $worker->dequeue(0.5), undef, 'no jobs yet';
 ok !!(($before + 0.5) <= time), 'waited for jobs';
 $worker->unregister;
 
-# Tasks
+# Stats
 $minion->add_task(
   add => sub {
     my ($job, $first, $second) = @_;
@@ -119,8 +119,6 @@ $minion->add_task(
   }
 );
 $minion->add_task(fail => sub { die "Intentional failure!\n" });
-
-# Stats
 my $stats = $minion->stats;
 is $stats->{active_workers},   0, 'no active workers';
 is $stats->{inactive_workers}, 0, 'no inactive workers';
@@ -386,27 +384,33 @@ $worker->unregister;
 # Perform jobs concurrently (with non-zero exit status)
 $id  = $minion->enqueue(add => [10, 11]);
 $id2 = $minion->enqueue(add => [12, 13]);
-$id3 = $minion->enqueue('exit');
+$id3 = $minion->enqueue('test');
+my $id4 = $minion->enqueue('exit');
 $worker = $minion->worker->register;
 $job    = $worker->dequeue(0);
 $job2   = $worker->dequeue(0);
 my $job3 = $worker->dequeue(0);
+my $job4 = $worker->dequeue(0);
 $pid = $job->start;
 my $pid2 = $job2->start;
 my $pid3 = $job3->start;
-my ($first, $second, $third);
+my $pid4 = $job4->start;
+my ($first, $second, $third, $fourth);
 do {
   usleep 50000;
   $first++  if $job->is_finished($pid);
   $second++ if $job2->is_finished($pid2);
   $third++  if $job3->is_finished($pid3);
-} until $first && $second && $third;
+  $fourth++ if $job4->is_finished($pid4);
+} until $first && $second && $third && $fourth;
 is $minion->job($id)->info->{state}, 'finished', 'right state';
 is_deeply $minion->job($id)->info->{result}, {added => 21}, 'right result';
 is $minion->job($id2)->info->{state}, 'finished', 'right state';
 is_deeply $minion->job($id2)->info->{result}, {added => 25}, 'right result';
-is $minion->job($id3)->info->{state}, 'failed', 'right state';
-is $minion->job($id3)->info->{result}, 'Non-zero exit status (1)',
+is $minion->job($id3)->info->{state},  'finished', 'right state';
+is $minion->job($id3)->info->{result}, undef,      'no result';
+is $minion->job($id4)->info->{state},  'failed',   'right state';
+is $minion->job($id4)->info->{result}, 'Non-zero exit status (1)',
   'right result';
 $worker->unregister;
 $minion->reset;
