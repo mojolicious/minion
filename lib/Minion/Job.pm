@@ -233,6 +233,14 @@ Transition from C<failed> or C<finished> state back to C<inactive>.
 
 Perform job in new process, but do not wait for it to finish.
 
+  # Perform two jobs concurrently
+  my $pid1 = $job1->start;
+  my $pid2 = $job2->start;
+  my ($first, $second);
+  sleep 1
+    until $first  ||= $job1->is_finished($pid1)
+    and   $second ||= $job2->is_finished($pid2);
+
 =head1 SEE ALSO
 
 L<Minion>, L<Mojolicious::Guides>, L<http://mojolicio.us>.

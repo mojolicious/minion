@@ -396,13 +396,11 @@ my $pid2 = $job2->start;
 my $pid3 = $job3->start;
 my $pid4 = $job4->start;
 my ($first, $second, $third, $fourth);
-do {
-  usleep 50000;
-  $first++  if $job->is_finished($pid);
-  $second++ if $job2->is_finished($pid2);
-  $third++  if $job3->is_finished($pid3);
-  $fourth++ if $job4->is_finished($pid4);
-} until $first && $second && $third && $fourth;
+usleep 50000
+  until $first ||= $job->is_finished($pid)
+  and $second  ||= $job2->is_finished($pid2)
+  and $third   ||= $job3->is_finished($pid3)
+  and $fourth  ||= $job4->is_finished($pid4);
 is $minion->job($id)->info->{state}, 'finished', 'right state';
 is_deeply $minion->job($id)->info->{result}, {added => 21}, 'right result';
 is $minion->job($id2)->info->{state}, 'finished', 'right state';
