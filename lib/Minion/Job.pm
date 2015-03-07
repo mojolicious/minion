@@ -26,8 +26,7 @@ sub info { $_[0]->minion->backend->job_info($_[0]->id) }
 
 sub is_finished {
   my ($self, $pid) = @_;
-  my $result = waitpid($pid, WNOHANG);
-  return undef if $result == 0 || $result == -1;
+  return undef unless waitpid($pid, WNOHANG) == $pid;
   $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
   return 1;
 }
