@@ -230,7 +230,7 @@ Minion::Backend::File - File backend
 
   use Minion::Backend::File;
 
-  my $backend = Minion::Backend::File->new('/Users/sri/minion.db');
+  my $backend = Minion::Backend::File->new('/home/sri/minion.db');
 
 =head1 DESCRIPTION
 
@@ -340,7 +340,7 @@ Returns the same information as L</"worker_info"> but in batches.
 
 =head2 new
 
-  my $backend = Minion::Backend::File->new('/Users/sri/minion.db');
+  my $backend = Minion::Backend::File->new('/home/sri/minion.db');
 
 Construct a new L<Minion::Backend::File> object.
 

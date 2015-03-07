@@ -11,7 +11,7 @@ use Mojolicious::Lite;
 use 5.20.0;
 use experimental 'signatures';
 
-plugin Minion => {File => '/Users/sri/minion.db'};
+plugin Minion => {File => '/home/sri/minion.db'};
 
 # Slow task
 app->minion->add_task(slow_log => sub ($job, $msg) {

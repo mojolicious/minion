@@ -84,7 +84,7 @@ Minion - Job queue
   use Minion;
 
   # Connect to backend
-  my $minion = Minion->new(File => '/Users/sri/minion.db');
+  my $minion = Minion->new(File => '/home/sri/minion.db');
   my $minion = Minion->new(Pg   => 'postgresql://postgres@/test');
 
   # Add tasks
@@ -274,7 +274,7 @@ return C<undef> if job does not exist.
 
 =head2 new
 
-  my $minion = Minion->new(File => '/Users/sri/minion.db');
+  my $minion = Minion->new(File => '/home/sri/minion.db');
 
 Construct a new L<Minion> object.
 

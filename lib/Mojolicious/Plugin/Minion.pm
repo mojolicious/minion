@@ -25,11 +25,11 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
 =head1 SYNOPSIS
 
   # Mojolicious (choose a backend)
-  $self->plugin(Minion => {File => '/Users/sri/minion.db'});
+  $self->plugin(Minion => {File => '/home/sri/minion.db'});
   $self->plugin(Minion => {Pg   => 'postgresql://postgres@/test'});
 
   # Mojolicious::Lite (choose a backend)
-  plugin Minion => {File => '/Users/sri/minion.db'};
+  plugin Minion => {File => '/home/sri/minion.db'};
   plugin Minion => {Pg   => 'postgresql://postgres@/test'};
 
   # Add tasks to your application
@@ -76,7 +76,7 @@ L<Mojolicious::Plugin> and implements the following new ones.
 
 =head2 register
 
-  $plugin->register(Mojolicious->new, {File => '/Users/sri/minion.db'});
+  $plugin->register(Mojolicious->new, {File => '/home/sri/minion.db'});
 
 Register plugin in L<Mojolicious> application.
 
