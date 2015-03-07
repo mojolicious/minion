@@ -381,7 +381,7 @@ is $job->info->{state}, 'failed', 'right state';
 is $job->info->{result}, 'Non-zero exit status (1)', 'right result';
 $worker->unregister;
 
-# Perform jobs concurrently (with non-zero exit status)
+# Perform jobs concurrently
 $id  = $minion->enqueue(add => [10, 11]);
 $id2 = $minion->enqueue(add => [12, 13]);
 $id3 = $minion->enqueue('test');
