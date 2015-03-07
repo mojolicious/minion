@@ -380,7 +380,7 @@ $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 $job->perform;
 is $job->info->{state}, 'failed', 'right state';
-is $job->info->{result}, 'Non-zero exit status', 'right result';
+is $job->info->{result}, 'Non-zero exit status (1)', 'right result';
 $worker->unregister;
 
 # Perform jobs concurrently (with non-zero exit status)
@@ -406,7 +406,8 @@ is_deeply $minion->job($id)->info->{result}, {added => 21}, 'right result';
 is $minion->job($id2)->info->{state}, 'finished', 'right state';
 is_deeply $minion->job($id2)->info->{result}, {added => 25}, 'right result';
 is $minion->job($id3)->info->{state}, 'failed', 'right state';
-is $minion->job($id3)->info->{result}, 'Non-zero exit status', 'right result';
+is $minion->job($id3)->info->{result}, 'Non-zero exit status (1)',
+  'right result';
 $worker->unregister;
 $minion->reset;
 

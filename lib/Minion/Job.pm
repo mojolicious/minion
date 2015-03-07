@@ -28,14 +28,14 @@ sub is_finished {
   my ($self, $pid) = @_;
   my $result = waitpid($pid, WNOHANG);
   return undef if $result == 0 || $result == -1;
-  $? ? $self->fail('Non-zero exit status') : $self->finish;
+  $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
   return 1;
 }
 
 sub perform {
   my $self = shift;
   waitpid $self->start, 0;
-  $? ? $self->fail('Non-zero exit status') : $self->finish;
+  $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
 }
 
 sub remove { $_[0]->minion->backend->remove_job($_[0]->id) }
