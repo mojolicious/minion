@@ -20,8 +20,8 @@ sub run {
   my $tasks  = $minion->tasks;
   %$tasks = map { $tasks->{$_} ? ($_ => $tasks->{$_}) : () } @tasks if @tasks;
 
-  local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
   local $SIG{CHLD} = 'DEFAULT';
+  local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
 
   # Log fatal errors
   my $worker = $self->{worker} = $minion->worker;

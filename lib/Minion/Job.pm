@@ -53,7 +53,8 @@ sub start {
 
   # Child
   my $task = $self->task;
-  $self->app->log->debug(qq{Performing job "$task" (@{[$self->id]}:$$)});
+  $self->app->log->debug(
+    qq{Performing job "@{[$self->id]}" with task "$task" in process $$});
   my $cb = $self->minion->tasks->{$task};
   $self->fail($@) unless eval { $self->$cb(@{$self->args}); 1 };
   exit 0;
