@@ -48,6 +48,8 @@ sub run {
   $self->_info($job);
 }
 
+sub _date { Mojo::Date->new(@_)->to_datetime }
+
 sub _info {
   my ($self, $job) = @_;
 
@@ -59,15 +61,11 @@ sub _info {
   if (my $result = $info->{result}) { print dumper $result }
 
   # Timing
-  say Mojo::Date->new($info->{created})->to_datetime, ' (created)';
-  my $delayed = $info->{delayed};
-  say Mojo::Date->new($delayed)->to_datetime, ' (delayed)' if $delayed > time;
-  my $retried = $info->{retried};
-  say Mojo::Date->new($retried)->to_datetime, ' (retried)' if $retried;
-  my $started = $info->{started};
-  say Mojo::Date->new($started)->to_datetime, ' (started)' if $started;
-  my $finished = $info->{finished};
-  say Mojo::Date->new($finished)->to_datetime, ' (finished)' if $finished;
+  my ($created, $delayed) = @$info{qw(created delayed)};
+  say _date($created), ' (created)';
+  say _date($delayed), ' (delayed)' if $delayed > $created;
+  $info->{$_} and say _date($info->{$_}), " ($_)"
+    for qw(retried started finished);
 }
 
 sub _list_jobs {
@@ -92,12 +90,9 @@ sub _stats {
 
 sub _worker {
   my $worker = shift;
-
-  my $state    = @{$worker->{jobs}} ? 'active' : 'inactive';
-  my $name     = $worker->{host} . ':' . $worker->{pid};
-  my $notified = Mojo::Date->new($_->{notified})->to_datetime;
-
-  return $worker->{id}, $state, $name, $notified;
+  my $state  = @{$worker->{jobs}} ? 'active' : 'inactive';
+  my $name   = $worker->{host} . ':' . $worker->{pid};
+  return $worker->{id}, $state, $name, _date($worker->{notified});
 }
 
 1;

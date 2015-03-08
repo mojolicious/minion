@@ -5,6 +5,8 @@
   - Added is_finished and start methods to Minion::Job. (bpmedley, sri)
   - Added -j option to worker command. (bpmedley, sri)
   - Fixed concurrency bugs in Minion::Backend::File.
+  - Fixed bug in job command where timing information was not displayed
+    correctly.
 
 1.09  2015-03-02
   - Added support for monitoring workers with heartbeats instead of signals.
