@@ -1,5 +1,6 @@
 
 1.11  2015-03-10
+  - Fixed tests to work without Mojo::Pg.
 
 1.10  2015-03-09
   - Added support for performing multiple jobs concurrently with a single

@@ -9,11 +9,11 @@ plan skip_all => 'set TEST_ONLINE to enable this test'
 
 use Minion;
 use Mojo::IOLoop;
-use Mojo::Pg;
 use Sys::Hostname 'hostname';
 use Time::HiRes qw(time usleep);
 
 # Clean up before start
+require Mojo::Pg;
 my $pg = Mojo::Pg->new($ENV{TEST_ONLINE});
 $pg->db->query('drop table if exists mojo_migrations');
 $pg->db->query('drop table if exists minion_jobs');
