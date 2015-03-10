@@ -1,4 +1,6 @@
 
+1.12  2015-03-11
+
 1.11  2015-03-10
   - Fixed tests to work without Mojo::Pg.
 
