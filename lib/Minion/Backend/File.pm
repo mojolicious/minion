@@ -117,7 +117,7 @@ sub repair {
     values %$jobs;
 }
 
-sub reset { shift->db->clear }
+sub reset { $_[0]->db and delete($_[0]->{db})->clear }
 
 sub retry_job {
   my ($self, $id) = @_;
