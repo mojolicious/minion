@@ -365,6 +365,20 @@ is $job->info->{state}, 'failed', 'right state';
 is $job->info->{result}, "Intentional failure!\n", 'right result';
 $worker->unregister;
 
+# Nested data structures
+$minion->add_task(
+  nested => sub {
+    my ($job, $hash, $array) = @_;
+    $job->finish([{23 => $hash->{first}[0]{second} x $array->[0][0]}]);
+  }
+);
+$minion->enqueue(nested => [{first => [{second => 'test'}]}, [[3]]]);
+$job = $worker->register->dequeue(0);
+$job->perform;
+is $job->info->{state}, 'finished', 'right state';
+is_deeply $job->info->{result}, [{23 => 'testtesttest'}], 'right structure';
+$worker->unregister;
+
 # Perform job in a running event loop
 $id = $minion->enqueue(add => [8, 9]);
 Mojo::IOLoop->delay(sub { $minion->perform_jobs })->wait;
