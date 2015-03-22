@@ -239,7 +239,8 @@ Register a new task.
   my $id = $minion->enqueue(foo => [@args] => {priority => 1});
 
 Enqueue a new job with C<inactive> state. Arguments get serialized, so you
-shouldn't send objects.
+shouldn't send objects, nested data structures with hash and array references
+are fine though.
 
 These options are currently available:
 
