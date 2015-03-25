@@ -1,5 +1,6 @@
 
-1.13  2015-03-22
+1.13  2015-03-25
+  - Improved Minion::Backend::Pg to reset the job queue a little faster.
 
 1.12  2015-03-17
   - Improved portability of some tests.
