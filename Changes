@@ -1,4 +1,6 @@
 
+1.15  2015-04-22
+
 1.14  2015-04-21
   - Improved performance of Minion::Backend::Pg with a new index. (avkhozov)
 
