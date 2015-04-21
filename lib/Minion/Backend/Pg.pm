@@ -407,7 +407,7 @@ create table if not exists minion_jobs (
   task     text not null,
   worker   bigint
 );
-create index on minion_jobs (priority DESC, created);
+create index on minion_jobs (priority desc, created);
 create table if not exists minion_workers (
   id      bigserial not null primary key,
   host    text not null,
@@ -438,3 +438,6 @@ alter table minion_jobs alter column retries set default 0;
 alter table minion_workers add column
   notified timestamp with time zone not null default now();
 alter table minion_workers alter column started set default now();
+
+-- 3 up
+create index on minion_jobs (state);
