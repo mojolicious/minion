@@ -1,5 +1,6 @@
 
-1.14  2015-03-26
+1.14  2015-04-21
+  - Improved performance of Minion::Backend::Pg with a new index. (avkhozov)
 
 1.13  2015-03-25
   - Improved Minion::Backend::Pg to reset the job queue a little faster.
