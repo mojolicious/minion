@@ -128,12 +128,15 @@ sub repair {
 sub reset { shift->pg->db->query('truncate minion_jobs, minion_workers') }
 
 sub retry_job {
-  !!shift->pg->db->query(
+  my ($self, $id) = (shift, shift);
+  my $options = shift // {};
+  !!$self->pg->db->query(
     "update minion_jobs
      set finished = null, result = null, retried = now(),
-       retries = retries + 1, started = null, state = 'inactive', worker = null
+       retries = retries + 1, started = null, state = 'inactive', worker = null,
+       delayed = (now() + (interval '1 second' * ?))
      where id = ? and state in ('failed', 'finished')
-     returning 1", shift
+     returning 1", $options->{delay} // 0, $id
   )->rows;
 }
 
@@ -361,8 +364,21 @@ Reset job queue.
 =head2 retry_job
 
   my $bool = $backend->retry_job($job_id);
+  my $bool = $backend->retry_job($job_id, {delay => 10});
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
+
+These options are currently available:
+
+=over 2
+
+=item delay
+
+  delay => 10
+
+Delay job for this many seconds from now.
+
+=back
 
 =head2 stats
 

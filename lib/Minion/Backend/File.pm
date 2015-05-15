@@ -120,13 +120,16 @@ sub repair {
 sub reset { $_[0]->db and delete($_[0]->{db})->clear }
 
 sub retry_job {
-  my ($self, $id) = @_;
+  my ($self, $id) = (shift, shift);
+  my $options = shift // {};
 
   my $guard = $self->_exclusive;
   return undef unless my $job = $self->_job($id, 'failed', 'finished');
   $job->{retries} += 1;
+  $job->{delayed} = time + $options->{delay} if $options->{delay};
   @$job{qw(retried state)} = (time, 'inactive');
   delete @$job{qw(finished result started worker)};
+
   return 1;
 }
 
@@ -372,8 +375,21 @@ Reset job queue.
 =head2 retry_job
 
   my $bool = $backend->retry_job($job_id);
+  my $bool = $backend->retry_job($job_id, {delay => 10});
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
+
+These options are currently available:
+
+=over 2
+
+=item delay
+
+  delay => 10
+
+Delay job for this many seconds from now.
+
+=back
 
 =head2 stats
 

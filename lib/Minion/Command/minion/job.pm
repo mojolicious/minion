@@ -42,7 +42,8 @@ sub run {
   return $job->remove || die "Job is active.\n" if $remove;
 
   # Retry job
-  return $job->retry || die "Job is active.\n" if $retry;
+  return $job->retry({delay => $options->{delay}}) || die "Job is active.\n"
+    if $retry;
 
   # Job info
   $self->_info($job);

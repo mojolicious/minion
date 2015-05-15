@@ -39,7 +39,10 @@ sub perform {
 
 sub remove { $_[0]->minion->backend->remove_job($_[0]->id) }
 
-sub retry { $_[0]->minion->backend->retry_job($_[0]->id) }
+sub retry {
+  my $self = shift;
+  $self->minion->backend->retry_job($self->id, @_);
+}
 
 sub start {
   my $self = shift;
@@ -225,8 +228,21 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
 =head2 retry
 
   my $bool = $job->retry;
+  my $bool = $job->retry({delay => 10});
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
+
+These options are currently available:
+
+=over 2
+
+=item delay
+
+  delay => 10
+
+Delay job for this many seconds from now.
+
+=back
 
 =head2 start
 
