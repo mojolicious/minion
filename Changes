@@ -1,4 +1,6 @@
 
+1.16  2015-05-16
+
 1.15  2015-05-15
   - Added support for retrying jobs with a delay. (kwa)
   - Added delay option to retry method in Minion::Job. (kwa)
