@@ -120,13 +120,16 @@ sub repair {
 sub reset { $_[0]->db and delete($_[0]->{db})->clear }
 
 sub retry_job {
-  my ($self, $id) = @_;
+  my ($self, $id) = (shift, shift);
+  my $options = shift // {};
 
   my $guard = $self->_exclusive;
   return undef unless my $job = $self->_job($id, 'failed', 'finished');
   $job->{retries} += 1;
+  $job->{delayed} = time + $options->{delay} if $options->{delay};
   @$job{qw(retried state)} = (time, 'inactive');
   delete @$job{qw(finished result started worker)};
+
   return 1;
 }
 
