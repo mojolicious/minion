@@ -230,8 +230,17 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
   my $bool = $job->retry;
   my $bool = $job->retry({delay => 10});
 
-Transition from C<failed> or C<finished> state back to C<inactive>. Optionally
-delay job for several seconds from now.
+Transition from C<failed> or C<finished> state back to C<inactive>.
+
+These options are currently available:
+
+=over 2
+
+=item delay
+
+  delay => 10
+
+Delay job for this many seconds from now.
 
 =head2 start
 

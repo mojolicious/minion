@@ -375,8 +375,19 @@ Reset job queue.
 =head2 retry_job
 
   my $bool = $backend->retry_job($job_id);
+  my $bool = $backend->retry_job($job_id, {delay => 10});
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
+
+These options are currently available:
+
+=over 2
+
+=item delay
+
+  delay => 10
+
+Delay job for this many seconds from now.
 
 =head2 stats
 
