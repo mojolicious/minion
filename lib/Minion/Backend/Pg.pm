@@ -268,7 +268,7 @@ These options are currently available:
 
   delay => 10
 
-Delay job for this many seconds from now.
+Delay job for this many seconds (from now).
 
 =item priority
 
@@ -377,7 +377,7 @@ These options are currently available:
 
   delay => 10
 
-Delay job for this many seconds from now.
+Delay job for this many seconds (from now).
 
 =back
 

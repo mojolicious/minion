@@ -101,7 +101,7 @@ These options are currently available:
 
   delay => 10
 
-Delay job for this many seconds from now.
+Delay job for this many seconds (from now).
 
 =item priority
 
@@ -200,9 +200,22 @@ Reset job queue. Meant to be overloaded in a subclass.
 =head2 retry_job
 
   my $bool = $backend->retry_job($job_id);
+  my $bool = $backend->retry_job($job_id, {delay => 10});
 
 Transition from C<failed> or C<finished> state back to C<inactive>. Meant to be
 overloaded in a subclass.
+
+These options are currently available:
+
+=over 2
+
+=item delay
+
+  delay => 10
+
+Delay job for this many seconds (from now).
+
+=back
 
 =head2 stats
 
