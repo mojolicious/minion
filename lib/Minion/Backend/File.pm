@@ -389,6 +389,8 @@ These options are currently available:
 
 Delay job for this many seconds from now.
 
+=back
+
 =head2 stats
 
   my $stats = $backend->stats;

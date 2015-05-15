@@ -242,6 +242,8 @@ These options are currently available:
 
 Delay job for this many seconds from now.
 
+=back
+
 =head2 start
 
   my $pid = $job->start;
