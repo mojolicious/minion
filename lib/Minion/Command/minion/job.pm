@@ -42,8 +42,7 @@ sub run {
   return $job->remove || die "Job is active.\n" if $remove;
 
   # Retry job
-  return $job->retry({delay => $options->{delay}}) || die "Job is active.\n"
-    if $retry;
+  return $job->retry($options) || die "Job is active.\n" if $retry;
 
   # Job info
   $self->_info($job);
@@ -115,7 +114,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -s
     ./myapp.pl minion job -w -l 5
     ./myapp.pl minion job 10023
-    ./myapp.pl minion job -R 10023
+    ./myapp.pl minion job -R 10023 -d 10
     ./myapp.pl minion job -r 10023
 
   Options:

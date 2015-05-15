@@ -1,5 +1,6 @@
 
-1.15  2015-04-22
+1.15  2015-05-15
+  - Added support for retrying jobs with delays. (kwa)
 
 1.14  2015-04-21
   - Improved performance of Minion::Backend::Pg with a new index. (avkhozov)

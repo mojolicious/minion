@@ -130,11 +130,12 @@ sub reset { shift->pg->db->query('truncate minion_jobs, minion_workers') }
 sub retry_job {
   my ($self, $id) = (shift, shift);
   my $options = shift // {};
-  !!$self->pg->db->query(
+
+  return !!$self->pg->db->query(
     "update minion_jobs
      set finished = null, result = null, retried = now(),
-       retries = retries + 1, started = null, state = 'inactive', worker = null,
-       delayed = (now() + (interval '1 second' * ?))
+       retries = retries + 1, started = null, state = 'inactive',
+       worker = null, delayed = (now() + (interval '1 second' * ?))
      where id = ? and state in ('failed', 'finished')
      returning 1", $options->{delay} // 0, $id
   )->rows;
