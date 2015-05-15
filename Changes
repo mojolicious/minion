@@ -1,6 +1,9 @@
 
 1.15  2015-05-15
-  - Added support for retrying jobs with delays. (kwa)
+  - Added support for retrying jobs with a delay. (kwa)
+  - Added delay option to retry method in Minion::Job. (kwa)
+  - Added delay option to retry_job method in Minion::Backend::File. (kwa)
+  - Added delay option to retry_job method in Minion::Backend::Pg. (kwa)
 
 1.14  2015-04-21
   - Improved performance of Minion::Backend::Pg with a new index. (avkhozov)
