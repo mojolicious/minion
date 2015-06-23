@@ -105,6 +105,35 @@ C<active> state or return C<undef> if queue was empty.
 
 Get worker information.
 
+  # Check worker host
+  my $host = $worker->info->{host};
+
+These fields are currently available:
+
+=over 2
+
+=item host
+
+Worker host.
+
+=item jobs
+
+Ids of jobs the worker is currently processing.
+
+=item notified
+
+Last time worker sent a heartbeat.
+
+=item pid
+
+Process id of worker.
+
+=item started
+
+Time worker was started.
+
+=back
+
 =head2 register
 
   $worker = $worker->register;

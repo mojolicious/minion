@@ -204,6 +204,60 @@ Get job information.
   # Get job result
   my $result = $job->info->{result};
 
+These fields are currently available:
+
+=over 2
+
+=item args
+
+Job arguments.
+
+=item created
+
+Time job was created.
+
+=item delayed
+
+Time job was delayed to.
+
+=item finished
+
+Time job was finished.
+
+=item priority
+
+Job priority.
+
+=item result
+
+Job result.
+
+=item retried
+
+Time job has been retried.
+
+=item retries
+
+Number of times job has been retried.
+
+=item started
+
+Time job was started.
+
+=item state
+
+Current job state.
+
+=item task
+
+Task name.
+
+=item worker
+
+Id of worker that is processing the job.
+
+=back
+
 =head2 is_finished
 
   my $bool = $job->is_finished($pid);

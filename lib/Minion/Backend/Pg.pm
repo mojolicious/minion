@@ -300,6 +300,66 @@ Transition from C<active> to C<finished> state.
 
 Get information about a job or return C<undef> if job does not exist.
 
+  # Check job state
+  my $state = $backend->job_info($job_id)->{state};
+
+  # Get job result
+  my $result = $backend->job_info($job_id)->{result};
+
+These fields are currently available:
+
+=over 2
+
+=item args
+
+Job arguments.
+
+=item created
+
+Time job was created.
+
+=item delayed
+
+Time job was delayed to.
+
+=item finished
+
+Time job was finished.
+
+=item priority
+
+Job priority.
+
+=item result
+
+Job result.
+
+=item retried
+
+Time job has been retried.
+
+=item retries
+
+Number of times job has been retried.
+
+=item started
+
+Time job was started.
+
+=item state
+
+Current job state.
+
+=item task
+
+Task name.
+
+=item worker
+
+Id of worker that is processing the job.
+
+=back
+
 =head2 list_jobs
 
   my $batch = $backend->list_jobs($offset, $limit);
@@ -398,6 +458,35 @@ Unregister worker.
   my $worker_info = $backend->worker_info($worker_id);
 
 Get information about a worker or return C<undef> if worker does not exist.
+
+  # Check worker host
+  my $host = $backend->worker_info($worker_id)->{host};
+
+These fields are currently available:
+
+=over 2
+
+=item host
+
+Worker host.
+
+=item jobs
+
+Ids of jobs the worker is currently processing.
+
+=item notified
+
+Last time worker sent a heartbeat.
+
+=item pid
+
+Process id of worker.
+
+=item started
+
+Time worker was started.
+
+=back
 
 =head1 SEE ALSO
 
