@@ -152,6 +152,31 @@ L<Minion::Command::minion::job>.
 
   $ ./myapp.pl minion job
 
+And as your application grows, you can move tasks into application specific
+plugins.
+
+  package MyApp::Task::PokeMojo;
+  use Mojo::Base 'Mojolicious::Plugin';
+
+  sub register {
+    my ($self, $app) = @_;
+    $app->minion->add_task(poke_mojo => sub {
+      my $job = shift;
+      $job->app->ua->get('mojolicio.us');
+      $job->app->log->debug('We have poked mojolicio.us for a visitor');
+    });
+  }
+
+  1;
+
+Which are loaded like any other plugin from your application.
+
+  # Mojolicious
+  $app->plugin('MyApp::Task::PokeMojo');
+
+  # Mojolicious::Lite
+  plugin 'MyApp::Task::PokeMojo';
+
 Every job can fail or succeed, but not get lost, the system is eventually
 consistent and will preserve job results for as long as you like, depending on
 L</"remove_after">. While individual workers can fail in the middle of
