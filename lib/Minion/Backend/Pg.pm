@@ -125,7 +125,10 @@ sub repair {
   );
 }
 
-sub reset { shift->pg->db->query('truncate minion_jobs, minion_workers') }
+sub reset {
+  shift->pg->db->query(
+    'truncate minion_jobs, minion_workers restart identity');
+}
 
 sub retry_job {
   my ($self, $id) = (shift, shift);
