@@ -51,6 +51,9 @@ sub _work {
   my $jobs = $self->{jobs} ||= {};
   $jobs->{$_}->is_finished($_) and delete $jobs->{$_} for keys %$jobs;
 
+  # Check if worker are finished
+  sleep 1 and return if $self->{finished};
+
   # Wait if job limit has been reached
   if ($self->{max} <= keys %$jobs) { sleep 1 }
 
