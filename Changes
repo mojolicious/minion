@@ -1,4 +1,6 @@
 
+1.18  2015-08-30
+
 1.17  2015-08-29
   - Fixed bug in worker command where new jobs would still be dequeued after
     receiving an INT/TERM signal.
