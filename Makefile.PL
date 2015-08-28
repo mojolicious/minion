@@ -12,15 +12,21 @@ WriteMakefile(
   AUTHOR       => 'Sebastian Riedel <sri@cpan.org>',
   LICENSE      => 'artistic_2',
   META_MERGE   => {
-    requires  => {perl => '5.010001'},
-    resources => {
-      license    => 'http://www.opensource.org/licenses/artistic-license-2.0',
-      homepage   => 'http://mojolicio.us',
-      bugtracker => 'https://github.com/kraih/minion/issues',
-      repository => 'https://github.com/kraih/minion.git',
-      x_IRC      => 'irc://irc.perl.org/#mojo'
+    dynamic_config => 0,
+    'meta-spec'    => {version => 2},
+    no_index       => {directory => ['t']},
+    prereqs        => {runtime => {requires => {perl => '5.010001'}}},
+    resources      => {
+      bugtracker => {web => 'https://github.com/kraih/minion/issues'},
+      homepage => 'http://mojolicio.us',
+      license  => ['http://www.opensource.org/licenses/artistic-license-2.0'],
+      repository => {
+        type => 'git',
+        url  => 'https://github.com/kraih/minion.git',
+        web  => 'https://github.com/kraih/minion',
+      },
+      x_IRC => 'irc://irc.perl.org/#mojo'
     },
-    no_index => {directory => ['t']}
   },
   PREREQ_PM => {Mojolicious => '6.0', 'DBM::Deep' => '2.0011'},
   test      => {TESTS       => 't/*.t t/*/*.t'}
