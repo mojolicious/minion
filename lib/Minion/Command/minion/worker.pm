@@ -44,7 +44,7 @@ sub _work {
     $app->log->debug('Checking worker registry and job queue');
     my $minion = $app->minion;
     $minion->repair;
-    $self->{repair} = time + $minion->remove_after;
+    $self->{repair} = time + $minion->missing_after;
   }
 
   # Check if jobs are finished

@@ -1,5 +1,6 @@
 
-1.16  2015-07-02
+1.16  2015-08-28
+  - Improved worker command to detect workers without heartbeat a little faster.
 
 1.15  2015-05-15
   - Added support for retrying jobs with a delay. (kwa)
