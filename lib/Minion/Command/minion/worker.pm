@@ -51,8 +51,8 @@ sub _work {
   my $jobs = $self->{jobs} ||= {};
   $jobs->{$_}->is_finished($_) and delete $jobs->{$_} for keys %$jobs;
 
-  # Wait if job limit has been reached
-  if ($self->{max} <= keys %$jobs) { sleep 1 }
+  # Wait if job limit has been reached or worker is stopping
+  if (($self->{max} <= keys %$jobs) || $self->{finished}) { sleep 1 }
 
   # Try to get more jobs
   elsif (my $job = $self->{worker}->dequeue(5)) { $jobs->{$job->start} = $job }
