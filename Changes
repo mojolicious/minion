@@ -1,4 +1,6 @@
 
+1.17  2015-08-29
+
 1.16  2015-08-28
   - Improved worker command to detect workers without heartbeat a little faster.
 
