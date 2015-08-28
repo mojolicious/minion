@@ -151,8 +151,8 @@ sub stats {
   my $active = $db->query($sql)->array->[0];
 
   $sql = 'select state, count(state) from minion_jobs group by 1';
-  my $states = $db->query($sql)
-    ->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
+  my $states
+    = $db->query($sql)->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
 
   return {
     active_workers   => $active,

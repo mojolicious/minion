@@ -4,8 +4,7 @@ BEGIN { $ENV{MOJO_REACTOR} = 'Mojo::Reactor::Poll' }
 
 use Test::More;
 
-plan skip_all => 'set TEST_ONLINE to enable this test'
-  unless $ENV{TEST_ONLINE};
+plan skip_all => 'set TEST_ONLINE to enable this test' unless $ENV{TEST_ONLINE};
 
 use Minion;
 use Mojo::IOLoop;
@@ -125,8 +124,7 @@ $minion->reset->repair;
 ok !$minion->backend->pg->db->query(
   'select count(id) as count from minion_jobs')->hash->{count}, 'no jobs';
 ok !$minion->backend->pg->db->query(
-  'select count(id) as count from minion_workers')->hash->{count},
-  'no workers';
+  'select count(id) as count from minion_workers')->hash->{count}, 'no workers';
 
 # Wait for job
 my $before = time;

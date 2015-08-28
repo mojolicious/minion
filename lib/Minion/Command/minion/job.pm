@@ -29,8 +29,7 @@ sub run {
   my $id = @args ? shift @args : undef;
 
   # Enqueue
-  return say $self->app->minion->enqueue($enqueue, $args, $options)
-    if $enqueue;
+  return say $self->app->minion->enqueue($enqueue, $args, $options) if $enqueue;
 
   # Show stats or list jobs/workers
   return $self->_stats if $stats;
