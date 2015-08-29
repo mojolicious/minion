@@ -1,5 +1,7 @@
 
 1.18  2015-08-30
+  - Fixed Makefile.PL to be compliant with version 2 of the CPAN distribution
+    metadata specification.
 
 1.17  2015-08-29
   - Fixed bug in worker command where new jobs would still be dequeued after
