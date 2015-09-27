@@ -306,6 +306,23 @@ is $job->id, $id, 'right id';
 is $job->info->{priority}, 1, 'right priority';
 ok $job->finish, 'job finished';
 isnt $worker->dequeue(0)->id, $id, 'different id';
+$id = $minion->enqueue(add => [2, 5]);
+$job = $worker->register->dequeue(0);
+is $job->id, $id, 'right id';
+is $job->info->{priority}, 0, 'right priority';
+ok $job->finish, 'job finished';
+ok $job->retry({priority => 100}), 'job retried with higher priority';
+$job = $worker->dequeue(0);
+is $job->id, $id, 'right id';
+is $job->info->{retries},  1,   'job has been retried once';
+is $job->info->{priority}, 100, 'high priority';
+ok $job->finish, 'job finished';
+ok $job->retry({priority => 0}), 'job retried with lower priority';
+$job = $worker->dequeue(0);
+is $job->id, $id, 'right id';
+is $job->info->{retries},  2, 'job has been retried twice';
+is $job->info->{priority}, 0, 'low priority';
+ok $job->finish, 'job finished';
 $worker->unregister;
 
 # Delayed jobs

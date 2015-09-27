@@ -133,11 +133,12 @@ sub retry_job {
 
   return !!$self->pg->db->query(
     "update minion_jobs
-     set finished = null, result = null, retried = now(),
-       retries = retries + 1, started = null, state = 'inactive',
-       worker = null, delayed = (now() + (interval '1 second' * ?))
+     set finished = null, priority = coalesce(?, priority), result = null,
+       retried = now(), retries = retries + 1, started = null,
+       state = 'inactive', worker = null,
+       delayed = (now() + (interval '1 second' * ?))
      where id = ? and state in ('failed', 'finished')
-     returning 1", $options->{delay} // 0, $id
+     returning 1", $options->{priority}, $options->{delay} // 0, $id
   )->rows;
 }
 
@@ -438,6 +439,12 @@ These options are currently available:
   delay => 10
 
 Delay job for this many seconds (from now).
+
+=item priority
+
+  priority => 5
+
+Job priority.
 
 =back
 

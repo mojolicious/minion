@@ -126,7 +126,8 @@ sub retry_job {
   my $guard = $self->_exclusive;
   return undef unless my $job = $self->_job($id, 'failed', 'finished');
   $job->{retries} += 1;
-  $job->{delayed} = time + $options->{delay} if $options->{delay};
+  $job->{delayed}  = time + $options->{delay} if $options->{delay};
+  $job->{priority} = $options->{priority}     if defined $options->{priority};
   @$job{qw(retried state)} = (time, 'inactive');
   delete @$job{qw(finished result started worker)};
 
@@ -448,6 +449,12 @@ These options are currently available:
   delay => 10
 
 Delay job for this many seconds (from now).
+
+=item priority
+
+  priority => 5
+
+Job priority.
 
 =back
 

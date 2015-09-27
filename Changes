@@ -1,5 +1,9 @@
 
-1.19  2015-09-03
+1.19  2015-09-28
+  - Added support for retrying jobs with a new priority.
+  - Added priority option to retry method in Minion::Job.
+  - Added priority option to retry_job method in Minion::Backend::File.
+  - Added priority option to retry_job method in Minion::Backend::Pg.
 
 1.18  2015-08-30
   - Fixed Makefile.PL to be compliant with version 2 of the CPAN distribution

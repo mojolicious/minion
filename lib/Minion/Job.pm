@@ -293,6 +293,12 @@ These options are currently available:
 
 Delay job for this many seconds (from now).
 
+=item priority
+
+  priority => 5
+
+Job priority.
+
 =back
 
 =head2 start
