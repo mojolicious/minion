@@ -1,4 +1,6 @@
 
+1.20  2015-09-29
+
 1.19  2015-09-28
   - Added support for retrying jobs with a new priority.
   - Added priority option to retry method in Minion::Job.
