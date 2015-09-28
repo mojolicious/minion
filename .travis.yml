@@ -7,7 +7,7 @@ perl:
   - "5.12"
   - "5.10"
 addons:
-  postgresql: "9.3"
+  postgresql: "9.4"
 env:
   - "HARNESS_OPTIONS=j9 TEST_POD=1 TEST_ONLINE=postgresql://postgres@/minion_test"
 install:
