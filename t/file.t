@@ -252,6 +252,7 @@ like $job->info->{retried}, qr/^[\d.]+$/, 'has retried timestamp';
 is $job->info->{state},     'inactive',   'right state';
 is $job->info->{retries},   1,            'job has been retried once';
 $job = $worker->dequeue(0);
+is $job->retries, 1, 'job has been retried once';
 ok !$job->retry, 'job not retried';
 is $job->id, $id, 'right id';
 ok !$job->remove, 'job has not been removed';
