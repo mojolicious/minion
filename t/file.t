@@ -221,7 +221,8 @@ like $job->info->{created}, qr/^[\d.]+$/, 'has created timestamp';
 like $job->info->{started}, qr/^[\d.]+$/, 'has started timestamp';
 is_deeply $job->args, [2, 2], 'right arguments';
 is $job->info->{state}, 'active', 'right state';
-is $job->task, 'add', 'right task';
+is $job->task,    'add', 'right task';
+is $job->retries, 0,     'job has not been retried';
 $id = $job->info->{worker};
 is $minion->backend->worker_info($id)->{pid}, $$, 'right worker';
 ok !$job->info->{finished}, 'no finished timestamp';
@@ -233,6 +234,7 @@ is $job->info->{state}, 'finished', 'right state';
 $worker->unregister;
 $job = $minion->job($job->id);
 is_deeply $job->args, [2, 2], 'right arguments';
+is $job->retries, 0, 'job has not been retried';
 is $job->info->{state}, 'finished', 'right state';
 is $job->task, 'add', 'right task';
 
@@ -418,6 +420,24 @@ is $job->id, $id, 'right id';
 $job->perform;
 is $job->info->{state}, 'failed', 'right state';
 is $job->info->{result}, 'Non-zero exit status (1)', 'right result';
+$worker->unregister;
+
+# A job needs to be dequeued again after a retry
+$minion->add_task(restart => sub { });
+$id  = $minion->enqueue('restart');
+$job = $worker->register->dequeue(0);
+is $job->id, $id, 'right id';
+ok $job->finish, 'job finished';
+is $job->info->{state}, 'finished', 'right state';
+ok $job->retry, 'job retried';
+is $job->info->{state}, 'inactive', 'right state';
+$job2 = $worker->dequeue(0);
+is $job->info->{state}, 'active', 'right state';
+ok !$job->finish, 'job not finished';
+is $job->info->{state}, 'active', 'right state';
+is $job2->id, $id, 'right id';
+ok $job2->finish, 'job finished';
+is $job->info->{state}, 'finished', 'right state';
 $worker->unregister;
 
 # Perform jobs concurrently

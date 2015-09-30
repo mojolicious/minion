@@ -85,6 +85,28 @@ following new ones.
 Wait for job, dequeue it and transition from C<inactive> to C<active> state or
 return C<undef> if queue was empty. Meant to be overloaded in a subclass.
 
+These fields are currently available:
+
+=over 2
+
+=item args
+
+Job arguments.
+
+=item id
+
+Job ID.
+
+=item retries
+
+Number of times job has been retried.
+
+=item task
+
+Task name.
+
+=back
+
 =head2 enqueue
 
   my $job_id = $backend->enqueue('foo');
@@ -113,18 +135,19 @@ Job priority, defaults to C<0>.
 
 =head2 fail_job
 
-  my $bool = $backend->fail_job($job_id);
-  my $bool = $backend->fail_job($job_id, 'Something went wrong!');
-  my $bool = $backend->fail_job($job_id, {msg => 'Something went wrong!'});
+  my $bool = $backend->fail_job($job_id, $retries);
+  my $bool = $backend->fail_job($job_id, $retries, 'Something went wrong!');
+  my $bool = $backend->fail_job(
+    $job_id, $retries, {msg => 'Something went wrong!'});
 
 Transition from C<active> to C<failed> state. Meant to be overloaded in a
 subclass.
 
 =head2 finish_job
 
-  my $bool = $backend->finish_job($job_id);
-  my $bool = $backend->finish_job($job_id, 'All went well!');
-  my $bool = $backend->finish_job($job_id, {msg => 'All went well!'});
+  my $bool = $backend->finish_job($job_id, $retries);
+  my $bool = $backend->finish_job($job_id, $retries, 'All went well!');
+  my $bool = $backend->finish_job($job_id, $retries, {msg => 'All went well!'});
 
 Transition from C<active> to C<finished> state. Meant to be overloaded in a
 subclass.
@@ -274,6 +297,12 @@ These options are currently available:
   delay => 10
 
 Delay job for this many seconds (from now).
+
+=item priority
+
+  priority => 5
+
+Job priority.
 
 =back
 

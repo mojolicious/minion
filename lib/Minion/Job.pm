@@ -4,21 +4,21 @@ use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::IOLoop;
 use POSIX 'WNOHANG';
 
-has args => sub { [] };
-has [qw(id minion task)];
+has [qw(args id minion retries task)];
 
 sub app { shift->minion->app }
 
 sub fail {
   my $self = shift;
   my $err  = shift // 'Unknown error';
-  my $ok   = $self->minion->backend->fail_job($self->id, $err);
+  my $ok   = $self->minion->backend->fail_job($self->id, $self->retries, $err);
   return $ok ? !!$self->emit(failed => $err) : undef;
 }
 
 sub finish {
   my ($self, $result) = @_;
-  my $ok = $self->minion->backend->finish_job($self->id, $result);
+  my $ok
+    = $self->minion->backend->finish_job($self->id, $self->retries, $result);
   return $ok ? !!$self->emit(finished => $result) : undef;
 }
 
@@ -154,6 +154,13 @@ Job id.
   $job       = $job->minion(Minion->new);
 
 L<Minion> object this job belongs to.
+
+=head2 retries
+
+  my $retries = $job->retries;
+  $job        = $job->retries(5);
+
+Number of times job has been retried.
 
 =head2 task
 

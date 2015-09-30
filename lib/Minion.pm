@@ -15,7 +15,7 @@ has missing_after => 86400;
 has remove_after  => 864000;
 has tasks         => sub { {} };
 
-our $VERSION = '1.20';
+our $VERSION = '2.0';
 
 sub add_task { ($_[0]->tasks->{$_[1]} = $_[2]) and return $_[0] }
 
@@ -26,10 +26,11 @@ sub job {
 
   return undef unless my $job = $self->backend->job_info($id);
   return Minion::Job->new(
-    args   => $job->{args},
-    id     => $job->{id},
-    minion => $self,
-    task   => $job->{task}
+    args    => $job->{args},
+    id      => $job->{id},
+    minion  => $self,
+    retries => $job->{retries},
+    task    => $job->{task}
   );
 }
 
