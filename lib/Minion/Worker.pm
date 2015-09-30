@@ -4,13 +4,13 @@ use Mojo::Base 'Mojo::EventEmitter';
 has [qw(id minion)];
 
 sub dequeue {
-  my ($self, $timeout) = @_;
+  my ($self, $wait) = @_;
 
   # Worker not registered
   return undef unless my $id = $self->id;
 
   my $minion = $self->minion;
-  return undef unless my $job = $minion->backend->dequeue($id, $timeout);
+  return undef unless my $job = $minion->backend->dequeue($id, $wait);
   $job = Minion::Job->new(
     args    => $job->{args},
     id      => $job->{id},

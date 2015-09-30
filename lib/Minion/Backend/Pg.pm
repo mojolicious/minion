@@ -8,13 +8,13 @@ use Sys::Hostname 'hostname';
 has 'pg';
 
 sub dequeue {
-  my ($self, $id, $timeout) = @_;
+  my ($self, $id, $wait) = @_;
 
   if ((my $job = $self->_try($id)) || Mojo::IOLoop->is_running) { return $job }
 
   my $db = $self->pg->db;
   $db->listen('minion.job')->on(notification => sub { Mojo::IOLoop->stop });
-  my $timer = Mojo::IOLoop->timer($timeout => sub { Mojo::IOLoop->stop });
+  my $timer = Mojo::IOLoop->timer($wait => sub { Mojo::IOLoop->stop });
   Mojo::IOLoop->start;
   $db->unlisten('*') and Mojo::IOLoop->remove($timer);
   undef $db;

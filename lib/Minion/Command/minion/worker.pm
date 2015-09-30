@@ -2,6 +2,7 @@ package Minion::Command::minion::worker;
 use Mojo::Base 'Mojolicious::Command';
 
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
+use Mojo::Util 'steady_time';
 
 has description => 'Start Minion worker';
 has usage => sub { shift->extract_usage };
@@ -35,16 +36,17 @@ sub _work {
   my $self = shift;
 
   # Send heartbeats in regular intervals
-  $self->{worker}->register and $self->{register} = time + $self->{interval}
-    if $self->{register} < time;
+  $self->{worker}->register
+    and $self->{register} = steady_time + $self->{interval}
+    if $self->{register} < steady_time;
 
   # Repair in regular intervals
-  if ($self->{repair} < time) {
+  if ($self->{repair} < steady_time) {
     my $app = $self->app;
     $app->log->debug('Checking worker registry and job queue');
     my $minion = $app->minion;
     $minion->repair;
-    $self->{repair} = time + $minion->missing_after;
+    $self->{repair} = steady_time + $minion->missing_after;
   }
 
   # Check if jobs are finished

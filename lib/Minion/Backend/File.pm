@@ -14,8 +14,8 @@ sub db {
 }
 
 sub dequeue {
-  my ($self, $id, $timeout) = @_;
-  usleep($timeout * 1000000) unless my $job = $self->_try($id);
+  my ($self, $id, $wait) = @_;
+  usleep($wait * 1000000) unless my $job = $self->_try($id);
   return $job || $self->_try($id);
 }
 
