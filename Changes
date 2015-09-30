@@ -1,7 +1,7 @@
 
 2.0  2015-09-30
   - Added retries attribute to Minion::Job.
-  - Added retries argument to fail_job and finish_job methods in
+  - Added retries argument to fail_job, finish_job and retry_job methods in
     Minion::Backend::File and Minion::Backend::Pg.
   - Fixed a race condition in Minion::Backend::File and Minion::Backend::Pg
     where a retried job did not have to be dequeued again before it could be

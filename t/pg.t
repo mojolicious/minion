@@ -421,6 +421,7 @@ ok !$job->finish, 'job not finished';
 is $job->info->{state}, 'active', 'right state';
 is $job2->id, $id, 'right id';
 ok $job2->finish, 'job finished';
+ok !$job->retry, 'job not retried';
 is $job->info->{state}, 'finished', 'right state';
 $worker->unregister;
 

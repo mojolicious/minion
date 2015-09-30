@@ -120,11 +120,12 @@ sub repair {
 sub reset { $_[0]->db and delete($_[0]->{db})->clear }
 
 sub retry_job {
-  my ($self, $id) = (shift, shift);
+  my ($self, $id, $retries) = (shift, shift, shift);
   my $options = shift // {};
 
   my $guard = $self->_exclusive;
   return undef unless my $job = $self->_job($id, 'failed', 'finished');
+  return undef unless $job->{retries} == $retries;
   $job->{retries} += 1;
   $job->{delayed}  = time + $options->{delay} if $options->{delay};
   $job->{priority} = $options->{priority}     if defined $options->{priority};
@@ -459,8 +460,8 @@ Reset job queue.
 
 =head2 retry_job
 
-  my $bool = $backend->retry_job($job_id);
-  my $bool = $backend->retry_job($job_id, {delay => 10});
+  my $bool = $backend->retry_job($job_id, $retries);
+  my $bool = $backend->retry_job($job_id, $retries, {delay => 10});
 
 Transition from C<failed> or C<finished> state back to C<inactive>.
 

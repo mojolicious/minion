@@ -39,7 +39,10 @@ sub perform {
 
 sub remove { $_[0]->minion->backend->remove_job($_[0]->id) }
 
-sub retry { $_[0]->minion->backend->retry_job($_[0]->id, $_[1]) }
+sub retry {
+  my $self = shift;
+  return $self->minion->backend->retry_job($self->id, $self->retries, @_);
+}
 
 sub start {
   my $self = shift;

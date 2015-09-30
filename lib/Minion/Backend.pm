@@ -282,8 +282,8 @@ Reset job queue. Meant to be overloaded in a subclass.
 
 =head2 retry_job
 
-  my $bool = $backend->retry_job($job_id);
-  my $bool = $backend->retry_job($job_id, {delay => 10});
+  my $bool = $backend->retry_job($job_id, $retries);
+  my $bool = $backend->retry_job($job_id, $retries, {delay => 10});
 
 Transition from C<failed> or C<finished> state back to C<inactive>. Meant to be
 overloaded in a subclass.
