@@ -96,7 +96,7 @@ implements the following new ones.
 =head2 dequeue
 
   my $job = $worker->dequeue(0.5);
-  my $job = $worker->dequeue(0.5 => {queues => ['default']});
+  my $job = $worker->dequeue(0.5 => {queues => ['important']});
 
 Wait for job, dequeue L<Minion::Job> object and transition from C<inactive> to
 C<active> state or return C<undef> if queues were empty.
@@ -107,7 +107,7 @@ These options are currently available:
 
 =item queues
 
-  queues => ['high_priority']
+  queues => ['important']
 
 One or more queues to dequeue jobs from, defaults to C<default>.
 

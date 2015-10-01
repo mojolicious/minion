@@ -315,7 +315,7 @@ Job priority.
 
 =item queue
 
-  queue => 'high_priority'
+  queue => 'important'
 
 Queue to put job in.
 

@@ -265,7 +265,7 @@ L<DBM::Deep> object used to store all data.
 =head2 dequeue
 
   my $job_info = $backend->dequeue($worker_id, 0.5);
-  my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['default']});
+  my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['important']});
 
 Wait for job, dequeue it and transition from C<inactive> to C<active> state or
 return C<undef> if queues were empty.
@@ -276,7 +276,7 @@ These options are currently available:
 
 =item queues
 
-  queues => ['high_priority']
+  queues => ['important']
 
 One or more queues to dequeue jobs from, defaults to C<default>.
 
@@ -330,7 +330,7 @@ Job priority, defaults to C<0>.
 
 =item queue
 
-  queue => 'high_priority'
+  queue => 'important'
 
 Queue to put job in, defaults to C<default>.
 
@@ -510,7 +510,7 @@ Job priority.
 
 =item queue
 
-  queue => 'high_priority'
+  queue => 'important'
 
 Queue to put job in.
 

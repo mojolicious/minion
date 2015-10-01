@@ -71,7 +71,7 @@ Minion::Command::minion::worker - Minion worker command
 
     ./myapp.pl minion worker
     ./myapp.pl minion worker -m production -I 15 -j 10
-    ./myapp.pl minion worker -q high_priority -q low_priority -q default
+    ./myapp.pl minion worker -q important -q default
 
   Options:
     -I, --heartbeat-interval <seconds>   Heartbeat interval, defaults to 60

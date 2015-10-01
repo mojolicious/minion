@@ -289,7 +289,7 @@ Job priority, defaults to C<0>.
 
 =item queue
 
-  queue => 'high_priority'
+  queue => 'important'
 
 Queue to put job in, defaults to C<default>.
 

@@ -111,7 +111,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job
     ./myapp.pl minion job -t foo -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
-    ./myapp.pl minion job -e foo -p 5 -q high_priority
+    ./myapp.pl minion job -e foo -p 5 -q important
     ./myapp.pl minion job -s
     ./myapp.pl minion job -w -l 5
     ./myapp.pl minion job 10023
