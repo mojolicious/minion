@@ -267,8 +267,9 @@ Register a new task.
   my $id = $minion->enqueue(foo => [@args] => {priority => 1});
 
 Enqueue a new job with C<inactive> state. Arguments get serialized by the
-L</"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects, nested
-data structures with hash and array references are fine though.
+L</"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects and be
+careful with binary data, nested data structures with hash and array references
+are fine though.
 
 These options are currently available:
 
