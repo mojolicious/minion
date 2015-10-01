@@ -187,17 +187,17 @@ sub _try {
   my ($self, $id, $options) = @_;
 
   my $guard  = $self->_exclusive;
+  my @ready  = grep { $_->{state} eq 'inactive' } values %{$self->_jobs};
   my %queues = map { $_ => 1 } @{$options->{queues} || ['default']};
-  my @queue  = grep { $queues{$_->{queue}} } values %{$self->_jobs};
-  my @ready  = grep { $_->{state} eq 'inactive' } @queue;
-  my $now    = time;
-  @ready = grep { $_->{delayed} < $now } @ready;
+  my $tasks  = $self->minion->tasks;
+  @ready = grep { $queues{$_->{queue}} && $tasks->{$_->{task}} } @ready;
   @ready = sort { $a->{created} <=> $b->{created} } @ready;
   @ready = sort { $b->{priority} <=> $a->{priority} } @ready;
-  my $job = first { $self->minion->tasks->{$_->{task}} } @ready;
-  @$job{qw(started state worker)} = (time, 'active', $id) if $job;
 
-  return $job ? $job->export : undef;
+  my $now = time;
+  return undef unless my $job = first { $_->{delayed} < $now } @ready;
+  @$job{qw(started state worker)} = (time, 'active', $id);
+  return $job->export;
 }
 
 sub _update {
