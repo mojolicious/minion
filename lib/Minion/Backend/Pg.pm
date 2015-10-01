@@ -190,7 +190,7 @@ sub _try {
      set started = now(), state = 'active', worker = ?
      where id = (
        select id from minion_jobs
-       where queue = any (?) and state = 'inactive' and delayed < now()
+       where delayed < now() and queue = any (?) and state = 'inactive'
          and task = any (?)
        order by priority desc, created
        limit 1
