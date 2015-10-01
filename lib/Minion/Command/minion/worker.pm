@@ -31,8 +31,8 @@ sub _work {
   my $self = shift;
 
   # Send heartbeats in regular intervals
-  $self->{worker}->register
-    and $self->{register} = steady_time + $self->{interval}
+  my $worker = $self->{worker};
+  $worker->register and $self->{register} = steady_time + $self->{interval}
     if $self->{register} < steady_time;
 
   # Repair in regular intervals
@@ -52,7 +52,7 @@ sub _work {
   if (($self->{max} <= keys %$jobs) || $self->{finished}) { sleep 1 }
 
   # Try to get more jobs
-  elsif (my $job = $self->{worker}->dequeue(5 => {queues => $self->{queues}})) {
+  elsif (my $job = $worker->dequeue(5 => {queues => $self->{queues}})) {
     $jobs->{$job->start} = $job;
   }
 }

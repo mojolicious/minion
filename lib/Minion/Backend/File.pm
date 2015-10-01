@@ -128,9 +128,8 @@ sub retry_job {
   return undef unless my $job = $self->_job($id, 'failed', 'finished');
   return undef unless $job->{retries} == $retries;
   $job->{retries} += 1;
-  $job->{delayed}  = time + $options->{delay} if $options->{delay};
-  $job->{priority} = $options->{priority}     if defined $options->{priority};
-  $job->{queue}    = $options->{queue}        if defined $options->{queue};
+  $job->{delayed} = time + $options->{delay} if $options->{delay};
+  defined $options->{$_} and $job->{$_} = $options->{$_} for qw(priority queue);
   @$job{qw(retried state)} = (time, 'inactive');
   delete @$job{qw(finished result started worker)};
 
