@@ -99,7 +99,7 @@ implements the following new ones.
   my $job = $worker->dequeue(0.5 => {queues => ['default']});
 
 Wait for job, dequeue L<Minion::Job> object and transition from C<inactive> to
-C<active> state or return C<undef> if queue was empty.
+C<active> state or return C<undef> if queues were empty.
 
 These options are currently available:
 

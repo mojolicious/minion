@@ -257,7 +257,7 @@ implements the following new ones.
   my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['default']});
 
 Wait for job, dequeue it and transition from C<inactive> to C<active> state or
-return C<undef> if queue was empty.
+return C<undef> if queues were empty.
 
 These options are currently available:
 
