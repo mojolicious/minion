@@ -20,6 +20,7 @@ sub run {
     'l|limit=i'    => \(my $limit = 100),
     'o|offset=i'   => \(my $offset = 0),
     'p|priority=i' => \$options->{priority},
+    'q|queue=s'    => \$options->{queue},
     'R|retry'      => \my $retry,
     'r|remove'     => \my $remove,
     'S|state=s'    => \$options->{state},
@@ -54,8 +55,9 @@ sub _info {
 
   # Details
   my $info = $job->info;
-  my ($state, $priority, $retries) = @$info{qw(state priority retries)};
-  say $info->{task}, " ($state, p$priority, r$retries)";
+  my ($queue, $state, $priority, $retries)
+    = @$info{qw(queue state priority retries)};
+  say $info->{task}, " ($queue, $state, p$priority, r$retries)";
   print dumper $info->{args};
   if (my $result = $info->{result}) { print dumper $result }
 
@@ -109,7 +111,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job
     ./myapp.pl minion job -t foo -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
-    ./myapp.pl minion job -e foo -p 5
+    ./myapp.pl minion job -e foo -p 5 -q high_priority
     ./myapp.pl minion job -s
     ./myapp.pl minion job -w -l 5
     ./myapp.pl minion job 10023
@@ -125,6 +127,7 @@ Minion::Command::minion::job - Minion job command
     -o, --offset <number>     Number of jobs/workers to skip when listing them,
                               defaults to 0
     -p, --priority <number>   Priority of new job, defaults to 0
+    -q, --queue <name>        Queue to put job in, defaults to "default"
     -R, --retry               Retry job
     -r, --remove              Remove job
     -S, --state <state>       List only jobs in this state

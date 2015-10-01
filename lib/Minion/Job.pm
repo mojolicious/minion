@@ -238,6 +238,10 @@ Time job was finished.
 
 Job priority.
 
+=item queue
+
+Queue name.
+
 =item result
 
 Job result.
@@ -308,6 +312,12 @@ Delay job for this many seconds (from now).
   priority => 5
 
 Job priority.
+
+=item queue
+
+  queue => 'high_priority'
+
+Queue to put job in.
 
 =back
 

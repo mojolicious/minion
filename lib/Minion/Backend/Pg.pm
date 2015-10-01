@@ -8,9 +8,10 @@ use Sys::Hostname 'hostname';
 has 'pg';
 
 sub dequeue {
-  my ($self, $id, $wait) = @_;
+  my ($self, $id, $wait, $options) = @_;
 
-  if ((my $job = $self->_try($id)) || Mojo::IOLoop->is_running) { return $job }
+  if ((my $job = $self->_try($id, $options))) { return $job }
+  return undef if Mojo::IOLoop->is_running;
 
   my $db = $self->pg->db;
   $db->listen('minion.job')->on(notification => sub { Mojo::IOLoop->stop });
@@ -19,7 +20,7 @@ sub dequeue {
   $db->unlisten('*') and Mojo::IOLoop->remove($timer);
   undef $db;
 
-  return $self->_try($id);
+  return $self->_try($id, $options);
 }
 
 sub enqueue {
@@ -29,10 +30,10 @@ sub enqueue {
 
   my $db = $self->pg->db;
   return $db->query(
-    "insert into minion_jobs (args, delayed, priority, task)
-     values (?, (now() + (interval '1 second' * ?)), ?, ?)
+    "insert into minion_jobs (args, delayed, priority, queue, task)
+     values (?, (now() + (interval '1 second' * ?)), ?, ?, ?)
      returning id", {json => $args}, $options->{delay} // 0,
-    $options->{priority} // 0, $task
+    $options->{priority} // 0, $options->{queue} // 'default', $task
   )->hash->{id};
 }
 
@@ -43,7 +44,7 @@ sub job_info {
   shift->pg->db->query(
     'select id, args, extract(epoch from created) as created,
        extract(epoch from delayed) as delayed,
-       extract(epoch from finished) as finished, priority, result,
+       extract(epoch from finished) as finished, priority, queue, result,
        extract(epoch from retried) as retried, retries,
        extract(epoch from started) as started, state, task, worker
      from minion_jobs where id = ?', shift
@@ -133,12 +134,13 @@ sub retry_job {
 
   return !!$self->pg->db->query(
     "update minion_jobs
-     set finished = null, priority = coalesce(?, priority), result = null,
-       retried = now(), retries = retries + 1, started = null,
-       state = 'inactive', worker = null,
+     set finished = null, priority = coalesce(?, priority),
+       queue = coalesce(?, queue), result = null, retried = now(),
+       retries = retries + 1, started = null, state = 'inactive', worker = null,
        delayed = (now() + (interval '1 second' * ?))
      where id = ? and retries = ? and state in ('failed', 'finished')
-     returning 1", $options->{priority}, $options->{delay} // 0, $id, $retries
+     returning 1", @$options{qw(priority queue)}, $options->{delay} // 0, $id,
+    $retries
   )->rows;
 }
 
@@ -181,19 +183,21 @@ sub worker_info {
 }
 
 sub _try {
-  my ($self, $id) = @_;
+  my ($self, $id, $options) = @_;
 
   return $self->pg->db->query(
     "update minion_jobs
      set started = now(), state = 'active', worker = ?
      where id = (
        select id from minion_jobs
-       where state = 'inactive' and delayed < now() and task = any (?)
+       where queue = any (?) and state = 'inactive' and delayed < now()
+         and task = any (?)
        order by priority desc, created
        limit 1
        for update
      )
-     returning id, args, retries, task", $id, [keys %{$self->minion->tasks}]
+     returning id, args, retries, task", $id,
+    $options->{queues} || ['default'], [keys %{$self->minion->tasks}]
   )->expand->hash;
 }
 
@@ -250,9 +254,22 @@ implements the following new ones.
 =head2 dequeue
 
   my $job_info = $backend->dequeue($worker_id, 0.5);
+  my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['default']});
 
 Wait for job, dequeue it and transition from C<inactive> to C<active> state or
 return C<undef> if queue was empty.
+
+These options are currently available:
+
+=over 2
+
+=item queues
+
+  queues => ['high_priority']
+
+One or more queues to dequeue jobs from, defaults to C<default>.
+
+=back
 
 These fields are currently available:
 
@@ -299,6 +316,12 @@ Delay job for this many seconds (from now).
   priority => 5
 
 Job priority, defaults to C<0>.
+
+=item queue
+
+  queue => 'high_priority'
+
+Queue to put job in, defaults to C<default>.
 
 =back
 
@@ -354,6 +377,10 @@ Time job was finished.
 =item priority
 
 Job priority.
+
+=item queue
+
+Queue name.
 
 =item result
 
@@ -470,6 +497,12 @@ Delay job for this many seconds (from now).
 
 Job priority.
 
+=item queue
+
+  queue => 'high_priority'
+
+Queue to put job in.
+
 =back
 
 =head2 stats
@@ -578,3 +611,6 @@ alter table minion_workers alter column started set default now();
 
 -- 3 up
 create index on minion_jobs (state);
+
+-- 4 up
+alter table minion_jobs add column queue text not null default 'default';

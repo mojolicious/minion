@@ -13,19 +13,14 @@ sub run {
   GetOptionsFromArray \@args,
     'I|heartbeat-interval=i' => \($self->{interval} = 60),
     'j|jobs=i'               => \($self->{max}      = 4),
-    't|task=s'               => \my @tasks;
-
-  # Limit tasks
-  my $app    = $self->app;
-  my $minion = $app->minion;
-  my $tasks  = $minion->tasks;
-  %$tasks = map { $tasks->{$_} ? ($_ => $tasks->{$_}) : () } @tasks if @tasks;
+    'q|queue=s'              => ($self->{queues}    = ['default']);
 
   local $SIG{CHLD} = 'DEFAULT';
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
 
   # Log fatal errors
-  my $worker = $self->{worker} = $minion->worker;
+  my $app = $self->app;
+  my $worker = $self->{worker} = $app->minion->worker;
   @$self{qw(register repair)} = (0, 0);
   eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
     or $app->log->fatal("Worker error: $@");
@@ -57,7 +52,9 @@ sub _work {
   if (($self->{max} <= keys %$jobs) || $self->{finished}) { sleep 1 }
 
   # Try to get more jobs
-  elsif (my $job = $self->{worker}->dequeue(5)) { $jobs->{$job->start} = $job }
+  elsif (my $job = $self->{worker}->dequeue(5 => {queues => $self->{queues}})) {
+    $jobs->{$job->start} = $job;
+  }
 }
 
 1;
@@ -74,14 +71,14 @@ Minion::Command::minion::worker - Minion worker command
 
     ./myapp.pl minion worker
     ./myapp.pl minion worker -m production -I 15 -j 10
-    ./myapp.pl minion worker -t foo -t bar
+    ./myapp.pl minion worker -q high_priority -q low_priority -q default
 
   Options:
     -I, --heartbeat-interval <seconds>   Heartbeat interval, defaults to 60
     -j, --jobs <number>                  Number of jobs to perform
                                          concurrently, defaults to 4
-    -t, --task <name>                    One or more tasks to handle, defaults
-                                         to handling all tasks
+    -q, --queue <name>                   One or more queues to get jobs from,
+                                         defaults to "default"
 
 =head1 DESCRIPTION
 

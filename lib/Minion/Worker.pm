@@ -4,13 +4,13 @@ use Mojo::Base 'Mojo::EventEmitter';
 has [qw(id minion)];
 
 sub dequeue {
-  my ($self, $wait) = @_;
+  my ($self, $wait, $options) = @_;
 
   # Worker not registered
   return undef unless my $id = $self->id;
 
   my $minion = $self->minion;
-  return undef unless my $job = $minion->backend->dequeue($id, $wait);
+  return undef unless my $job = $minion->backend->dequeue($id, $wait, $options);
   $job = Minion::Job->new(
     args    => $job->{args},
     id      => $job->{id},
@@ -96,9 +96,22 @@ implements the following new ones.
 =head2 dequeue
 
   my $job = $worker->dequeue(0.5);
+  my $job = $worker->dequeue(0.5 => {queues => ['default']});
 
 Wait for job, dequeue L<Minion::Job> object and transition from C<inactive> to
 C<active> state or return C<undef> if queue was empty.
+
+These options are currently available:
+
+=over 2
+
+=item queues
+
+  queues => ['high_priority']
+
+One or more queues to dequeue jobs from, defaults to C<default>.
+
+=back
 
 =head2 info
 

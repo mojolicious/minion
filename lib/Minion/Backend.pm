@@ -81,9 +81,22 @@ following new ones.
 =head2 dequeue
 
   my $job_info = $backend->dequeue($worker_id, 0.5);
+  my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['default']});
 
 Wait for job, dequeue it and transition from C<inactive> to C<active> state or
 return C<undef> if queue was empty. Meant to be overloaded in a subclass.
+
+These options are currently available:
+
+=over 2
+
+=item queues
+
+  queues => ['high_priority']
+
+One or more queues to dequeue jobs from, defaults to C<default>.
+
+=back
 
 These fields are currently available:
 
@@ -130,6 +143,12 @@ Delay job for this many seconds (from now).
   priority => 5
 
 Job priority, defaults to C<0>.
+
+=item queue
+
+  queue => 'high_priority'
+
+Queue to put job in, defaults to C<default>.
 
 =back
 
@@ -188,6 +207,10 @@ Time job was finished.
 =item priority
 
 Job priority.
+
+=item queue
+
+Queue name.
 
 =item result
 
@@ -303,6 +326,12 @@ Delay job for this many seconds (from now).
   priority => 5
 
 Job priority.
+
+=item queue
+
+  queue => 'high_priority'
+
+Queue to put job in.
 
 =back
 

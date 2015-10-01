@@ -353,6 +353,25 @@ ok $job->info->{delayed} > time, 'delayed timestamp';
 ok $minion->job($id)->remove, 'job has been removed';
 $worker->unregister;
 
+# Queues
+$id = $minion->enqueue(add => [100, 1]);
+$job = $worker->register->dequeue(0);
+is $job->id, $id, 'right id';
+is $job->info->{queue}, 'default', 'right queue';
+ok $job->finish, 'job finished';
+$id = $minion->enqueue(add => [100, 3] => {queue => 'test1'});
+is $worker->dequeue(0), undef, 'wrong queue';
+$job = $worker->dequeue(0 => {queues => ['test1']});
+is $job->id, $id, 'right id';
+is $job->info->{queue}, 'test1', 'right queue';
+ok $job->finish, 'job finished';
+ok $job->retry({queue => 'test2'}), 'job retried';
+$job = $worker->dequeue(0 => {queues => ['default', 'test2']});
+is $job->id, $id, 'right id';
+is $job->info->{queue}, 'test2', 'right queue';
+ok $job->finish, 'job finished';
+$worker->unregister;
+
 # Failed jobs
 $id = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue(0);

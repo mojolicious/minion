@@ -286,6 +286,12 @@ Delay job for this many seconds (from now).
 
 Job priority, defaults to C<0>.
 
+=item queue
+
+  queue => 'high_priority'
+
+Queue to put job in, defaults to C<default>.
+
 =back
 
 =head2 job

@@ -14,9 +14,9 @@ sub db {
 }
 
 sub dequeue {
-  my ($self, $id, $wait) = @_;
-  usleep($wait * 1000000) unless my $job = $self->_try($id);
-  return $job || $self->_try($id);
+  my ($self, $id, $wait, $options) = @_;
+  usleep($wait * 1000000) unless my $job = $self->_try($id, $options);
+  return $job || $self->_try($id, $options);
 }
 
 sub enqueue {
@@ -31,6 +31,7 @@ sub enqueue {
     delayed => $options->{delay} ? (time + $options->{delay}) : 1,
     id      => $self->_id,
     priority => $options->{priority} // 0,
+    queue    => $options->{queue}    // 'default',
     retries  => 0,
     state    => 'inactive',
     task     => $task
@@ -129,6 +130,7 @@ sub retry_job {
   $job->{retries} += 1;
   $job->{delayed}  = time + $options->{delay} if $options->{delay};
   $job->{priority} = $options->{priority}     if defined $options->{priority};
+  $job->{queue}    = $options->{queue}        if defined $options->{queue};
   @$job{qw(retried state)} = (time, 'inactive');
   delete @$job{qw(finished result started worker)};
 
@@ -182,11 +184,13 @@ sub _job {
 sub _jobs { shift->db->{jobs} //= {} }
 
 sub _try {
-  my ($self, $id) = @_;
+  my ($self, $id, $options) = @_;
 
-  my $guard = $self->_exclusive;
-  my @ready = grep { $_->{state} eq 'inactive' } values %{$self->_jobs};
-  my $now   = time;
+  my $guard  = $self->_exclusive;
+  my %queues = map { $_ => 1 } @{$options->{queues} || ['default']};
+  my @queue  = grep { $queues{$_->{queue}} } values %{$self->_jobs};
+  my @ready  = grep { $_->{state} eq 'inactive' } @queue;
+  my $now    = time;
   @ready = grep { $_->{delayed} < $now } @ready;
   @ready = sort { $a->{created} <=> $b->{created} } @ready;
   @ready = sort { $b->{priority} <=> $a->{priority} } @ready;
@@ -261,9 +265,22 @@ L<DBM::Deep> object used to store all data.
 =head2 dequeue
 
   my $job_info = $backend->dequeue($worker_id, 0.5);
+  my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['default']});
 
 Wait for job, dequeue it and transition from C<inactive> to C<active> state or
 return C<undef> if queue was empty.
+
+These options are currently available:
+
+=over 2
+
+=item queues
+
+  queues => ['high_priority']
+
+One or more queues to dequeue jobs from, defaults to C<default>.
+
+=back
 
 These fields are currently available:
 
@@ -310,6 +327,12 @@ Delay job for this many seconds (from now).
   priority => 5
 
 Job priority, defaults to C<0>.
+
+=item queue
+
+  queue => 'high_priority'
+
+Queue to put job in, defaults to C<default>.
 
 =back
 
@@ -365,6 +388,10 @@ Time job was finished.
 =item priority
 
 Job priority.
+
+=item queue
+
+Queue name.
 
 =item result
 
@@ -480,6 +507,12 @@ Delay job for this many seconds (from now).
   priority => 5
 
 Job priority.
+
+=item queue
+
+  queue => 'high_priority'
+
+Queue to put job in.
 
 =back
 

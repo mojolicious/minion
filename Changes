@@ -1,8 +1,17 @@
 
 2.0  2015-10-01
+  - Removed -t option from worker command.
+  - Added support for multiple named queues.
   - Added retries attribute to Minion::Job.
   - Added retries argument to fail_job, finish_job and retry_job methods in
     Minion::Backend::File and Minion::Backend::Pg.
+  - Added queue option to enqueue method in Minion.
+  - Added queue option to enqueue and retry_job methods in Minion::Backend::File
+    and Minion::Backend::Pg.
+  - Added queues option to dequeue method in Minion::Worker.
+  - Added queues option to dequeue method in Minion::Backend::File and
+    Minion::Backend::Pg.
+  - Added -q option to job and worker commands.
   - Improved worker command to be more resilient to time jumps.
   - Fixed a race condition in Minion::Backend::File and Minion::Backend::Pg
     where a retried job did not have to be dequeued again before it could be
@@ -11,8 +20,8 @@
 1.19  2015-09-28
   - Added support for retrying jobs with a new priority.
   - Added priority option to retry method in Minion::Job.
-  - Added priority option to retry_job method in Minion::Backend::File.
-  - Added priority option to retry_job method in Minion::Backend::Pg.
+  - Added priority option to retry_job method in Minion::Backend::File and
+    Minion::Backend::Pg.
 
 1.18  2015-08-30
   - Fixed Makefile.PL to be compliant with version 2 of the CPAN distribution
@@ -28,8 +37,8 @@
 1.15  2015-05-15
   - Added support for retrying jobs with a delay. (kwa)
   - Added delay option to retry method in Minion::Job. (kwa)
-  - Added delay option to retry_job method in Minion::Backend::File. (kwa)
-  - Added delay option to retry_job method in Minion::Backend::Pg. (kwa)
+  - Added delay option to retry_job method in Minion::Backend::File and
+    Minion::Backend::Pg. (kwa)
 
 1.14  2015-04-21
   - Improved performance of Minion::Backend::Pg with a new index. (avkhozov)
