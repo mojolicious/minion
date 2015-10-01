@@ -384,7 +384,7 @@ Time job was started.
 
 =item state
 
-Current job state.
+Current job state, usually C<active>, C<failed>, C<finished> or C<inactive>.
 
 =item task
 

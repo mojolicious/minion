@@ -1,5 +1,5 @@
 
-2.0  2015-09-30
+2.0  2015-10-01
   - Added retries attribute to Minion::Job.
   - Added retries argument to fail_job, finish_job and retry_job methods in
     Minion::Backend::File and Minion::Backend::Pg.
