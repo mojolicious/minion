@@ -1,5 +1,6 @@
 
 2.01  2015-10-02
+  - Fixed Windows portability issues in tests.
 
 2.0  2015-10-01
   - Removed -t option from worker command.

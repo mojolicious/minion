@@ -130,7 +130,7 @@ ok !$minion->backend->pg->db->query(
 my $before = time;
 $worker = $minion->worker->register;
 is $worker->dequeue(0.5), undef, 'no jobs yet';
-ok !!(($before + 0.5) <= time), 'waited for jobs';
+ok !!(($before + 0.4) <= time), 'waited for jobs';
 $worker->unregister;
 
 # Stats
