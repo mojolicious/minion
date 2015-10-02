@@ -220,53 +220,79 @@ These fields are currently available:
 
 =item args
 
+  args => ['foo', 'bar']
+
 Job arguments.
 
 =item created
+
+  created => 784111777
 
 Time job was created.
 
 =item delayed
 
+  delayed => 784111777
+
 Time job was delayed to.
 
 =item finished
+
+  finished => 784111777
 
 Time job was finished.
 
 =item priority
 
+  priority => 3
+
 Job priority.
 
 =item queue
+
+  queue => 'important'
 
 Queue name.
 
 =item result
 
+  result => 'All went well!'
+
 Job result.
 
 =item retried
+
+  retried => 784111777
 
 Time job has been retried.
 
 =item retries
 
+  retries => 3
+
 Number of times job has been retried.
 
 =item started
+
+  started => 784111777
 
 Time job was started.
 
 =item state
 
+  state => 'inactive'
+
 Current job state, usually C<active>, C<failed>, C<finished> or C<inactive>.
 
 =item task
 
+  task => 'foo'
+
 Task name.
 
 =item worker
+
+  worker => '154'
 
 Id of worker that is processing the job.
 

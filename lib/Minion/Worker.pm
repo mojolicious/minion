@@ -128,21 +128,31 @@ These fields are currently available:
 
 =item host
 
+  host => 'localhost'
+
 Worker host.
 
 =item jobs
+
+  jobs => ['10023', '10024', '10025', '10029']
 
 Ids of jobs the worker is currently processing.
 
 =item notified
 
+  notified => 784111777
+
 Last time worker sent a heartbeat.
 
 =item pid
 
+  pid => 12345
+
 Process id of worker.
 
 =item started
+
+  started => 784111777
 
 Time worker was started.
 
