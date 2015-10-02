@@ -372,7 +372,8 @@ $worker->unregister;
 
 # Queues
 $id = $minion->enqueue(add => [100, 1]);
-$job = $worker->register->dequeue(0);
+is $worker->register->dequeue(0 => {queues => ['test1']}), undef, 'wrong queue';
+$job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 is $job->info->{queue}, 'default', 'right queue';
 ok $job->finish, 'job finished';

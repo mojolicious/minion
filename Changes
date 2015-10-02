@@ -1,4 +1,6 @@
 
+2.01  2015-10-02
+
 2.0  2015-10-01
   - Removed -t option from worker command.
   - Added support for multiple named queues.
