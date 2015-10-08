@@ -1,5 +1,6 @@
 
-2.02  2015-10-03
+2.02  2015-10-08
+  - Improved job command to show the queue in job lists.
 
 2.01  2015-10-02
   - Fixed Windows portability issues in tests.

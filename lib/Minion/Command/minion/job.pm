@@ -71,7 +71,7 @@ sub _info {
 
 sub _list_jobs {
   my $jobs = shift->app->minion->backend->list_jobs(@_);
-  print tablify [map { [@$_{qw(id state task)}] } @$jobs];
+  print tablify [map { [@$_{qw(id state queue task)}] } @$jobs];
 }
 
 sub _list_workers {
