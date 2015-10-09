@@ -74,9 +74,16 @@ Minion::Command::minion::worker - Minion worker command
     ./myapp.pl minion worker -q important -q default
 
   Options:
+    -h, --help                           Show this summary of available options
+        --home <path>                    Path to your applications home
+                                         directory, defaults to the value of
+                                         MOJO_HOME or auto detection
     -I, --heartbeat-interval <seconds>   Heartbeat interval, defaults to 60
     -j, --jobs <number>                  Number of jobs to perform
                                          concurrently, defaults to 4
+    -m, --mode <name>                    Operating mode for your application,
+                                         defaults to the value of
+                                         MOJO_MODE/PLACK_ENV or "development"
     -q, --queue <name>                   One or more queues to get jobs from,
                                          defaults to "default"
 
