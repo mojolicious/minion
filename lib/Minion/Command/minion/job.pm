@@ -123,8 +123,9 @@ Minion::Command::minion::job - Minion job command
     -d, --delay <seconds>     Delay new job for this many seconds
     -e, --enqueue <name>      New job to be enqueued
     -h, --help                Show this summary of available options
-        --home <path>         Path to your applications home directory, defaults
-                              to the value of MOJO_HOME or auto detection
+        --home <path>         Path to home directory of your application,
+                              defaults to the value of MOJO_HOME or auto
+                              detection
     -l, --limit <number>      Number of jobs/workers to show when listing them,
                               defaults to 100
     -m, --mode <name>         Operating mode for your application, defaults to
