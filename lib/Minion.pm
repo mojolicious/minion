@@ -15,7 +15,7 @@ has missing_after => 86400;
 has remove_after  => 864000;
 has tasks         => sub { {} };
 
-our $VERSION = '2.04';
+our $VERSION = '2.05';
 
 sub add_task { ($_[0]->tasks->{$_[1]} = $_[2]) and return $_[0] }
 
