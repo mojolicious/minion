@@ -1,6 +1,6 @@
 
 2.04  2015-10-14
-  - Fixed small portability issue in Minion::Command::minion::worker.
+  - Fixed portability issue in worker command.
 
 2.03  2015-10-09
   - Improved commands to show all options that can affect their behavior.
