@@ -15,6 +15,7 @@ sub run {
     'j|jobs=i'               => \($self->{max}      = 4),
     'q|queue=s'              => ($self->{queues}    = ['default']);
 
+  local $SIG{CHLD} = 'DEFAULT';
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
 
   # Log fatal errors
