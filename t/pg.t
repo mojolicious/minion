@@ -13,11 +13,13 @@ use Time::HiRes qw(time usleep);
 
 # Clean up before start
 require Mojo::Pg;
-my $pg = Mojo::Pg->new($ENV{TEST_ONLINE});
+my $pg = Mojo::Pg->new($ENV{TEST_ONLINE})->search_path(['minion_test']);
+$pg->db->query('create schema if not exists minion_test');
 $pg->db->query('drop table if exists mojo_migrations');
 $pg->db->query('drop table if exists minion_jobs');
 $pg->db->query('drop table if exists minion_workers');
 my $minion = Minion->new(Pg => $ENV{TEST_ONLINE});
+$minion->backend->pg->search_path(['minion_test']);
 $minion->reset;
 
 # Nothing to repair
@@ -353,6 +355,47 @@ ok $job->info->{delayed} > time, 'delayed timestamp';
 ok $minion->job($id)->remove, 'job has been removed';
 $worker->unregister;
 
+# Events
+my $pid;
+my $failed = 0;
+$finished = 0;
+$minion->once(
+  worker => sub {
+    my ($minion, $worker) = @_;
+    $worker->on(
+      dequeue => sub {
+        my ($worker, $job) = @_;
+        $job->on(failed   => sub { $failed++ });
+        $job->on(finished => sub { $finished++ });
+        $job->on(spawn    => sub { $pid = pop });
+      }
+    );
+  }
+);
+$worker = $minion->worker->register;
+$minion->enqueue(add => [3, 3]);
+$minion->enqueue(add => [4, 3]);
+$job = $worker->dequeue(0);
+is $failed,   0, 'failed event has not been emitted';
+is $finished, 0, 'finished event has not been emitted';
+my $result;
+$job->on(finished => sub { $result = pop });
+$job->finish('Everything is fine!');
+$job->perform;
+is $result,   'Everything is fine!', 'right result';
+is $failed,   0,                     'failed event has not been emitted';
+is $finished, 1,                     'finished event has been emitted once';
+isnt $pid, $$, 'new process id';
+$job = $worker->dequeue(0);
+my $err;
+$job->on(failed => sub { $err = pop });
+$job->fail("test\n");
+$job->fail;
+is $err,      "test\n", 'right error';
+is $failed,   1,        'failed event has been emitted once';
+is $finished, 1,        'finished event has been emitted once';
+$worker->unregister;
+
 # Queues
 $id = $minion->enqueue(add => [100, 1]);
 is $worker->register->dequeue(0 => {queues => ['test1']}), undef, 'wrong queue';
@@ -455,7 +498,7 @@ $job    = $worker->dequeue(0);
 $job2   = $worker->dequeue(0);
 my $job3 = $worker->dequeue(0);
 my $job4 = $worker->dequeue(0);
-my $pid  = $job->start;
+$pid = $job->start;
 my $pid2 = $job2->start;
 my $pid3 = $job3->start;
 my $pid4 = $job4->start;

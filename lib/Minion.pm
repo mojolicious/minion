@@ -15,7 +15,7 @@ has missing_after => 86400;
 has remove_after  => 864000;
 has tasks         => sub { {} };
 
-our $VERSION = '2.06';
+our $VERSION = '3.0';
 
 sub add_task { ($_[0]->tasks->{$_[1]} = $_[2]) and return $_[0] }
 
@@ -85,8 +85,7 @@ Minion - Job queue
   use Minion;
 
   # Connect to backend
-  my $minion = Minion->new(File => '/home/sri/minion.db');
-  my $minion = Minion->new(Pg   => 'postgresql://postgres@/test');
+  my $minion = Minion->new(Pg => 'postgresql://postgres@/test');
 
   # Add tasks
   $minion->add_task(something_slow => sub {
@@ -113,7 +112,7 @@ Minion - Job queue
 =head1 DESCRIPTION
 
 L<Minion> is a job queue for the L<Mojolicious|http://mojolicio.us> real-time
-web framework with support for multiple backends, such as L<DBM::Deep> and
+web framework with support for multiple backends, such as
 L<PostgreSQL|http://www.postgresql.org>.
 
 A job queue allows you to process time and/or computationally intensive tasks
@@ -220,9 +219,9 @@ Application for job queue, defaults to a L<Mojo::HelloWorld> object.
 =head2 backend
 
   my $backend = $minion->backend;
-  $minion     = $minion->backend(Minion::Backend::File->new);
+  $minion     = $minion->backend(Minion::Backend::Pg->new);
 
-Backend, usually a L<Minion::Backend::File> or L<Minion::Backend::Pg> object.
+Backend, usually a L<Minion::Backend::Pg> object.
 
 =head2 missing_after
 
@@ -310,7 +309,7 @@ return C<undef> if job does not exist.
 
 =head2 new
 
-  my $minion = Minion->new(File => '/home/sri/minion.db');
+  my $minion = Minion->new(Pg => 'postgresql://postgres@/test');
 
 Construct a new L<Minion> object.
 
@@ -355,8 +354,6 @@ This is the class hierarchy of the L<Minion> distribution.
 =item * L<Minion::Backend>
 
 =over 2
-
-=item * L<Minion::Backend::File>
 
 =item * L<Minion::Backend::Pg>
 

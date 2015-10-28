@@ -1,5 +1,6 @@
 
-2.06  2015-10-16
+3.0  2015-10-28
+  - Removed Minion::Backend::File.
 
 2.05  2015-10-15
   - Fixed bug where jobs could sometimes not be finished correctly by the worker

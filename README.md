@@ -3,7 +3,6 @@
 
   A job queue for the [Mojolicious](http://mojolicio.us) real-time web
   framework with support for multiple backends, such as
-  [DBM::Deep](https://metacpan.org/release/DBM-Deep) and
   [PostgreSQL](http://www.postgresql.org).
 
 ```perl
@@ -11,7 +10,7 @@ use Mojolicious::Lite;
 use 5.20.0;
 use experimental 'signatures';
 
-plugin Minion => {File => '/home/sri/minion.db'};
+plugin Minion => {Pg => 'postgresql://postgres@/test'};
 
 # Slow task
 app->minion->add_task(slow_log => sub ($job, $msg) {

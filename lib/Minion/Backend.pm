@@ -60,7 +60,8 @@ Minion::Backend - Backend base class
 
 =head1 DESCRIPTION
 
-L<Minion::Backend> is an abstract base class for L<Minion> backends.
+L<Minion::Backend> is an abstract base class for L<Minion> backends, like
+L<Minion::Backend::Pg>.
 
 =head1 ATTRIBUTES
 
