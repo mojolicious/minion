@@ -259,6 +259,14 @@ following new ones.
 
 Register a new task.
 
+  # Job with result
+  $minion->add_task(add => sub {
+    my ($job, $first, $second) = @_;
+    $job->finish($first + $second);
+  });
+  my $id = $minion->enqueue(add => [1, 1]);
+  my $result = $minion->job($id)->info->{result};
+
 =head2 enqueue
 
   my $id = $minion->enqueue('foo');
