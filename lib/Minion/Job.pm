@@ -190,7 +190,7 @@ Get application from L<Minion/"app">.
 
   my $bool = $job->fail;
   my $bool = $job->fail('Something went wrong!');
-  my $bool = $job->fail({msg => 'Something went wrong!'});
+  my $bool = $job->fail({whatever => 'Something went wrong!'});
 
 Transition from C<active> to C<failed> state.
 
@@ -198,7 +198,7 @@ Transition from C<active> to C<failed> state.
 
   my $bool = $job->finish;
   my $bool = $job->finish('All went well!');
-  my $bool = $job->finish({msg => 'All went well!'});
+  my $bool = $job->finish({whatever => 'All went well!'});
 
 Transition from C<active> to C<finished> state.
 

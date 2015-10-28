@@ -338,7 +338,7 @@ Queue to put job in, defaults to C<default>.
   my $bool = $backend->fail_job($job_id, $retries);
   my $bool = $backend->fail_job($job_id, $retries, 'Something went wrong!');
   my $bool = $backend->fail_job(
-    $job_id, $retries, {msg => 'Something went wrong!'});
+    $job_id, $retries, {whatever => 'Something went wrong!'});
 
 Transition from C<active> to C<failed> state.
 
@@ -346,7 +346,8 @@ Transition from C<active> to C<failed> state.
 
   my $bool = $backend->finish_job($job_id, $retries);
   my $bool = $backend->finish_job($job_id, $retries, 'All went well!');
-  my $bool = $backend->finish_job($job_id, $retries, {msg => 'All went well!'});
+  my $bool = $backend->finish_job(
+    $job_id, $retries, {whatever => 'All went well!'});
 
 Transition from C<active> to C<finished> state.
 
