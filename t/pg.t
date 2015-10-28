@@ -128,13 +128,6 @@ ok !$minion->backend->pg->db->query(
 ok !$minion->backend->pg->db->query(
   'select count(id) as count from minion_workers')->hash->{count}, 'no workers';
 
-# Wait for job
-my $before = time;
-$worker = $minion->worker->register;
-is $worker->dequeue(0.5), undef, 'no jobs yet';
-ok !!(($before + 0.4) <= time), 'waited for jobs';
-$worker->unregister;
-
 # Stats
 $minion->add_task(
   add => sub {
