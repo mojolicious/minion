@@ -16,8 +16,9 @@ eval { plugin Minion => {Something => 'fun'} };
 like $@, qr/^Backend "Minion::Backend::Something" missing/, 'right error';
 
 # Isolate tests
-Mojo::Pg->new($ENV{TEST_ONLINE})
-  ->db->query('create schema if not exists minion_app_test');
+my $pg = Mojo::Pg->new($ENV{TEST_ONLINE});
+$pg->db->query('drop schema if exists minion_app_test cascade');
+$pg->db->query('create schema minion_app_test');
 plugin Minion => {Pg => $ENV{TEST_ONLINE}};
 app->minion->backend->pg->search_path(['minion_app_test']);
 app->minion->reset;
