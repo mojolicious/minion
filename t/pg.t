@@ -18,7 +18,6 @@ $pg->db->query('drop schema if exists minion_test cascade');
 $pg->db->query('create schema minion_test');
 my $minion = Minion->new(Pg => $ENV{TEST_ONLINE});
 $minion->backend->pg->search_path(['minion_test']);
-$minion->reset;
 
 # Nothing to repair
 my $worker = $minion->repair->worker;

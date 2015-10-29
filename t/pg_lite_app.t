@@ -21,7 +21,6 @@ $pg->db->query('drop schema if exists minion_app_test cascade');
 $pg->db->query('create schema minion_app_test');
 plugin Minion => {Pg => $ENV{TEST_ONLINE}};
 app->minion->backend->pg->search_path(['minion_app_test']);
-app->minion->reset;
 
 app->minion->add_task(
   add => sub {
