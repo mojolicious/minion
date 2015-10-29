@@ -15,11 +15,12 @@ use Test::Mojo;
 eval { plugin Minion => {Something => 'fun'} };
 like $@, qr/^Backend "Minion::Backend::Something" missing/, 'right error';
 
+# Isolate tests
 Mojo::Pg->new($ENV{TEST_ONLINE})
   ->db->query('create schema if not exists minion_app_test');
-
 plugin Minion => {Pg => $ENV{TEST_ONLINE}};
 app->minion->backend->pg->search_path(['minion_app_test']);
+app->minion->reset;
 
 app->minion->add_task(
   add => sub {
@@ -62,6 +63,8 @@ $t->get_ok('/result' => form => {id => $first})->status_is(200)
   ->content_is('5');
 $t->get_ok('/result' => form => {id => $second})->status_is(200)
   ->content_is('9');
-$t->app->minion->reset;
+
+# Clean up once we are done
+app->minion->backend->pg->db->query('drop schema minion_app_test cascade');
 
 done_testing();

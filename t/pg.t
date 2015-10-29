@@ -11,13 +11,10 @@ use Mojo::IOLoop;
 use Sys::Hostname 'hostname';
 use Time::HiRes qw(time usleep);
 
-# Clean up before start
+# Isolate tests
 require Mojo::Pg;
 my $pg = Mojo::Pg->new($ENV{TEST_ONLINE})->search_path(['minion_test']);
 $pg->db->query('create schema if not exists minion_test');
-$pg->db->query('drop table if exists mojo_migrations');
-$pg->db->query('drop table if exists minion_jobs');
-$pg->db->query('drop table if exists minion_workers');
 my $minion = Minion->new(Pg => $ENV{TEST_ONLINE});
 $minion->backend->pg->search_path(['minion_test']);
 $minion->reset;
@@ -512,6 +509,8 @@ is $minion->job($id4)->info->{state},  'failed',   'right state';
 is $minion->job($id4)->info->{result}, 'Non-zero exit status (1)',
   'right result';
 $worker->unregister;
-$minion->reset;
+
+# Clean up once we are done
+$minion->backend->pg->db->query('drop schema minion_test cascade');
 
 done_testing();
