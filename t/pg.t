@@ -33,7 +33,7 @@ my $notified = $worker->info->{notified};
 like $notified, qr/^[\d.]+$/, 'has timestamp';
 my $id = $worker->id;
 is $worker->register->id, $id, 'same id';
-usleep 500000;
+usleep 50000;
 ok $worker->register->info->{notified} > $notified, 'new timestamp';
 is $worker->unregister->info, undef, 'no information';
 my $host = hostname;
