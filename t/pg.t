@@ -13,8 +13,8 @@ use Time::HiRes qw(time usleep);
 
 # Isolate tests
 require Mojo::Pg;
-my $pg = Mojo::Pg->new($ENV{TEST_ONLINE})->search_path(['minion_test']);
-$pg->db->query('create schema if not exists minion_test');
+Mojo::Pg->new($ENV{TEST_ONLINE})
+  ->db->query('create schema if not exists minion_test');
 my $minion = Minion->new(Pg => $ENV{TEST_ONLINE});
 $minion->backend->pg->search_path(['minion_test']);
 $minion->reset;
