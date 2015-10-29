@@ -1,6 +1,7 @@
 
 3.0  2015-10-29
-  - Removed Minion::Backend::File.
+  - Removed Minion::Backend::File, because DBM::Deep quickly becomes unusably
+    slow, we recommend the use of Minion::Backend::SQLite instead.
 
 2.05  2015-10-15
   - Fixed bug where jobs could sometimes not be finished correctly by the worker
