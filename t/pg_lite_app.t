@@ -66,6 +66,6 @@ $t->get_ok('/result' => form => {id => $second})->status_is(200)
   ->content_is('9');
 
 # Clean up once we are done
-app->minion->backend->pg->db->query('drop schema minion_app_test cascade');
+$pg->db->query('drop schema minion_app_test cascade');
 
 done_testing();

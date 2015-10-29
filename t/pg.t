@@ -512,6 +512,6 @@ is $minion->job($id4)->info->{result}, 'Non-zero exit status (1)',
 $worker->unregister;
 
 # Clean up once we are done
-$minion->backend->pg->db->query('drop schema minion_test cascade');
+$pg->db->query('drop schema minion_test cascade');
 
 done_testing();
