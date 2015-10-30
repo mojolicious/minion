@@ -204,7 +204,9 @@ Get application from L<Minion/"app">.
   my $bool = $job->fail('Something went wrong!');
   my $bool = $job->fail({whatever => 'Something went wrong!'});
 
-Transition from C<active> to C<failed> state.
+Transition from C<active> to C<failed> state, and if there are L</"attempts">
+remaining, transition back to C<inactive> with an exponentially increasing
+delay based on L<Minion/"backoff">.
 
 =head2 finish
 
