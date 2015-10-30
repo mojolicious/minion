@@ -3,7 +3,6 @@
   - Added support retrying failed jobs automatically.
   - Added backoff attribute to Minion.
   - Added attempts attribute to Minion::Job.
-  - Added attempts option to enqueue method in Minion.
   - Added attempts option to enqueue method in Minion and Minion::Backend::Pg.
   - Added -A option to job command.
 
