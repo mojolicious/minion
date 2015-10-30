@@ -15,9 +15,8 @@ sub fail {
   return undef
     unless $self->minion->backend->fail_job($self->id, $self->retries, $err);
 
-  my $retries = $self->emit(failed => $err)->retries;
-  my $attempts = $self->attempts;
-  return 1 unless $attempts > 1 && $attempts > ($retries + 1);
+  return 1 if (my $attempts = $self->emit(failed => $err)->attempts) == 1;
+  return 1 if (my $retries = $self->retries) >= ($attempts - 1);
   return $self->retry({delay => $self->minion->backoff->($retries)});
 }
 

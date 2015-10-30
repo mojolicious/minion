@@ -256,7 +256,8 @@ is $job->task, 'add', 'right task';
 # Retry and remove
 $id = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue(0);
-is $job->info->{retries}, 0, 'job has not been retried';
+is $job->info->{attempts}, 1, 'job will be attempted once';
+is $job->info->{retries},  0, 'job has not been retried';
 is $job->id, $id, 'right id';
 ok $job->finish, 'job finished';
 ok !$worker->dequeue(0), 'no more jobs';
