@@ -14,11 +14,12 @@ sub run {
 
   my ($args, $options) = ([], {});
   GetOptionsFromArray \@args,
-    'a|args=s' => sub { $args = decode_json($_[1]) },
+    'A|attempts=i' => \$options->{attempts},
+    'a|args=s'     => sub { $args = decode_json($_[1]) },
     'd|delay=i'    => \$options->{delay},
     'e|enqueue=s'  => \my $enqueue,
-    'l|limit=i'    => \(my $limit = 100),
-    'o|offset=i'   => \(my $offset = 0),
+    'l|limit=i'  => \(my $limit  = 100),
+    'o|offset=i' => \(my $offset = 0),
     'p|priority=i' => \$options->{priority},
     'q|queue=s'    => \$options->{queue},
     'R|retry'      => \my $retry,
@@ -119,6 +120,8 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -r 10023
 
   Options:
+    -A, --attempts <number>   Number of times performing this job will be
+                              attempted, defaults to 1
     -a, --args <JSON array>   Arguments for new job in JSON format
     -d, --delay <seconds>     Delay new job for this many seconds
     -e, --enqueue <name>      New job to be enqueued

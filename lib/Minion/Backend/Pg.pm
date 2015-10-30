@@ -30,10 +30,11 @@ sub enqueue {
 
   my $db = $self->pg->db;
   return $db->query(
-    "insert into minion_jobs (args, delayed, priority, queue, task)
-     values (?, (now() + (interval '1 second' * ?)), ?, ?, ?)
-     returning id", {json => $args}, $options->{delay} // 0,
-    $options->{priority} // 0, $options->{queue} // 'default', $task
+    "insert into minion_jobs (args, attempts, delayed, priority, queue, task)
+     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?)
+     returning id", {json => $args}, $options->{attempts} // 1,
+    $options->{delay} // 0, $options->{priority} // 0,
+    $options->{queue} // 'default', $task
   )->hash->{id};
 }
 
@@ -42,7 +43,7 @@ sub finish_job { shift->_update(0, @_) }
 
 sub job_info {
   shift->pg->db->query(
-    'select id, args, extract(epoch from created) as created,
+    'select id, args, attempts, extract(epoch from created) as created,
        extract(epoch from delayed) as delayed,
        extract(epoch from finished) as finished, priority, queue, result,
        extract(epoch from retried) as retried, retries,
@@ -135,8 +136,8 @@ sub retry_job {
   return !!$self->pg->db->query(
     "update minion_jobs
      set finished = null, priority = coalesce(?, priority),
-       queue = coalesce(?, queue), result = null, retried = now(),
-       retries = retries + 1, started = null, state = 'inactive', worker = null,
+       queue = coalesce(?, queue), retried = now(), retries = retries + 1,
+       started = null, state = 'inactive', worker = null,
        delayed = (now() + (interval '1 second' * ?))
      where id = ? and retries = ? and state in ('failed', 'finished')
      returning 1", @$options{qw(priority queue)}, $options->{delay} // 0, $id,
@@ -196,7 +197,7 @@ sub _try {
        limit 1
        for update
      )
-     returning id, args, retries, task", $id,
+     returning id, args, attempts, retries, task", $id,
     $options->{queues} || ['default'], [keys %{$self->minion->tasks}]
   )->expand->hash;
 }
@@ -281,6 +282,12 @@ These fields are currently available:
 
 Job arguments.
 
+=item attempts
+
+  attempts => 25
+
+Number of times performing this job will be attempted, defaults to C<1>.
+
 =item id
 
   id => '10023'
@@ -312,6 +319,12 @@ Enqueue a new job with C<inactive> state.
 These options are currently available:
 
 =over 2
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing this job will be attempted, defaults to C<1>.
 
 =item delay
 
@@ -372,6 +385,12 @@ These fields are currently available:
   args => ['foo', 'bar']
 
 Job arguments.
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing this job will be attempted, defaults to C<1>.
 
 =item created
 
@@ -659,3 +678,6 @@ create index on minion_jobs (state);
 
 -- 4 up
 alter table minion_jobs add column queue text not null default 'default';
+
+-- 5 up
+alter table minion_jobs add column attempts int not null default 1;

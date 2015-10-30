@@ -11,6 +11,7 @@ use Scalar::Util 'weaken';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has 'backend';
+has backoff => sub { \&_backoff };
 has missing_after => 86400;
 has remove_after  => 864000;
 has tasks         => sub { {} };
@@ -26,11 +27,12 @@ sub job {
 
   return undef unless my $job = $self->backend->job_info($id);
   return Minion::Job->new(
-    args    => $job->{args},
-    id      => $job->{id},
-    minion  => $self,
-    retries => $job->{retries},
-    task    => $job->{task}
+    args     => $job->{args},
+    attempts => $job->{attempts},
+    id       => $job->{id},
+    minion   => $self,
+    retries  => $job->{retries},
+    task     => $job->{task}
   );
 }
 
@@ -65,6 +67,8 @@ sub worker {
   $self->emit(worker => $worker);
   return $worker;
 }
+
+sub _backoff { (shift()**4) + 15 }
 
 sub _delegate {
   my ($self, $method) = @_;
@@ -112,8 +116,9 @@ Minion - Job queue
 =head1 DESCRIPTION
 
 L<Minion> is a job queue for the L<Mojolicious|http://mojolicio.us> real-time
-web framework with support for multiple backends, such as
-L<PostgreSQL|http://www.postgresql.org>.
+web framework with support for multiple named queues, priorities, delayed jobs,
+job results, retries with backoff, distributed workers, parallel processing and
+multiple backends (such as L<PostgreSQL|http://www.postgresql.org>).
 
 A job queue allows you to process time and/or computationally intensive tasks
 in background processes, outside of the request/response lifecycle. Among those
@@ -223,6 +228,19 @@ Application for job queue, defaults to a L<Mojo::HelloWorld> object.
 
 Backend, usually a L<Minion::Backend::Pg> object.
 
+=head2 backoff
+
+  my $cb  = $minion->backoff;
+  $minion = $minion->backoff(sub {...});
+
+A callback used to calculate the delay for automatically retried jobs, defaults
+to C<(retries ** 4) + 15> (15, 16, 31, 96...).
+
+  $minion->backoff(sub {
+    my $retries = shift;
+    return ($retries ** 4) + 15 + int(rand 30);
+  });
+
 =head2 missing_after
 
   my $after = $minion->missing_after;
@@ -281,6 +299,12 @@ are fine though.
 These options are currently available:
 
 =over 2
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing this job will be attempted, defaults to C<1>.
 
 =item delay
 

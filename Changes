@@ -1,5 +1,11 @@
 
-3.01  2015-10-31
+3.01  2015-10-30
+  - Added support retrying failed jobs automatically.
+  - Added backoff attribute to Minion.
+  - Added attempts attribute to Minion::Job.
+  - Added attempts option to enqueue method in Minion.
+  - Added attempts option to enqueue method in Minion and Minion::Backend::Pg.
+  - Added -A option to job command.
 
 3.0  2015-10-30
   - Removed Minion::Backend::File, because DBM::Deep quickly becomes unusably

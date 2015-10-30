@@ -275,7 +275,6 @@ ok $job->fail,  'job failed';
 ok $job->retry, 'job retried';
 is $job->info->{retries}, 2, 'job has been retried twice';
 ok !$job->info->{finished}, 'no finished timestamp';
-ok !$job->info->{result},   'no result';
 ok !$job->info->{started},  'no started timestamp';
 ok !$job->info->{worker},   'no worker';
 $job = $worker->dequeue(0);
@@ -457,6 +456,36 @@ $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 $job->perform;
 is $job->info->{state}, 'failed', 'right state';
+is $job->info->{result}, 'Non-zero exit status (1)', 'right result';
+$worker->unregister;
+
+# Multiple attempts
+is $minion->backoff->(0),  15,     'right result';
+is $minion->backoff->(1),  16,     'right result';
+is $minion->backoff->(2),  31,     'right result';
+is $minion->backoff->(3),  96,     'right result';
+is $minion->backoff->(4),  271,    'right result';
+is $minion->backoff->(5),  640,    'right result';
+is $minion->backoff->(25), 390640, 'right result';
+$id = $minion->enqueue(exit => [] => {attempts => 2});
+$job = $worker->register->dequeue(0);
+is $job->id, $id, 'right id';
+is $job->retries,  0, 'job has not been retried';
+is $job->attempts, 2, 'job will be attempted twice';
+$job->perform;
+is $job->info->{attempts}, 2,          'job will be attempted twice';
+is $job->info->{state},    'inactive', 'right state';
+is $job->info->{result}, 'Non-zero exit status (1)', 'right result';
+ok $job->info->{retried} < $job->info->{delayed}, 'delayed timestamp';
+$minion->backend->pg->db->query(
+  'update minion_jobs set delayed = now() where id = ?', $id);
+$job = $worker->register->dequeue(0);
+is $job->id, $id, 'right id';
+is $job->retries,  1, 'job has been retried once';
+is $job->attempts, 2, 'job will be attempted twice';
+$job->perform;
+is $job->info->{attempts}, 2,        'job will be attempted twice';
+is $job->info->{state},    'failed', 'right state';
 is $job->info->{result}, 'Non-zero exit status (1)', 'right result';
 $worker->unregister;
 

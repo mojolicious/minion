@@ -4,15 +4,21 @@ use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::IOLoop;
 use POSIX 'WNOHANG';
 
-has [qw(args id minion retries task)];
+has [qw(args attempts id minion retries task)];
 
 sub app { shift->minion->app }
 
 sub fail {
   my $self = shift;
-  my $err  = shift // 'Unknown error';
-  my $ok   = $self->minion->backend->fail_job($self->id, $self->retries, $err);
-  return $ok ? !!$self->emit(failed => $err) : undef;
+  my $err = shift // 'Unknown error';
+
+  return undef
+    unless $self->minion->backend->fail_job($self->id, $self->retries, $err);
+
+  my $retries = $self->emit(failed => $err)->retries;
+  my $attempts = $self->attempts;
+  return 1 unless $attempts > 1 && $attempts > ($retries + 1);
+  return $self->retry({delay => $self->minion->backoff->($retries)});
 }
 
 sub finish {
@@ -144,6 +150,13 @@ L<Minion::Job> implements the following attributes.
 
 Arguments passed to task.
 
+=head2 attempts
+
+  my $attempts = $job->attempts;
+  $job         = $job->attempts(25);
+
+Number of times performing this job will be attempted.
+
 =head2 id
 
   my $id = $job->id;
@@ -223,6 +236,12 @@ These fields are currently available:
   args => ['foo', 'bar']
 
 Job arguments.
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing this job will be attempted.
 
 =item created
 
