@@ -1,5 +1,6 @@
 
 3.02  2015-10-31
+  - Fixed portability issues in tests.
 
 3.01  2015-10-30
   - Added support retrying failed jobs automatically.
