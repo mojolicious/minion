@@ -1,4 +1,6 @@
 
+3.01  2015-10-31
+
 3.0  2015-10-30
   - Removed Minion::Backend::File, because DBM::Deep quickly becomes unusably
     slow, you can use the CPAN module Minion::Backend::SQLite instead.
