@@ -50,9 +50,9 @@ sub new {
 }
 
 sub perform_jobs {
-  my $self   = shift;
+  my ($self, $options) = @_;
   my $worker = $self->worker;
-  while (my $job = $worker->register->dequeue(0)) { $job->perform }
+  while (my $job = $worker->register->dequeue(0, $options)) { $job->perform }
   $worker->unregister;
 }
 
@@ -348,8 +348,21 @@ Construct a new L<Minion> object.
 =head2 perform_jobs
 
   $minion->perform_jobs;
+  $minion->perform_jobs({queues => ['important']});
 
 Perform all jobs, very useful for testing.
+
+These options are currently available:
+
+=over 2
+
+=item queues
+
+  queues => ['important']
+
+One or more queues to dequeue jobs from, defaults to C<default>.
+
+=back
 
 =head2 repair
 
