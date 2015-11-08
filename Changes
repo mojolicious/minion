@@ -1,4 +1,6 @@
 
+3.04  2015-11-09
+
 3.03  2015-11-08
   - Added queues option to perform_jobs method in Minion.
 
