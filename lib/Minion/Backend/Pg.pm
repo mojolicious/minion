@@ -135,9 +135,8 @@ sub retry_job {
 
   return !!$self->pg->db->query(
     "update minion_jobs
-     set finished = null, priority = coalesce(?, priority),
-       queue = coalesce(?, queue), retried = now(), retries = retries + 1,
-       started = null, state = 'inactive', worker = null,
+     set priority = coalesce(?, priority), queue = coalesce(?, queue),
+       retried = now(), retries = retries + 1, state = 'inactive',
        delayed = (now() + (interval '1 second' * ?))
      where id = ? and retries = ? and state in ('failed', 'finished')
      returning 1", @$options{qw(priority queue)}, $options->{delay} // 0, $id,
