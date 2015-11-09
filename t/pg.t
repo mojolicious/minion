@@ -457,7 +457,7 @@ is $job->info->{state}, 'failed', 'right state';
 is $job->info->{result}, 'Non-zero exit status (1)', 'right result';
 $worker->unregister;
 
-# Multiple attempts
+# Multiple attempts while processing
 is $minion->backoff->(0),  15,     'right result';
 is $minion->backoff->(1),  16,     'right result';
 is $minion->backoff->(2),  31,     'right result';
@@ -468,8 +468,7 @@ is $minion->backoff->(25), 390640, 'right result';
 $id = $minion->enqueue(exit => [] => {attempts => 2});
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
-is $job->retries,  0, 'job has not been retried';
-is $job->attempts, 2, 'job will be attempted twice';
+is $job->retries, 0, 'job has not been retried';
 $job->perform;
 is $job->info->{attempts}, 2,          'job will be attempted twice';
 is $job->info->{state},    'inactive', 'right state';
@@ -479,12 +478,26 @@ $minion->backend->pg->db->query(
   'update minion_jobs set delayed = now() where id = ?', $id);
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
-is $job->retries,  1, 'job has been retried once';
-is $job->attempts, 2, 'job will be attempted twice';
+is $job->retries, 1, 'job has been retried once';
 $job->perform;
 is $job->info->{attempts}, 2,        'job will be attempted twice';
 is $job->info->{state},    'failed', 'right state';
 is $job->info->{result}, 'Non-zero exit status (1)', 'right result';
+$worker->unregister;
+
+# Multiple attempts during maintenance
+$id = $minion->enqueue(exit => [] => {attempts => 2});
+$job = $worker->register->dequeue(0);
+is $job->id, $id, 'right id';
+is $job->info->{attempts}, 2,        'job will be attempted twice';
+is $job->info->{state},    'active', 'right state';
+$worker->unregister;
+$minion->backoff(sub {0})->repair;
+is $job->info->{state}, 'inactive', 'right state';
+$job = $worker->register->dequeue(0);
+is $job->id, $id, 'right id';
+ok $job->finish, 'job finished';
+is $job->info->{state}, 'finished', 'right state';
 $worker->unregister;
 
 # A job needs to be dequeued again after a retry

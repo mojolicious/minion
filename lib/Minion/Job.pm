@@ -4,20 +4,15 @@ use Mojo::Base 'Mojo::EventEmitter';
 use Mojo::IOLoop;
 use POSIX 'WNOHANG';
 
-has [qw(args attempts id minion retries task)];
+has [qw(args id minion retries task)];
 
 sub app { shift->minion->app }
 
 sub fail {
   my $self = shift;
-  my $err = shift // 'Unknown error';
-
-  return undef
-    unless $self->minion->backend->fail_job($self->id, $self->retries, $err);
-
-  return 1 if (my $attempts = $self->emit(failed => $err)->attempts) == 1;
-  return 1 if (my $retries = $self->retries) >= ($attempts - 1);
-  return $self->retry({delay => $self->minion->backoff->($retries)});
+  my $err  = shift // 'Unknown error';
+  my $ok   = $self->minion->backend->fail_job($self->id, $self->retries, $err);
+  return $ok ? !!$self->emit(failed => $err) : undef;
 }
 
 sub finish {
@@ -149,13 +144,6 @@ L<Minion::Job> implements the following attributes.
 
 Arguments passed to task.
 
-=head2 attempts
-
-  my $attempts = $job->attempts;
-  $job         = $job->attempts(25);
-
-Number of times performing this job will be attempted.
-
 =head2 id
 
   my $id = $job->id;
@@ -204,9 +192,7 @@ Get application from L<Minion/"app">.
   my $bool = $job->fail('Something went wrong!');
   my $bool = $job->fail({whatever => 'Something went wrong!'});
 
-Transition from C<active> to C<failed> state, and if there are L</"attempts">
-remaining, transition back to C<inactive> with an exponentially increasing
-delay based on L<Minion/"backoff">.
+Transition from C<active> to C<failed> state.
 
 =head2 finish
 

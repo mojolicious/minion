@@ -1,7 +1,10 @@
 
-3.04  2015-11-09
+4.0  2015-11-09
+  - Removed attempts attribute from Minion::Job.
   - Improved Minion::Backend::Pg to preserve more information across retries for
     debugging.
+  - Fixed bug where jobs could not be retried automatically if a worker went
+    away.
 
 3.03  2015-11-08
   - Added queues option to perform_jobs method in Minion.

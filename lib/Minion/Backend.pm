@@ -109,12 +109,6 @@ These fields are currently available:
 
 Job arguments.
 
-=item attempts
-
-  attempts => 25
-
-Number of times performing this job will be attempted, defaults to C<1>.
-
 =item id
 
   id => '10023'

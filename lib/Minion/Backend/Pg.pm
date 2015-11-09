@@ -111,13 +111,12 @@ sub repair {
   );
 
   # Abandoned jobs
-  $db->query(
-    "update minion_jobs as j
-     set finished = now(), result = to_json('Worker went away'::text),
-       state = 'failed'
+  my $fail = $db->query(
+    "select id, retries from minion_jobs as j
      where state = 'active'
        and not exists(select 1 from minion_workers where id = j.worker)"
-  );
+  )->hashes;
+  $fail->each(sub { $self->fail_job(@$_{qw(id retries)}, 'Worker went away') });
 
   # Old jobs
   $db->query(
@@ -196,7 +195,7 @@ sub _try {
        limit 1
        for update
      )
-     returning id, args, attempts, retries, task", $id,
+     returning id, args, retries, task", $id,
     $options->{queues} || ['default'], [keys %{$self->minion->tasks}]
   )->expand->hash;
 }
@@ -204,13 +203,18 @@ sub _try {
 sub _update {
   my ($self, $fail, $id, $retries, $result) = @_;
 
-  return !!$self->pg->db->query(
+  return undef unless my $array = $self->pg->db->query(
     "update minion_jobs
      set finished = now(), result = ?, state = ?
      where id = ? and retries = ? and state = 'active'
-     returning 1", {json => $result}, $fail ? 'failed' : 'finished', $id,
-    $retries
-  )->rows;
+     returning attempts", {json => $result}, $fail ? 'failed' : 'finished',
+    $id, $retries
+  )->array;
+
+  return 1 if !$fail || (my $attempts = $array->[0]) == 1;
+  return 1 if $retries >= ($attempts - 1);
+  my $delay = $self->minion->backoff->($retries);
+  return $self->retry_job($id, $retries, {delay => $delay});
 }
 
 1;
@@ -280,12 +284,6 @@ These fields are currently available:
   args => ['foo', 'bar']
 
 Job arguments.
-
-=item attempts
-
-  attempts => 25
-
-Number of times performing this job will be attempted, defaults to C<1>.
 
 =item id
 

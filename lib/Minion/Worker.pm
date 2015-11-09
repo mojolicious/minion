@@ -12,12 +12,11 @@ sub dequeue {
   my $minion = $self->minion;
   return undef unless my $job = $minion->backend->dequeue($id, $wait, $options);
   $job = Minion::Job->new(
-    args     => $job->{args},
-    attempts => $job->{attempts},
-    id       => $job->{id},
-    minion   => $minion,
-    retries  => $job->{retries},
-    task     => $job->{task}
+    args    => $job->{args},
+    id      => $job->{id},
+    minion  => $minion,
+    retries => $job->{retries},
+    task    => $job->{task}
   );
   $self->emit(dequeue => $job);
   return $job;
