@@ -564,6 +564,48 @@ Queue to put job in.
 
 Get statistics for jobs and workers.
 
+These fields are currently available:
+
+=over 2
+
+=item active_jobs
+
+  active_jobs => 100
+
+Number of jobs in C<active> state.
+
+=item active_workers
+
+  active_workers => 100
+
+Number of workers that are currently processing a job.
+
+=item failed_jobs
+
+  failed_jobs => 100
+
+Number of jobs in C<failed> state.
+
+=item finished_jobs
+
+  finished_jobs => 100
+
+Number of jobs in C<finished> state.
+
+=item inactive_jobs
+
+  inactive_jobs => 100
+
+Number of jobs in C<inactive> state.
+
+=item inactive_workers
+
+  inactive_workers => 100
+
+Number of workers that are currently not processing a job.
+
+=back
+
 =head2 unregister_worker
 
   $backend->unregister_worker($worker_id);
