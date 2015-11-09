@@ -203,7 +203,7 @@ sub _try {
 sub _update {
   my ($self, $fail, $id, $retries, $result) = @_;
 
-  return undef unless my $array = $self->pg->db->query(
+  return undef unless my $row = $self->pg->db->query(
     "update minion_jobs
      set finished = now(), result = ?, state = ?
      where id = ? and retries = ? and state = 'active'
@@ -211,7 +211,7 @@ sub _update {
     $id, $retries
   )->array;
 
-  return 1 if !$fail || (my $attempts = $array->[0]) == 1;
+  return 1 if !$fail || (my $attempts = $row->[0]) == 1;
   return 1 if $retries >= ($attempts - 1);
   my $delay = $self->minion->backoff->($retries);
   return $self->retry_job($id, $retries, {delay => $delay});
