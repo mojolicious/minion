@@ -489,18 +489,22 @@ $worker->unregister;
 $id = $minion->enqueue(exit => [] => {attempts => 2});
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
+is $job->retries, 0, 'job has not been retried';
 is $job->info->{attempts}, 2,        'job will be attempted twice';
 is $job->info->{state},    'active', 'right state';
 $worker->unregister;
 $minion->repair;
+is $job->info->{result}, 'Worker went away', 'right result';
 ok $job->info->{retried} < $job->info->{delayed}, 'delayed timestamp';
 $minion->backend->pg->db->query(
   'update minion_jobs set delayed = now() where id = ?', $id);
 is $job->info->{state}, 'inactive', 'right state';
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
-ok $job->finish, 'job finished';
-is $job->info->{state}, 'finished', 'right state';
+is $job->retries, 1, 'job has been retried once';
+ok $job->finish('Works'), 'job finished';
+is $job->info->{state},  'finished', 'right state';
+is $job->info->{result}, 'Works',    'right result';
 $worker->unregister;
 
 # A job needs to be dequeued again after a retry
