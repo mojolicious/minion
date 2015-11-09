@@ -157,12 +157,12 @@ sub stats {
     = $db->query($sql)->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
 
   return {
+    active_jobs => $states->{active} || 0,
     active_workers   => $active,
-    inactive_workers => $all - $active,
-    active_jobs      => $states->{active} || 0,
-    inactive_jobs    => $states->{inactive} || 0,
     failed_jobs      => $states->{failed} || 0,
     finished_jobs    => $states->{finished} || 0,
+    inactive_jobs    => $states->{inactive} || 0,
+    inactive_workers => $all - $active
   };
 }
 
