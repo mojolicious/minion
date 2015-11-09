@@ -1,4 +1,6 @@
 
+4.01  2015-11-10
+
 4.0  2015-11-09
   - Removed attempts attribute from Minion::Job.
   - Improved Minion::Backend::Pg to preserve more information across retries for
