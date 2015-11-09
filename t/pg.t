@@ -492,7 +492,10 @@ is $job->id, $id, 'right id';
 is $job->info->{attempts}, 2,        'job will be attempted twice';
 is $job->info->{state},    'active', 'right state';
 $worker->unregister;
-$minion->backoff(sub {0})->repair;
+$minion->repair;
+ok $job->info->{retried} < $job->info->{delayed}, 'delayed timestamp';
+$minion->backend->pg->db->query(
+  'update minion_jobs set delayed = now() where id = ?', $id);
 is $job->info->{state}, 'inactive', 'right state';
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';

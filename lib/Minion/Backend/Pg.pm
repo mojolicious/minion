@@ -350,7 +350,9 @@ Queue to put job in, defaults to C<default>.
   my $bool = $backend->fail_job(
     $job_id, $retries, {whatever => 'Something went wrong!'});
 
-Transition from C<active> to C<failed> state.
+Transition from C<active> to C<failed> state, and if there are attempts
+remaining, transition back to C<inactive> with an exponentially increasing delay
+based on L<Minion/"backoff">.
 
 =head2 finish_job
 
