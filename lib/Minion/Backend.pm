@@ -175,8 +175,8 @@ Queue to put job in, defaults to C<default>.
     $job_id, $retries, {whatever => 'Something went wrong!'});
 
 Transition from C<active> to C<failed> state, and if there are attempts
-remaining, transition back to C<inactive> with an exponentially increasing delay
-based on L<Minion/"backoff">. Meant to be overloaded in a subclass.
+remaining, transition back to C<inactive> with a delay based on
+L<Minion/"backoff">. Meant to be overloaded in a subclass.
 
 =head2 finish_job
 

@@ -233,7 +233,8 @@ Backend, usually a L<Minion::Backend::Pg> object.
   $minion = $minion->backoff(sub {...});
 
 A callback used to calculate the delay for automatically retried jobs, defaults
-to C<(retries ** 4) + 15> (15, 16, 31, 96, 271, 640...).
+to exponentially increasing delays with C<(retries ** 4) + 15>
+(15, 16, 31, 96, 271, 640...).
 
   $minion->backoff(sub {
     my $retries = shift;
@@ -303,9 +304,8 @@ These options are currently available:
 
   attempts => 25
 
-Number of times performing this job will be attempted, with an exponentially
-increasing delay based on L</"backoff"> after the first attempt, defaults to
-C<1>.
+Number of times performing this job will be attempted, with a delay based on
+L</"backoff"> after the first attempt, defaults to C<1>.
 
 =item delay
 
