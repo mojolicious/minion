@@ -1,5 +1,7 @@
 
-4.01  2015-11-11
+4.01  2015-11-12
+  - Improved retry methods to allow options to be changed for already inactive
+    jobs.
 
 4.0  2015-11-09
   - Removed attempts attribute from Minion::Job.
