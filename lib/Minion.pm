@@ -275,7 +275,7 @@ following new ones.
 
   $minion = $minion->add_task(foo => sub {...});
 
-Register a new task.
+Register a task.
 
   # Job with result
   $minion->add_task(add => sub {
