@@ -85,8 +85,8 @@ following new ones.
   my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['important']});
 
 Wait a given amount of time in seconds for a job, dequeue it and transition from
-C<inactive> to C<active> state or return C<undef> if queues were empty. Meant to
-be overloaded in a subclass.
+C<inactive> to C<active> state, or return C<undef> if queues were empty. Meant
+to be overloaded in a subclass.
 
 These options are currently available:
 
@@ -193,7 +193,7 @@ subclass.
 
   my $job_info = $backend->job_info($job_id);
 
-Get information about a job or return C<undef> if job does not exist. Meant to
+Get information about a job, or return C<undef> if job does not exist. Meant to
 be overloaded in a subclass.
 
   # Check job state
@@ -444,7 +444,7 @@ Unregister worker. Meant to be overloaded in a subclass.
 
   my $worker_info = $backend->worker_info($worker_id);
 
-Get information about a worker or return C<undef> if worker does not exist.
+Get information about a worker, or return C<undef> if worker does not exist.
 Meant to be overloaded in a subclass.
 
   # Check worker host

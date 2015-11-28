@@ -262,7 +262,7 @@ implements the following new ones.
   my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['important']});
 
 Wait a given amount of time in seconds for a job, dequeue it and transition from
-C<inactive> to C<active> state or return C<undef> if queues were empty.
+C<inactive> to C<active> state, or return C<undef> if queues were empty.
 
 These options are currently available:
 
@@ -368,7 +368,7 @@ Transition from C<active> to C<finished> state.
 
   my $job_info = $backend->job_info($job_id);
 
-Get information about a job or return C<undef> if job does not exist.
+Get information about a job, or return C<undef> if job does not exist.
 
   # Check job state
   my $state = $backend->job_info($job_id)->{state};
@@ -618,7 +618,7 @@ Unregister worker.
 
   my $worker_info = $backend->worker_info($worker_id);
 
-Get information about a worker or return C<undef> if worker does not exist.
+Get information about a worker, or return C<undef> if worker does not exist.
 
   # Check worker host
   my $host = $backend->worker_info($worker_id)->{host};
