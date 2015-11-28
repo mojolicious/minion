@@ -261,8 +261,8 @@ implements the following new ones.
   my $job_info = $backend->dequeue($worker_id, 0.5);
   my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['important']});
 
-Wait for job, dequeue it and transition from C<inactive> to C<active> state or
-return C<undef> if queues were empty.
+Wait a given amount of time in seconds for a job, dequeue it and transition from
+C<inactive> to C<active> state or return C<undef> if queues were empty.
 
 These options are currently available:
 
