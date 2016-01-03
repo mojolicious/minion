@@ -372,6 +372,6 @@ Perform job in new process, but do not wait for it to finish.
 
 =head1 SEE ALSO
 
-L<Minion>, L<Mojolicious::Guides>, L<http://mojolicio.us>.
+L<Minion>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
 
 =cut

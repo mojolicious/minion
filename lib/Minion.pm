@@ -114,7 +114,7 @@ Minion - Job queue
 
 =head1 DESCRIPTION
 
-L<Minion> is a job queue for the L<Mojolicious|http://mojolicio.us> real-time
+L<Minion> is a job queue for the L<Mojolicious|http://mojolicious.org> real-time
 web framework with support for multiple named queues, priorities, delayed jobs,
 job results, retries with backoff, distributed workers, parallel processing and
 multiple backends (such as L<PostgreSQL|http://www.postgresql.org>).
@@ -132,15 +132,15 @@ that's not super fast.
   # Slow task
   app->minion->add_task(poke_mojo => sub {
     my $job = shift;
-    $job->app->ua->get('mojolicio.us');
-    $job->app->log->debug('We have poked mojolicio.us for a visitor');
+    $job->app->ua->get('mojolicious.org');
+    $job->app->log->debug('We have poked mojolicious.org for a visitor');
   });
 
   # Perform job in a background worker process
   get '/' => sub {
     my $c = shift;
     $c->minion->enqueue('poke_mojo');
-    $c->render(text => 'We will poke mojolicio.us for you soon.');
+    $c->render(text => 'We will poke mojolicious.org for you soon.');
   };
 
   app->start;
@@ -174,8 +174,8 @@ plugins.
     my ($self, $app) = @_;
     $app->minion->add_task(poke_mojo => sub {
       my $job = shift;
-      $job->app->ua->get('mojolicio.us');
-      $job->app->log->debug('We have poked mojolicio.us for a visitor');
+      $job->app->ua->get('mojolicious.org');
+      $job->app->log->debug('We have poked mojolicious.org for a visitor');
     });
   }
 
@@ -492,6 +492,6 @@ the terms of the Artistic License version 2.0.
 =head1 SEE ALSO
 
 L<https://github.com/kraih/minion>, L<Mojolicious::Guides>,
-L<http://mojolicio.us>.
+L<http://mojolicious.org>.
 
 =cut

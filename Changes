@@ -1,5 +1,6 @@
 
-4.02  2016-01-01
+4.02  2016-01-03
+  - Updated links to Mojolicious website.
 
 4.01  2015-11-12
   - Improved retry methods to allow options to be changed for already inactive
