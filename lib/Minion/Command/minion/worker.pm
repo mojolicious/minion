@@ -77,7 +77,7 @@ Minion::Command::minion::worker - Minion worker command
     -h, --help                           Show this summary of available options
         --home <path>                    Path to home directory of your
                                          application, defaults to the value of
-                                         MOJO_HOME or auto detection
+                                         MOJO_HOME or auto-detection
     -I, --heartbeat-interval <seconds>   Heartbeat interval, defaults to 60
     -j, --jobs <number>                  Number of jobs to perform
                                          concurrently, defaults to 4
