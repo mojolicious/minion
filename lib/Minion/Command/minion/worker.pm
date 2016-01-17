@@ -13,7 +13,8 @@ sub run {
   GetOptionsFromArray \@args,
     'I|heartbeat-interval=i' => \($self->{interval} = 60),
     'j|jobs=i'               => \($self->{max}      = 4),
-    'q|queue=s'              => ($self->{queues}    = ['default']);
+    'q|queue=s'              => ($self->{queues}    = []);
+  $self->{queues} = ['default'] unless @{$self->{queues}};
 
   local $SIG{CHLD} = 'DEFAULT';
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
