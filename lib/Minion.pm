@@ -313,6 +313,12 @@ L</"backoff"> after the first attempt, defaults to C<1>.
 
 Delay job for this many seconds (from now).
 
+=item lock
+
+  lock => 'some_key'
+
+Unique key for all C<active> and C<inactive> tasks.
+
 =item priority
 
   priority => 5
