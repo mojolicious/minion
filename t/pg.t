@@ -349,6 +349,27 @@ ok $job->info->{delayed} > time, 'delayed timestamp';
 ok $minion->job($id)->remove, 'job has been removed';
 $worker->unregister;
 
+# Locks
+$id  = $minion->enqueue(add => [2, 1] => {lock => 'add21'});
+$id2 = $minion->enqueue(add => [2, 1] => {lock => 'add21'});
+is $id2, undef, 'right id';
+$job = $worker->register->dequeue(0);
+is $job->id, $id, 'right id';
+$id2 = $minion->enqueue(add => [2, 1] => {lock => 'add21'});
+is $id2, undef, 'right id';
+ok $job->finish, 'job finished';
+$id2 = $minion->enqueue(add => [2, 1] => {lock => 'add21'});
+$job2 = $worker->register->dequeue(0);
+is $job2->id, $id2, 'right id';
+ok !$job->retry, 'job not retried';
+ok $job2->finish, 'job finished';
+ok $job->retry,   'job retried';
+$job = $worker->register->dequeue(0);
+ok $job2->retry({lock => 'add21_new'}), 'job retried';
+ok $job->finish, 'job finished';
+$worker->register->dequeue(0)->finish;
+$worker->unregister;
+
 # Events
 my $pid;
 my $failed = 0;

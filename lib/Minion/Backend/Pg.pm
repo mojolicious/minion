@@ -28,14 +28,17 @@ sub enqueue {
   my $args    = shift // [];
   my $options = shift // {};
 
-  my $db = $self->pg->db;
-  return $db->query(
-    "insert into minion_jobs (args, attempts, delayed, priority, queue, task)
-     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?)
-     returning id", {json => $args}, $options->{attempts} // 1,
-    $options->{delay} // 0, $options->{priority} // 0,
-    $options->{queue} // 'default', $task
-  )->hash->{id};
+  my $result = eval {
+    $self->pg->db->query(
+      "insert into minion_jobs
+       (args, attempts, delayed, priority, queue, task, lock)
+       values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?)
+       returning id", {json => $args}, $options->{attempts} // 1,
+      $options->{delay} // 0, $options->{priority} // 0,
+      $options->{queue} // 'default', $task, $options->{lock}
+    );
+  };
+  return $result ? $result->hash->{id} : undef;
 }
 
 sub fail_job   { shift->_update(1, @_) }
@@ -132,16 +135,19 @@ sub retry_job {
   my ($self, $id, $retries) = (shift, shift, shift);
   my $options = shift // {};
 
-  return !!$self->pg->db->query(
-    "update minion_jobs
+  my $result = eval {
+    $self->pg->db->query(
+      "update minion_jobs
      set priority = coalesce(?, priority), queue = coalesce(?, queue),
-       retried = now(), retries = retries + 1, state = 'inactive',
-       delayed = (now() + (interval '1 second' * ?))
+       lock = coalesce(?, lock), retried = now(), retries = retries + 1,
+       state = 'inactive', delayed = (now() + (interval '1 second' * ?))
      where id = ? and retries = ?
        and state in ('failed', 'finished', 'inactive')
-     returning 1", @$options{qw(priority queue)}, $options->{delay} // 0, $id,
-    $retries
-  )->rows;
+     returning 1", @$options{qw(priority queue lock)}, $options->{delay} // 0,
+      $id, $retries
+    );
+  };
+  return !!($result ? $result->rows : 0);
 }
 
 sub stats {
@@ -329,6 +335,12 @@ Number of times performing this job will be attempted, defaults to C<1>.
   delay => 10
 
 Delay job for this many seconds (from now).
+
+=item lock
+
+  lock => 'some_key'
+
+Unique key for all C<active> and C<inactive> tasks.
 
 =item priority
 
@@ -546,6 +558,12 @@ These options are currently available:
 
 Delay job for this many seconds (from now).
 
+=item lock
+
+  lock => 'some_key'
+
+Unique key for all C<active> and C<inactive> tasks.
+
 =item priority
 
   priority => 5
@@ -724,3 +742,8 @@ alter table minion_jobs add column queue text not null default 'default';
 
 -- 5 up
 alter table minion_jobs add column attempts int not null default 1;
+
+-- 6 up
+alter table minion_jobs add column lock text;
+create unique index on minion_jobs (lock)
+  where state in ('active', 'inactive');
