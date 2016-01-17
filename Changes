@@ -1,4 +1,6 @@
 
+4.04  2016-01-18
+
 4.03  2016-01-17
   - Removed an unused index from Minion::Backend::Pg.
   - Fixed a bug where the worker command would always watch the default queue.
