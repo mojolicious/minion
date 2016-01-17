@@ -724,3 +724,6 @@ alter table minion_jobs add column queue text not null default 'default';
 
 -- 5 up
 alter table minion_jobs add column attempts int not null default 1;
+
+-- 6 up
+drop index minion_jobs_state_idx;

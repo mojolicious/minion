@@ -1,5 +1,8 @@
 
-4.03  2016-01-13
+4.03  2016-01-17
+  - Removed an unused index from Minion::Backend::Pg.
+  - Fixed a bug where the worker command would always watch the default queue.
+    (avkhozov)
 
 4.02  2016-01-03
   - Updated links to Mojolicious website.
