@@ -194,7 +194,7 @@ sub _try {
          and task = any (?)
        order by priority desc, created
        limit 1
-       for update
+       for update skip locked
      )
      returning id, args, retries, task", $id,
     $options->{queues} || ['default'], [keys %{$self->minion->tasks}]
