@@ -51,8 +51,9 @@ sub start {
   die "Can't fork: $!" unless defined(my $pid = fork);
   $self->emit(spawn => $pid) and return $pid if $pid;
 
-  # Reset event loop
+  # Reset event loop and seed
   Mojo::IOLoop->reset;
+  srand;
 
   # Child
   my $task = $self->task;
