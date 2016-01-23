@@ -74,9 +74,8 @@ sub list_workers {
 
 sub new {
   my $self = shift->SUPER::new(pg => Mojo::Pg->new(@_));
-  my $pg = $self->pg->max_connections(1);
+  my $pg = $self->pg->auto_migrate(1)->max_connections(1);
   $pg->migrations->name('minion')->from_data;
-  $pg->once(connection => sub { shift->migrations->migrate });
   return $self;
 }
 

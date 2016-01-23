@@ -1,5 +1,6 @@
 
-4.04  2016-01-22
+4.04  2016-01-23
+  - Updated Minion::Backend::Pg to use new Mojo::Pg features.
 
 4.03  2016-01-17
   - Removed an unused index from Minion::Backend::Pg.
