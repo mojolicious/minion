@@ -1,4 +1,6 @@
 
+4.05  2016-01-24
+
 4.04  2016-01-23
   - Updated Minion::Backend::Pg to use new Mojo::Pg features.
 
