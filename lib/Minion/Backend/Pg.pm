@@ -142,7 +142,7 @@ sub retry_job {
        retried = now(), retries = retries + 1, state = 'inactive',
        delayed = (now() + (interval '1 second' * ?))
      where id = ? and retries = ?
-       and state in ('failed', 'finished', 'inactive')
+       and state in ('inactive', 'failed', 'finished')
      returning 1", @$options{qw(priority queue)}, $options->{delay} // 0, $id,
     $retries
   )->rows;
@@ -733,7 +733,7 @@ alter table minion_jobs add column attempts int not null default 1;
 drop index minion_jobs_state_idx;
 
 -- 7 up
-create type minion_state as enum ('inactive', 'active', 'finished', 'failed');
+create type minion_state as enum ('inactive', 'active', 'failed', 'finished');
 alter table minion_jobs alter column state set default 'inactive'::minion_state;
 alter table minion_jobs
   alter column state type minion_state using state::minion_state;
