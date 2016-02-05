@@ -23,6 +23,12 @@ $minion->backend->pg->search_path(['minion_test']);
 my $worker = $minion->repair->worker;
 isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
+# Migrate up and down
+is $minion->backend->pg->migrations->active, 7, 'active version is 7';
+is $minion->backend->pg->migrations->migrate(0)->active, 0,
+  'active version is 0';
+is $minion->backend->pg->migrations->migrate->active, 7, 'active version is 7';
+
 # Register and unregister
 $worker->register;
 like $worker->info->{started}, qr/^[\d.]+$/, 'has timestamp';
