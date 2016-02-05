@@ -720,17 +720,11 @@ alter table minion_workers add column
   notified timestamp with time zone not null default now();
 alter table minion_workers alter column started set default now();
 
--- 3 up
-create index on minion_jobs (state);
-
 -- 4 up
 alter table minion_jobs add column queue text not null default 'default';
 
 -- 5 up
 alter table minion_jobs add column attempts int not null default 1;
-
--- 6 up
-drop index if exists minion_jobs_state_idx;
 
 -- 7 up
 create type minion_state as enum ('inactive', 'active', 'failed', 'finished');
