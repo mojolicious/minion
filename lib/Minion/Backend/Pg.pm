@@ -25,9 +25,7 @@ sub dequeue {
 }
 
 sub enqueue {
-  my ($self, $task) = (shift, shift);
-  my $args    = shift // [];
-  my $options = shift // {};
+  my ($self, $task, $args, $options) = (shift, shift, shift || [], shift || {});
 
   my $db = $self->pg->db;
   return $db->query(
@@ -133,8 +131,7 @@ sub repair {
 sub reset { shift->pg->db->query('truncate minion_jobs, minion_workers') }
 
 sub retry_job {
-  my ($self, $id, $retries) = (shift, shift, shift);
-  my $options = shift // {};
+  my ($self, $id, $retries, $options) = (shift, shift, shift, shift || {});
 
   return !!$self->pg->db->query(
     "update minion_jobs

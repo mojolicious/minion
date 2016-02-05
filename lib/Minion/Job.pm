@@ -9,9 +9,8 @@ has [qw(args id minion retries task)];
 sub app { shift->minion->app }
 
 sub fail {
-  my $self = shift;
-  my $err  = shift // 'Unknown error';
-  my $ok   = $self->minion->backend->fail_job($self->id, $self->retries, $err);
+  my ($self, $err) = (shift, shift // 'Unknown error');
+  my $ok = $self->minion->backend->fail_job($self->id, $self->retries, $err);
   return $ok ? !!$self->emit(failed => $err) : undef;
 }
 
