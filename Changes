@@ -1,4 +1,6 @@
 
+4.07  2016-02-07
+
 4.06  2016-02-06
   - Improved performance of Minion::Backend::Pg slightly.
 
