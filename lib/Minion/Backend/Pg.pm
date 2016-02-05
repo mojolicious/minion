@@ -731,3 +731,14 @@ alter table minion_jobs add column attempts int not null default 1;
 
 -- 6 up
 drop index minion_jobs_state_idx;
+
+-- 7 up
+create type minion_state as enum ('inactive', 'active', 'finished', 'failed');
+alter table minion_jobs alter column state set default 'inactive'::minion_state;
+alter table minion_jobs
+  alter column state type minion_state using state::minion_state;
+alter table minion_jobs alter column args type jsonb using args::jsonb;
+alter table minion_jobs alter column result type jsonb using result::jsonb;
+
+-- 7 down
+drop type minion_state;

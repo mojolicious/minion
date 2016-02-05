@@ -1,5 +1,6 @@
 
 4.06  2016-02-06
+  - Improved performance of Minion::Backend::Pg slightly.
 
 4.05  2016-02-05
   - Improved Minion::Backend::Pg to check the PostgreSQL version.
