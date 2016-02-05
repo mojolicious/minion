@@ -1,6 +1,7 @@
 package Minion::Backend::Pg;
 use Mojo::Base 'Minion::Backend';
 
+use Carp 'croak';
 use Mojo::IOLoop;
 use Mojo::Pg;
 use Sys::Hostname 'hostname';
@@ -74,8 +75,12 @@ sub list_workers {
 
 sub new {
   my $self = shift->SUPER::new(pg => Mojo::Pg->new(@_));
+
+  croak 'PostgreSQL 9.4 or later is required'
+    if Mojo::Pg->new(@_)->db->dbh->{pg_server_version} < 90400;
   my $pg = $self->pg->auto_migrate(1)->max_connections(1);
   $pg->migrations->name('minion')->from_data;
+
   return $self;
 }
 
