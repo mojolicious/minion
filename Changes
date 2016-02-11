@@ -1,5 +1,6 @@
 
-4.07  2016-02-07
+5.0  2016-02-11
+  - Improved Minion::Backend::Pg performance with new PostgreSQL 9.5 features.
 
 4.06  2016-02-06
   - Improved performance of Minion::Backend::Pg slightly.

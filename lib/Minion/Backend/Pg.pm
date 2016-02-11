@@ -74,8 +74,8 @@ sub list_workers {
 sub new {
   my $self = shift->SUPER::new(pg => Mojo::Pg->new(@_));
 
-  croak 'PostgreSQL 9.4 or later is required'
-    if Mojo::Pg->new(@_)->db->dbh->{pg_server_version} < 90400;
+  croak 'PostgreSQL 9.5 or later is required'
+    if Mojo::Pg->new(@_)->db->dbh->{pg_server_version} < 90500;
   my $pg = $self->pg->auto_migrate(1)->max_connections(1);
   $pg->migrations->name('minion')->from_data;
 
@@ -195,7 +195,7 @@ sub _try {
          and task = any (?)
        order by priority desc, created
        limit 1
-       for update
+       for update skip locked
      )
      returning id, args, retries, task", $id,
     $options->{queues} || ['default'], [keys %{$self->minion->tasks}]
