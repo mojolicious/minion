@@ -143,7 +143,7 @@ Emitted in the process performing this job, after is has been spawned.
 
   $job->on(start => sub {
     my $job = shift;
-    local $0 = $job->id;
+    $0 = $job->id;
   });
 
 =head1 ATTRIBUTES
