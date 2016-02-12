@@ -54,7 +54,7 @@ sub start {
   Mojo::IOLoop->reset;
 
   # Child
-  my $task = $self->task;
+  my $task = $self->emit('start')->task;
   $self->app->log->debug(
     qq{Performing job "@{[$self->id]}" with task "$task" in process $$});
   my $cb = $self->minion->tasks->{$task};
@@ -130,6 +130,20 @@ spawned for processing.
     my ($job, $pid) = @_;
     my $id = $job->id;
     say "Job $id running in process $pid";
+  });
+
+=head2 start
+
+  $job->on(start => sub {
+    my $job = shift;
+    ...
+  });
+
+Emitted in the process performing this job, after is has been spawned.
+
+  $job->on(start => sub {
+    my $job = shift;
+    local $0 = $job->id;
   });
 
 =head1 ATTRIBUTES

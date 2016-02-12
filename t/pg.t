@@ -368,6 +368,13 @@ $minion->once(
         $job->on(failed   => sub { $failed++ });
         $job->on(finished => sub { $finished++ });
         $job->on(spawn    => sub { $pid = pop });
+        $job->on(
+          start => sub {
+            my $job = shift;
+            return unless $job->task eq 'switcheroo';
+            $job->task('add')->args->[-1] += 1;
+          }
+        );
       }
     );
   }
@@ -394,6 +401,11 @@ $job->fail;
 is $err,      "test\n", 'right error';
 is $failed,   1,        'failed event has been emitted once';
 is $finished, 1,        'finished event has been emitted once';
+$minion->add_task(switcheroo => sub { });
+$minion->enqueue(switcheroo => [5, 3]);
+$job = $worker->dequeue(0);
+$job->perform;
+is_deeply $job->info->{result}, {added => 9}, 'right result';
 $worker->unregister;
 
 # Queues
