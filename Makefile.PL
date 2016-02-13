@@ -8,7 +8,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
   NAME         => 'Minion',
   VERSION_FROM => 'lib/Minion.pm',
-  ABSTRACT     => 'Job Queue',
+  ABSTRACT     => 'Job queue',
   AUTHOR       => 'Sebastian Riedel <sri@cpan.org>',
   LICENSE      => 'artistic_2',
   META_MERGE   => {
