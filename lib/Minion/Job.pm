@@ -139,7 +139,7 @@ spawned for processing.
     ...
   });
 
-Emitted in the process performing this job, after is has been spawned.
+Emitted in the process performing this job, after it has been spawned.
 
   $job->on(start => sub {
     my $job = shift;

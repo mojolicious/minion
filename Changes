@@ -1,5 +1,5 @@
 
-5.0  2016-02-12
+5.0  2016-02-13
   - Added start event to Minion::Job.
   - Improved Minion::Backend::Pg performance with new PostgreSQL 9.5 features.
 
