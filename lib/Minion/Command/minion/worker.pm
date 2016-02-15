@@ -18,6 +18,8 @@ sub run {
 
   local $SIG{CHLD} = 'DEFAULT';
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
+  local $SIG{QUIT}
+    = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
 
   # Log fatal errors
   my $app = $self->app;
@@ -99,6 +101,10 @@ with the following signals.
 =head2 INT, TERM
 
 Stop gracefully after finishing the current jobs.
+
+=head2 QUIT
+
+Stop immediately without finishing the current jobs.
 
 =head1 ATTRIBUTES
 
