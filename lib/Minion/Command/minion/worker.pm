@@ -40,9 +40,8 @@ sub _work {
   if ($self->{repair} < steady_time) {
     my $app = $self->app;
     $app->log->debug('Checking worker registry and job queue');
-    my $minion = $app->minion;
-    $minion->repair;
-    $self->{repair} = steady_time + $minion->missing_after;
+    my $after = $app->minion->repair->missing_after;
+    $self->{repair} = steady_time + ($after - int rand $after / 2);
   }
 
   # Check if jobs are finished
