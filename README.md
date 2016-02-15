@@ -47,3 +47,7 @@ app->start;
     $ curl -L https://cpanmin.us | perl - -M https://cpan.metacpan.org -n Minion
 
   We recommend the use of a [Perlbrew](http://perlbrew.pl) environment.
+
+## Want to know more?
+
+  Take a look at our excellent [documentation](http://mojolicious.org/perldoc>)!
