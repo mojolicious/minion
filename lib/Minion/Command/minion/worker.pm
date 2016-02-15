@@ -55,7 +55,10 @@ sub _work {
 
   # Try to get more jobs
   elsif (my $job = $worker->dequeue(5 => {queues => $self->{queues}})) {
-    $jobs->{$job->start} = $job;
+    $jobs->{my $pid = $job->start} = $job;
+    my ($id, $task) = ($job->id, $job->task);
+    $self->app->log->debug(
+      qq{Performing job "$id" with task "$task" in process $pid});
   }
 }
 

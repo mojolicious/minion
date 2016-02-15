@@ -50,15 +50,15 @@ sub start {
   die "Can't fork: $!" unless defined(my $pid = fork);
   $self->emit(spawn => $pid) and return $pid if $pid;
 
-  # Reset event loop
-  Mojo::IOLoop->reset;
-
   # Child
-  my $task = $self->emit('start')->task;
-  $self->app->log->debug(
-    qq{Performing job "@{[$self->id]}" with task "$task" in process $$});
-  my $cb = $self->minion->tasks->{$task};
-  $self->fail($@) unless eval { $self->$cb(@{$self->args}); 1 };
+  eval {
+
+    # Reset event loop
+    Mojo::IOLoop->reset;
+    $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
+
+    1;
+  } or $self->fail($@);
   exit 0;
 }
 
