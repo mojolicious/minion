@@ -2,8 +2,16 @@
 # Minion [![Build Status](https://travis-ci.org/kraih/minion.svg?branch=master)](https://travis-ci.org/kraih/minion)
 
   A job queue for the [Mojolicious](http://mojolicious.org) real-time web
-  framework with support for multiple backends, such as
-  [PostgreSQL](http://www.postgresql.org).
+  framework, with support for multiple named queues, priorities, delayed jobs,
+  job results, retries with backoff, statistics, distributed workers, parallel
+  processing, autoscaling, resource leak protection and multiple backends (such
+  as [PostgreSQL](http://www.postgresql.org).
+
+  Job queues allow you to process time and/or computationally intensive tasks in
+  background processes, outside of the request/response lifecycle. Among those
+  tasks you'll commonly find image resizing, spam filtering, HTTP downloads,
+  building tarballs, warming caches and basically everything else you can
+  imagine that's not super fast.
 
 ```perl
 use Mojolicious::Lite;
