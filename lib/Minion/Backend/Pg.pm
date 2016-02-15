@@ -85,12 +85,12 @@ sub new {
 sub register_worker {
   my ($self, $id) = @_;
 
-  my $sql
-    = 'update minion_workers set notified = now() where id = ? returning 1';
-  return $id if $id && $self->pg->db->query($sql, $id)->rows;
-
-  $sql = 'insert into minion_workers (host, pid) values (?, ?) returning id';
-  return $self->pg->db->query($sql, hostname, $$)->hash->{id};
+  return shift->pg->db->query(
+    "insert into minion_workers (id, host, pid)
+     values (coalesce(?, nextval('minion_workers_id_seq')), ?, ?)
+     on conflict(id) do update set notified = now()
+     returning id", $id, $self->{host} //= hostname, $$
+  )->hash->{id};
 }
 
 sub remove_job {
