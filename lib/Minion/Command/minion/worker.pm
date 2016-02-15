@@ -22,7 +22,6 @@ sub run {
   # Log fatal errors
   my $app = $self->app;
   my $worker = $self->{worker} = $app->minion->worker;
-  @$self{qw(register repair)} = (0, 0);
   eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
     or $app->log->fatal("Worker error: $@");
   $worker->unregister;
@@ -34,10 +33,10 @@ sub _work {
   # Send heartbeats in regular intervals
   my $worker = $self->{worker};
   $worker->register and $self->{register} = steady_time + $self->{interval}
-    if $self->{register} < steady_time;
+    if ($self->{register} // 0) < steady_time;
 
   # Repair in regular intervals
-  if ($self->{repair} < steady_time) {
+  if (($self->{repair} // 0) < steady_time) {
     my $app = $self->app;
     $app->log->debug('Checking worker registry and job queue');
     my $after = $app->minion->repair->missing_after;
