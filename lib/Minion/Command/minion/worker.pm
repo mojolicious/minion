@@ -23,6 +23,7 @@ sub run {
 
   # Log fatal errors
   my $app = $self->app;
+  $app->log->debug("Manager $$ started");
   my $worker = $self->{worker} = $app->minion->worker;
   eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
     or $app->log->fatal("Worker error: $@");
