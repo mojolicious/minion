@@ -33,10 +33,10 @@ sub _work {
   # Send heartbeats in regular intervals
   my $worker = $self->{worker};
   $worker->register and $self->{register} = steady_time + $self->{interval}
-    if ($self->{register} // 0) < steady_time;
+    if ($self->{register} || 0) < steady_time;
 
-  # Repair in regular intervals
-  if (($self->{repair} // 0) < steady_time) {
+  # Repair in regular intervals (randomize to avoid congestion)
+  if (($self->{repair} || 0) < steady_time) {
     my $app = $self->app;
     $app->log->debug('Checking worker registry and job queue');
     my $after = $app->minion->repair->missing_after;
