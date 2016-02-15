@@ -149,23 +149,18 @@ sub stats {
   my $self = shift;
 
   my $stats = $self->pg->db->query(
-    "select state::text, count(state) from minion_jobs group by state
+    "select state::text || '_jobs', count(state) from minion_jobs group by state
      union all
-     select 'workers', count(*) from minion_workers
+     select 'inactive_workers', count(*) from minion_workers
      union all
      select 'active_workers', count(distinct worker) from minion_jobs
      where state = 'active'"
   );
   $stats = $stats->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
+  $stats->{inactive_workers} -= $stats->{active_workers};
+  $stats->{"${_}_jobs"} ||= 0 for qw(inactive active failed finished);
 
-  return {
-    active_jobs => $stats->{active} || 0,
-    active_workers   => $stats->{active_workers},
-    failed_jobs      => $stats->{failed} || 0,
-    finished_jobs    => $stats->{finished} || 0,
-    inactive_jobs    => $stats->{inactive} || 0,
-    inactive_workers => $stats->{workers} - $stats->{active_workers}
-  };
+  return $stats;
 }
 
 sub unregister_worker {
