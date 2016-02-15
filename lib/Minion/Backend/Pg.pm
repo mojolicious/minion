@@ -148,24 +148,23 @@ sub retry_job {
 sub stats {
   my $self = shift;
 
-  my $db      = $self->pg->db;
-  my $workers = $db->query(
-    "select count(*) from minion_workers
+  my $stats = $self->pg->db->query(
+    "select state::text, count(state) from minion_jobs group by state
      union all
-     select count(distinct worker) from minion_jobs where state = 'active'"
-  )->arrays->flatten->to_array;
-
-  my $sql = 'select state, count(state) from minion_jobs group by 1';
-  my $states
-    = $db->query($sql)->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
+     select 'workers', count(*) from minion_workers
+     union all
+     select 'active_workers', count(distinct worker) from minion_jobs
+     where state = 'active'"
+  );
+  $stats = $stats->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
 
   return {
-    active_jobs => $states->{active} || 0,
-    active_workers   => $workers->[1],
-    failed_jobs      => $states->{failed} || 0,
-    finished_jobs    => $states->{finished} || 0,
-    inactive_jobs    => $states->{inactive} || 0,
-    inactive_workers => $workers->[0] - $workers->[1]
+    active_jobs => $stats->{active} || 0,
+    active_workers   => $stats->{active_workers},
+    failed_jobs      => $stats->{failed} || 0,
+    finished_jobs    => $stats->{finished} || 0,
+    inactive_jobs    => $stats->{inactive} || 0,
+    inactive_workers => $stats->{workers} - $stats->{active_workers}
   };
 }
 
