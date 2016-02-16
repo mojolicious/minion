@@ -1,7 +1,8 @@
 
 5.0  2016-02-16
   - Added start event to Minion::Job.
-  - Improved Minion::Backend::Pg performance with new PostgreSQL 9.5 features.
+  - Improved Minion::Backend::Pg performance significantly with a new index and
+    PostgreSQL 9.5 features.
   - Improved Minion::Job to capture more exceptions.
   - Improved worker command to support the QUIT signal.
   - Improved worker command to repair in less regular intervals.

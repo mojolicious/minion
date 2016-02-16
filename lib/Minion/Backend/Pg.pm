@@ -678,7 +678,6 @@ create table if not exists minion_jobs (
   task     text not null,
   worker   bigint
 );
-create index on minion_jobs (priority desc, created);
 create table if not exists minion_workers (
   id      bigserial not null primary key,
   host    text not null,
@@ -731,4 +730,4 @@ drop type if exists minion_state;
 
 -- 8 up
 alter table minion_jobs add constraint args check(jsonb_typeof(args) = 'array');
-create index on minion_jobs (state);
+create index on minion_jobs (state, priority desc, created);
