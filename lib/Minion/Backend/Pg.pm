@@ -730,4 +730,5 @@ alter table minion_jobs alter column state set default 'inactive';
 drop type if exists minion_state;
 
 -- 8 up
+alter table minion_jobs add constraint args check(jsonb_typeof(args) = 'array');
 create index on minion_jobs (state);
