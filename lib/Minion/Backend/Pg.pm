@@ -58,8 +58,7 @@ sub list_jobs {
     'select id from minion_jobs
      where (state = $1 or $1 is null) and (task = $2 or $2 is null)
      order by id desc
-     limit $3
-     offset $4', @$options{qw(state task)}, $limit, $offset
+     limit $3 offset $4', @$options{qw(state task)}, $limit, $offset
   )->arrays->map(sub { $self->job_info($_->[0]) })->to_array;
 }
 
@@ -155,8 +154,7 @@ sub stats {
      union all
      select 'active_workers', count(distinct worker) from minion_jobs
      where state = 'active'"
-  );
-  $stats = $stats->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
+  )->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
   $stats->{inactive_workers} -= $stats->{active_workers};
   $stats->{"${_}_jobs"} ||= 0 for qw(inactive active failed finished);
 
