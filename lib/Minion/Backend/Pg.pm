@@ -711,10 +711,10 @@ alter table minion_workers add column
 alter table minion_workers alter column started set default now();
 
 -- 4 up
-alter table minion_jobs add column queue text not null;
+alter table minion_jobs add column queue text not null default 'default';
 
 -- 5 up
-alter table minion_jobs add column attempts int not null;
+alter table minion_jobs add column attempts int not null default 1;
 
 -- 7 up
 create type minion_state as enum ('inactive', 'active', 'failed', 'finished');
