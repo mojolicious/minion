@@ -728,3 +728,6 @@ alter table minion_jobs alter column result type jsonb using result::jsonb;
 alter table minion_jobs alter column state type text using state;
 alter table minion_jobs alter column state set default 'inactive';
 drop type if exists minion_state;
+
+-- 8 up
+create index on minion_jobs (state);
