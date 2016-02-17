@@ -1,4 +1,6 @@
 
+5.01  2016-02-18
+
 5.0  2016-02-17
   - Added start event to Minion::Job.
   - Added -R option to worker command.
