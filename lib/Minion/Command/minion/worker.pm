@@ -11,9 +11,10 @@ sub run {
   my ($self, @args) = @_;
 
   GetOptionsFromArray \@args,
-    'I|heartbeat-interval=i' => \($self->{interval} = 60),
-    'j|jobs=i'               => \($self->{max}      = 4),
-    'q|queue=s'              => \my @queues;
+    'I|heartbeat-interval=i' => \($self->{hearthbeat} = 60),
+    'j|jobs=i'               => \($self->{max}        = 4),
+    'q|queue=s'              => \my @queues,
+    'R|repair-interval=i'    => \($self->{repair}     = 21600);
   $self->{queues} = @queues ? \@queues : ['default'];
 
   local $SIG{CHLD} = 'DEFAULT';
@@ -35,15 +36,15 @@ sub _work {
 
   # Send heartbeats in regular intervals
   my $worker = $self->{worker};
-  $worker->register and $self->{register} = steady_time + $self->{interval}
+  $worker->register and $self->{register} = steady_time + $self->{hearthbeat}
     if ($self->{register} || 0) < steady_time;
 
   # Repair in regular intervals (randomize to avoid congestion)
-  if (($self->{repair} || 0) < steady_time) {
+  if (($self->{check} || 0) < steady_time) {
     my $app = $self->app;
     $app->log->debug('Checking worker registry and job queue');
-    my $after = $app->minion->repair->missing_after;
-    $self->{repair} = steady_time + ($after - int rand $after / 2);
+    my $repair = $self->{repair};
+    $self->{check} = steady_time + ($repair - int rand $repair / 2);
   }
 
   # Check if jobs are finished
@@ -75,7 +76,7 @@ Minion::Command::minion::worker - Minion worker command
   Usage: APPLICATION minion worker [OPTIONS]
 
     ./myapp.pl minion worker
-    ./myapp.pl minion worker -m production -I 15 -j 10
+    ./myapp.pl minion worker -m production -I 15 -R 3600 -j 10
     ./myapp.pl minion worker -q important -q default
 
   Options:
@@ -91,6 +92,7 @@ Minion::Command::minion::worker - Minion worker command
                                          MOJO_MODE/PLACK_ENV or "development"
     -q, --queue <name>                   One or more queues to get jobs from,
                                          defaults to "default"
+    -R, --repair-interval <seconds>      Repair interval, defaults to 21600
 
 =head1 DESCRIPTION
 

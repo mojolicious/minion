@@ -1,7 +1,8 @@
 
 5.0  2016-02-17
   - Added start event to Minion::Job.
-  - Reduced default missing_after value to 4 hours.
+  - Added -R option to worker command.
+  - Reduced default missing_after value to 30 minutes.
   - Reduced default remove_after value to 2 days.
   - Improved Minion::Backend::Pg performance significantly with a new index and
     PostgreSQL 9.5 features.

@@ -12,7 +12,7 @@ use Scalar::Util 'weaken';
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has 'backend';
 has backoff => sub { \&_backoff };
-has missing_after => 14400;
+has missing_after => 1800;
 has remove_after  => 172800;
 has tasks         => sub { {} };
 
@@ -249,7 +249,7 @@ roughly C<25> attempts can be made in C<21> days.
 
 Amount of time in seconds after which workers without a heartbeat will be
 considered missing and removed from the registry by L</"repair">, defaults to
-C<14400> (4 hours).
+C<1800> (30 minutes).
 
 =head2 remove_after
 
