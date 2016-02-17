@@ -12,8 +12,8 @@ use Scalar::Util 'weaken';
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has 'backend';
 has backoff => sub { \&_backoff };
-has missing_after => 86400;
-has remove_after  => 864000;
+has missing_after => 14400;
+has remove_after  => 172800;
 has tasks         => sub { {} };
 
 our $VERSION = '5.0';
@@ -249,7 +249,7 @@ roughly C<25> attempts can be made in C<21> days.
 
 Amount of time in seconds after which workers without a heartbeat will be
 considered missing and removed from the registry by L</"repair">, defaults to
-C<86400> (1 day).
+C<14400> (4 hours).
 
 =head2 remove_after
 
@@ -258,7 +258,7 @@ C<86400> (1 day).
 
 Amount of time in seconds after which jobs that have reached the state
 C<finished> will be removed automatically by L</"repair">, defaults to
-C<864000> (10 days).
+C<172800> (2 days).
 
 =head2 tasks
 
