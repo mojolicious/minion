@@ -43,8 +43,9 @@ sub _work {
   if (($self->{check} || 0) < steady_time) {
     my $app = $self->app;
     $app->log->debug('Checking worker registry and job queue');
-    my $repair = $self->{repair};
-    $self->{check} = steady_time + ($repair - int rand $repair / 2);
+    $app->minion->repair;
+    $self->{check}
+      = steady_time + ($self->{repair} - int rand $self->{repair} / 2);
   }
 
   # Check if jobs are finished
@@ -93,6 +94,7 @@ Minion::Command::minion::worker - Minion worker command
     -q, --queue <name>                   One or more queues to get jobs from,
                                          defaults to "default"
     -R, --repair-interval <seconds>      Repair interval, defaults to 21600
+                                         (6 hours)
 
 =head1 DESCRIPTION
 
