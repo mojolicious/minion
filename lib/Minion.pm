@@ -352,7 +352,12 @@ Construct a new L<Minion> object.
   $minion->perform_jobs;
   $minion->perform_jobs({queues => ['important']});
 
-Perform all jobs, very useful for testing.
+Perform all jobs with a temporary worker, very useful for testing.
+
+  # Longer version
+  my $worker = $self->worker;
+  while (my $job = $worker->register->dequeue(0)) { $job->perform }
+  $worker->unregister;
 
 These options are currently available:
 
