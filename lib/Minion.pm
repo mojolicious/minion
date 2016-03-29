@@ -355,7 +355,7 @@ Construct a new L<Minion> object.
 Perform all jobs with a temporary worker, very useful for testing.
 
   # Longer version
-  my $worker = $self->worker;
+  my $worker = $minion->worker;
   while (my $job = $worker->register->dequeue(0)) { $job->perform }
   $worker->unregister;
 
