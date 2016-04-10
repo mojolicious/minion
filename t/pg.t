@@ -356,9 +356,8 @@ ok $minion->job($id)->remove, 'job has been removed';
 $worker->unregister;
 
 # Events
-my ($pid, $enqueue);
-my $failed = 0;
-$finished = 0;
+my ($enqueue, $pid);
+my $failed = $finished = 0;
 $minion->once(enqueue => sub { $enqueue = pop });
 $minion->once(
   worker => sub {
