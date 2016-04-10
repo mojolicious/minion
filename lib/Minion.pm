@@ -20,7 +20,12 @@ our $VERSION = '5.03';
 
 sub add_task { ($_[0]->tasks->{$_[1]} = $_[2]) and return $_[0] }
 
-sub enqueue { shift->backend->enqueue(@_) }
+sub enqueue {
+  my $self = shift;
+  my $id = $self->backend->enqueue(@_);
+  $self->emit(enqueue => $id);
+  return $id;
+}
 
 sub job {
   my ($self, $id) = @_;
@@ -194,6 +199,20 @@ Which are loaded like any other plugin from your application.
 
 L<Minion> inherits all events from L<Mojo::EventEmitter> and can emit the
 following new ones.
+
+=head2 enqueue
+
+  $minion->on(enqueue => sub {
+    my ($minion, $id) = @_;
+    ...
+  });
+
+Emitted after a job has been enqueued, in the process that enqueued it.
+
+  $minion->on(enqueue => sub {
+    my ($minion, $id) = @_;
+    say "Job $id has been enqueued.";
+  });
 
 =head2 worker
 

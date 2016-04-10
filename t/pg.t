@@ -357,8 +357,10 @@ $worker->unregister;
 
 # Events
 my $pid;
+my $enqueue;
 my $failed = 0;
 $finished = 0;
+$minion->once(enqueue => sub { $enqueue = pop });
 $minion->once(
   worker => sub {
     my ($minion, $worker) = @_;
@@ -380,7 +382,8 @@ $minion->once(
   }
 );
 $worker = $minion->worker->register;
-$minion->enqueue(add => [3, 3]);
+$id = $minion->enqueue(add => [3, 3]);
+is $enqueue, $id, 'emit correct event';
 $minion->enqueue(add => [4, 3]);
 $job = $worker->dequeue(0);
 is $failed,   0, 'failed event has not been emitted';
