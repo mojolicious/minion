@@ -1,5 +1,6 @@
 
-5.03  2016-03-29
+5.03  2016-04-10
+  - Added enqueue event to Minion. (jberger)
 
 5.02  2016-03-23
   - Fixed copyright notice.

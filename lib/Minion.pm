@@ -22,7 +22,7 @@ sub add_task { ($_[0]->tasks->{$_[1]} = $_[2]) and return $_[0] }
 
 sub enqueue {
   my $self = shift;
-  my $id = $self->backend->enqueue(@_);
+  my $id   = $self->backend->enqueue(@_);
   $self->emit(enqueue => $id);
   return $id;
 }
@@ -502,6 +502,8 @@ In alphabetical order:
 Andrey Khozov
 
 Brian Medley
+
+Joel Berger
 
 Paul Williams
 
