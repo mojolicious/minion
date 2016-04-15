@@ -1,5 +1,6 @@
 
 5.04  2016-04-15
+  - Updated Mojo::Pg version requirement to 2.18.
 
 5.03  2016-04-10
   - Added enqueue event to Minion. (jberger)
@@ -11,6 +12,7 @@
   - Fixed worker command to repair in regular intervals.
 
 5.0  2016-02-17
+  - Minion::Backend::Pg now requires PostgreSQL 9.5.
   - Added start event to Minion::Job.
   - Added -R option to worker command.
   - Reduced default missing_after value to 30 minutes.
