@@ -3,7 +3,7 @@ use Mojo::Base 'Minion::Backend';
 
 use Carp 'croak';
 use Mojo::IOLoop;
-use Mojo::Pg;
+use Mojo::Pg 2.18;
 use Sys::Hostname 'hostname';
 
 has 'pg';
