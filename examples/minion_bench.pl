@@ -10,6 +10,8 @@ my $WORKERS     = 4;
 my $STATS       = 100;
 my $REPAIR      = 100;
 
+# A benchmark script for comparing backends and evaluating the performance
+# impact of proposed changes
 my $minion = Minion->new(Pg => 'postgresql://tester:testing@/test');
 $minion->add_task(foo => sub { });
 $minion->add_task(bar => sub { });

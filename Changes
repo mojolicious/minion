@@ -2,6 +2,7 @@
 5.04  2016-04-16
   - Added delayed_jobs field to stats method in Minion and Minion::Backend::Pg.
   - Updated Mojo::Pg version requirement to 2.18.
+  - Improved job command to show the number of delayed jobs in statistics.
 
 5.03  2016-04-10
   - Added enqueue event to Minion. (jberger)
