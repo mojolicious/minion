@@ -150,9 +150,6 @@ sub stats {
   my $stats = $self->pg->db->query(
     "select state::text || '_jobs', count(state) from minion_jobs group by state
      union all
-     select 'delayed_jobs', count(*) from minion_jobs
-     where state = 'inactive' and delayed > now()
-     union all
      select 'inactive_workers', count(*) from minion_workers
      union all
      select 'active_workers', count(distinct worker) from minion_jobs
@@ -578,13 +575,6 @@ Number of jobs in C<active> state.
   active_workers => 100
 
 Number of workers that are currently processing a job.
-
-=item delayed_jobs
-
-  delayed_jobs => 100
-
-Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future.
 
 =item failed_jobs
 
