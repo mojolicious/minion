@@ -88,6 +88,7 @@ sub _stats {
   say "Active jobs:      $stats->{active_jobs}";
   say "Failed jobs:      $stats->{failed_jobs}";
   say "Finished jobs:    $stats->{finished_jobs}";
+  say "Delayed jobs:     $stats->{delayed_jobs}";
 }
 
 sub _worker {

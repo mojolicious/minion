@@ -144,6 +144,7 @@ my $stats = $minion->stats;
 is $stats->{active_workers},   0, 'no active workers';
 is $stats->{inactive_workers}, 0, 'no inactive workers';
 is $stats->{active_jobs},      0, 'no active jobs';
+is $stats->{delayed_jobs},     0, 'no delayed jobs';
 is $stats->{failed_jobs},      0, 'no failed jobs';
 is $stats->{finished_jobs},    0, 'no finished jobs';
 is $stats->{inactive_jobs},    0, 'no inactive jobs';
@@ -334,6 +335,7 @@ $worker->unregister;
 $id = $minion->enqueue(add => [2, 1] => {delay => 100});
 is $worker->register->dequeue(0), undef, 'too early for job';
 ok $minion->job($id)->info->{delayed} > time, 'delayed timestamp';
+is $minion->stats->{delayed_jobs}, 1, 'one delayed job';
 $minion->backend->pg->db->query(
   "update minion_jobs set delayed = now() - interval '1 day' where id = ?",
   $id);
