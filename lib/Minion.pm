@@ -6,7 +6,6 @@ use Minion::Job;
 use Minion::Worker;
 use Mojo::Loader 'load_class';
 use Mojo::Server;
-use Mojo::URL;
 use Scalar::Util 'weaken';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
