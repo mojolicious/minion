@@ -433,6 +433,18 @@ Number of jobs in C<inactive> state.
 
 Number of workers that are currently not processing a job.
 
+=item size
+
+  size => 1024
+
+Size in bytes of all jobs currently in the queue.
+
+=item uptime
+
+  uptime => 65.25
+
+Uptime of job queue in seconds.
+
 =back
 
 =head2 unregister_worker

@@ -153,7 +153,11 @@ sub stats {
      select 'inactive_workers', count(*) from minion_workers
      union all
      select 'active_workers', count(distinct worker) from minion_jobs
-     where state = 'active'"
+     where state = 'active'
+     union all
+     select 'size', pg_total_relation_size('minion_jobs')
+     union all
+     select 'uptime', extract(epoch from now() - pg_postmaster_start_time())"
   )->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
   $stats->{inactive_workers} -= $stats->{active_workers};
   $stats->{"${_}_jobs"} ||= 0 for qw(inactive active failed finished);
@@ -600,6 +604,18 @@ Number of jobs in C<inactive> state.
   inactive_workers => 100
 
 Number of workers that are currently not processing a job.
+
+=item size
+
+  size => 1024
+
+Size in bytes of all jobs currently in the queue.
+
+=item uptime
+
+  uptime => 65.25
+
+Uptime of job queue in seconds.
 
 =back
 

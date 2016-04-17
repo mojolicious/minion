@@ -1,6 +1,9 @@
 
-5.04  2016-04-17
+5.04  2016-04-18
+  - Added size and uptime fields to stat method in Minion and
+    Minion::Backend::Pg.
   - Updated Mojo::Pg requirement to 2.18.
+  - Improved job command to show more detailed information for jobs and workers.
 
 5.03  2016-04-10
   - Added enqueue event to Minion. (jberger)

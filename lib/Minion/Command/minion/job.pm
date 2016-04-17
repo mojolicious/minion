@@ -2,7 +2,6 @@ package Minion::Command::minion::job;
 use Mojo::Base 'Mojolicious::Command';
 
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
-use Mojo::Date;
 use Mojo::JSON 'decode_json';
 use Mojo::Util qw(dumper tablify);
 
@@ -35,7 +34,8 @@ sub run {
 
   # Show stats or list jobs/workers
   return $self->_stats if $stats;
-  return $self->_list_workers($offset, $limit) if $workers;
+  return $id ? $self->_worker($id) : $self->_list_workers($offset, $limit)
+    if $workers;
   return $self->_list_jobs($offset, $limit, $options) unless defined $id;
   die "Job does not exist.\n" unless my $job = $self->app->minion->job($id);
 
@@ -46,28 +46,7 @@ sub run {
   return $job->retry($options) || die "Job is active.\n" if $retry;
 
   # Job info
-  $self->_info($job);
-}
-
-sub _date { Mojo::Date->new(@_)->to_datetime }
-
-sub _info {
-  my ($self, $job) = @_;
-
-  # Details
-  my $info = $job->info;
-  my ($queue, $state, $priority, $retries)
-    = @$info{qw(queue state priority retries)};
-  say $info->{task}, " ($queue, $state, p$priority, r$retries)";
-  print dumper $info->{args};
-  if (my $result = $info->{result}) { print dumper $result }
-
-  # Timing
-  my ($created, $delayed) = @$info{qw(created delayed)};
-  say _date($created), ' (created)';
-  say _date($delayed), ' (delayed)' if $delayed > $created;
-  $info->{$_} and say _date($info->{$_}), " ($_)"
-    for qw(retried started finished);
+  print dumper $job->info;
 }
 
 sub _list_jobs {
@@ -77,24 +56,16 @@ sub _list_jobs {
 
 sub _list_workers {
   my $workers = shift->app->minion->backend->list_workers(@_);
-  print tablify [map { [_worker($_)] } @$workers];
+  my @workers = map { [$_->{id}, $_->{host} . ':' . $_->{pid}] } @$workers;
+  print tablify \@workers;
 }
 
-sub _stats {
-  my $stats = shift->app->minion->stats;
-  say "Inactive workers: $stats->{inactive_workers}";
-  say "Active workers:   $stats->{active_workers}";
-  say "Inactive jobs:    $stats->{inactive_jobs}";
-  say "Active jobs:      $stats->{active_jobs}";
-  say "Failed jobs:      $stats->{failed_jobs}";
-  say "Finished jobs:    $stats->{finished_jobs}";
-}
+sub _stats { print dumper shift->app->minion->stats }
 
 sub _worker {
-  my $worker = shift;
-  my $state  = @{$worker->{jobs}} ? 'active' : 'inactive';
-  my $name   = $worker->{host} . ':' . $worker->{pid};
-  return $worker->{id}, $state, $name, _date($worker->{notified});
+  die "Worker does not exist.\n"
+    unless my $worker = shift->app->minion->backend->worker_info(@_);
+  print dumper $worker;
 }
 
 1;
@@ -110,12 +81,13 @@ Minion::Command::minion::job - Minion job command
   Usage: APPLICATION minion job [OPTIONS] [ID]
 
     ./myapp.pl minion job
+    ./myapp.pl minion job 10023
+    ./myapp.pl minion job -w
+    ./myapp.pl minion job -w 23
+    ./myapp.pl minion job -s
     ./myapp.pl minion job -t foo -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -p 5 -q important
-    ./myapp.pl minion job -s
-    ./myapp.pl minion job -w -l 5
-    ./myapp.pl minion job 10023
     ./myapp.pl minion job -R -d 10 10023
     ./myapp.pl minion job -r 10023
 
@@ -142,7 +114,8 @@ Minion::Command::minion::job - Minion job command
     -S, --state <state>       List only jobs in this state
     -s, --stats               Show queue statistics
     -t, --task <name>         List only jobs for this task
-    -w, --workers             List workers instead of jobs
+    -w, --workers             List workers instead of jobs, or show information
+                              for a specific worker
 
 =head1 DESCRIPTION
 
