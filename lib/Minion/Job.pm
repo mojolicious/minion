@@ -249,19 +249,19 @@ Number of times performing this job will be attempted.
 
   created => 784111777
 
-Time job was created.
+Epoch time job was created.
 
 =item delayed
 
   delayed => 784111777
 
-Time job was delayed to.
+Epoch time job was delayed to.
 
 =item finished
 
   finished => 784111777
 
-Time job was finished.
+Epoch time job was finished.
 
 =item priority
 
@@ -285,7 +285,7 @@ Job result.
 
   retried => 784111777
 
-Time job has been retried.
+Epoch time job has been retried.
 
 =item retries
 
@@ -297,7 +297,7 @@ Number of times job has been retried.
 
   started => 784111777
 
-Time job was started.
+Epoch time job was started.
 
 =item state
 

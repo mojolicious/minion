@@ -1,6 +1,6 @@
 
 5.04  2016-04-17
-  - Updated Mojo::Pg version requirement to 2.18.
+  - Updated Mojo::Pg requirement to 2.18.
 
 5.03  2016-04-10
   - Added enqueue event to Minion. (jberger)
@@ -352,7 +352,7 @@
   - Added support for delayed jobs.
   - Added stats method to Minion.
   - Added app method to Minion::Job.
-  - Reduced Perl version requirement to 5.10.1.
+  - Reduced Perl requirement to 5.10.1.
 
 0.01  2014-03-27
   - First release.

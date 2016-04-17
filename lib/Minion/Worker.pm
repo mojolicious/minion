@@ -143,7 +143,7 @@ Ids of jobs the worker is currently processing.
 
   notified => 784111777
 
-Last time worker sent a heartbeat.
+Epoch time worker sent the last heartbeat.
 
 =item pid
 
@@ -155,7 +155,7 @@ Process id of worker.
 
   started => 784111777
 
-Time worker was started.
+Epoch time worker was started.
 
 =back
 
