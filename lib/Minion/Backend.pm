@@ -146,7 +146,8 @@ These options are currently available:
 
   attempts => 25
 
-Number of times performing this job will be attempted, defaults to C<1>.
+Number of times performing this job will be attempted, with a delay based on
+L<Minion/"backoff"> after the first attempt, defaults to C<1>.
 
 =item delay
 
@@ -216,7 +217,7 @@ Job arguments.
 
   attempts => 25
 
-Number of times performing this job will be attempted, defaults to C<1>.
+Number of times performing this job will be attempted.
 
 =item created
 
