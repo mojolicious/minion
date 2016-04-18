@@ -426,6 +426,14 @@ Number of jobs in C<active> state.
 
 Number of workers that are currently processing a job.
 
+=item delayed_jobs
+
+  delayed_jobs => 100
+
+Number of jobs in C<inactive> state that are scheduled to run at specific time
+in the future. Note that this field is EXPERIMENTAL and might change without
+warning!
+
 =item failed_jobs
 
   failed_jobs => 100

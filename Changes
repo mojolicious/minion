@@ -1,5 +1,7 @@
 
-5.04  2016-04-18
+5.04  2016-04-19
+  - Added EXPERIMENTAL delayed_jobs field to stats method in Minion and
+    Minion::Backend::Pg.
   - Updated Mojo::Pg requirement to 2.18.
   - Improved job command to show more detailed information for jobs and workers.
 
@@ -227,12 +229,12 @@
   - Improved job command to show higher precision times.
 
 0.33  2014-07-10
-  - Replaced state argument of list_jobs methods in Minion::Backend::File and
+  - Replaced state argument of list_jobs method in Minion::Backend::File and
     Minion::Backend::Mango with more versatile options argument.
   - Added -t option to job command.
 
 0.32  2014-07-10
-  - Added state argument to list_jobs methods in Minion::Backend::File and
+  - Added state argument to list_jobs method in Minion::Backend::File and
     Minion::Backend::Mango.
   - Added -T option to job command.
 
@@ -240,11 +242,11 @@
   - Reduced CPU usage of Minion::Backend::Mango when waiting for new jobs.
 
 0.30  2014-07-08
-  - Added timeout argument to dequeue methods in Minion::Backend::File,
+  - Added timeout argument to dequeue method in Minion::Backend::File,
     Minion::Backend::Mango and Minion::Worker.
 
 0.29  2014-07-07
-  - Renamed restart_job methods to retry_job in Minion::Backend,
+  - Renamed restart_job method to retry_job in Minion::Backend,
     Minion::Backend::File and Minion::Backend::Mango.
   - Renamed restart method to retry in Minion::Job.
   - Improved worker command to repair in regular intervals.

@@ -147,6 +147,7 @@ is $stats->{active_jobs},      0, 'no active jobs';
 is $stats->{failed_jobs},      0, 'no failed jobs';
 is $stats->{finished_jobs},    0, 'no finished jobs';
 is $stats->{inactive_jobs},    0, 'no inactive jobs';
+is $stats->{delayed_jobs},     0, 'no delayed jobs';
 $worker = $minion->worker->register;
 is $minion->stats->{inactive_workers}, 1, 'one inactive worker';
 $minion->enqueue('fail');
@@ -180,6 +181,7 @@ is $stats->{active_jobs},      0, 'no active jobs';
 is $stats->{failed_jobs},      0, 'no failed jobs';
 is $stats->{finished_jobs},    3, 'three finished jobs';
 is $stats->{inactive_jobs},    0, 'no inactive jobs';
+is $stats->{delayed_jobs},     0, 'no delayed jobs';
 
 # List jobs
 $id = $minion->enqueue('add');
@@ -332,6 +334,7 @@ $worker->unregister;
 
 # Delayed jobs
 $id = $minion->enqueue(add => [2, 1] => {delay => 100});
+is $minion->stats->{delayed_jobs}, 1, 'one delayed job';
 is $worker->register->dequeue(0), undef, 'too early for job';
 ok $minion->job($id)->info->{delayed} > time, 'delayed timestamp';
 $minion->backend->pg->db->query(
