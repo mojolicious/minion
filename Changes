@@ -1,7 +1,5 @@
 
 5.04  2016-04-18
-  - Added size and uptime fields to stats methods in Minion and
-    Minion::Backend::Pg.
   - Updated Mojo::Pg requirement to 2.18.
   - Improved job command to show more detailed information for jobs and workers.
 
