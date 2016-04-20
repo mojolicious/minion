@@ -1,5 +1,6 @@
 
 5.05  2016-04-20
+  - Improved performance of stats method in Minion::Backend::Pg slightly.
 
 5.04  2016-04-19
   - Added EXPERIMENTAL delayed_jobs field to stats method in Minion and

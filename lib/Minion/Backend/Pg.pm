@@ -148,7 +148,7 @@ sub stats {
   my $self = shift;
 
   my $stats = $self->pg->db->query(
-    "select state::text || '_jobs', count(state) from minion_jobs group by state
+    "select state::text || '_jobs', count(*) from minion_jobs group by state
      union all
      select 'delayed_jobs', count(*) from minion_jobs
      where state = 'inactive' and delayed > now()
