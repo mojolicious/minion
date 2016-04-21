@@ -85,8 +85,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -w
     ./myapp.pl minion job -w 23
     ./myapp.pl minion job -s
-    ./myapp.pl minion job -q important
-    ./myapp.pl minion job -t foo -S inactive
+    ./myapp.pl minion job -q important -t foo -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -p 5 -q important
     ./myapp.pl minion job -R -d 10 10023
