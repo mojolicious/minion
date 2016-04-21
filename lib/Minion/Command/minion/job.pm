@@ -85,6 +85,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -w
     ./myapp.pl minion job -w 23
     ./myapp.pl minion job -s
+    ./myapp.pl minion job -q important
     ./myapp.pl minion job -t foo -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -p 5 -q important
@@ -92,7 +93,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -r 10023
 
   Options:
-    -A, --attempts <number>   Number of times performing this job will be
+    -A, --attempts <number>   Number of times performing this new job will be
                               attempted, defaults to 1
     -a, --args <JSON array>   Arguments for new job in JSON format
     -d, --delay <seconds>     Delay new job for this many seconds
@@ -108,7 +109,8 @@ Minion::Command::minion::job - Minion job command
     -o, --offset <number>     Number of jobs/workers to skip when listing them,
                               defaults to 0
     -p, --priority <number>   Priority of new job, defaults to 0
-    -q, --queue <name>        Queue to put job in, defaults to "default"
+    -q, --queue <name>        Queue to put new job in, defaults to "default", or
+                              list only jobs in this queue
     -R, --retry               Retry job
     -r, --remove              Remove job
     -S, --state <state>       List only jobs in this state

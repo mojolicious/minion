@@ -305,6 +305,12 @@ These options are currently available:
 
 =over 2
 
+=item queue
+
+  queue => 'important'
+
+List only jobs in this queue.
+
 =item state
 
   state => 'inactive'

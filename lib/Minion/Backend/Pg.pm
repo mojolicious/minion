@@ -56,9 +56,10 @@ sub list_jobs {
 
   return $self->pg->db->query(
     'select id from minion_jobs
-     where (state = $1 or $1 is null) and (task = $2 or $2 is null)
+     where (queue = $1 or $1 is null) and (state = $2 or $2 is null)
+       and (task = $3 or $3 is null)
      order by id desc
-     limit $3 offset $4', @$options{qw(state task)}, $limit, $offset
+     limit $4 offset $5', @$options{qw(queue state task)}, $limit, $offset
   )->arrays->map(sub { $self->job_info($_->[0]) })->to_array;
 }
 
@@ -474,6 +475,12 @@ Returns the same information as L</"job_info"> but in batches.
 These options are currently available:
 
 =over 2
+
+=item queue
+
+  queue => 'important'
+
+List only jobs in this queue.
 
 =item state
 

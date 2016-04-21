@@ -1,5 +1,6 @@
 
 5.05  2016-04-20
+  - Added queue option to list_jobs method in Minion::Backend::Pg.
   - Improved performance of stats method in Minion::Backend::Pg slightly.
 
 5.04  2016-04-19
