@@ -128,7 +128,8 @@ Decrease the number of jobs to perform concurrently by one.
 =head2 USR1
 
 Set the number of jobs to perform concurrently to C<0>, effectively pausing the
-worker. That means it will finish all current jobs, but not accept new ones.
+worker. That means it will finish all current jobs, but not accept new ones,
+until the number is increased again with L</"TTIN">.
 
 =head1 ATTRIBUTES
 
