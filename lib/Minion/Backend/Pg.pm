@@ -703,21 +703,9 @@ create table if not exists minion_workers (
   pid     int not null,
   started timestamp with time zone not null
 );
-create or replace function minion_jobs_insert_notify() returns trigger as $$
-  begin
-    perform pg_notify('minion.job', '');
-    return null;
-  end;
-$$ language plpgsql;
-set client_min_messages to warning;
-drop trigger if exists minion_jobs_insert_trigger on minion_jobs;
-set client_min_messages to notice;
-create trigger minion_jobs_insert_trigger after insert on minion_jobs
-  for each row execute procedure minion_jobs_insert_notify();
 
 -- 1 down
 drop table if exists minion_jobs;
-drop function if exists minion_jobs_insert_notify();
 drop table if exists minion_workers;
 
 -- 2 up
@@ -750,3 +738,19 @@ drop type if exists minion_state;
 -- 8 up
 alter table minion_jobs add constraint args check(jsonb_typeof(args) = 'array');
 create index on minion_jobs (state, priority desc, created);
+
+-- 9 up
+create or replace function minion_jobs_notify_workers() returns trigger as $$
+  begin
+    if new.delayed <= now() then
+      perform pg_notify('minion.job', '');
+    end if;
+    return null;
+  end;
+$$ language plpgsql;
+set client_min_messages to warning;
+drop trigger if exists minion_jobs_insert_trigger on minion_jobs;
+drop trigger if exists minion_jobs_notify_workers_trigger on minion_jobs;
+set client_min_messages to notice;
+create trigger minion_jobs_notify_workers after insert or update of retries
+  on minion_jobs for each row execute procedure minion_jobs_notify_workers();
