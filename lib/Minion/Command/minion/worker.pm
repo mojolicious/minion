@@ -21,6 +21,9 @@ sub run {
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
   local $SIG{QUIT}
     = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
+  local $SIG{TTIN} = sub { $self->{max}++ };
+  local $SIG{TTOU} = sub { $self->{max}-- if $self->{max} > 0 };
+  local $SIG{USR1} = sub { $self->{max} = 0 };
 
   # Log fatal errors
   my $app = $self->app;
@@ -113,6 +116,19 @@ Stop gracefully after finishing the current jobs.
 =head2 QUIT
 
 Stop immediately without finishing the current jobs.
+
+=head2 TTIN
+
+Increase the number of jobs to perform concurrently by one.
+
+=head2 TTOU
+
+Decrease the number of jobs to perform concurrently by one.
+
+=head2 USR1
+
+Set the number of jobs to perform concurrently to C<0>, effectively pausing the
+worker. That means it will finish all current jobs, but not accept new ones.
 
 =head1 ATTRIBUTES
 
