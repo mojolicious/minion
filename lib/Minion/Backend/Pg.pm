@@ -743,7 +743,7 @@ create index on minion_jobs (state, priority desc, created);
 create or replace function minion_jobs_notify_workers() returns trigger as $$
   begin
     if new.delayed <= now() then
-      notify "minion.job", '';
+      notify "minion.job";
     end if;
     return null;
   end;
