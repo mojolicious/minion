@@ -1,4 +1,6 @@
 
+5.07  2016-05-06
+
 5.06  2016-05-05
   - Improved worker command to support the TTIN, TTOU and USR1 signals.
   - Improved Minion::Backend::Pg to handle delayed and retried jobs more
