@@ -5,8 +5,8 @@
   - Added support for job dependencies. (jberger, sri)
   - Added parents option to enqueue method in Minion and Minion::Backend::Pg.
     (jberger, sri)
-  - Added children and parents fields to info method in Minion::Jobs and
-    job_info method in Minion::Backend::Pg.
+  - Added children and parents fields to info method in Minion::Job and job_info
+    method in Minion::Backend::Pg.
   - Added -P option to job command.
   - Improved stats methods to include jobs with unresolved dependencies in
     delayed_jobs count.
