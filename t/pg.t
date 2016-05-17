@@ -628,7 +628,7 @@ ok !$worker->dequeue(0), 'job with missing parent will never be ready';
 $minion->repair;
 like $minion->job($id)->info->{finished}, qr/^[\d.]+$/,
   'has finished timestamp';
-is $minion->job($id)->info->{state}, 'failed', 'job is no longer active';
+is $minion->job($id)->info->{state},  'failed',           'right state';
 is $minion->job($id)->info->{result}, 'Parent went away', 'right result';
 $worker->unregister;
 
