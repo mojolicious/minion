@@ -107,7 +107,7 @@ sub remove_job {
 sub repair {
   my $self = shift;
 
-  # Check worker registry
+  # Workers without heartbeat
   my $db     = $self->pg->db;
   my $minion = $self->minion;
   $db->query(
@@ -115,7 +115,7 @@ sub repair {
      where notified < now() - interval '1 second' * ?", $minion->missing_after
   );
 
-  # Abandoned jobs
+  # Jobs with missing worker (can be retried)
   my $fail = $db->query(
     "select id, retries from minion_jobs as j
      where state = 'active'
@@ -123,7 +123,7 @@ sub repair {
   )->hashes;
   $fail->each(sub { $self->fail_job(@$_{qw(id retries)}, 'Worker went away') });
 
-  # Jobs with missing parents
+  # Jobs with missing parents (can't be retried)
   $db->query(
     "update minion_jobs as j
      set finished = now(), result = to_json('Parent went away'::text),
@@ -348,8 +348,8 @@ Delay job for this many seconds (from now).
 
   parents => [$id1, $id2, $id3]
 
-One or more jobs this job depends on, and that need to have transitioned to the
-state C<finished> before it can be processed.
+One or more existing jobs this job depends on, and that need to have
+transitioned to the state C<finished> before it can be processed.
 
 =item priority
 

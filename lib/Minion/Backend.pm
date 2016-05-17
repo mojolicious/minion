@@ -159,8 +159,8 @@ Delay job for this many seconds (from now).
 
   parents => [$id1, $id2, $id3]
 
-One or more jobs this job depends on, and that need to have transitioned to the
-state C<finished> before it can be processed.
+One or more existing jobs this job depends on, and that need to have
+transitioned to the state C<finished> before it can be processed.
 
 =item priority
 
