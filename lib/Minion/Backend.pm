@@ -155,6 +155,13 @@ L<Minion/"backoff"> after the first attempt, defaults to C<1>.
 
 Delay job for this many seconds (from now).
 
+=item parents
+
+  parents => [$id1, $id2, $id3]
+
+One or more jobs this job depends on, and that need to have transitioned to the
+state C<finished> before it can be processed.
+
 =item priority
 
   priority => 5
@@ -219,6 +226,12 @@ Job arguments.
 
 Number of times performing this job will be attempted.
 
+=item children
+
+  children => ['10026', '10027', '10028']
+
+Jobs depending on this job.
+
 =item created
 
   created => 784111777
@@ -236,6 +249,12 @@ Epoch time job was delayed to.
   finished => 784111777
 
 Epoch time job was finished.
+
+=item parents
+
+  parents => ['10023', '10024', '10025']
+
+Jobs this job depends on.
 
 =item priority
 
@@ -420,8 +439,8 @@ Number of workers that are currently processing a job.
   delayed_jobs => 100
 
 Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future. Note that this field is EXPERIMENTAL and might change without
-warning!
+in the future or have unresolved dependencies. Note that this field is
+EXPERIMENTAL and might change without warning!
 
 =item failed_jobs
 

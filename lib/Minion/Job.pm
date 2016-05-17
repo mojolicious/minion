@@ -245,6 +245,12 @@ Job arguments.
 
 Number of times performing this job will be attempted.
 
+=item children
+
+  children => ['10026', '10027', '10028']
+
+Jobs depending on this job.
+
 =item created
 
   created => 784111777
@@ -262,6 +268,12 @@ Epoch time job was delayed to.
   finished => 784111777
 
 Epoch time job was finished.
+
+=item parents
+
+  parents => ['10023', '10024', '10025']
+
+Jobs this job depends on.
 
 =item priority
 

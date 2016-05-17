@@ -29,11 +29,12 @@ sub enqueue {
 
   my $db = $self->pg->db;
   return $db->query(
-    "insert into minion_jobs (args, attempts, delayed, priority, queue, task)
-     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?)
+    "insert into minion_jobs
+       (args, attempts, delayed, parents, priority, queue, task)
+     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?)
      returning id", {json => $args}, $options->{attempts} // 1,
-    $options->{delay} // 0, $options->{priority} // 0,
-    $options->{queue} // 'default', $task
+    $options->{delay} // 0, $options->{parents} || [],
+    $options->{priority} // 0, $options->{queue} // 'default', $task
   )->hash->{id};
 }
 
@@ -42,12 +43,14 @@ sub finish_job { shift->_update(0, @_) }
 
 sub job_info {
   shift->pg->db->query(
-    'select id, args, attempts, extract(epoch from created) as created,
+    'select id, args, attempts,
+       array(select id from minion_jobs where j.id = any(parents)) as children,
+       extract(epoch from created) as created,
        extract(epoch from delayed) as delayed,
-       extract(epoch from finished) as finished, priority, queue, result,
-       extract(epoch from retried) as retried, retries,
+       extract(epoch from finished) as finished, parents, priority, queue,
+       result, extract(epoch from retried) as retried, retries,
        extract(epoch from started) as started, state, task, worker
-     from minion_jobs where id = ?', shift
+     from minion_jobs as j where id = ?', shift
   )->expand->hash;
 }
 
@@ -120,6 +123,16 @@ sub repair {
   )->hashes;
   $fail->each(sub { $self->fail_job(@$_{qw(id retries)}, 'Worker went away') });
 
+  # Jobs with missing parents
+  $db->query(
+    "update minion_jobs as j
+     set finished = now(), result = to_json('Parent went away'::text),
+       state = 'failed'
+     where parents != '{}' and cardinality(parents) != (
+       select count(*) from minion_jobs where id = any(j.parents)
+     ) and state = 'inactive'"
+  );
+
   # Old jobs
   $db->query(
     "delete from minion_jobs
@@ -152,7 +165,7 @@ sub stats {
     "select state::text || '_jobs', count(*) from minion_jobs group by state
      union all
      select 'delayed_jobs', count(*) from minion_jobs
-     where state = 'inactive' and delayed > now()
+     where (delayed > now() or parents != '{}') and state = 'inactive'
      union all
      select 'inactive_workers', count(*) from minion_workers
      union all
@@ -187,9 +200,11 @@ sub _try {
     "update minion_jobs
      set started = now(), state = 'active', worker = ?
      where id = (
-       select id from minion_jobs
-       where delayed <= now() and queue = any (?) and state = 'inactive'
-         and task = any (?)
+       select id from minion_jobs as j
+       where delayed <= now() and (parents = '{}' or cardinality(parents) = (
+         select count(*) from minion_jobs
+         where id = any(j.parents) and state = 'finished'
+       )) and queue = any (?) and state = 'inactive' and task = any (?)
        order by priority desc, created
        limit 1
        for update skip locked
@@ -329,6 +344,13 @@ L<Minion/"backoff"> after the first attempt, defaults to C<1>.
 
 Delay job for this many seconds (from now).
 
+=item parents
+
+  parents => [$id1, $id2, $id3]
+
+One or more jobs this job depends on, and that need to have transitioned to the
+state C<finished> before it can be processed.
+
 =item priority
 
   priority => 5
@@ -391,6 +413,12 @@ Job arguments.
 
 Number of times performing this job will be attempted.
 
+=item children
+
+  children => ['10026', '10027', '10028']
+
+Jobs depending on this job.
+
 =item created
 
   created => 784111777
@@ -408,6 +436,12 @@ Epoch time job was delayed to.
   finished => 784111777
 
 Epoch time job was finished.
+
+=item parents
+
+  parents => ['10023', '10024', '10025']
+
+Jobs this job depends on.
 
 =item priority
 
@@ -592,8 +626,8 @@ Number of workers that are currently processing a job.
   delayed_jobs => 100
 
 Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future. Note that this field is EXPERIMENTAL and might change without
-warning!
+in the future or have unresolved dependencies. Note that this field is
+EXPERIMENTAL and might change without warning!
 
 =item failed_jobs
 
@@ -759,3 +793,6 @@ create trigger minion_jobs_notify_workers_trigger
 -- 9 down
 drop trigger if exists minion_jobs_notify_workers_trigger on minion_jobs;
 drop function if exists minion_jobs_notify_workers();
+
+-- 10 up
+alter table minion_jobs add column parents bigint[] default '{}'::bigint[];

@@ -120,9 +120,9 @@ Minion - Job queue
 
 L<Minion> is a job queue for the L<Mojolicious|http://mojolicious.org> real-time
 web framework, with support for multiple named queues, priorities, delayed jobs,
-job results, retries with backoff, statistics, distributed workers, parallel
-processing, autoscaling, resource leak protection and multiple backends (such as
-L<PostgreSQL|http://www.postgresql.org>).
+job dependencies, job results, retries with backoff, statistics, distributed
+workers, parallel processing, autoscaling, resource leak protection and multiple
+backends (such as L<PostgreSQL|http://www.postgresql.org>).
 
 Job queues allow you to process time and/or computationally intensive tasks in
 background processes, outside of the request/response lifecycle. Among those
@@ -332,6 +332,13 @@ L</"backoff"> after the first attempt, defaults to C<1>.
 
 Delay job for this many seconds (from now).
 
+=item parents
+
+  parents => [$id1, $id2, $id3]
+
+One or more jobs this job depends on, and that need to have transitioned to the
+state C<finished> before it can be processed.
+
 =item priority
 
   priority => 5
@@ -431,8 +438,8 @@ Number of workers that are currently processing a job.
   delayed_jobs => 100
 
 Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future. Note that this field is EXPERIMENTAL and might change without
-warning!
+in the future or have unresolved dependencies. Note that this field is
+EXPERIMENTAL and might change without warning!
 
 =item failed_jobs
 

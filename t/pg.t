@@ -24,10 +24,11 @@ my $worker = $minion->repair->worker;
 isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
 # Migrate up and down
-is $minion->backend->pg->migrations->active, 9, 'active version is 9';
+is $minion->backend->pg->migrations->active, 10, 'active version is 10';
 is $minion->backend->pg->migrations->migrate(0)->active, 0,
   'active version is 0';
-is $minion->backend->pg->migrations->migrate->active, 9, 'active version is 9';
+is $minion->backend->pg->migrations->migrate->active, 10,
+  'active version is 10';
 
 # Register and unregister
 $worker->register;
@@ -194,8 +195,10 @@ like $batch->[0]{created}, qr/^[\d.]+$/, 'has created timestamp';
 is $batch->[1]{task},      'fail', 'right task';
 is_deeply $batch->[1]{args}, [], 'right arguments';
 is_deeply $batch->[1]{result}, ['works'], 'right result';
-is $batch->[1]{state},      'finished',   'right state';
-is $batch->[1]{priority},   0,            'right priority';
+is $batch->[1]{state},    'finished', 'right state';
+is $batch->[1]{priority}, 0,          'right priority';
+is_deeply $batch->[1]{parents},  [], 'right parents';
+is_deeply $batch->[1]{children}, [], 'right children';
 is $batch->[1]{retries},    1,            'job has been retried';
 like $batch->[1]{created},  qr/^[\d.]+$/, 'has created timestamp';
 like $batch->[1]{delayed},  qr/^[\d.]+$/, 'has delayed timestamp';
@@ -399,7 +402,7 @@ is $failed,   0, 'failed event has not been emitted';
 is $finished, 0, 'finished event has not been emitted';
 my $result;
 $job->on(finished => sub { $result = pop });
-$job->finish('Everything is fine!');
+ok $job->finish('Everything is fine!'), 'job finished';
 $job->perform;
 is $result,   'Everything is fine!', 'right result';
 is $failed,   0,                     'failed event has not been emitted';
@@ -591,6 +594,42 @@ is $minion->job($id3)->info->{result}, undef,      'no result';
 is $minion->job($id4)->info->{state},  'failed',   'right state';
 is $minion->job($id4)->info->{result}, 'Non-zero exit status (1)',
   'right result';
+$worker->unregister;
+
+# Job dependencies
+$worker = $minion->worker->register;
+$id     = $minion->enqueue('test');
+$id2    = $minion->enqueue('test');
+$id3    = $minion->enqueue(test => [] => {parents => [$id, $id2]});
+is $minion->stats->{delayed_jobs}, 1, 'one delayed job';
+$job = $worker->dequeue(0);
+is $job->id, $id, 'right id';
+is_deeply $job->info->{children}, [$id3], 'right children';
+is_deeply $job->info->{parents}, [], 'right parents';
+$job2 = $worker->dequeue(0);
+is $job2->id, $id2, 'right id';
+is_deeply $job2->info->{children}, [$id3], 'right children';
+is_deeply $job2->info->{parents}, [], 'right parents';
+ok !$worker->dequeue(0), 'parents are not ready yet';
+ok $job->finish, 'job finished';
+ok !$worker->dequeue(0), 'parents are not ready yet';
+ok $job2->fail, 'job failed';
+ok !$worker->dequeue(0), 'parents are not ready yet';
+ok $job2->retry, 'job retried';
+$job2 = $worker->dequeue(0);
+is $job2->id, $id2, 'right id';
+ok $job2->finish, 'job finished';
+$job = $worker->dequeue(0);
+is $job->id, $id3, 'right id';
+is_deeply $job->info->{children}, [], 'right children';
+is_deeply $job->info->{parents}, [$id, $id2], 'right parents';
+$id = $minion->enqueue(test => [] => {parents => [-1]});
+ok !$worker->dequeue(0), 'job with missing parent will never be ready';
+$minion->repair;
+like $minion->job($id)->info->{finished}, qr/^[\d.]+$/,
+  'has finished timestamp';
+is $minion->job($id)->info->{state}, 'failed', 'job is no longer active';
+is $minion->job($id)->info->{result}, 'Parent went away', 'right result';
 $worker->unregister;
 
 # Clean up once we are done
