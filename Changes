@@ -5,6 +5,7 @@
     (jberger, sri)
   - Added children and parents fields to info method in Minion::Jobs and
     job_info method in Minion::Backend::Pg.
+  - Added -P option to job command.
   - Improved stats methods to include jobs with unresolved dependencies in
     delayed_jobs count.
 

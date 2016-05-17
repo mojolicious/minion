@@ -17,8 +17,9 @@ sub run {
     'a|args=s'     => sub { $args = decode_json($_[1]) },
     'd|delay=i'    => \$options->{delay},
     'e|enqueue=s'  => \my $enqueue,
-    'l|limit=i'  => \(my $limit  = 100),
-    'o|offset=i' => \(my $offset = 0),
+    'l|limit=i'  => \(my $limit          = 100),
+    'o|offset=i' => \(my $offset         = 0),
+    'P|parent=s' => ($options->{parents} = []),
     'p|priority=i' => \$options->{priority},
     'q|queue=s'    => \$options->{queue},
     'R|retry'      => \my $retry,
@@ -87,7 +88,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -s
     ./myapp.pl minion job -q important -t foo -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
-    ./myapp.pl minion job -e foo -p 5 -q important
+    ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
     ./myapp.pl minion job -R -d 10 10023
     ./myapp.pl minion job -r 10023
 
@@ -107,6 +108,7 @@ Minion::Command::minion::job - Minion job command
                               the value of MOJO_MODE/PLACK_ENV or "development"
     -o, --offset <number>     Number of jobs/workers to skip when listing them,
                               defaults to 0
+    -P, --parent <id>         One or more jobs the new job depends on
     -p, --priority <number>   Priority of new job, defaults to 0
     -q, --queue <name>        Queue to put new job in, defaults to "default", or
                               list only jobs in this queue
