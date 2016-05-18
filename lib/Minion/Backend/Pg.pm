@@ -128,7 +128,7 @@ sub repair {
     "update minion_jobs as j
      set finished = now(), result = to_json('Parent went away'::text),
        state = 'failed'
-     where parents != '{}' and cardinality(parents) != (
+     where parents <> '{}' and cardinality(parents) <> (
        select count(*) from minion_jobs where id = any(j.parents)
      ) and state = 'inactive'"
   );
@@ -165,7 +165,7 @@ sub stats {
     "select state::text || '_jobs', count(*) from minion_jobs group by state
      union all
      select 'delayed_jobs', count(*) from minion_jobs
-     where (delayed > now() or parents != '{}') and state = 'inactive'
+     where (delayed > now() or parents <> '{}') and state = 'inactive'
      union all
      select 'inactive_workers', count(*) from minion_workers
      union all
