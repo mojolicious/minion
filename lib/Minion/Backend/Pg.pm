@@ -119,7 +119,7 @@ sub repair {
   my $fail = $db->query(
     "select id, retries from minion_jobs as j
      where state = 'active'
-       and not exists(select 1 from minion_workers where id = j.worker)"
+       and not exists (select 1 from minion_workers where id = j.worker)"
   )->hashes;
   $fail->each(sub { $self->fail_job(@$_{qw(id retries)}, 'Worker went away') });
 
@@ -133,11 +133,13 @@ sub repair {
      ) and state = 'inactive'"
   );
 
-  # Old jobs
+  # Old jobs with no unresolved dependencies
   $db->query(
-    "delete from minion_jobs
-     where state = 'finished' and finished < now() - interval '1 second' * ?",
-    $minion->remove_after
+    "delete from minion_jobs as j
+     where finished < now() - interval '1 second' * ? and not exists (
+       select 1 from minion_jobs
+       where j.id = any(parents) and state <> 'finished'
+     ) and state = 'finished'", $minion->remove_after
   );
 }
 
@@ -148,12 +150,12 @@ sub retry_job {
 
   return !!$self->pg->db->query(
     "update minion_jobs
-     set priority = coalesce(?, priority), queue = coalesce(?, queue),
-       retried = now(), retries = retries + 1, state = 'inactive',
-       delayed = (now() + (interval '1 second' * ?))
+     set delayed = (now() + (interval '1 second' * ?)),
+       priority = coalesce(?, priority), queue = coalesce(?, queue),
+       retried = now(), retries = retries + 1, state = 'inactive'
      where id = ? and retries = ?
        and state in ('inactive', 'failed', 'finished')
-     returning 1", @$options{qw(priority queue)}, $options->{delay} // 0, $id,
+     returning 1", $options->{delay} // 0, @$options{qw(priority queue)}, $id,
     $retries
   )->rows;
 }

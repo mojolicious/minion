@@ -597,10 +597,11 @@ is $minion->job($id4)->info->{result}, 'Non-zero exit status (1)',
 $worker->unregister;
 
 # Job dependencies
-$worker = $minion->worker->register;
-$id     = $minion->enqueue('test');
-$id2    = $minion->enqueue('test');
-$id3    = $minion->enqueue(test => [] => {parents => [$id, $id2]});
+$worker = $minion->remove_after(0)->worker->register;
+is $minion->repair->stats->{finished_jobs}, 0, 'no finished jobs';
+$id  = $minion->enqueue('test');
+$id2 = $minion->enqueue('test');
+$id3 = $minion->enqueue(test => [] => {parents => [$id, $id2]});
 is $minion->stats->{delayed_jobs}, 1, 'one delayed job';
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
@@ -623,6 +624,11 @@ $job = $worker->dequeue(0);
 is $job->id, $id3, 'right id';
 is_deeply $job->info->{children}, [], 'right children';
 is_deeply $job->info->{parents}, [$id, $id2], 'right parents';
+is $minion->stats->{finished_jobs}, 2, 'two finished jobs';
+is $minion->repair->stats->{finished_jobs}, 2, 'two finished jobs';
+ok $job->finish, 'job finished';
+is $minion->stats->{finished_jobs}, 3, 'three finished jobs';
+is $minion->repair->stats->{finished_jobs}, 0, 'no finished jobs';
 $id = $minion->enqueue(test => [] => {parents => [-1]});
 ok !$worker->dequeue(0), 'job with missing parent will never be ready';
 $minion->repair;
