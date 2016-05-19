@@ -275,8 +275,8 @@ C<1800> (30 minutes).
   $minion   = $minion->remove_after(86400);
 
 Amount of time in seconds after which jobs that have reached the state
-C<finished> will be removed automatically by L</"repair">, defaults to
-C<172800> (2 days).
+C<finished> and have no unresolved dependencies will be removed automatically by
+L</"repair">, defaults to C<172800> (2 days).
 
 =head2 tasks
 
