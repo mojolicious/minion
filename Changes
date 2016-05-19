@@ -1,11 +1,11 @@
 
-5.08  2016-05-19
+5.08  2016-05-20
   - Improved repair methods not to remove finished jobs with unresolved
     dependencies.
 
 5.07  2016-05-17
   - Added support for job dependencies. (jberger, sri)
-  - Added parents option to enqueue method in Minion and Minion::Backend::Pg.
+  - Added parents option to enqueue methods in Minion and Minion::Backend::Pg.
     (jberger, sri)
   - Added children and parents fields to info method in Minion::Job and job_info
     method in Minion::Backend::Pg.
@@ -23,7 +23,7 @@
   - Improved performance of stats method in Minion::Backend::Pg slightly.
 
 5.04  2016-04-19
-  - Added EXPERIMENTAL delayed_jobs field to stats method in Minion and
+  - Added EXPERIMENTAL delayed_jobs field to stats methods in Minion and
     Minion::Backend::Pg.
   - Updated Mojo::Pg requirement to 2.18.
   - Improved job command to show more detailed information for jobs and workers.
@@ -87,7 +87,7 @@
   - Added support for retrying failed jobs automatically.
   - Added backoff attribute to Minion.
   - Added attempts attribute to Minion::Job.
-  - Added attempts option to enqueue method in Minion and Minion::Backend::Pg.
+  - Added attempts option to enqueue methods in Minion and Minion::Backend::Pg.
   - Added -A option to job command.
 
 3.0  2015-10-30
@@ -119,9 +119,8 @@
   - Added queue option to enqueue method in Minion.
   - Added queue option to enqueue and retry_job methods in Minion::Backend::File
     and Minion::Backend::Pg.
-  - Added queues option to dequeue method in Minion::Worker.
-  - Added queues option to dequeue method in Minion::Backend::File and
-    Minion::Backend::Pg.
+  - Added queues option to dequeue methods in Minion::Worker,
+    Minion::Backend::File and Minion::Backend::Pg.
   - Added -q option to job and worker commands.
   - Improved worker command to be more resilient to time jumps.
   - Fixed a race condition in Minion::Backend::File and Minion::Backend::Pg
@@ -131,7 +130,7 @@
 1.19  2015-09-28
   - Added support for retrying jobs with a new priority.
   - Added priority option to retry method in Minion::Job.
-  - Added priority option to retry_job method in Minion::Backend::File and
+  - Added priority option to retry_job methods in Minion::Backend::File and
     Minion::Backend::Pg.
 
 1.18  2015-08-30
@@ -148,7 +147,7 @@
 1.15  2015-05-15
   - Added support for retrying jobs with a delay. (kwa)
   - Added delay option to retry method in Minion::Job. (kwa)
-  - Added delay option to retry_job method in Minion::Backend::File and
+  - Added delay option to retry_job methods in Minion::Backend::File and
     Minion::Backend::Pg. (kwa)
 
 1.14  2015-04-21
@@ -189,7 +188,7 @@
   - Improved commands to use less punctuation.
 
 1.05  2015-01-05
-  - Improved repair method in Minion::Backend::File and Minion::Backend::Pg to
+  - Improved repair methods in Minion::Backend::File and Minion::Backend::Pg to
     mention the current process in results of failed jobs.
 
 1.04  2015-01-03
@@ -252,12 +251,12 @@
   - Improved job command to show higher precision times.
 
 0.33  2014-07-10
-  - Replaced state argument of list_jobs method in Minion::Backend::File and
+  - Replaced state argument of list_jobs methods in Minion::Backend::File and
     Minion::Backend::Mango with more versatile options argument.
   - Added -t option to job command.
 
 0.32  2014-07-10
-  - Added state argument to list_jobs method in Minion::Backend::File and
+  - Added state argument to list_jobs methods in Minion::Backend::File and
     Minion::Backend::Mango.
   - Added -T option to job command.
 
@@ -265,7 +264,7 @@
   - Reduced CPU usage of Minion::Backend::Mango when waiting for new jobs.
 
 0.30  2014-07-08
-  - Added timeout argument to dequeue method in Minion::Backend::File,
+  - Added timeout argument to dequeue methods in Minion::Backend::File,
     Minion::Backend::Mango and Minion::Worker.
 
 0.29  2014-07-07
