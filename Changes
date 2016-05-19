@@ -313,8 +313,7 @@
     ids.
 
 0.13  2014-06-03
-  - Added list_workers method to Minion::Backend.
-  - Added list_workers method to Minion::Backend::Mango.
+  - Added list_workers methods to Minion::Backend and Minion::Backend::Mango.
 
 0.12  2014-06-03
   - Fixed enqueue to use the correct time format.
@@ -330,8 +329,7 @@
   - Added modules Minion::Backend and Minion::Backend::Mango.
   - Added backend attribute to Minion.
   - Added reset method to Minion.
-  - Added info method to Minion::Job.
-  - Added info method to Minion::Worker.
+  - Added info methods to Minion::Job and Minion::Worker.
   - Added -L and -S options to job command.
 
 0.09  2014-04-05
