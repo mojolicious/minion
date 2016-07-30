@@ -161,6 +161,21 @@ L<Minion::Command::minion::job>.
 
   $ ./myapp.pl minion job
 
+To manage background worker processes with systemd, you can use a unit
+configuration file like this.
+
+  [Unit]
+  Description=My Mojolicious application workers
+  After=postgresql.service
+
+  [Service]
+  Type=simple
+  ExecStart=/home/sri/myapp/myapp.pl minion worker -m production
+  KillMode=process
+
+  [Install]
+  WantedBy=multi-user.target
+
 Every job can fail or succeed, but not get lost, the system is eventually
 consistent and will preserve job results for as long as you like, depending on
 L</"remove_after">. While individual workers can fail in the middle of
