@@ -456,6 +456,13 @@ Number of jobs in C<inactive> state that are scheduled to run at specific time
 in the future or have unresolved dependencies. Note that this field is
 EXPERIMENTAL and might change without warning!
 
+=item enqueued_jobs
+
+  enqueued_jobs => 100000
+
+Rough estimate of how many jobs have ever been enqueued. Note that this field is
+EXPERIMENTAL and might change without warning!
+
 =item failed_jobs
 
   failed_jobs => 100

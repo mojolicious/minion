@@ -1,5 +1,7 @@
 
 5.09  2016-08-31
+  - Added EXPERIMENTAL enqueued_jobs field to stats methods in Minion and
+    Minion::Backend::Pg.
   - Improved Minion::Backend::Pg performance slightly with a new index.
 
 5.08  2016-05-20

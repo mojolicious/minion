@@ -143,7 +143,9 @@ sub repair {
   );
 }
 
-sub reset { shift->pg->db->query('truncate minion_jobs, minion_workers') }
+sub reset {
+  shift->pg->db->query('truncate minion_jobs, minion_workers restart identity');
+}
 
 sub retry_job {
   my ($self, $id, $retries, $options) = (shift, shift, shift, shift || {});
@@ -164,7 +166,10 @@ sub stats {
   my $self = shift;
 
   my $stats = $self->pg->db->query(
-    "select state::text || '_jobs', count(*) from minion_jobs group by state
+    "select 'enqueued_jobs', case when is_called then last_value else 0 end
+     from minion_jobs_id_seq
+     union all
+     select state::text || '_jobs', count(*) from minion_jobs group by state
      union all
      select 'delayed_jobs', count(*) from minion_jobs
      where (delayed > now() or parents <> '{}') and state = 'inactive'
@@ -629,6 +634,13 @@ Number of workers that are currently processing a job.
 
 Number of jobs in C<inactive> state that are scheduled to run at specific time
 in the future or have unresolved dependencies. Note that this field is
+EXPERIMENTAL and might change without warning!
+
+=item enqueued_jobs
+
+  enqueued_jobs => 100000
+
+Rough estimate of how many jobs have ever been enqueued. Note that this field is
 EXPERIMENTAL and might change without warning!
 
 =item failed_jobs
