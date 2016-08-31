@@ -1,5 +1,6 @@
 
-5.09  2016-07-31
+5.09  2016-08-31
+  - Improved Minion::Backend::Pg performance slightly with a new index.
 
 5.08  2016-05-20
   - Improved repair methods not to remove finished jobs with unresolved

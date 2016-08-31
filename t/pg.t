@@ -24,11 +24,11 @@ my $worker = $minion->repair->worker;
 isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
 # Migrate up and down
-is $minion->backend->pg->migrations->active, 10, 'active version is 10';
+is $minion->backend->pg->migrations->active, 11, 'active version is 11';
 is $minion->backend->pg->migrations->migrate(0)->active, 0,
   'active version is 0';
-is $minion->backend->pg->migrations->migrate->active, 10,
-  'active version is 10';
+is $minion->backend->pg->migrations->migrate->active, 11,
+  'active version is 11';
 
 # Register and unregister
 $worker->register;

@@ -207,7 +207,7 @@ sub _try {
          select count(*) from minion_jobs
          where id = any(j.parents) and state = 'finished'
        )) and queue = any (?) and state = 'inactive' and task = any (?)
-       order by priority desc, created
+       order by priority desc, id
        limit 1
        for update skip locked
      )
@@ -773,7 +773,6 @@ drop type if exists minion_state;
 
 -- 8 up
 alter table minion_jobs add constraint args check(jsonb_typeof(args) = 'array');
-create index on minion_jobs (state, priority desc, created);
 
 -- 9 up
 create or replace function minion_jobs_notify_workers() returns trigger as $$
@@ -798,3 +797,6 @@ drop function if exists minion_jobs_notify_workers();
 
 -- 10 up
 alter table minion_jobs add column parents bigint[] default '{}'::bigint[];
+
+-- 11 up
+create index on minion_jobs (state, priority desc, id);
