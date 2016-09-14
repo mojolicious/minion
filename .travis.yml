@@ -19,6 +19,7 @@ install:
   - cpanm -n --installdeps .
 before_script:
   - psql -U postgres -c 'create database minion_test'
-sudo: false
+sudo: required
+dist: trusty
 notifications:
   email: false
