@@ -175,7 +175,7 @@ sub retry_job {
 sub send_command {
   !!shift->pg->db->query(
     'update minion_workers set inbox = inbox || $2::jsonb
-     where id = $1', shift, {json => [[shift, @{shift()}]]}
+     where id = $1', shift, {json => [[shift, @{shift() || []}]]}
   )->rows;
 }
 
@@ -631,6 +631,7 @@ Queue to put job in.
 
 =head2 send_command
 
+  my $bool = $backend->send_command($worker_id, 'some_command');
   my $bool = $backend->send_command($worker_id, 'some_command', [@args]);
 
 Send worker remote control command.

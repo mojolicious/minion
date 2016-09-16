@@ -646,13 +646,12 @@ $worker = $minion->worker->register->process_commands;
 my @commands;
 $worker->add_command(test_id => sub { push @commands, shift->id })->register;
 $worker->add_command(test_args => sub { shift and push @commands, [@_] });
-ok $minion->backend->send_command($worker->id, 'test_id', []), 'sent command';
+ok $minion->backend->send_command($worker->id, 'test_id'), 'sent command';
 $worker->process_commands->register;
 is_deeply \@commands, [$worker->id], 'right structure';
 @commands = ();
 ok $minion->backend->send_command($worker->id, 'test_id', []), 'sent command';
-ok $minion->backend->send_command($worker->id, 'test_whatever', []),
-  'sent command';
+ok $minion->backend->send_command($worker->id, 'test_whatever'), 'sent command';
 ok $minion->backend->send_command($worker->id, 'test_args',
   [1, [2], {3 => 'three'}]),
   'sent command';

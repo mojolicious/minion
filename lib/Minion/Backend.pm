@@ -427,6 +427,7 @@ Queue to put job in.
 
 =head2 send_command
 
+  my $bool = $backend->send_command($worker_id, 'some_command');
   my $bool = $backend->send_command($worker_id, 'some_command', [@args]);
 
 Send worker remote control command.
