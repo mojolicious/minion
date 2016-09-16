@@ -837,7 +837,7 @@ drop trigger if exists minion_jobs_notify_workers_trigger on minion_jobs;
 drop function if exists minion_jobs_notify_workers();
 
 -- 10 up
-alter table minion_jobs add column parents bigint[] default '{}'::bigint[];
+alter table minion_jobs add column parents bigint[] default '{}';
 
 -- 11 up
 create index on minion_jobs (state, priority desc, id);
