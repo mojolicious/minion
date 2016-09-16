@@ -15,6 +15,7 @@ sub run {
   GetOptionsFromArray \@args,
     'A|attempts=i' => \$options->{attempts},
     'a|args=s'     => sub { $args = decode_json($_[1]) },
+    'c|command=s'  => (\my $command),
     'd|delay=i'    => \$options->{delay},
     'e|enqueue=s'  => \my $enqueue,
     'l|limit=i'  => \(my $limit          = 100),
@@ -29,6 +30,10 @@ sub run {
     't|task=s'     => \$options->{task},
     'w|workers'    => \my $workers;
   my $id = @args ? shift @args : undef;
+
+  # Worker remote control command
+  return $self->app->minion->backend->send_command($id, $command, $args)
+    if $command;
 
   # Enqueue
   return say $self->app->minion->enqueue($enqueue, $args, $options) if $enqueue;
@@ -91,11 +96,14 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
     ./myapp.pl minion job -R -d 10 10023
     ./myapp.pl minion job -r 10023
+    ./myapp.pl minion job -c jobs -a '[12]' 23
 
   Options:
     -A, --attempts <number>   Number of times performing this new job will be
                               attempted, defaults to 1
-    -a, --args <JSON array>   Arguments for new job in JSON format
+    -a, --args <JSON array>   Arguments for new job or worker remote control
+                              command in JSON format
+    -c, --command <name>      Send worker remote control command
     -d, --delay <seconds>     Delay new job for this many seconds
     -e, --enqueue <name>      New job to be enqueued
     -h, --help                Show this summary of available options
@@ -122,7 +130,7 @@ Minion::Command::minion::job - Minion job command
 
 =head1 DESCRIPTION
 
-L<Minion::Command::minion::job> manages L<Minion> jobs.
+L<Minion::Command::minion::job> manages the L<Minion> job queue.
 
 =head1 ATTRIBUTES
 

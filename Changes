@@ -1,5 +1,11 @@
 
-5.10  2016-09-14
+6.0  2016-09-16
+  - Removed TTIN, TTOU and USR1 signals from worker command.
+  - Added support for worker remote control commands.
+  - Added commands attribute to Minion::Worker.
+  - Added add_command and process_commands methods to Minion::Worker.
+  - Added receive_commands and send_command methods to Minion::Backend::Pg.
+  - Improved worker command with support for jobs remote control command.
 
 5.09  2016-08-31
   - Added EXPERIMENTAL enqueued_jobs field to stats methods in Minion and

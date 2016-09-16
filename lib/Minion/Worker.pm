@@ -1,7 +1,10 @@
 package Minion::Worker;
 use Mojo::Base 'Mojo::EventEmitter';
 
+has commands => sub { {} };
 has [qw(id minion)];
+
+sub add_command { $_[0]->commands->{$_[1]} = $_[2] and return $_[0] }
 
 sub dequeue {
   my ($self, $wait, $options) = @_;
@@ -23,6 +26,17 @@ sub dequeue {
 }
 
 sub info { $_[0]->minion->backend->worker_info($_[0]->id) }
+
+sub process_commands {
+  my $self = shift;
+
+  for my $command (@{$self->minion->backend->receive_commands($self->id)}) {
+    next unless my $cb = $self->commands->{shift @$command};
+    $self->$cb(@$command);
+  }
+
+  return $self;
+}
 
 sub register { $_[0]->id($_[0]->minion->backend->register_worker($_[0]->id)) }
 
@@ -74,6 +88,13 @@ Emitted in the worker process after a job has been dequeued.
 
 L<Minion::Worker> implements the following attributes.
 
+=head2 commands
+
+  my $commands = $worker->commands;
+  $worker      = $worker->commands({jobs => sub {...}});
+
+Registered worker remote control commands.
+
 =head2 id
 
   my $id  = $worker->id;
@@ -92,6 +113,17 @@ L<Minion> object this worker belongs to.
 
 L<Minion::Worker> inherits all methods from L<Mojo::EventEmitter> and
 implements the following new ones.
+
+=head2 add_command
+
+  $worker = $worker->add_command(jobs => sub {...});
+
+Register a worker remote control command.
+
+  $worker->add_command(foo => sub {
+    my ($worker, @args) = @_;
+    ...
+  });
 
 =head2 dequeue
 
@@ -158,6 +190,12 @@ Process id of worker.
 Epoch time worker was started.
 
 =back
+
+=head2 process_commands
+
+  $worker = $worker->process_commands;
+
+Process worker remote control commands.
 
 =head2 register
 

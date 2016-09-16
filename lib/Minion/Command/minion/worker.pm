@@ -11,6 +11,7 @@ sub run {
   my ($self, @args) = @_;
 
   GetOptionsFromArray \@args,
+    'C|command-interval=i'   => \($self->{commands}   = 10),
     'I|heartbeat-interval=i' => \($self->{hearthbeat} = 60),
     'j|jobs=i'               => \($self->{max}        = 4),
     'q|queue=s'              => \my @queues,
@@ -21,14 +22,13 @@ sub run {
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
   local $SIG{QUIT}
     = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
-  local $SIG{TTIN} = sub { $self->{max}++ };
-  local $SIG{TTOU} = sub { $self->{max}-- if $self->{max} > 0 };
-  local $SIG{USR1} = sub { $self->{max} = 0 };
 
   # Log fatal errors
   my $app = $self->app;
   $app->log->debug("Worker $$ started");
   my $worker = $self->{worker} = $app->minion->worker;
+  $worker->add_command(
+    jobs => sub { $self->{max} = $_[1] if ($_[1] // '') =~ /^\d+$/ });
   eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
     or $app->log->fatal("Worker error: $@");
   $worker->unregister;
@@ -39,8 +39,12 @@ sub _work {
 
   # Send heartbeats in regular intervals
   my $worker = $self->{worker};
-  $worker->register and $self->{register} = steady_time + $self->{hearthbeat}
-    if ($self->{register} || 0) < steady_time;
+  $worker->register and $self->{lr} = steady_time + $self->{hearthbeat}
+    if ($self->{lr} || 0) < steady_time;
+
+  # Process worker remote control commands in regular intervals
+  $worker->process_commands and $self->{lp} = steady_time + $self->{commands}
+    if ($self->{lp} || 0) < steady_time;
 
   # Repair in regular intervals (randomize to avoid congestion)
   if (($self->{check} || 0) < steady_time) {
@@ -80,10 +84,12 @@ Minion::Command::minion::worker - Minion worker command
   Usage: APPLICATION minion worker [OPTIONS]
 
     ./myapp.pl minion worker
-    ./myapp.pl minion worker -m production -I 15 -R 3600 -j 10
+    ./myapp.pl minion worker -m production -I 15 -C 5 -R 3600 -j 10
     ./myapp.pl minion worker -q important -q default
 
   Options:
+    -C, --command-interval <seconds>     Worker remote control command interval,
+                                         defaults to 10
     -h, --help                           Show this summary of available options
         --home <path>                    Path to home directory of your
                                          application, defaults to the value of
@@ -117,19 +123,18 @@ Stop gracefully after finishing the current jobs.
 
 Stop immediately without finishing the current jobs.
 
-=head2 TTIN
+=head1 REMOTE CONTROL COMMANDS
 
-Increase the number of jobs to perform concurrently by one.
+The L<Minion::Command::minion::worker> process can be controlled at runtime
+with the following remote control commands.
 
-=head2 TTOU
+=head2 jobs
 
-Decrease the number of jobs to perform concurrently by one.
+  $ ./myapp.pl minion job -c jobs -a '[10]' 23
 
-=head2 USR1
-
-Pause the worker by setting the number of jobs to perform concurrently to zero.
-That means it will finish all current jobs, but not accept new ones, until the
-number is increased again with L</"TTIN">.
+Change the number of jobs to perform concurrently. Setting this value to C<0>
+will effectively pause the worker. That means all current jobs will be finished,
+but no new ones accepted, until the number is increased again.
 
 =head1 ATTRIBUTES
 

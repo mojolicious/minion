@@ -13,15 +13,20 @@ sub job_info     { croak 'Method "job_info" not implemented by subclass' }
 sub list_jobs    { croak 'Method "list_jobs" not implemented by subclass' }
 sub list_workers { croak 'Method "list_workers" not implemented by subclass' }
 
+sub receive_commands {
+  croak 'Method "receive_commands" not implemented by subclass';
+}
+
 sub register_worker {
   croak 'Method "register_worker" not implemented by subclass';
 }
 
-sub remove_job { croak 'Method "remove_job" not implemented by subclass' }
-sub repair     { croak 'Method "repair" not implemented by subclass' }
-sub reset      { croak 'Method "reset" not implemented by subclass' }
-sub retry_job  { croak 'Method "retry_job" not implemented by subclass' }
-sub stats      { croak 'Method "stats" not implemented by subclass' }
+sub remove_job   { croak 'Method "remove_job" not implemented by subclass' }
+sub repair       { croak 'Method "repair" not implemented by subclass' }
+sub reset        { croak 'Method "reset" not implemented by subclass' }
+sub retry_job    { croak 'Method "retry_job" not implemented by subclass' }
+sub send_command { croak 'Method "send_command" not implemented by subclass' }
+sub stats        { croak 'Method "stats" not implemented by subclass' }
 
 sub unregister_worker {
   croak 'Method "unregister_worker" not implemented by subclass';
@@ -49,11 +54,13 @@ Minion::Backend - Backend base class
   sub job_info          {...}
   sub list_jobs         {...}
   sub list_workers      {...}
+  sub receive_commands  {...}
   sub register_worker   {...}
   sub remove_job        {...}
   sub repair            {...}
   sub reset             {...}
   sub retry_job         {...}
+  sub send_command      {...}
   sub stats             {...}
   sub unregister_worker {...}
   sub worker_info       {...}
@@ -351,6 +358,12 @@ List only jobs for this task.
 Returns the same information as L</"worker_info"> but in batches. Meant to be
 overloaded in a subclass.
 
+=head2 receive_commands
+
+  my $commands = $backend->receive_commands($worker_id);
+
+Receive worker remote control commands.
+
 =head2 register_worker
 
   my $worker_id = $backend->register_worker;
@@ -411,6 +424,12 @@ Job priority.
 Queue to put job in.
 
 =back
+
+=head2 send_command
+
+  my $bool = $backend->send_command($worker_id, 'some_command', [@args]);
+
+Send worker remote control command.
 
 =head2 stats
 

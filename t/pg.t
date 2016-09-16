@@ -24,11 +24,11 @@ my $worker = $minion->repair->worker;
 isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
 # Migrate up and down
-is $minion->backend->pg->migrations->active, 11, 'active version is 11';
+is $minion->backend->pg->migrations->active, 12, 'active version is 12';
 is $minion->backend->pg->migrations->migrate(0)->active, 0,
   'active version is 0';
-is $minion->backend->pg->migrations->migrate->active, 11,
-  'active version is 11';
+is $minion->backend->pg->migrations->migrate->active, 12,
+  'active version is 12';
 
 # Register and unregister
 $worker->register;
@@ -640,6 +640,27 @@ like $minion->job($id)->info->{finished}, qr/^[\d.]+$/,
 is $minion->job($id)->info->{state},  'failed',           'right state';
 is $minion->job($id)->info->{result}, 'Parent went away', 'right result';
 $worker->unregister;
+
+# Worker remote control commands
+$worker = $minion->worker->register->process_commands;
+my @commands;
+$worker->add_command(test_id => sub { push @commands, shift->id })->register;
+$worker->add_command(test_args => sub { shift and push @commands, [@_] });
+ok $minion->backend->send_command($worker->id, 'test_id', []), 'sent command';
+$worker->process_commands->register;
+is_deeply \@commands, [$worker->id], 'right structure';
+@commands = ();
+ok $minion->backend->send_command($worker->id, 'test_id', []), 'sent command';
+ok $minion->backend->send_command($worker->id, 'test_whatever', []),
+  'sent command';
+ok $minion->backend->send_command($worker->id, 'test_args',
+  [1, [2], {3 => 'three'}]),
+  'sent command';
+$worker->process_commands;
+is_deeply \@commands, [$worker->id, [1, [2], {3 => 'three'}]],
+  'right structure';
+$worker->unregister;
+ok !$minion->backend->send_command(23, 'test_id', []), 'command not sent';
 
 # Clean up once we are done
 $pg->db->query('drop schema minion_test cascade');

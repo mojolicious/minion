@@ -85,6 +85,16 @@ sub new {
   return $self;
 }
 
+sub receive_commands {
+  my $array = shift->pg->db->query(
+    "update minion_workers as new set inbox = '[]'
+     from (select id, inbox from minion_workers where id = ? for update) as old
+     where new.id = old.id and old.inbox != '[]'
+     returning old.inbox", shift
+  )->expand->array;
+  return $array ? $array->[0] : [];
+}
+
 sub register_worker {
   my ($self, $id) = @_;
 
@@ -159,6 +169,13 @@ sub retry_job {
        and state in ('inactive', 'failed', 'finished')
      returning 1", $options->{delay} // 0, @$options{qw(priority queue)}, $id,
     $retries
+  )->rows;
+}
+
+sub send_command {
+  !!shift->pg->db->query(
+    'update minion_workers set inbox = inbox || $2::jsonb
+     where id = $1', shift, {json => [[shift, @{shift()}]]}
   )->rows;
 }
 
@@ -549,6 +566,12 @@ Returns the same information as L</"worker_info"> but in batches.
 
 Construct a new L<Minion::Backend::Pg> object.
 
+=head2 receive_commands
+
+  my $commands = $backend->receive_commands($worker_id);
+
+Receive worker remote control commands.
+
 =head2 register_worker
 
   my $worker_id = $backend->register_worker;
@@ -605,6 +628,12 @@ Job priority.
 Queue to put job in.
 
 =back
+
+=head2 send_command
+
+  my $bool = $backend->send_command($worker_id, 'some_command', [@args]);
+
+Send worker remote control command.
 
 =head2 stats
 
@@ -812,3 +841,7 @@ alter table minion_jobs add column parents bigint[] default '{}'::bigint[];
 
 -- 11 up
 create index on minion_jobs (state, priority desc, id);
+
+-- 12 up
+alter table minion_workers add column inbox jsonb
+  check(jsonb_typeof(inbox) = 'array') default '[]';
