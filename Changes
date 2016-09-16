@@ -1,5 +1,5 @@
 
-6.0  2016-09-16
+6.0  2016-09-17
   - Removed TTIN, TTOU and USR1 signals from worker command.
   - Added support for worker remote control commands.
   - Added commands attribute to Minion::Worker.

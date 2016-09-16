@@ -11,8 +11,8 @@ has 'pg';
 sub broadcast {
   my ($self, $command, $args, $ids) = (shift, shift, shift || [], shift || []);
   return !!$self->pg->db->query(
-    "update minion_workers set inbox = inbox || \$1::jsonb
-     where (id = any(\$2) or \$2 = '{}')", {json => [[$command, @$args]]}, $ids
+    q{update minion_workers set inbox = inbox || $1::jsonb
+      where (id = any($2) or $2 = '{}')}, {json => [[$command, @$args]]}, $ids
   )->rows;
 }
 
