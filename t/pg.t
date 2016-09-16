@@ -642,24 +642,35 @@ is $minion->job($id)->info->{result}, 'Parent went away', 'right result';
 $worker->unregister;
 
 # Worker remote control commands
-$worker = $minion->worker->register->process_commands;
+$worker  = $minion->worker->register->process_commands;
+$worker2 = $minion->worker->register;
 my @commands;
-$worker->add_command(test_id => sub { push @commands, shift->id })->register;
-$worker->add_command(test_args => sub { shift and push @commands, [@_] });
-ok $minion->backend->send_command($worker->id, 'test_id'), 'sent command';
+$_->add_command(test_id => sub { push @commands, shift->id })
+  for $worker, $worker2;
+$worker->add_command(test_args => sub { shift and push @commands, [@_] })
+  ->register;
+ok $minion->backend->broadcast('test_id', [], [$worker->id]), 'sent command';
+ok $minion->backend->broadcast('test_id', [], [$worker->id, $worker2->id]),
+  'sent command';
 $worker->process_commands->register;
-is_deeply \@commands, [$worker->id], 'right structure';
+$worker2->process_commands;
+is_deeply \@commands, [$worker->id, $worker->id, $worker2->id],
+  'right structure';
 @commands = ();
-ok $minion->backend->send_command($worker->id, 'test_id', []), 'sent command';
-ok $minion->backend->send_command($worker->id, 'test_whatever'), 'sent command';
-ok $minion->backend->send_command($worker->id, 'test_args',
-  [1, [2], {3 => 'three'}]),
+ok $minion->backend->broadcast('test_id'),       'sent command';
+ok $minion->backend->broadcast('test_whatever'), 'sent command';
+ok $minion->backend->broadcast('test_args', [23], []), 'sent command';
+ok $minion->backend->broadcast('test_args', [1, [2], {3 => 'three'}],
+  [$worker->id]),
   'sent command';
 $worker->process_commands;
-is_deeply \@commands, [$worker->id, [1, [2], {3 => 'three'}]],
+$worker2->process_commands;
+is_deeply \@commands,
+  [$worker->id, [23], [1, [2], {3 => 'three'}], $worker2->id],
   'right structure';
 $worker->unregister;
-ok !$minion->backend->send_command(23, 'test_id', []), 'command not sent';
+$worker2->unregister;
+ok !$minion->backend->broadcast('test_id', []), 'command not sent';
 
 # Clean up once we are done
 $pg->db->query('drop schema minion_test cascade');

@@ -30,7 +30,7 @@ sub info { $_[0]->minion->backend->worker_info($_[0]->id) }
 sub process_commands {
   my $self = shift;
 
-  for my $command (@{$self->minion->backend->receive_commands($self->id)}) {
+  for my $command (@{$self->minion->backend->receive($self->id)}) {
     next unless my $cb = $self->commands->{shift @$command};
     $self->$cb(@$command);
   }

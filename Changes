@@ -4,7 +4,7 @@
   - Added support for worker remote control commands.
   - Added commands attribute to Minion::Worker.
   - Added add_command and process_commands methods to Minion::Worker.
-  - Added receive_commands and send_command methods to Minion::Backend::Pg.
+  - Added broadcast and receive methods to Minion::Backend::Pg.
   - Improved worker command with support for jobs remote control command.
 
 5.09  2016-08-31

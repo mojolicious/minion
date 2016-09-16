@@ -130,6 +130,7 @@ with the following remote control commands.
 
 =head2 jobs
 
+  $ ./myapp.pl minion job -c jobs -a '[10]'
   $ ./myapp.pl minion job -c jobs -a '[10]' 23
 
 Change the number of jobs to perform concurrently. Setting this value to C<0>

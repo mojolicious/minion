@@ -29,17 +29,19 @@ sub run {
     's|stats'      => \my $stats,
     't|task=s'     => \$options->{task},
     'w|workers'    => \my $workers;
-  my $id = @args ? shift @args : undef;
 
   # Worker remote control command
-  return $self->app->minion->backend->send_command($id, $command, $args)
+  return $self->app->minion->backend->broadcast($command, $args, \@args)
     if $command;
 
   # Enqueue
   return say $self->app->minion->enqueue($enqueue, $args, $options) if $enqueue;
 
-  # Show stats or list jobs/workers
+  # Show stats
   return $self->_stats if $stats;
+
+  # List jobs/workers
+  my $id = @args ? shift @args : undef;
   return $id ? $self->_worker($id) : $self->_list_workers($offset, $limit)
     if $workers;
   return $self->_list_jobs($offset, $limit, $options) unless defined $id;
@@ -96,14 +98,16 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
     ./myapp.pl minion job -R -d 10 10023
     ./myapp.pl minion job -r 10023
-    ./myapp.pl minion job -c jobs -a '[12]' 23
+    ./myapp.pl minion job -c jobs -a '[12]'
+    ./myapp.pl minion job -c jobs -a '[12]' 23 24 25
 
   Options:
     -A, --attempts <number>   Number of times performing this new job will be
                               attempted, defaults to 1
     -a, --args <JSON array>   Arguments for new job or worker remote control
                               command in JSON format
-    -c, --command <name>      Send worker remote control command
+    -c, --command <name>      Broadcast remote control command to one or more
+                              workers
     -d, --delay <seconds>     Delay new job for this many seconds
     -e, --enqueue <name>      New job to be enqueued
     -h, --help                Show this summary of available options

@@ -8,6 +8,14 @@ use Sys::Hostname 'hostname';
 
 has 'pg';
 
+sub broadcast {
+  my ($self, $command, $args, $ids) = (shift, shift, shift || [], shift || []);
+  return !!$self->pg->db->query(
+    "update minion_workers set inbox = inbox || \$1::jsonb
+     where (id = any(\$2) or \$2 = '{}')", {json => [[$command, @$args]]}, $ids
+  )->rows;
+}
+
 sub dequeue {
   my ($self, $id, $wait, $options) = @_;
 
@@ -85,7 +93,7 @@ sub new {
   return $self;
 }
 
-sub receive_commands {
+sub receive {
   my $array = shift->pg->db->query(
     "update minion_workers as new set inbox = '[]'
      from (select id, inbox from minion_workers where id = ? for update) as old
@@ -172,13 +180,6 @@ sub retry_job {
   )->rows;
 }
 
-sub send_command {
-  !!shift->pg->db->query(
-    'update minion_workers set inbox = inbox || $2::jsonb
-     where id = $1', shift, {json => [[shift, @{shift() || []}]]}
-  )->rows;
-}
-
 sub stats {
   my $self = shift;
 
@@ -228,7 +229,7 @@ sub _try {
        where delayed <= now() and (parents = '{}' or cardinality(parents) = (
          select count(*) from minion_jobs
          where id = any(j.parents) and state = 'finished'
-       )) and queue = any (?) and state = 'inactive' and task = any (?)
+       )) and queue = any(?) and state = 'inactive' and task = any(?)
        order by priority desc, id
        limit 1
        for update skip locked
@@ -292,6 +293,14 @@ L<Mojo::Pg> object used to store all data.
 
 L<Minion::Backend::Pg> inherits all methods from L<Minion::Backend> and
 implements the following new ones.
+
+=head2 broadcast
+
+  my $bool = $backend->broadcast('some_command');
+  my $bool = $backend->broadcast('some_command', [@args]);
+  my $bool = $backend->broadcast('some_command', [@args], [$id1, $id2, $id3]);
+
+Broadcast remote control command to one or more workers.
 
 =head2 dequeue
 
@@ -566,11 +575,11 @@ Returns the same information as L</"worker_info"> but in batches.
 
 Construct a new L<Minion::Backend::Pg> object.
 
-=head2 receive_commands
+=head2 receive
 
-  my $commands = $backend->receive_commands($worker_id);
+  my $commands = $backend->receive($worker_id);
 
-Receive worker remote control commands.
+Receive remote control commands for worker.
 
 =head2 register_worker
 
@@ -628,13 +637,6 @@ Job priority.
 Queue to put job in.
 
 =back
-
-=head2 send_command
-
-  my $bool = $backend->send_command($worker_id, 'some_command');
-  my $bool = $backend->send_command($worker_id, 'some_command', [@args]);
-
-Send worker remote control command.
 
 =head2 stats
 

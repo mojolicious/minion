@@ -5,6 +5,7 @@ use Carp 'croak';
 
 has 'minion';
 
+sub broadcast    { croak 'Method "broadcast" not implemented by subclass' }
 sub dequeue      { croak 'Method "dequeue" not implemented by subclass' }
 sub enqueue      { croak 'Method "enqueue" not implemented by subclass' }
 sub fail_job     { croak 'Method "fail_job" not implemented by subclass' }
@@ -12,21 +13,17 @@ sub finish_job   { croak 'Method "finish_job" not implemented by subclass' }
 sub job_info     { croak 'Method "job_info" not implemented by subclass' }
 sub list_jobs    { croak 'Method "list_jobs" not implemented by subclass' }
 sub list_workers { croak 'Method "list_workers" not implemented by subclass' }
-
-sub receive_commands {
-  croak 'Method "receive_commands" not implemented by subclass';
-}
+sub receive      { croak 'Method "receive" not implemented by subclass' }
 
 sub register_worker {
   croak 'Method "register_worker" not implemented by subclass';
 }
 
-sub remove_job   { croak 'Method "remove_job" not implemented by subclass' }
-sub repair       { croak 'Method "repair" not implemented by subclass' }
-sub reset        { croak 'Method "reset" not implemented by subclass' }
-sub retry_job    { croak 'Method "retry_job" not implemented by subclass' }
-sub send_command { croak 'Method "send_command" not implemented by subclass' }
-sub stats        { croak 'Method "stats" not implemented by subclass' }
+sub remove_job { croak 'Method "remove_job" not implemented by subclass' }
+sub repair     { croak 'Method "repair" not implemented by subclass' }
+sub reset      { croak 'Method "reset" not implemented by subclass' }
+sub retry_job  { croak 'Method "retry_job" not implemented by subclass' }
+sub stats      { croak 'Method "stats" not implemented by subclass' }
 
 sub unregister_worker {
   croak 'Method "unregister_worker" not implemented by subclass';
@@ -47,6 +44,7 @@ Minion::Backend - Backend base class
   package Minion::Backend::MyBackend;
   use Mojo::Base 'Minion::Backend';
 
+  sub broadcast         {...}
   sub dequeue           {...}
   sub enqueue           {...}
   sub fail_job          {...}
@@ -54,13 +52,12 @@ Minion::Backend - Backend base class
   sub job_info          {...}
   sub list_jobs         {...}
   sub list_workers      {...}
-  sub receive_commands  {...}
+  sub receive           {...}
   sub register_worker   {...}
   sub remove_job        {...}
   sub repair            {...}
   sub reset             {...}
   sub retry_job         {...}
-  sub send_command      {...}
   sub stats             {...}
   sub unregister_worker {...}
   sub worker_info       {...}
@@ -85,6 +82,14 @@ L<Minion> object this backend belongs to.
 
 L<Minion::Backend> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
+
+=head2 broadcast
+
+  my $bool = $backend->broadcast('some_command');
+  my $bool = $backend->broadcast('some_command', [@args]);
+  my $bool = $backend->broadcast('some_command', [@args], [$id1, $id2, $id3]);
+
+Broadcast remote control command to one or more workers.
 
 =head2 dequeue
 
@@ -358,11 +363,11 @@ List only jobs for this task.
 Returns the same information as L</"worker_info"> but in batches. Meant to be
 overloaded in a subclass.
 
-=head2 receive_commands
+=head2 receive
 
-  my $commands = $backend->receive_commands($worker_id);
+  my $commands = $backend->receive($worker_id);
 
-Receive worker remote control commands.
+Receive remote control commands for worker.
 
 =head2 register_worker
 
@@ -424,13 +429,6 @@ Job priority.
 Queue to put job in.
 
 =back
-
-=head2 send_command
-
-  my $bool = $backend->send_command($worker_id, 'some_command');
-  my $bool = $backend->send_command($worker_id, 'some_command', [@args]);
-
-Send worker remote control command.
 
 =head2 stats
 
