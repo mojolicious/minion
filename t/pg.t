@@ -663,13 +663,11 @@ ok $minion->backend->broadcast('test_args', [23], []), 'sent command';
 ok $minion->backend->broadcast('test_args', [1, [2], {3 => 'three'}],
   [$worker->id]),
   'sent command';
-$worker->process_commands;
-$worker2->process_commands;
+$_->process_commands for $worker, $worker2;
 is_deeply \@commands,
   [$worker->id, [23], [1, [2], {3 => 'three'}], $worker2->id],
   'right structure';
-$worker->unregister;
-$worker2->unregister;
+$_->unregister for $worker, $worker2;
 ok !$minion->backend->broadcast('test_id', []), 'command not sent';
 
 # Clean up once we are done
