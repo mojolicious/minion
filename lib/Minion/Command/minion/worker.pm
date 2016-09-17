@@ -23,12 +23,16 @@ sub run {
   local $SIG{QUIT}
     = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
 
-  # Log fatal errors
+  # Remote control commands
   my $app = $self->app;
-  $app->log->debug("Worker $$ started");
   my $worker = $self->{worker} = $app->minion->worker;
   $worker->add_command(
     jobs => sub { $self->{max} = $_[1] if ($_[1] // '') =~ /^\d+$/ });
+  $worker->add_command(
+    stop => sub { $self->{jobs}{$_[1]}->stop if $self->{jobs}{$_[1] // ''} });
+
+  # Log fatal errors
+  $app->log->debug("Worker $$ started");
   eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
     or $app->log->fatal("Worker error: $@");
   $worker->unregister;
@@ -57,15 +61,15 @@ sub _work {
 
   # Check if jobs are finished
   my $jobs = $self->{jobs} ||= {};
-  $jobs->{$_}->is_finished($_) and delete $jobs->{$_} for keys %$jobs;
+  $jobs->{$_}->is_finished and delete $jobs->{$_} for keys %$jobs;
 
   # Wait if job limit has been reached or worker is stopping
   if (($self->{max} <= keys %$jobs) || $self->{finished}) { sleep 1 }
 
   # Try to get more jobs
   elsif (my $job = $worker->dequeue(5 => {queues => $self->{queues}})) {
-    $jobs->{my $pid = $job->start} = $job;
-    my ($id, $task) = ($job->id, $job->task);
+    $jobs->{my $id = $job->id} = $job->start;
+    my ($pid, $task) = ($job->pid, $job->task);
     $self->app->log->debug(
       qq{Performing job "$id" with task "$task" in process $pid});
   }
@@ -136,6 +140,13 @@ with the following remote control commands.
 Change the number of jobs to perform concurrently. Setting this value to C<0>
 will effectively pause the worker. That means all current jobs will be finished,
 but no new ones accepted, until the number is increased again.
+
+=head2 stop
+
+  $ ./myapp.pl minion job -c stop -a '[10025]'
+  $ ./myapp.pl minion job -c stop -a '[10025]' 23
+
+Stop a job that is currently being performed immediately.
 
 =head1 ATTRIBUTES
 

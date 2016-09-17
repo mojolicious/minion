@@ -578,16 +578,16 @@ $job    = $worker->dequeue(0);
 $job2   = $worker->dequeue(0);
 my $job3 = $worker->dequeue(0);
 my $job4 = $worker->dequeue(0);
-$pid = $job->start;
-my $pid2 = $job2->start;
-my $pid3 = $job3->start;
-my $pid4 = $job4->start;
+$job->start;
+$job2->start;
+$job3->start;
+$job4->start;
 my ($first, $second, $third, $fourth);
 usleep 50000
-  until $first ||= $job->is_finished($pid)
-  and $second  ||= $job2->is_finished($pid2)
-  and $third   ||= $job3->is_finished($pid3)
-  and $fourth  ||= $job4->is_finished($pid4);
+  until $first ||= $job->is_finished
+  and $second  ||= $job2->is_finished
+  and $third   ||= $job3->is_finished
+  and $fourth  ||= $job4->is_finished;
 is $minion->job($id)->info->{state}, 'finished', 'right state';
 is_deeply $minion->job($id)->info->{result}, {added => 21}, 'right result';
 is $minion->job($id2)->info->{state}, 'finished', 'right state';
@@ -597,6 +597,19 @@ is $minion->job($id3)->info->{result}, undef,      'no result';
 is $minion->job($id4)->info->{state},  'failed',   'right state';
 is $minion->job($id4)->info->{result}, 'Non-zero exit status (1)',
   'right result';
+$worker->unregister;
+
+# Stopping jobs
+$minion->add_task(long_running => sub { sleep 1000 });
+$worker = $minion->worker->register;
+$minion->enqueue('long_running');
+$job = $worker->dequeue(0);
+ok $job->start->pid, 'has a process id';
+ok !$job->is_finished, 'job is not finished';
+$job->stop;
+usleep 5000 until $job->is_finished;
+is $job->info->{state}, 'failed', 'right state';
+like $job->info->{result}, qr/Non-zero exit status/, 'right result';
 $worker->unregister;
 
 # Job dependencies

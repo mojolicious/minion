@@ -24,17 +24,21 @@ sub finish {
 sub info { $_[0]->minion->backend->job_info($_[0]->id) }
 
 sub is_finished {
-  my ($self, $pid) = @_;
-  return undef unless waitpid($pid, WNOHANG) == $pid;
+  my $self = shift;
+  return undef unless waitpid($self->{pid}, WNOHANG) == $self->{pid};
   $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
   return 1;
 }
 
+sub stop { kill 'KILL', shift->{pid} }
+
 sub perform {
   my $self = shift;
-  waitpid $self->start, 0;
+  waitpid $self->start->pid, 0;
   $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
 }
+
+sub pid { shift->{pid} }
 
 sub remove { $_[0]->minion->backend->remove_job($_[0]->id) }
 
@@ -48,7 +52,7 @@ sub start {
 
   # Parent
   die "Can't fork: $!" unless defined(my $pid = fork);
-  $self->emit(spawn => $pid) and return $pid if $pid;
+  return $self->emit(spawn => $pid) if $self->{pid} = $pid;
 
   # Child
   eval {
@@ -59,7 +63,7 @@ sub start {
 
     1;
   } or $self->fail($@);
-  exit 0;
+  POSIX::_exit(0);
 }
 
 1;
@@ -333,7 +337,7 @@ Id of worker that is processing the job.
 
 =head2 is_finished
 
-  my $bool = $job->is_finished($pid);
+  my $bool = $job->is_finished;
 
 Check if job performed with L</"start"> is finished.
 
@@ -342,6 +346,12 @@ Check if job performed with L</"start"> is finished.
   $job->perform;
 
 Perform job in new process and wait for it to finish.
+
+=head2 pid
+
+  my $pid = $job->pid;
+
+Process id of the process spawned by L</"start"> if available.
 
 =head2 remove
 
@@ -383,17 +393,22 @@ Queue to put job in.
 
 =head2 start
 
-  my $pid = $job->start;
+  $job = $job->start;
 
 Perform job in new process, but do not wait for it to finish.
 
   # Perform two jobs concurrently
-  my $pid1 = $job1->start;
-  my $pid2 = $job2->start;
+  $job1->start;
+  $job2->start;
   my ($first, $second);
   sleep 1
-    until $first  ||= $job1->is_finished($pid1)
-    and   $second ||= $job2->is_finished($pid2);
+    until $first ||= $job1->is_finished and $second ||= $job2->is_finished;
+
+=head2 stop
+
+  $job->stop;
+
+Stop job performed with L</"start"> immediately.
 
 =head1 SEE ALSO
 

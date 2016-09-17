@@ -2,6 +2,7 @@ package Minion;
 use Mojo::Base 'Mojo::EventEmitter';
 
 use Carp 'croak';
+use Config;
 use Minion::Job;
 use Minion::Worker;
 use Mojo::Loader 'load_class';
@@ -66,6 +67,10 @@ sub stats { shift->backend->stats }
 
 sub worker {
   my $self = shift;
+
+  # No fork emulation support
+  croak 'Minion workers do not support fork emulation' if $Config{d_pseudofork};
+
   my $worker = Minion::Worker->new(minion => $self);
   $self->emit(worker => $worker);
   return $worker;
