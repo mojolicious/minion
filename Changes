@@ -7,6 +7,7 @@
   - Added add_command and process_commands methods to Minion::Worker.
   - Added pid and stop methods to Minion::Job.
   - Added broadcast and receive methods to Minion::Backend::Pg.
+  - Added -b option to job command.
   - Improved worker command with support for jobs and stop remote control
     commands.
 

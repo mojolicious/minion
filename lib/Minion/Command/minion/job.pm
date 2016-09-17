@@ -13,11 +13,11 @@ sub run {
 
   my ($args, $options) = ([], {});
   GetOptionsFromArray \@args,
-    'A|attempts=i' => \$options->{attempts},
-    'a|args=s'     => sub { $args = decode_json($_[1]) },
-    'c|command=s'  => (\my $command),
-    'd|delay=i'    => \$options->{delay},
-    'e|enqueue=s'  => \my $enqueue,
+    'A|attempts=i'  => \$options->{attempts},
+    'a|args=s'      => sub { $args = decode_json($_[1]) },
+    'b|broadcast=s' => (\my $command),
+    'd|delay=i'     => \$options->{delay},
+    'e|enqueue=s'   => \my $enqueue,
     'l|limit=i'  => \(my $limit          = 100),
     'o|offset=i' => \(my $offset         = 0),
     'P|parent=s' => ($options->{parents} = []),
@@ -98,39 +98,40 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
     ./myapp.pl minion job -R -d 10 10023
     ./myapp.pl minion job -r 10023
-    ./myapp.pl minion job -c jobs -a '[12]'
-    ./myapp.pl minion job -c jobs -a '[12]' 23 24 25
+    ./myapp.pl minion job -b jobs -a '[12]'
+    ./myapp.pl minion job -b jobs -a '[12]' 23 24 25
 
   Options:
-    -A, --attempts <number>   Number of times performing this new job will be
-                              attempted, defaults to 1
-    -a, --args <JSON array>   Arguments for new job or worker remote control
-                              command in JSON format
-    -c, --command <name>      Broadcast remote control command to one or more
-                              workers
-    -d, --delay <seconds>     Delay new job for this many seconds
-    -e, --enqueue <name>      New job to be enqueued
-    -h, --help                Show this summary of available options
-        --home <path>         Path to home directory of your application,
-                              defaults to the value of MOJO_HOME or
-                              auto-detection
-    -l, --limit <number>      Number of jobs/workers to show when listing them,
-                              defaults to 100
-    -m, --mode <name>         Operating mode for your application, defaults to
-                              the value of MOJO_MODE/PLACK_ENV or "development"
-    -o, --offset <number>     Number of jobs/workers to skip when listing them,
-                              defaults to 0
-    -P, --parent <id>         One or more jobs the new job depends on
-    -p, --priority <number>   Priority of new job, defaults to 0
-    -q, --queue <name>        Queue to put new job in, defaults to "default", or
-                              list only jobs in this queue
-    -R, --retry               Retry job
-    -r, --remove              Remove job
-    -S, --state <state>       List only jobs in this state
-    -s, --stats               Show queue statistics
-    -t, --task <name>         List only jobs for this task
-    -w, --workers             List workers instead of jobs, or show information
-                              for a specific worker
+    -A, --attempts <number>     Number of times performing this new job will be
+                                attempted, defaults to 1
+    -a, --args <JSON array>     Arguments for new job or worker remote control
+                                command in JSON format
+    -b, --broadcast <command>   Broadcast remote control command to one or more
+                                workers
+    -d, --delay <seconds>       Delay new job for this many seconds
+    -e, --enqueue <task>        New job to be enqueued
+    -h, --help                  Show this summary of available options
+        --home <path>           Path to home directory of your application,
+                                defaults to the value of MOJO_HOME or
+                                auto-detection
+    -l, --limit <number>        Number of jobs/workers to show when listing
+                                them, defaults to 100
+    -m, --mode <name>           Operating mode for your application, defaults to
+                                the value of MOJO_MODE/PLACK_ENV or
+                                "development"
+    -o, --offset <number>       Number of jobs/workers to skip when listing
+                                them, defaults to 0
+    -P, --parent <id>           One or more jobs the new job depends on
+    -p, --priority <number>     Priority of new job, defaults to 0
+    -q, --queue <name>          Queue to put new job in, defaults to "default",
+                                or list only jobs in this queue
+    -R, --retry                 Retry job
+    -r, --remove                Remove job
+    -S, --state <name>          List only jobs in this state
+    -s, --stats                 Show queue statistics
+    -t, --task <name>           List only jobs for this task
+    -w, --workers               List workers instead of jobs, or show
+                                information for a specific worker
 
 =head1 DESCRIPTION
 

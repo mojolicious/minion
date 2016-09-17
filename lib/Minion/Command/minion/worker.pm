@@ -134,8 +134,8 @@ with the following remote control commands.
 
 =head2 jobs
 
-  $ ./myapp.pl minion job -c jobs -a '[10]'
-  $ ./myapp.pl minion job -c jobs -a '[10]' 23
+  $ ./myapp.pl minion job -b jobs -a '[10]'
+  $ ./myapp.pl minion job -b jobs -a '[10]' 23
 
 Change the number of jobs to perform concurrently. Setting this value to C<0>
 will effectively pause the worker. That means all current jobs will be finished,
@@ -143,8 +143,8 @@ but no new ones accepted, until the number is increased again.
 
 =head2 stop
 
-  $ ./myapp.pl minion job -c stop -a '[10025]'
-  $ ./myapp.pl minion job -c stop -a '[10025]' 23
+  $ ./myapp.pl minion job -b stop -a '[10025]'
+  $ ./myapp.pl minion job -b stop -a '[10025]' 23
 
 Stop a job that is currently being performed immediately.
 
