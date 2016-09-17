@@ -23,7 +23,7 @@ sub run {
   local $SIG{QUIT}
     = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
 
-  # Remote control commands
+  # Remote control commands need to validate arguments carefully
   my $app = $self->app;
   my $worker = $self->{worker} = $app->minion->worker;
   $worker->add_command(
