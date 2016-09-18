@@ -11,11 +11,11 @@ sub run {
   my ($self, @args) = @_;
 
   GetOptionsFromArray \@args,
-    'C|command-interval=i'   => \($self->{commands}   = 10),
-    'I|heartbeat-interval=i' => \($self->{hearthbeat} = 60),
-    'j|jobs=i'               => \($self->{max}        = 4),
+    'C|command-interval=i'   => \($self->{commands}  = 10),
+    'I|heartbeat-interval=i' => \($self->{heartbeat} = 60),
+    'j|jobs=i'               => \($self->{max}       = 4),
     'q|queue=s'              => \my @queues,
-    'R|repair-interval=i'    => \($self->{repair}     = 21600);
+    'R|repair-interval=i'    => \($self->{repair}    = 21600);
   $self->{queues} = @queues ? \@queues : ['default'];
 
   local $SIG{CHLD} = 'DEFAULT';
@@ -43,7 +43,7 @@ sub _work {
 
   # Send heartbeats in regular intervals
   my $worker = $self->{worker};
-  $worker->register and $self->{lr} = steady_time + $self->{hearthbeat}
+  $worker->register and $self->{lr} = steady_time + $self->{heartbeat}
     if ($self->{lr} || 0) < steady_time;
 
   # Process worker remote control commands in regular intervals
