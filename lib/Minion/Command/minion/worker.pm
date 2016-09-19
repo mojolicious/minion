@@ -138,17 +138,17 @@ broadcasting the following remote control commands.
   $ ./myapp.pl minion job -b jobs -a '[10]'
   $ ./myapp.pl minion job -b jobs -a '[10]' 23
 
-Advice one or more workers to change the number of jobs to perform concurrently.
-Setting this value to C<0> will effectively pause the worker. That means all
-current jobs will be finished, but no new ones accepted, until the number is
-increased again.
+Instruct one or more workers to change the number of jobs to perform
+concurrently. Setting this value to C<0> will effectively pause the worker. That
+means all current jobs will be finished, but no new ones accepted, until the
+number is increased again.
 
 =head2 stop
 
   $ ./myapp.pl minion job -b stop -a '[10025]'
   $ ./myapp.pl minion job -b stop -a '[10025]' 23
 
-Advice one or more workers to stop a job that is currently being performed
+Instruct one or more workers to stop a job that is currently being performed
 immediately. This command will be ignored by workers that do not have a job
 matching the id. That means it is safe to broadcast this command to all workers.
 
