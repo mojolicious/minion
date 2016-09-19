@@ -1,4 +1,6 @@
 
+6.01  2016-09-19
+
 6.0  2016-09-17
   - Removed TTIN, TTOU and USR1 signals from worker command.
   - Changed return value of start method in Minion::Job.
