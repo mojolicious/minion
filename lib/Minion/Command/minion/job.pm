@@ -86,7 +86,7 @@ Minion::Command::minion::job - Minion job command
 
 =head1 SYNOPSIS
 
-  Usage: APPLICATION minion job [OPTIONS] [ID]
+  Usage: APPLICATION minion job [OPTIONS] [IDS]
 
     ./myapp.pl minion job
     ./myapp.pl minion job 10023
