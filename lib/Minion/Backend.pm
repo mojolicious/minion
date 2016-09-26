@@ -178,7 +178,7 @@ transitioned to the state C<finished> before it can be processed.
 
   priority => 5
 
-Job priority, defaults to C<0>.
+Job priority, defaults to C<0>. Jobs with a higher priority get performed first.
 
 =item queue
 

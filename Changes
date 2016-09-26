@@ -1,5 +1,5 @@
 
-6.01  2016-09-19
+6.01  2016-09-26
 
 6.0  2016-09-17
   - Removed TTIN, TTOU and USR1 signals from worker command.
