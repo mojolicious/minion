@@ -9,6 +9,7 @@ my $REPETITIONS = 2;
 my $WORKERS     = 4;
 my $STATS       = 100;
 my $REPAIR      = 100;
+my $INFO        = 100;
 
 # A benchmark script for comparing backends and evaluating the performance
 # impact of proposed changes
@@ -69,3 +70,12 @@ $minion->repair for 1 .. $REPAIR;
 $elapsed = time - $before;
 $avg = sprintf '%.3f', $REPAIR / $elapsed;
 say "Repaired $REPAIR times in $elapsed seconds ($avg/s)";
+
+# Job info
+say "Requesting job info $INFO times";
+$before = time;
+my $backend = $minion->backend;
+$backend->job_info($ENQUEUE) for 1 .. $INFO;
+$elapsed = time - $before;
+$avg = sprintf '%.3f', $INFO / $elapsed;
+say "Received job info $INFO times in $elapsed seconds ($avg/s)";
