@@ -1,5 +1,6 @@
 
 6.02  2017-01-02
+  - Updated Mojo::Pg requirement to 2.18.
 
 6.01  2017-01-01
   - Updated Mojo::Pg requirement to 2.33.

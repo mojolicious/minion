@@ -11,8 +11,13 @@ use Mojo::IOLoop;
 use Sys::Hostname 'hostname';
 use Time::HiRes qw(time usleep);
 
+# Isolate tests
+require Mojo::Pg;
+my $pg = Mojo::Pg->new($ENV{TEST_ONLINE});
+$pg->db->query('drop schema if exists minion_test cascade');
+$pg->db->query('create schema minion_test');
 my $minion = Minion->new(Pg => $ENV{TEST_ONLINE});
-$minion->backend->pg->with_temp_schema('minion_test');
+$minion->backend->pg->search_path(['minion_test']);
 
 # Nothing to repair
 my $worker = $minion->repair->worker;
@@ -677,5 +682,8 @@ is_deeply \@commands,
   'right structure';
 $_->unregister for $worker, $worker2;
 ok !$minion->backend->broadcast('test_id', []), 'command not sent';
+
+# Clean up once we are done
+$pg->db->query('drop schema minion_test cascade');
 
 done_testing();
