@@ -1,5 +1,6 @@
 
-6.01  2016-10-23
+6.01  2017-01-01
+  - Updated Mojo::Pg requirement to 2.33.
   - Improved performance of Minion::Backend::Pg with a new index.
 
 6.0  2016-09-17
