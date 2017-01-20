@@ -376,7 +376,7 @@ L<Minion/"backoff"> after the first attempt, defaults to C<1>.
 
   delay => 10
 
-Delay job for this many seconds (from now).
+Delay job for this many seconds (from now), defaults to C<0>.
 
 =item parents
 
