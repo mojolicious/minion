@@ -107,7 +107,7 @@ sub receive {
 sub register_worker {
   my ($self, $id) = @_;
 
-  return shift->pg->db->query(
+  return $self->pg->db->query(
     "insert into minion_workers (id, host, pid)
      values (coalesce(?, nextval('minion_workers_id_seq')), ?, ?)
      on conflict(id) do update set notified = now()
