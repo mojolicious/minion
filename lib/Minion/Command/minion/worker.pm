@@ -99,8 +99,9 @@ Minion::Command::minion::worker - Minion worker command
                                          application, defaults to the value of
                                          MOJO_HOME or auto-detection
     -I, --heartbeat-interval <seconds>   Heartbeat interval, defaults to 60
-    -j, --jobs <number>                  Number of jobs to perform parallel in
-                                         forked worker processes, defaults to 4
+    -j, --jobs <number>                  Maximum number of jobs to perform
+                                         parallel in forked worker processes,
+                                         defaults to 4
     -m, --mode <name>                    Operating mode for your application,
                                          defaults to the value of
                                          MOJO_MODE/PLACK_ENV or "development"
