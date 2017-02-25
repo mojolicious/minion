@@ -8,7 +8,9 @@ perl:
   - "5.12"
   - "5.10"
 addons:
-  postgresql: 9.5
+  postgresql: 9.6
+services:
+    - postgresql
 env:
   global:
     - HARNESS_OPTIONS=j9
@@ -19,7 +21,7 @@ install:
   - cpanm -n --installdeps .
 before_script:
   - psql -U postgres -c 'create database minion_test'
-sudo: required
+sudo: false
 dist: trusty
 notifications:
   email: false
