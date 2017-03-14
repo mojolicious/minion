@@ -52,8 +52,7 @@ sub finish_job { shift->_update(0, @_) }
 sub job_info {
   shift->pg->db->query(
     'select id, args, attempts,
-       array(select id from minion_jobs where parents @> ARRAY[j.id])
-         as children,
+       array(select id from minion_jobs where j.id = any(parents)) as children,
        extract(epoch from created) as created,
        extract(epoch from delayed) as delayed,
        extract(epoch from finished) as finished, parents, priority, queue,
@@ -148,7 +147,7 @@ sub repair {
      set finished = now(), result = to_json('Parent went away'::text),
        state = 'failed'
      where parents <> '{}' and cardinality(parents) <> (
-       select count(*) from minion_jobs where j.parents @> ARRAY[id]
+       select count(*) from minion_jobs where id = any (j.parents)
      ) and state = 'inactive'"
   );
 
@@ -157,7 +156,7 @@ sub repair {
     "delete from minion_jobs as j
      where finished <= now() - interval '1 second' * ? and not exists (
        select 1 from minion_jobs
-       where parents @> ARRAY[j.id] and state <> 'finished'
+       where j.id = any(parents) and state <> 'finished'
      ) and state = 'finished'", $minion->remove_after
   );
 }
@@ -229,7 +228,7 @@ sub _try {
        select id from minion_jobs as j
        where delayed <= now() and (parents = '{}' or cardinality(parents) = (
          select count(*) from minion_jobs
-         where j.parents @> ARRAY[id] and state = 'finished'
+         where id = any(j.parents) and state = 'finished'
        )) and queue = any(?) and state = 'inactive' and task = any(?)
        order by priority desc, id
        limit 1
@@ -852,3 +851,6 @@ alter table minion_workers add column inbox jsonb
 
 -- 13 up
 create index on minion_jobs using gin (parents);
+
+-- 14 up
+drop index minion_jobs_parents_idx;
