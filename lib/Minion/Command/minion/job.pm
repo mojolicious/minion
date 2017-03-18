@@ -24,7 +24,7 @@ sub run {
     'p|priority=i' => \$options->{priority},
     'q|queue=s'    => \$options->{queue},
     'R|retry'      => \my $retry,
-    'r|remove'     => \my $remove,
+    'remove'       => \my $remove,
     'S|state=s'    => \$options->{state},
     's|stats'      => \my $stats,
     't|task=s'     => \$options->{task},
@@ -97,7 +97,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
     ./myapp.pl minion job -R -d 10 10023
-    ./myapp.pl minion job -r 10023
+    ./myapp.pl minion job --remove 10023
     ./myapp.pl minion job -b jobs -a '[12]'
     ./myapp.pl minion job -b jobs -a '[12]' 23 24 25
 
@@ -126,7 +126,7 @@ Minion::Command::minion::job - Minion job command
     -q, --queue <name>          Queue to put new job in, defaults to "default",
                                 or list only jobs in this queue
     -R, --retry                 Retry job
-    -r, --remove                Remove job
+        --remove                Remove job
     -S, --state <name>          List only jobs in this state
     -s, --stats                 Show queue statistics
     -t, --task <name>           List only jobs for this task

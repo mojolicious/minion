@@ -12,11 +12,13 @@ sub run {
 
   GetOptionsFromArray \@args,
     'C|command-interval=i'   => \($self->{commands}  = 10),
+    'f|fast-start'           => \my $fast,
     'I|heartbeat-interval=i' => \($self->{heartbeat} = 60),
     'j|jobs=i'               => \($self->{max}       = 4),
     'q|queue=s'              => \my @queues,
     'R|repair-interval=i'    => \($self->{repair}    = 21600);
   $self->{queues} = @queues ? \@queues : ['default'];
+  $self->_next_repair if $fast;
 
   local $SIG{CHLD} = 'DEFAULT';
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
@@ -38,6 +40,12 @@ sub run {
   $worker->unregister;
 }
 
+sub _next_repair {
+  my $self = shift;
+  $self->{check}
+    = steady_time + ($self->{repair} - int rand $self->{repair} / 2);
+}
+
 sub _work {
   my $self = shift;
 
@@ -55,8 +63,7 @@ sub _work {
     my $app = $self->app;
     $app->log->debug('Checking worker registry and job queue');
     $app->minion->repair;
-    $self->{check}
-      = steady_time + ($self->{repair} - int rand $self->{repair} / 2);
+    $self->_next_repair;
   }
 
   # Check if jobs are finished
@@ -88,12 +95,15 @@ Minion::Command::minion::worker - Minion worker command
   Usage: APPLICATION minion worker [OPTIONS]
 
     ./myapp.pl minion worker
+    ./myapp.pl minion worker -f
     ./myapp.pl minion worker -m production -I 15 -C 5 -R 3600 -j 10
     ./myapp.pl minion worker -q important -q default
 
   Options:
     -C, --command-interval <seconds>     Worker remote control command interval,
                                          defaults to 10
+    -f, --fast-start                     Start processing jobs as fast as
+                                         possible and skip repairing on startup
     -h, --help                           Show this summary of available options
         --home <path>                    Path to home directory of your
                                          application, defaults to the value of
@@ -107,8 +117,10 @@ Minion::Command::minion::worker - Minion worker command
                                          MOJO_MODE/PLACK_ENV or "development"
     -q, --queue <name>                   One or more queues to get jobs from,
                                          defaults to "default"
-    -R, --repair-interval <seconds>      Repair interval, defaults to 21600
-                                         (6 hours)
+    -R, --repair-interval <seconds>      Repair interval, up to half of this
+                                         value can be subtracted randomly to
+                                         make sure not all workers repair at the
+                                         same time, defaults to 21600 (6 hours)
 
 =head1 DESCRIPTION
 
