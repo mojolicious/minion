@@ -1,4 +1,6 @@
 
+6.05  2017-03-20
+
 6.04  2017-03-18
   - Added -f option to worker command.
   - Removed -r option from job command, so you have to write --remove from now
