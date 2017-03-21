@@ -15,6 +15,7 @@ has backoff => sub { \&_backoff };
 has missing_after => 1800;
 has remove_after  => 172800;
 has tasks         => sub { {} };
+has worker_class  => 'Minion::Worker';
 
 our $VERSION = '6.05';
 
@@ -71,7 +72,7 @@ sub worker {
   # No fork emulation support
   croak 'Minion workers do not support fork emulation' if $Config{d_pseudofork};
 
-  my $worker = Minion::Worker->new(minion => $self);
+  my $worker = $self->worker_class->new(minion => $self);
   $self->emit(worker => $worker);
   return $worker;
 }
@@ -306,6 +307,14 @@ L</"repair">, defaults to C<172800> (2 days).
 
 Registered tasks.
 
+=head2 worker_class
+
+  my $class = $minion->worker_class;
+  $minion   = $minion->worker_class('MyApp::Worker');
+
+Class to be used by L</"worker">, defaults to L<Minion::Worker>. Note that
+this class needs to have already been loaded before L</"worker"> is called.
+
 =head1 METHODS
 
 L<Minion> inherits all methods from L<Mojo::EventEmitter> and implements the
@@ -499,7 +508,8 @@ Number of workers that are currently not processing a job.
 
   my $worker = $minion->worker;
 
-Build L<Minion::Worker> object.
+Build a worker object based on L</"worker_class">
+(which is usually L<Minion::Worker>).
 
 =head1 REFERENCE
 
