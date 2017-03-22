@@ -14,7 +14,7 @@ sub dequeue {
 
   my $minion = $self->minion;
   return undef unless my $job = $minion->backend->dequeue($id, $wait, $options);
-  $job = Minion::Job->new(
+  $job = $minion->job_class->new(
     args    => $job->{args},
     id      => $job->{id},
     minion  => $minion,
@@ -130,7 +130,7 @@ Register a worker remote control command.
   my $job = $worker->dequeue(0.5);
   my $job = $worker->dequeue(0.5 => {queues => ['important']});
 
-Wait a given amount of time in seconds for a job, dequeue L<Minion::Job> object
+Wait a given amount of time in seconds for a job, dequeue a job object
 and transition from C<inactive> to C<active> state, or return C<undef> if queues
 were empty.
 

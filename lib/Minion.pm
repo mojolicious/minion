@@ -12,6 +12,7 @@ use Scalar::Util 'weaken';
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has 'backend';
 has backoff => sub { \&_backoff };
+has job_class     => 'Minion::Job';
 has missing_after => 1800;
 has remove_after  => 172800;
 has tasks         => sub { {} };
@@ -32,7 +33,7 @@ sub job {
   my ($self, $id) = @_;
 
   return undef unless my $job = $self->backend->job_info($id);
-  return Minion::Job->new(
+  return $self->job_class->new(
     args    => $job->{args},
     id      => $job->{id},
     minion  => $self,
@@ -282,6 +283,14 @@ roughly C<25> attempts can be made in C<21> days.
     return ($retries ** 4) + 15 + int(rand 30);
   });
 
+=head2 job_class
+
+  my $class = $minion->job_class;
+  $minion   = $minion->job_class('MyApp::Job');
+
+Class to be used by L</"job">, defaults to L<Minion::Job>. Note that
+this class needs to have already been loaded before L</"job"> is called.
+
 =head2 missing_after
 
   my $after = $minion->missing_after;
@@ -387,8 +396,9 @@ Queue to put job in, defaults to C<default>.
 
   my $job = $minion->job($id);
 
-Get L<Minion::Job> object without making any changes to the actual job or
+Get a job object without making any changes to the actual job or
 return C<undef> if job does not exist.
+The object is based on L</"job_class"> (which is usually L<Minion::Job>).
 
   # Check job state
   my $state = $minion->job($id)->info->{state};
