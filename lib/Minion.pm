@@ -73,7 +73,7 @@ sub worker {
   # No fork emulation support
   croak 'Minion workers do not support fork emulation' if $Config{d_pseudofork};
 
-  my $worker = $self->worker_class->new(minion => $self);
+  my $worker = $self->worker_class->new(minion => $self, @_);
   $self->emit(worker => $worker);
   return $worker;
 }
