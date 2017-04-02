@@ -11,6 +11,16 @@ use Mojo::IOLoop;
 use Sys::Hostname 'hostname';
 use Time::HiRes qw(time usleep);
 
+package MinionTest::Worker;
+use Mojo::Base 'Minion::Worker';
+
+package MinionTest::Job;
+use Mojo::Base 'Minion::Job';
+
+sub info_test { shift->info }
+
+package main;
+
 # Isolate tests
 require Mojo::Pg;
 my $pg = Mojo::Pg->new($ENV{TEST_ONLINE});
@@ -682,6 +692,20 @@ is_deeply \@commands,
   'right structure';
 $_->unregister for $worker, $worker2;
 ok !$minion->backend->broadcast('test_id', []), 'command not sent';
+
+# Custom worker and job classes
+is ref $worker, 'Minion::Worker', 'right class for worker';
+is ref $job, 'Minion::Job', 'right class for job';
+$minion->worker_class('MinionTest::Worker');
+$minion->job_class('MinionTest::Job');
+my $w = $minion->worker->register;
+is ref $w, 'MinionTest::Worker', 'right custom class for worker';
+$id = $minion->enqueue(test => []);
+my $j = $minion->job($id);
+is ref $j, 'MinionTest::Job', 'right custom class for job';
+$j = $w->dequeue(0);
+is ref $j, 'MinionTest::Job', 'right custom class for job';
+is $j->info_test->{id}, $id, 'custom job method works';
 
 # Clean up once we are done
 $pg->db->query('drop schema minion_test cascade');
