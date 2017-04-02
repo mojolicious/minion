@@ -1,5 +1,6 @@
 
-6.05  2017-03-20
+6.05  2017-04-02
+  - Improved retry methods to allow for active jobs to be retried as well.
 
 6.04  2017-03-18
   - Added -f option to worker command.

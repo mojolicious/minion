@@ -174,7 +174,6 @@ sub retry_job {
        priority = coalesce(?, priority), queue = coalesce(?, queue),
        retried = now(), retries = retries + 1, state = 'inactive'
      where id = ? and retries = ?
-       and state in ('inactive', 'failed', 'finished')
      returning 1", $options->{delay} // 0, @$options{qw(priority queue)}, $id,
     $retries
   )->rows;
@@ -611,8 +610,8 @@ Reset job queue.
   my $bool = $backend->retry_job($job_id, $retries);
   my $bool = $backend->retry_job($job_id, $retries, {delay => 10});
 
-Transition from C<failed> or C<finished> state back to C<inactive>, already
-C<inactive> jobs may also be retried to change options.
+Transition job back to C<inactive> state, already C<inactive> jobs may also be
+retried to change options.
 
 These options are currently available:
 

@@ -402,9 +402,8 @@ Reset job queue. Meant to be overloaded in a subclass.
   my $bool = $backend->retry_job($job_id, $retries);
   my $bool = $backend->retry_job($job_id, $retries, {delay => 10});
 
-Transition from C<failed> or C<finished> state back to C<inactive>, already
-C<inactive> jobs may also be retried to change options. Meant to be overloaded
-in a subclass.
+Transition job back to C<inactive> state, already C<inactive> jobs may also be
+retried to change options. Meant to be overloaded in a subclass.
 
 These options are currently available:
 

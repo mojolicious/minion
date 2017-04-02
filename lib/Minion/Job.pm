@@ -364,8 +364,8 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
   my $bool = $job->retry;
   my $bool = $job->retry({delay => 10});
 
-Transition from C<failed> or C<finished> state back to C<inactive>, already
-C<inactive> jobs may also be retried to change options.
+Transition job back to C<inactive> state, already C<inactive> jobs may also be
+retried to change options.
 
 These options are currently available:
 
