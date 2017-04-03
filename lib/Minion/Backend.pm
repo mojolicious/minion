@@ -373,9 +373,23 @@ Receive remote control commands for worker.
 
   my $worker_id = $backend->register_worker;
   my $worker_id = $backend->register_worker($worker_id);
+  my $worker_id = $backend->register_worker(
+    $worker_id, {status => {queues => ['default', 'important']}});
 
 Register worker or send heartbeat to show that this worker is still alive.
 Meant to be overloaded in a subclass.
+
+These options are currently available:
+
+=over 2
+
+=item status
+
+  status => {queues => ['default', 'important']}
+
+Hash reference with whatever status information the worker would like to share.
+
+=back
 
 =head2 remove_job
 
@@ -534,6 +548,12 @@ Process id of worker.
   started => 784111777
 
 Epoch time worker was started.
+
+=item status
+
+  status => {queues => ['default', 'important']}
+
+Hash reference with whatever status information the worker would like to share.
 
 =back
 

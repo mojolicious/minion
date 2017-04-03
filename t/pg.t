@@ -24,11 +24,11 @@ my $worker = $minion->repair->worker;
 isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
 # Migrate up and down
-is $minion->backend->pg->migrations->active, 14, 'active version is 14';
+is $minion->backend->pg->migrations->active, 15, 'active version is 15';
 is $minion->backend->pg->migrations->migrate(0)->active, 0,
   'active version is 0';
-is $minion->backend->pg->migrations->migrate->active, 14,
-  'active version is 14';
+is $minion->backend->pg->migrations->migrate->active, 15,
+  'active version is 15';
 
 # Register and unregister
 $worker->register;
@@ -107,8 +107,8 @@ ok !$minion->job($id2), 'job has been cleaned up';
 ok !$minion->job($id3), 'job has been cleaned up';
 
 # List workers
-$worker  = $minion->worker->register;
-$worker2 = $minion->worker->register;
+$worker = $minion->worker->register;
+$worker2 = $minion->worker->status({whatever => 'works!'})->register;
 my $batch = $minion->backend->list_workers(0, 10);
 ok $batch->[0]{id},        'has id';
 is $batch->[0]{host},      $host, 'right host';
@@ -119,6 +119,7 @@ is $batch->[1]{pid},       $$, 'right pid';
 ok !$batch->[2], 'no more results';
 $batch = $minion->backend->list_workers(0, 1);
 is $batch->[0]{id}, $worker2->id, 'right id';
+is_deeply $batch->[0]{status}, {whatever => 'works!'}, 'right status';
 ok !$batch->[1], 'no more results';
 $batch = $minion->backend->list_workers(1, 1);
 is $batch->[0]{id}, $worker->id, 'right id';

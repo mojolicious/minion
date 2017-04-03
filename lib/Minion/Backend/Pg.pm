@@ -104,13 +104,14 @@ sub receive {
 }
 
 sub register_worker {
-  my ($self, $id) = @_;
+  my ($self, $id, $options) = (shift, shift, shift || {});
 
   return $self->pg->db->query(
-    "insert into minion_workers (id, host, pid)
-     values (coalesce(?, nextval('minion_workers_id_seq')), ?, ?)
+    "insert into minion_workers (id, host, pid, status)
+     values (coalesce(?, nextval('minion_workers_id_seq')), ?, ?, ?)
      on conflict(id) do update set notified = now()
-     returning id", $id, $self->{host} //= hostname, $$
+     returning id", $id, $self->{host} //= hostname, $$,
+    {json => $options->{status} // {}}
   )->hash->{id};
 }
 
@@ -211,10 +212,10 @@ sub worker_info {
     "select id, extract(epoch from notified) as notified, array(
        select id from minion_jobs
        where state = 'active' and worker = minion_workers.id
-     ) as jobs, host, pid, extract(epoch from started) as started
+     ) as jobs, host, pid, status, extract(epoch from started) as started
      from minion_workers
      where id = ?", shift
-  )->hash;
+  )->expand->hash;
 }
 
 sub _try {
@@ -584,8 +585,22 @@ Receive remote control commands for worker.
 
   my $worker_id = $backend->register_worker;
   my $worker_id = $backend->register_worker($worker_id);
+  my $worker_id = $backend->register_worker(
+    $worker_id, {status => {queues => ['default', 'important']}});
 
 Register worker or send heartbeat to show that this worker is still alive.
+
+These options are currently available:
+
+=over 2
+
+=item status
+
+  status => {queues => ['default', 'important']}
+
+Hash reference with whatever status information the worker would like to share.
+
+=back
 
 =head2 remove_job
 
@@ -749,6 +764,12 @@ Process id of worker.
 
 Epoch time worker was started.
 
+=item status
+
+  status => {queues => ['default', 'important']}
+
+Hash reference with whatever status information the worker would like to share.
+
 =back
 
 =head1 SEE ALSO
@@ -851,5 +872,6 @@ alter table minion_workers add column inbox jsonb
 -- 13 up
 create index on minion_jobs using gin (parents);
 
--- 14 up
-drop index minion_jobs_parents_idx;
+-- 15 up
+alter table minion_workers add column status jsonb
+  check(jsonb_typeof(status) = 'object') default '{}';

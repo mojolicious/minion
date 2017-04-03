@@ -1,7 +1,7 @@
 package Minion::Worker;
 use Mojo::Base 'Mojo::EventEmitter';
 
-has commands => sub { {} };
+has [qw(commands status)] => sub { {} };
 has [qw(id minion)];
 
 sub add_command { $_[0]->commands->{$_[1]} = $_[2] and return $_[0] }
@@ -38,7 +38,11 @@ sub process_commands {
   return $self;
 }
 
-sub register { $_[0]->id($_[0]->minion->backend->register_worker($_[0]->id)) }
+sub register {
+  my $self = shift;
+  my $status = {status => $self->status};
+  return $self->id($self->minion->backend->register_worker($self->id, $status));
+}
 
 sub unregister {
   my $self = shift;
@@ -108,6 +112,13 @@ Worker id.
   $worker    = $worker->minion(Minion->new);
 
 L<Minion> object this worker belongs to.
+
+=head2 status
+
+  my $status = $worker->status;
+  $worker    = $worker->status({queues => ['default', 'important']);
+
+Status information to share every time L</"register"> is called.
 
 =head1 METHODS
 
@@ -188,6 +199,12 @@ Process id of worker.
   started => 784111777
 
 Epoch time worker was started.
+
+=item status
+
+  status => {queues => ['default', 'important']}
+
+Hash reference with whatever status information the worker would like to share.
 
 =back
 

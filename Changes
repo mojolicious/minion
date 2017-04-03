@@ -1,5 +1,6 @@
 
-6.05  2017-04-02
+6.05  2017-04-03
+  - Added support for sharing worker status information.
   - Improved retry methods to allow for active jobs to be retried as well.
 
 6.04  2017-03-18

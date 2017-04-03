@@ -13,7 +13,7 @@ sub run {
   GetOptionsFromArray \@args,
     'C|command-interval=i'   => \($self->{commands}  = 10),
     'f|fast-start'           => \my $fast,
-    'I|heartbeat-interval=i' => \($self->{heartbeat} = 60),
+    'I|heartbeat-interval=i' => \($self->{heartbeat} = 300),
     'j|jobs=i'               => \($self->{max}       = 4),
     'q|queue=s'              => \my @queues,
     'R|repair-interval=i'    => \($self->{repair}    = 21600);
@@ -28,6 +28,8 @@ sub run {
   # Remote control commands need to validate arguments carefully
   my $app = $self->app;
   my $worker = $self->{worker} = $app->minion->worker;
+  @{$worker->status}{qw(heartbeat jobs performed queues)}
+    = ($self->{heartbeat}, $self->{max}, 0, $self->{queues});
   $worker->add_command(
     jobs => sub { $self->{max} = $_[1] if ($_[1] // '') =~ /^\d+$/ });
   $worker->add_command(
@@ -68,7 +70,9 @@ sub _work {
 
   # Check if jobs are finished
   my $jobs = $self->{jobs} ||= {};
-  $jobs->{$_}->is_finished and delete $jobs->{$_} for keys %$jobs;
+  my $status = $worker->status;
+  $jobs->{$_}->is_finished and delete $jobs->{$_} and ++$status->{performed}
+    for keys %$jobs;
 
   # Wait if job limit has been reached or worker is stopping
   if (($self->{max} <= keys %$jobs) || $self->{finished}) { sleep 1 }
@@ -108,7 +112,7 @@ Minion::Command::minion::worker - Minion worker command
         --home <path>                    Path to home directory of your
                                          application, defaults to the value of
                                          MOJO_HOME or auto-detection
-    -I, --heartbeat-interval <seconds>   Heartbeat interval, defaults to 60
+    -I, --heartbeat-interval <seconds>   Heartbeat interval, defaults to 300
     -j, --jobs <number>                  Maximum number of jobs to perform
                                          parallel in forked worker processes,
                                          defaults to 4
