@@ -1,10 +1,9 @@
 package Minion::Command::minion::job;
 use Mojo::Base 'Mojolicious::Command';
 
-use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
 use Mojo::Date;
 use Mojo::JSON 'decode_json';
-use Mojo::Util qw(dumper tablify);
+use Mojo::Util qw(dumper getopt tablify);
 
 has description => 'Manage Minion jobs';
 has usage => sub { shift->extract_usage };
@@ -13,7 +12,7 @@ sub run {
   my ($self, @args) = @_;
 
   my ($args, $options) = ([], {});
-  GetOptionsFromArray \@args,
+  getopt \@args,
     'A|attempts=i'  => \$options->{attempts},
     'a|args=s'      => sub { $args = decode_json($_[1]) },
     'b|broadcast=s' => (\my $command),

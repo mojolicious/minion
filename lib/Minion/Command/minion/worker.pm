@@ -1,8 +1,7 @@
 package Minion::Command::minion::worker;
 use Mojo::Base 'Mojolicious::Command';
 
-use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
-use Mojo::Util 'steady_time';
+use Mojo::Util qw(getopt steady_time);
 
 has description => 'Start Minion worker';
 has usage => sub { shift->extract_usage };
@@ -10,7 +9,7 @@ has usage => sub { shift->extract_usage };
 sub run {
   my ($self, @args) = @_;
 
-  GetOptionsFromArray \@args,
+  getopt \@args,
     'C|command-interval=i'   => \($self->{commands}  = 10),
     'f|fast-start'           => \my $fast,
     'I|heartbeat-interval=i' => \($self->{heartbeat} = 300),
