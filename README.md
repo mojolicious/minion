@@ -51,4 +51,4 @@ app->start;
 ## Want to know more?
 
   Take a look at our excellent
-  [documentation](http://mojolicious.org/perldoc/Minion>)!
+  [documentation](http://mojolicious.org/perldoc/Minion)!
