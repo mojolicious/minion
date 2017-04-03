@@ -2,6 +2,7 @@ package Minion::Command::minion::job;
 use Mojo::Base 'Mojolicious::Command';
 
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
+use Mojo::Date;
 use Mojo::JSON 'decode_json';
 use Mojo::Util qw(dumper tablify);
 
@@ -54,7 +55,14 @@ sub run {
   return $job->retry($options) || die "Job is active.\n" if $retry;
 
   # Job info
-  print dumper $job->info;
+  print dumper _datetime($job->info);
+}
+
+sub _datetime {
+  my $hash = shift;
+  $hash->{$_} and $hash->{$_} = Mojo::Date->new($hash->{$_})->to_datetime
+    for qw(created delayed finished notified retried started);
+  return $hash;
 }
 
 sub _list_jobs {
@@ -73,7 +81,7 @@ sub _stats { print dumper shift->app->minion->stats }
 sub _worker {
   die "Worker does not exist.\n"
     unless my $worker = shift->app->minion->backend->worker_info(@_);
-  print dumper $worker;
+  print dumper _datetime($worker);
 }
 
 1;

@@ -2,6 +2,8 @@
 6.05  2017-04-03
   - Added support for sharing worker status information.
   - Improved retry methods to allow for active jobs to be retried as well.
+  - Improved job command to show timestamps in RFC 3339 (1994-11-06T08:49:37Z)
+    format.
 
 6.04  2017-03-18
   - Added -f option to worker command.
