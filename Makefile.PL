@@ -28,6 +28,6 @@ WriteMakefile(
       x_IRC => 'irc://irc.perl.org/#mojo'
     },
   },
-  PREREQ_PM => {Mojolicious => '6.0'},
+  PREREQ_PM => {Mojolicious => '7.29'},
   test      => {TESTS       => 't/*.t t/*/*.t'}
 );
