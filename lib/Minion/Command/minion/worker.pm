@@ -9,14 +9,19 @@ has usage => sub { shift->extract_usage };
 sub run {
   my ($self, @args) = @_;
 
+  my $app    = $self->app;
+  my $worker = $self->{worker} = $app->minion->worker;
+  my $status = $worker->status;
+  $status->{performed} //= 0;
+
   getopt \@args,
-    'C|command-interval=i'   => \($self->{commands} = 10),
-    'f|fast-start'           => \my $fast,
-    'I|heartbeat-interval=i' => \(my $beat          = 300),
-    'j|jobs=i'               => \(my $jobs          = 4),
-    'q|queue=s'              => \my @queues,
-    'R|repair-interval=i'    => \($self->{repair}   = 21600);
-  @queues = ('default') unless @queues;
+    'C|command-interval=i' => \($self->{commands} = 10),
+    'f|fast-start' => \my $fast,
+    'I|heartbeat-interval=i' => \($status->{heartbeat} //= 300),
+    'j|jobs=i'               => \($status->{jobs}      //= 4),
+    'q|queue=s'              => ($status->{queues}     //= []),
+    'R|repair-interval=i' => \($self->{repair} = 21600);
+  @{$status->{queues}} = ('default') unless @{$status->{queues}};
   $self->_next_repair if $fast;
 
   local $SIG{CHLD} = 'DEFAULT';
@@ -25,10 +30,6 @@ sub run {
     = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
 
   # Remote control commands need to validate arguments carefully
-  my $app    = $self->app;
-  my $worker = $self->{worker} = $app->minion->worker;
-  my $status = $worker->status;
-  @{$status}{qw(heartbeat jobs performed queues)} = ($beat, $jobs, 0, \@queues);
   $worker->add_command(
     jobs => sub { $status->{jobs} = $_[1] if ($_[1] // '') =~ /^\d+$/ });
   $worker->add_command(
