@@ -107,10 +107,10 @@ sub register_worker {
   my ($self, $id, $options) = (shift, shift, shift || {});
 
   return $self->pg->db->query(
-    "insert into minion_workers (id, host, pid, status)
-     values (coalesce(?, nextval('minion_workers_id_seq')), ?, ?, ?)
-     on conflict(id) do update set notified = now()
-     returning id", $id, $self->{host} //= hostname, $$,
+    q{insert into minion_workers (id, host, pid, status)
+      values (coalesce($1, nextval('minion_workers_id_seq')), $2, $3, $4)
+      on conflict(id) do update set notified = now(), status = $4
+      returning id}, $id, $self->{host} //= hostname, $$,
     {json => $options->{status} // {}}
   )->hash->{id};
 }

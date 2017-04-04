@@ -15,12 +15,12 @@ sub run {
   $status->{performed} //= 0;
 
   getopt \@args,
-    'C|command-interval=i' => \($self->{commands} = 10),
-    'f|fast-start' => \my $fast,
-    'I|heartbeat-interval=i' => \($status->{heartbeat} //= 300),
-    'j|jobs=i'               => \($status->{jobs}      //= 4),
-    'q|queue=s'              => ($status->{queues}     //= []),
-    'R|repair-interval=i' => \($self->{repair} = 21600);
+    'C|command-interval=i'   => \($status->{command_interval}   //= 10),
+    'f|fast-start'           => \my $fast,
+    'I|heartbeat-interval=i' => \($status->{heartbeat_interval} //= 300),
+    'j|jobs=i'               => \($status->{jobs}               //= 4),
+    'q|queue=s'              => ($status->{queues}              //= []),
+    'R|repair-interval=i'    => \($status->{repair_interval}    //= 21600);
   @{$status->{queues}} = ('default') unless @{$status->{queues}};
   $self->_next_repair if $fast;
 
@@ -43,9 +43,9 @@ sub run {
 }
 
 sub _next_repair {
-  my $self = shift;
-  $self->{check}
-    = steady_time + ($self->{repair} - int rand $self->{repair} / 2);
+  my $self   = shift;
+  my $repair = $self->{worker}->status->{repair_interval};
+  $self->{check} = steady_time + ($repair - int rand $repair / 2);
 }
 
 sub _work {
@@ -54,12 +54,14 @@ sub _work {
   # Send heartbeats in regular intervals
   my $worker = $self->{worker};
   my $status = $worker->status;
-  $worker->register and $self->{lr} = steady_time + $status->{heartbeat}
-    if ($self->{lr} || 0) < steady_time;
+  $worker->register
+    and $self->{last_repair} = steady_time + $status->{heartbeat_interval}
+    if ($self->{last_repair} || 0) < steady_time;
 
   # Process worker remote control commands in regular intervals
-  $worker->process_commands and $self->{lp} = steady_time + $self->{commands}
-    if ($self->{lp} || 0) < steady_time;
+  $worker->process_commands
+    and $self->{last_command} = steady_time + $status->{command_interval}
+    if ($self->{last_command} || 0) < steady_time;
 
   # Repair in regular intervals (randomize to avoid congestion)
   if (($self->{check} || 0) < steady_time) {
@@ -71,7 +73,7 @@ sub _work {
 
   # Check if jobs are finished
   my $jobs = $self->{jobs} ||= {};
-  $jobs->{$_}->is_finished and delete $jobs->{$_} and ++$status->{performed}
+  $jobs->{$_}->is_finished and ++$status->{performed} and delete $jobs->{$_}
     for keys %$jobs;
 
   # Wait if job limit has been reached or worker is stopping
