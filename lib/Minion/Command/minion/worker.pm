@@ -10,13 +10,13 @@ sub run {
   my ($self, @args) = @_;
 
   getopt \@args,
-    'C|command-interval=i'   => \($self->{commands}  = 10),
+    'C|command-interval=i'   => \($self->{commands} = 10),
     'f|fast-start'           => \my $fast,
-    'I|heartbeat-interval=i' => \($self->{heartbeat} = 300),
-    'j|jobs=i'               => \($self->{max}       = 4),
+    'I|heartbeat-interval=i' => \(my $beat          = 300),
+    'j|jobs=i'               => \(my $jobs          = 4),
     'q|queue=s'              => \my @queues,
-    'R|repair-interval=i'    => \($self->{repair}    = 21600);
-  $self->{queues} = @queues ? \@queues : ['default'];
+    'R|repair-interval=i'    => \($self->{repair}   = 21600);
+  @queues = ('default') unless @queues;
   $self->_next_repair if $fast;
 
   local $SIG{CHLD} = 'DEFAULT';
@@ -25,12 +25,12 @@ sub run {
     = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
 
   # Remote control commands need to validate arguments carefully
-  my $app = $self->app;
+  my $app    = $self->app;
   my $worker = $self->{worker} = $app->minion->worker;
-  @{$worker->status}{qw(heartbeat jobs performed queues)}
-    = ($self->{heartbeat}, $self->{max}, 0, $self->{queues});
+  my $status = $worker->status;
+  @{$status}{qw(heartbeat jobs performed queues)} = ($beat, $jobs, 0, \@queues);
   $worker->add_command(
-    jobs => sub { $self->{max} = $_[1] if ($_[1] // '') =~ /^\d+$/ });
+    jobs => sub { $status->{jobs} = $_[1] if ($_[1] // '') =~ /^\d+$/ });
   $worker->add_command(
     stop => sub { $self->{jobs}{$_[1]}->stop if $self->{jobs}{$_[1] // ''} });
 
@@ -52,7 +52,8 @@ sub _work {
 
   # Send heartbeats in regular intervals
   my $worker = $self->{worker};
-  $worker->register and $self->{lr} = steady_time + $self->{heartbeat}
+  my $status = $worker->status;
+  $worker->register and $self->{lr} = steady_time + $status->{heartbeat}
     if ($self->{lr} || 0) < steady_time;
 
   # Process worker remote control commands in regular intervals
@@ -69,15 +70,14 @@ sub _work {
 
   # Check if jobs are finished
   my $jobs = $self->{jobs} ||= {};
-  my $status = $worker->status;
   $jobs->{$_}->is_finished and delete $jobs->{$_} and ++$status->{performed}
     for keys %$jobs;
 
   # Wait if job limit has been reached or worker is stopping
-  if (($self->{max} <= keys %$jobs) || $self->{finished}) { sleep 1 }
+  if (($status->{jobs} <= keys %$jobs) || $self->{finished}) { sleep 1 }
 
   # Try to get more jobs
-  elsif (my $job = $worker->dequeue(5 => {queues => $self->{queues}})) {
+  elsif (my $job = $worker->dequeue(5 => {queues => $status->{queues}})) {
     $jobs->{my $id = $job->id} = $job->start;
     my ($pid, $task) = ($job->pid, $job->task);
     $self->app->log->debug(
