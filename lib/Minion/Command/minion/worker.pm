@@ -22,7 +22,8 @@ sub run {
     'q|queue=s'              => ($status->{queues}              //= []),
     'R|repair-interval=i'    => \($status->{repair_interval}    //= 21600);
   @{$status->{queues}} = ('default') unless @{$status->{queues}};
-  $self->_next_repair if $fast;
+  $status->{repair_interval} -= int rand $status->{repair_interval} / 2;
+  $self->{last_repair} = $fast ? steady_time : 0;
 
   local $SIG{CHLD} = 'DEFAULT';
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
@@ -42,33 +43,27 @@ sub run {
   $worker->unregister;
 }
 
-sub _next_repair {
-  my $self   = shift;
-  my $repair = $self->{worker}->status->{repair_interval};
-  $self->{check} = steady_time + ($repair - int rand $repair / 2);
-}
-
 sub _work {
   my $self = shift;
 
   # Send heartbeats in regular intervals
   my $worker = $self->{worker};
   my $status = $worker->status;
-  $worker->register
-    and $self->{last_repair} = steady_time + $status->{heartbeat_interval}
-    if ($self->{last_repair} || 0) < steady_time;
+  $self->{last_heartbeat} ||= 0;
+  $worker->register and $self->{last_heartbeat} = steady_time
+    if ($self->{last_heartbeat} + $status->{heartbeat_interval}) < steady_time;
 
   # Process worker remote control commands in regular intervals
-  $worker->process_commands
-    and $self->{last_command} = steady_time + $status->{command_interval}
-    if ($self->{last_command} || 0) < steady_time;
+  $self->{last_command} ||= 0;
+  $worker->process_commands and $self->{last_command} = steady_time
+    if ($self->{last_command} + $status->{command_interval}) < steady_time;
 
   # Repair in regular intervals (randomize to avoid congestion)
-  if (($self->{check} || 0) < steady_time) {
+  if (($self->{last_repair} + $status->{repair_interval}) < steady_time) {
     my $app = $self->app;
     $app->log->debug('Checking worker registry and job queue');
     $app->minion->repair;
-    $self->_next_repair;
+    $self->{last_repair} = steady_time;
   }
 
   # Check if jobs are finished
