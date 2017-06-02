@@ -486,8 +486,13 @@ is_deeply $job->info->{result}, [{23 => 'testtesttest'}], 'right structure';
 $worker->unregister;
 
 # Perform job in a running event loop
+$notified = undef;
+my $cb = sub { $notified++ };
+$minion->backend->pg->pubsub->listen('minion.job' => $cb);
 $id = $minion->enqueue(add => [8, 9]);
 Mojo::IOLoop->delay(sub { $minion->perform_jobs })->wait;
+$minion->backend->pg->pubsub->unlisten('minion.job' => $cb);
+ok $notified, 'notified';
 is $minion->job($id)->info->{state}, 'finished', 'right state';
 is_deeply $minion->job($id)->info->{result}, {added => 17}, 'right result';
 
