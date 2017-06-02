@@ -12,9 +12,11 @@ use Scalar::Util 'weaken';
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has 'backend';
 has backoff => sub { \&_backoff };
+has job_class     => 'Minion::Job';
 has missing_after => 1800;
 has remove_after  => 172800;
 has tasks         => sub { {} };
+has worker_class  => 'Minion::Worker';
 
 our $VERSION = '6.06';
 
@@ -31,7 +33,7 @@ sub job {
   my ($self, $id) = @_;
 
   return undef unless my $job = $self->backend->job_info($id);
-  return Minion::Job->new(
+  return $self->job_class->new(
     args    => $job->{args},
     id      => $job->{id},
     minion  => $self,
@@ -71,7 +73,7 @@ sub worker {
   # No fork emulation support
   croak 'Minion workers do not support fork emulation' if $Config{d_pseudofork};
 
-  my $worker = Minion::Worker->new(minion => $self);
+  my $worker = $self->worker_class->new(minion => $self, @_);
   $self->emit(worker => $worker);
   return $worker;
 }
@@ -281,6 +283,14 @@ roughly C<25> attempts can be made in C<21> days.
     return ($retries ** 4) + 15 + int(rand 30);
   });
 
+=head2 job_class
+
+  my $class = $minion->job_class;
+  $minion   = $minion->job_class('MyApp::Job');
+
+Class to be used by L</"job">, defaults to L<Minion::Job>. Note that
+this class needs to have already been loaded before L</"job"> is called.
+
 =head2 missing_after
 
   my $after = $minion->missing_after;
@@ -305,6 +315,14 @@ L</"repair">, defaults to C<172800> (2 days).
   $minion   = $minion->tasks({foo => sub {...}});
 
 Registered tasks.
+
+=head2 worker_class
+
+  my $class = $minion->worker_class;
+  $minion   = $minion->worker_class('MyApp::Worker');
+
+Class to be used by L</"worker">, defaults to L<Minion::Worker>. Note that
+this class needs to have already been loaded before L</"worker"> is called.
 
 =head1 METHODS
 
@@ -378,8 +396,9 @@ Queue to put job in, defaults to C<default>.
 
   my $job = $minion->job($id);
 
-Get L<Minion::Job> object without making any changes to the actual job or
+Get a job object without making any changes to the actual job or
 return C<undef> if job does not exist.
+The object is based on L</"job_class"> (which is usually L<Minion::Job>).
 
   # Check job state
   my $state = $minion->job($id)->info->{state};
@@ -499,7 +518,8 @@ Number of workers that are currently not processing a job.
 
   my $worker = $minion->worker;
 
-Build L<Minion::Worker> object.
+Build a worker object based on L</"worker_class">
+(which is usually L<Minion::Worker>).
 
 =head1 REFERENCE
 
