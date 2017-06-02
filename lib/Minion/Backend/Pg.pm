@@ -157,7 +157,7 @@ sub repair {
     "delete from minion_jobs as j
      where finished <= now() - interval '1 second' * ? and not exists (
        select 1 from minion_jobs
-       where j.id = any(parents) and state <> 'finished'
+       where parents @> ARRAY[j.id] and state <> 'finished'
      ) and state = 'finished'", $minion->remove_after
   );
 }
