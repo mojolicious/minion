@@ -20,7 +20,7 @@ sub result {
   return $self->reply->not_found
     unless my $job = $self->minion->job($self->param('id'));
 
-  $self->render(action => 'result', result => $job->info->{result});
+  $self->render(result => $job->info->{result});
 }
 
 1;
