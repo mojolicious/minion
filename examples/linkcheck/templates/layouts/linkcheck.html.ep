@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <style>
+      body { font: 0.9em 'Helvetica Neue', Helvetica, sans-serif }
+      input[type=url] { width: 300px }
+      input.field-with-error { border: 4px solid #f00 }
+    </style>
+    %= content_for 'header'
+  </head>
+  <body>
+    <h1><%= link_to 'Link Check' => 'index' %></h1>
+    %= content
+  </body>
+</html>

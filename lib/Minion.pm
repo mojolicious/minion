@@ -215,6 +215,14 @@ Which are loaded like any other plugin from your application.
   # Mojolicious::Lite
   plugin 'MyApp::Task::PokeMojo';
 
+=head1 EXAMPLES
+
+This distribution also contains a great example application you can use for
+inspiration. The
+L<link checker|https://github.com/kraih/mojo-pg/tree/master/examples/linkcheck>
+will show you how to integrate background jobs into well-structured
+L<Mojolicious> applications.
+
 =head1 EVENTS
 
 L<Minion> inherits all events from L<Mojo::EventEmitter> and can emit the

@@ -1,0 +1,27 @@
+% layout 'linkcheck', title => 'Result';
+
+% if (ref $result eq 'ARRAY') {
+  <table>
+    <tr>
+      <th>URL</th>
+      <th>Status</th>
+    </tr>
+    % for my $status (@$result) {
+      <tr>
+        <td><%= $status->[0] %></td>
+        <td><%= $status->[1] %></td>
+      </tr>
+    % }
+  </table>
+% }
+
+% elsif (!$result) {
+  % content_for header => begin
+    <meta http-equiv="refresh" content="3">
+  % end
+  <p>Waiting for result...</p>
+% }
+
+% else {
+  %= $result
+% }

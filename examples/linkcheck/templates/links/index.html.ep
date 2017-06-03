@@ -1,0 +1,5 @@
+% layout 'linkcheck', title => 'Check links';
+%= form_for 'check' => begin
+  %= url_field url => 'http://mojolicious.org'
+  %= submit_button 'Check'
+% end
