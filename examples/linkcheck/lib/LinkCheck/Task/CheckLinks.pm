@@ -2,7 +2,6 @@ package LinkCheck::Task::CheckLinks;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use Mojo::URL;
-use Mojo::UserAgent;
 
 sub register {
   my ($self, $app) = @_;
@@ -13,7 +12,7 @@ sub _check_links {
   my ($job, $url) = @_;
 
   my @results;
-  my $ua  = Mojo::UserAgent->new;
+  my $ua  = $job->app->ua;
   my $res = $ua->get($url)->result;
   push @results, [$url, $res->code];
 

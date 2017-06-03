@@ -31,11 +31,11 @@ $t->post_ok('/links' => form => {url => 'http://mojolicious.org'})
   ->text_is('p' => 'Waiting for result...')->element_exists_not('table');
 
 # Perform the background job
-$t->get_ok('/links/1')->status_is(200)->text_is('p' => 'Waiting for result...')
-  ->element_exists_not('table');
+$t->get_ok('/links/1')->status_is(200)->text_is('title' => 'Result')
+  ->text_is('p' => 'Waiting for result...')->element_exists_not('table');
 $t->app->minion->perform_jobs;
 $t->get_ok('/links/1')->status_is(200)->text_is('title' => 'Result')
-  ->element_exists('table');
+  ->element_exists_not('p')->element_exists('table');
 
 # Clean up once we are done
 $pg->db->query('drop schema linkcheck_test cascade');
