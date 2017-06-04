@@ -8,7 +8,10 @@ sub startup {
   my $config = $self->plugin(Config => {file => 'linkcheck.conf'});
   $self->secrets($config->{secrets});
 
-  # Job queue
+  # Job queue (requires a background worker)
+  #
+  #   script/linkcheck minion worker
+  #
   $self->plugin(Minion => {Pg => $config->{pg}});
   $self->plugin('LinkCheck::Task::CheckLinks');
 
