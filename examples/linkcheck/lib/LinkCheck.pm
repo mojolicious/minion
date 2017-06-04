@@ -8,7 +8,7 @@ sub startup {
   my $config = $self->plugin(Config => {file => 'linkcheck.conf'});
   $self->secrets($config->{secrets});
 
-  # Job queue (requires a background worker)
+  # Job queue (requires a background worker process)
   #
   #   script/linkcheck minion worker
   #
