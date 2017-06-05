@@ -1,4 +1,6 @@
 
+6.07  2017-06-06
+
 6.06  2017-06-03
   - Added an example application to demonstrate how to integrate background jobs
     into well-structured Mojolicious applications.
