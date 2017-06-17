@@ -130,10 +130,41 @@ ok !$batch->[1], 'no more results';
 $worker->unregister;
 $worker2->unregister;
 
+# Exclusive lock
+ok $minion->lock('foo', 3600), 'locked';
+ok !$minion->lock('foo', 3600), 'not locked again';
+ok $minion->unlock('foo'), 'unlocked';
+ok !$minion->unlock('foo'), 'not unlocked again';
+ok $minion->lock('foo', -3600), 'locked';
+ok $minion->lock('foo', 3600),  'locked again';
+ok !$minion->lock('foo', 3600), 'not locked again';
+ok $minion->unlock('foo'), 'unlocked';
+ok !$minion->unlock('foo'), 'not unlocked again';
+ok $minion->lock('yada', 3600, {limit => 1}), 'locked';
+ok !$minion->lock('yada', 3600, {limit => 1}), 'not locked again';
+
+# Shared lock
+ok $minion->lock('bar', 3600,  {limit => 3}), 'locked';
+ok $minion->lock('bar', 3600,  {limit => 3}), 'locked again';
+ok $minion->lock('bar', -3600, {limit => 3}), 'locked again';
+ok $minion->lock('bar', 3600,  {limit => 3}), 'locked again';
+ok !$minion->lock('bar', 3600, {limit => 2}), 'not locked again';
+ok $minion->lock('baz', 3600, {limit => 3}), 'locked';
+ok $minion->unlock('bar'), 'unlocked';
+ok $minion->lock('bar', 3600, {limit => 3}), 'locked again';
+ok $minion->unlock('bar'), 'unlocked again';
+ok $minion->unlock('bar'), 'unlocked again';
+ok $minion->unlock('bar'), 'unlocked again';
+ok !$minion->unlock('bar'), 'not unlocked again';
+ok $minion->unlock('baz'), 'unlocked';
+ok !$minion->unlock('baz'), 'not unlocked again';
+
 # Reset
 $minion->reset->repair;
 ok !$minion->backend->pg->db->query(
   'select count(id) as count from minion_jobs')->hash->{count}, 'no jobs';
+ok !$minion->backend->pg->db->query(
+  'select count(id) as count from minion_locks')->hash->{count}, 'no locks';
 ok !$minion->backend->pg->db->query(
   'select count(id) as count from minion_workers')->hash->{count}, 'no workers';
 
@@ -684,33 +715,6 @@ is_deeply \@commands,
   'right structure';
 $_->unregister for $worker, $worker2;
 ok !$minion->backend->broadcast('test_id', []), 'command not sent';
-
-# Exclusive lock
-ok $minion->lock('foo', 3600), 'locked';
-ok !$minion->lock('foo', 3600), 'not locked again';
-ok $minion->unlock('foo'), 'unlocked';
-ok !$minion->unlock('foo'), 'not unlocked again';
-ok $minion->lock('foo', -3600), 'locked';
-ok $minion->lock('foo', 3600),  'locked again';
-ok !$minion->lock('foo', 3600), 'not locked again';
-ok $minion->unlock('foo'), 'unlocked';
-ok !$minion->unlock('foo'), 'not unlocked again';
-
-# Shared lock
-ok $minion->lock('bar', 3600,  {limit => 3}), 'locked';
-ok $minion->lock('bar', 3600,  {limit => 3}), 'locked again';
-ok $minion->lock('bar', -3600, {limit => 3}), 'locked again';
-ok $minion->lock('bar', 3600,  {limit => 3}), 'locked again';
-ok !$minion->lock('bar', 3600, {limit => 2}), 'not locked again';
-ok $minion->lock('baz', 3600, {limit => 3}), 'locked';
-ok $minion->unlock('bar'), 'unlocked';
-ok $minion->lock('bar', 3600, {limit => 3}), 'locked again';
-ok $minion->unlock('bar'), 'unlocked again';
-ok $minion->unlock('bar'), 'unlocked again';
-ok $minion->unlock('bar'), 'unlocked again';
-ok !$minion->unlock('bar'), 'not unlocked again';
-ok $minion->unlock('baz'), 'unlocked';
-ok !$minion->unlock('baz'), 'not unlocked again';
 
 # Clean up once we are done
 $pg->db->query('drop schema minion_test cascade');

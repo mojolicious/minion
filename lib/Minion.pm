@@ -404,7 +404,8 @@ return C<undef> if job does not exist.
   my $bool = $minion->lock('foo', 3600, {limit => 20});
 
 Try to acquire a named lock that will expire automatically after the given
-amount of time in seconds. You can release the lock manually with L</"unlock">.
+amount of time in seconds. You can release the lock manually with L</"unlock">
+to limit concurrency, or let it expire for rate limiting.
 
   # Wait for an exclusive lock that expires after 300 seconds
   sleep 1 until $minion->lock('fragile_backend_service', 300);
