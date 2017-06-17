@@ -408,19 +408,28 @@ amount of time in seconds. You can release the lock manually with L</"unlock">
 to limit concurrency, or let it expire for rate limiting.
 
   # Try to acquire a one hour exclusive lock (unique job)
-  return $job->finish('Previous job is still active')
-    unless $minion->lock('fragile_backend_service', 3600);
-  ...
-  $minion->unlock('fragile_backend_service');
+  $minion->add_task(foo => sub {
+    my ($job, @args) = @_;
+    return $job->finish('Previous job is still active')
+      unless $minion->lock('fragile_backend_service', 3600);
+    ...
+    $minion->unlock('fragile_backend_service');
+  });
 
-  # Wait for a 60 second lock shared by up to 5 parties (limit concurrency)
-  sleep 1 until $minion->lock('some_web_service', 60, {limit => 5});
-  ...
-  $minion->unlock('some_web_service');
+  # Wait for a lock shared by up to 5 parties (limit concurrency)
+  $minion->add_task(bar => sub {
+    my ($job, @args) = @_;
+    sleep 1 until $minion->lock('some_web_service', 60, {limit => 5});
+    ...
+    $minion->unlock('some_web_service');
+  });
 
-  # Wait for a 60 second lock shared by up to 5 parties (rate limiting)
-  sleep 1 until $minion->lock('some_web_service', 60, {limit => 5});
-  ...
+  # Wait for a lock shared by up to 10 parties (rate limiting)
+  $minion->add_task(baz => sub {
+    my ($job, @args) = @_;
+    sleep 1 until $minion->lock('some_web_service', 60, {limit => 10});
+    ...
+  });
 
 These options are currently available:
 
