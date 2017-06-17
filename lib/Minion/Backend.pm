@@ -13,6 +13,7 @@ sub finish_job   { croak 'Method "finish_job" not implemented by subclass' }
 sub job_info     { croak 'Method "job_info" not implemented by subclass' }
 sub list_jobs    { croak 'Method "list_jobs" not implemented by subclass' }
 sub list_workers { croak 'Method "list_workers" not implemented by subclass' }
+sub lock         { croak 'Method "lock" not implemented by subclass' }
 sub receive      { croak 'Method "receive" not implemented by subclass' }
 
 sub register_worker {
@@ -24,6 +25,7 @@ sub repair     { croak 'Method "repair" not implemented by subclass' }
 sub reset      { croak 'Method "reset" not implemented by subclass' }
 sub retry_job  { croak 'Method "retry_job" not implemented by subclass' }
 sub stats      { croak 'Method "stats" not implemented by subclass' }
+sub unlock     { croak 'Method "unlock" not implemented by subclass' }
 
 sub unregister_worker {
   croak 'Method "unregister_worker" not implemented by subclass';
