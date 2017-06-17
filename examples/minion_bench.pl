@@ -3,13 +3,13 @@ use Mojo::Base -strict;
 use Minion;
 use Time::HiRes 'time';
 
-my $ENQUEUE     = 10000;
+my $ENQUEUE     = 50000;
 my $DEQUEUE     = 1000;
 my $REPETITIONS = 2;
 my $WORKERS     = 4;
 my $STATS       = 100;
 my $REPAIR      = 100;
-my $INFO        = 100;
+my $INFO        = 1000;
 my $LOCK        = 5000;
 my $UNLOCK      = 1000;
 
@@ -22,8 +22,10 @@ $minion->reset;
 
 # Enqueue
 say "Clean start with $ENQUEUE jobs";
+my @parents = map { $minion->enqueue('foo') } 1 .. 5;
 my $before = time;
-$minion->enqueue($_ % 2 ? 'foo' : 'bar') for 1 .. $ENQUEUE;
+$minion->enqueue($_ % 2 ? 'foo' : 'bar' => [] => {parents => \@parents})
+  for 1 .. $ENQUEUE;
 my $elapsed = time - $before;
 my $avg = sprintf '%.3f', $ENQUEUE / $elapsed;
 say "Enqueued $ENQUEUE jobs in $elapsed seconds ($avg/s)";
