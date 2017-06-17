@@ -213,7 +213,8 @@ sub stats {
 sub unlock {
   !!shift->pg->db->query(
     'delete from minion_locks where id = (
-       select id from minion_locks where name = ? order by expires desc limit 1
+       select id from minion_locks
+       where expires > now() and name = ? order by expires limit 1
      ) returning 1', shift
   )->rows;
 }
@@ -924,7 +925,7 @@ create table if not exists minion_locks (
   name    text not null,
   expires timestamp with time zone not null
 );
-create index on minion_locks (expires desc);
+create index on minion_locks (expires);
 create function minion_lock(text, int, int) returns bool as $$
 declare
   new_expires timestamp with time zone = now() + (interval '1 second' * $2);
