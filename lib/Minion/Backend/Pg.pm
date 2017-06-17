@@ -926,11 +926,9 @@ create table if not exists minion_locks (
 create function minion_lock(text, int, int) returns bool as $$
 declare
   new_expires timestamp with time zone = now() + (interval '1 second' * $2);
-  holders int;
 begin
   delete from minion_locks where expires < now();
-  select count(*) into holders from minion_locks where name = $1;
-  if holders >= $3 then
+  if (select count(*) >= $3 from minion_locks where name = $1) then
     return false;
   end if;
   insert into minion_locks (name, expires) values ($1, new_expires);
