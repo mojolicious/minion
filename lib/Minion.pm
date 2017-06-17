@@ -407,15 +407,20 @@ Try to acquire a named lock that will expire automatically after the given
 amount of time in seconds. You can release the lock manually with L</"unlock">
 to limit concurrency, or let it expire for rate limiting.
 
-  # Wait for an exclusive lock that expires after 300 seconds
-  sleep 1 until $minion->lock('fragile_backend_service', 300);
+  # Try to acquire a one hour exclusive lock
+  return $job->finish('Previous job is still active')
+    unless $minion->lock('fragile_backend_service', 3600);
   ...
   $minion->unlock('fragile_backend_service');
 
-  # Wait for a shared lock used by up to 5 parties that expires after 60 seconds
+  # Wait for a 60 second lock shared by up to 5 parties (limit concurrency)
   sleep 1 until $minion->lock('some_web_service', 60, {limit => 5});
   ...
   $minion->unlock('some_web_service');
+
+  # Wait for a 60 second lock shared by up to 5 parties (rate limiting)
+  sleep 1 until $minion->lock('some_web_service', 60, {limit => 5});
+  ...
 
 These options are currently available:
 
