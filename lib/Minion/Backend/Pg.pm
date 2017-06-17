@@ -155,7 +155,7 @@ sub repair {
      set finished = now(), result = to_json('Parent went away'::text),
        state = 'failed'
      where parents <> '{}' and cardinality(parents) <> (
-       select count(*) from minion_jobs where id = any (j.parents)
+       select count(*) from minion_jobs where id = any(j.parents)
      ) and state = 'inactive'"
   );
 
