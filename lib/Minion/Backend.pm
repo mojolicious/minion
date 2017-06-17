@@ -52,6 +52,7 @@ Minion::Backend - Backend base class
   sub job_info          {...}
   sub list_jobs         {...}
   sub list_workers      {...}
+  sub lock              {...}
   sub receive           {...}
   sub register_worker   {...}
   sub remove_job        {...}
@@ -59,6 +60,7 @@ Minion::Backend - Backend base class
   sub reset             {...}
   sub retry_job         {...}
   sub stats             {...}
+  sub unlock            {...}
   sub unregister_worker {...}
   sub worker_info       {...}
 
@@ -363,6 +365,27 @@ List only jobs for this task.
 Returns the same information as L</"worker_info"> but in batches. Meant to be
 overloaded in a subclass.
 
+=head2 lock
+
+  my $bool = $backend->lock('foo', 3600);
+  my $bool = $backend->lock('foo', 3600, {limit => 20});
+
+Try to acquire a named lock that will expire automatically after the given
+amount of time in seconds.
+
+These options are currently available:
+
+=over 2
+
+=item limit
+
+  limit => 20
+
+Number of shared locks with the same name that can be active at the same time,
+defaults to C<1>.
+
+=back
+
 =head2 receive
 
   my $commands = $backend->receive($worker_id);
@@ -498,6 +521,12 @@ Number of jobs in C<inactive> state.
 Number of workers that are currently not processing a job.
 
 =back
+
+=head2 unlock
+
+  my $bool = $backend->unlock('foo');
+
+Release a named lock.
 
 =head2 unregister_worker
 

@@ -40,6 +40,8 @@ sub job {
   );
 }
 
+sub lock { shift->backend->lock(@_) }
+
 sub new {
   my $self = shift->SUPER::new;
 
@@ -63,7 +65,8 @@ sub perform_jobs {
 sub repair { shift->_delegate('repair') }
 sub reset  { shift->_delegate('reset') }
 
-sub stats { shift->backend->stats }
+sub stats  { shift->backend->stats }
+sub unlock { shift->backend->unlock(@_) }
 
 sub worker {
   my $self = shift;
@@ -395,6 +398,37 @@ return C<undef> if job does not exist.
   # Get job result
   my $result = $minion->job($id)->info->{result};
 
+=head2 lock
+
+  my $bool = $minion->lock('foo', 3600);
+  my $bool = $minion->lock('foo', 3600, {limit => 20});
+
+Try to acquire a named lock that will expire automatically after the given
+amount of time in seconds. You can release the lock manually with L</"unlock">.
+
+  # Wait for an exclusive lock that expires after 300 seconds
+  sleep 1 until $minion->lock('fragile_backend_service', 300);
+  ...
+  $minion->unlock('fragile_backend_service');
+
+  # Wait for a shared lock used by up to 5 parties that expires after 60 seconds
+  sleep 1 until $minion->lock('some_web_service', 60, {limit => 5});
+  ...
+  $minion->unlock('some_web_service');
+
+These options are currently available:
+
+=over 2
+
+=item limit
+
+  limit => 20
+
+Number of shared locks with the same name that can be active at the same time,
+defaults to C<1>.
+
+=back
+
 =head2 new
 
   my $minion = Minion->new(Pg => 'postgresql://postgres@/test');
@@ -502,6 +536,12 @@ Number of jobs in C<inactive> state.
 Number of workers that are currently not processing a job.
 
 =back
+
+=head2 unlock
+
+  my $bool = $minion->unlock('foo');
+
+Release a named lock that has been previously acquired with L</"lock">.
 
 =head2 worker
 

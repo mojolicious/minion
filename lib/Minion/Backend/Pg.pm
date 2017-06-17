@@ -82,6 +82,12 @@ sub list_workers {
     ->arrays->map(sub { $self->worker_info($_->[0]) })->to_array;
 }
 
+sub lock {
+  my ($self, $name, $duration, $options) = (shift, shift, shift, shift // {});
+  return !!$self->pg->db->query('select * from minion_lock(?, ?, ?)',
+    $name, $duration, $options->{limit} || 1)->array->[0];
+}
+
 sub new {
   my $self = shift->SUPER::new(pg => Mojo::Pg->new(@_));
 
@@ -201,6 +207,14 @@ sub stats {
   $stats->{"${_}_jobs"} ||= 0 for qw(inactive active failed finished);
 
   return $stats;
+}
+
+sub unlock {
+  !!shift->pg->db->query(
+    'delete from minion_locks where id = (
+       select id from minion_locks where name = ? order by expires desc limit 1
+     ) returning 1', shift
+  )->rows;
 }
 
 sub unregister_worker {
@@ -569,6 +583,27 @@ List only jobs for this task.
 
 Returns the same information as L</"worker_info"> but in batches.
 
+=head2 lock
+
+  my $bool = $backend->lock('foo', 3600);
+  my $bool = $backend->lock('foo', 3600, {limit => 20});
+
+Try to acquire a named lock that will expire automatically after the given
+amount of time in seconds.
+
+These options are currently available:
+
+=over 2
+
+=item limit
+
+  limit => 20
+
+Number of shared locks with the same name that can be active at the same time,
+defaults to C<1>.
+
+=back
+
 =head2 new
 
   my $backend = Minion::Backend::Pg->new('postgresql://postgres@/test');
@@ -714,6 +749,12 @@ Number of jobs in C<inactive> state.
 Number of workers that are currently not processing a job.
 
 =back
+
+=head2 unlock
+
+  my $bool = $backend->unlock('foo');
+
+Release a named lock.
 
 =head2 unregister_worker
 
@@ -875,3 +916,28 @@ create index on minion_jobs using gin (parents);
 -- 15 up
 alter table minion_workers add column status jsonb
   check(jsonb_typeof(status) = 'object') default '{}';
+
+-- 16 up
+create table if not exists minion_locks (
+  id      bigserial not null primary key,
+  name    text not null,
+  expires timestamp with time zone not null
+);
+create function minion_lock(text, int, int) returns bool as $$
+declare
+  new_expires timestamp with time zone = now() + (interval '1 second' * $2);
+  holders int;
+begin
+  delete from minion_locks where expires < now();
+  select count(*) into holders from minion_locks where name = $1;
+  if holders >= $3 then
+    return false;
+  end if;
+  insert into minion_locks (name, expires) values ($1, new_expires);
+  return true;
+end;
+$$ language plpgsql;
+
+-- 16 down
+drop function if exists minion_lock(text, int, int);
+drop table if exists minion_locks;
