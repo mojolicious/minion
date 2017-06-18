@@ -52,8 +52,7 @@ sub finish_job { shift->_update(0, @_) }
 sub job_info {
   shift->pg->db->query(
     'select id, args, attempts,
-       array(select id from minion_jobs where parents @> ARRAY[j.id])
-         as children,
+       array(select id from minion_jobs where j.id = any (parents)) as children,
        extract(epoch from created) as created,
        extract(epoch from delayed) as delayed,
        extract(epoch from finished) as finished, parents, priority, queue,
@@ -154,7 +153,7 @@ sub repair {
     "delete from minion_jobs as j
      where finished <= now() - interval '1 second' * ? and not exists (
        select 1 from minion_jobs
-       where parents @> ARRAY[j.id] and state <> 'finished'
+       where j.id = any (parents) and state <> 'finished'
      ) and state = 'finished'", $minion->remove_after
   );
 }
@@ -182,15 +181,18 @@ sub stats {
   my $self = shift;
 
   my $stats = $self->pg->db->query(
-    "select 'enqueued_jobs', case when is_called then last_value else 0 end from minion_jobs_id_seq
+    "select 'enqueued_jobs', case when is_called then last_value else 0 end
+     from minion_jobs_id_seq
      union all
      select state::text || '_jobs', count(*) from minion_jobs group by state
      union all
-     select 'delayed_jobs', count(*) from minion_jobs where (delayed > now() or parents <> '{}') and state = 'inactive'
+     select 'delayed_jobs', count(*) from minion_jobs
+     where (delayed > now() or parents <> '{}') and state = 'inactive'
      union all
      select 'inactive_workers', count(*) from minion_workers
      union all
-     select 'active_workers', count(distinct worker) from minion_jobs where state = 'active'"
+     select 'active_workers', count(distinct worker) from minion_jobs
+     where state = 'active'"
   )->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
   $stats->{inactive_workers} -= $stats->{active_workers};
   $stats->{"${_}_jobs"} ||= 0 for qw(inactive active failed finished);
@@ -901,15 +903,11 @@ create index on minion_jobs (state, priority desc, id);
 alter table minion_workers add column inbox jsonb
   check(jsonb_typeof(inbox) = 'array') default '[]';
 
--- 13 up
-create index on minion_jobs using gin (parents);
-
 -- 15 up
 alter table minion_workers add column status jsonb
   check(jsonb_typeof(status) = 'object') default '{}';
 
 -- 16 up
-create index on minion_jobs using gin (parents);
 create table if not exists minion_locks (
   id      bigserial not null primary key,
   name    text not null,
