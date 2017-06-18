@@ -679,12 +679,9 @@ ok $job->finish, 'job finished';
 is $minion->stats->{finished_jobs}, 3, 'three finished jobs';
 is $minion->repair->stats->{finished_jobs}, 0, 'no finished jobs';
 $id = $minion->enqueue(test => [] => {parents => [-1]});
-ok !$worker->dequeue(0), 'job with missing parent will never be ready';
-$minion->repair;
-like $minion->job($id)->info->{finished}, qr/^[\d.]+$/,
-  'has finished timestamp';
-is $minion->job($id)->info->{state},  'failed',           'right state';
-is $minion->job($id)->info->{result}, 'Parent went away', 'right result';
+$job = $worker->dequeue(0);
+is $job->id, $id, 'right id';
+ok $job->finish, 'job finished';
 $worker->unregister;
 
 # Worker remote control commands

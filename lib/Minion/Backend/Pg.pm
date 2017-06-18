@@ -12,7 +12,7 @@ sub broadcast {
   my ($self, $command, $args, $ids) = (shift, shift, shift || [], shift || []);
   return !!$self->pg->db->query(
     q{update minion_workers set inbox = inbox || $1::jsonb
-      where (id = any($2) or $2 = '{}')}, {json => [[$command, @$args]]}, $ids
+      where (id = any ($2) or $2 = '{}')}, {json => [[$command, @$args]]}, $ids
   )->rows;
 }
 
@@ -149,16 +149,6 @@ sub repair {
   )->hashes;
   $fail->each(sub { $self->fail_job(@$_{qw(id retries)}, 'Worker went away') });
 
-  # Jobs with missing parents (can't be retried)
-  $db->query(
-    "update minion_jobs as j
-     set finished = now(), result = to_json('Parent went away'::text),
-       state = 'failed'
-     where parents <> '{}' and cardinality(parents) <> (
-       select count(*) from minion_jobs where id = any(j.parents)
-     ) and state = 'inactive'"
-  );
-
   # Old jobs with no unresolved dependencies
   $db->query(
     "delete from minion_jobs as j
@@ -243,10 +233,12 @@ sub _try {
      set started = now(), state = 'active', worker = ?
      where id = (
        select id from minion_jobs as j
-       where delayed <= now() and (parents = '{}' or cardinality(parents) = (
-         select count(*) from minion_jobs
-         where id = any(j.parents) and state = 'finished'
-       )) and queue = any(?) and state = 'inactive' and task = any(?)
+       where delayed <= now() and (parents = '{}' or not exists (
+         select 1 from minion_jobs
+         where id = any (j.parents)
+           and state in ('inactive', 'active', 'failed')
+         limit 1
+       )) and queue = any (?) and state = 'inactive' and task = any (?)
        order by priority desc, id
        limit 1
        for update skip locked
