@@ -52,7 +52,8 @@ sub finish_job { shift->_update(0, @_) }
 sub job_info {
   shift->pg->db->query(
     'select id, args, attempts,
-       array(select id from minion_jobs where j.id = any (parents)) as children,
+       array(select id from minion_jobs where parents @> ARRAY[j.id])
+         as children,
        extract(epoch from created) as created,
        extract(epoch from delayed) as delayed,
        extract(epoch from finished) as finished, parents, priority, queue,
@@ -153,7 +154,7 @@ sub repair {
     "delete from minion_jobs as j
      where finished <= now() - interval '1 second' * ? and not exists (
        select 1 from minion_jobs
-       where j.id = any (parents) and state <> 'finished'
+       where parents @> ARRAY[j.id] and state != 'finished'
      ) and state = 'finished'", $minion->remove_after
   );
 }
@@ -187,7 +188,7 @@ sub stats {
      select state::text || '_jobs', count(*) from minion_jobs group by state
      union all
      select 'delayed_jobs', count(*) from minion_jobs
-     where (delayed > now() or parents <> '{}') and state = 'inactive'
+     where (delayed > now() or parents != '{}') and state = 'inactive'
      union all
      select 'inactive_workers', count(*) from minion_workers
      union all
@@ -908,6 +909,7 @@ alter table minion_workers add column status jsonb
   check(jsonb_typeof(status) = 'object') default '{}';
 
 -- 16 up
+create index on minion_jobs using gin (parents);
 create table if not exists minion_locks (
   id      bigserial not null primary key,
   name    text not null,
