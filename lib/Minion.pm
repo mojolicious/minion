@@ -411,7 +411,7 @@ to limit concurrency, or let it expire for rate limiting.
   $minion->add_task(do_unique_stuff => sub {
     my ($job, @args) = @_;
     return $job->finish('Previous job is still active')
-      unless $minion->lock('fragile_backend_service', 3600);
+      unless $minion->lock('fragile_backend_service', 7200);
     ...
     $minion->unlock('fragile_backend_service');
   });
@@ -424,10 +424,11 @@ to limit concurrency, or let it expire for rate limiting.
     $minion->unlock('some_web_service');
   });
 
-  # Only ten jobs should run per minute and we wait for our turn
+  # Only a hundred jobs should run per hour and we try again later if necessary
   $minion->add_task(do_rate_limited_stuff => sub {
     my ($job, @args) = @_;
-    sleep 1 until $minion->lock('another_web_service', 60, {limit => 10});
+    return $job->retry({delay => 3600})
+      unless $minion->lock('another_web_service', 3600, {limit => 100});
     ...
   });
 
