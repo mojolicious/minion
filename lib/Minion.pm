@@ -408,7 +408,7 @@ amount of time in seconds. You can release the lock manually with L</"unlock">
 to limit concurrency, or let it expire for rate limiting.
 
   # Only one job should run at a time (unique job)
-  $minion->add_task(foo => sub {
+  $minion->add_task(do_unique_stuff => sub {
     my ($job, @args) = @_;
     return $job->finish('Previous job is still active')
       unless $minion->lock('fragile_backend_service', 3600);
@@ -417,7 +417,7 @@ to limit concurrency, or let it expire for rate limiting.
   });
 
   # Only five jobs should run at a time and we wait for our turn
-  $minion->add_task(bar => sub {
+  $minion->add_task(do_concurrent_stuff => sub {
     my ($job, @args) = @_;
     sleep 1 until $minion->lock('some_web_service', 60, {limit => 5});
     ...
@@ -425,9 +425,9 @@ to limit concurrency, or let it expire for rate limiting.
   });
 
   # Only ten jobs should run per minute and we wait for our turn
-  $minion->add_task(baz => sub {
+  $minion->add_task(do_rate_limited_stuff => sub {
     my ($job, @args) = @_;
-    sleep 1 until $minion->lock('some_web_service', 60, {limit => 10});
+    sleep 1 until $minion->lock('another_web_service', 60, {limit => 10});
     ...
   });
 
