@@ -182,18 +182,15 @@ sub stats {
   my $self = shift;
 
   my $stats = $self->pg->db->query(
-    "select 'enqueued_jobs', case when is_called then last_value else 0 end
-     from minion_jobs_id_seq
+    "select 'enqueued_jobs', case when is_called then last_value else 0 end from minion_jobs_id_seq
      union all
      select state::text || '_jobs', count(*) from minion_jobs group by state
      union all
-     select 'delayed_jobs', count(*) from minion_jobs
-     where (delayed > now() or parents <> '{}') and state = 'inactive'
+     select 'delayed_jobs', count(*) from minion_jobs where (delayed > now() or parents <> '{}') and state = 'inactive'
      union all
      select 'inactive_workers', count(*) from minion_workers
      union all
-     select 'active_workers', count(distinct worker) from minion_jobs
-     where state = 'active'"
+     select 'active_workers', count(distinct worker) from minion_jobs where state = 'active'"
   )->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
   $stats->{inactive_workers} -= $stats->{active_workers};
   $stats->{"${_}_jobs"} ||= 0 for qw(inactive active failed finished);
@@ -237,7 +234,6 @@ sub _try {
          select 1 from minion_jobs
          where id = any (j.parents)
            and state in ('inactive', 'active', 'failed')
-         limit 1
        )) and queue = any (?) and state = 'inactive' and task = any (?)
        order by priority desc, id
        limit 1
