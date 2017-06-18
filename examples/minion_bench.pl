@@ -10,7 +10,7 @@ my $WORKERS     = 4;
 my $INFO        = 100;
 my $STATS       = 100;
 my $REPAIR      = 100;
-my $LOCK        = 5000;
+my $LOCK        = 1000;
 my $UNLOCK      = 1000;
 
 # A benchmark script for comparing backends and evaluating the performance
