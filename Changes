@@ -1,4 +1,6 @@
 
+7.01  2017-06-19
+
 7.0  2017-06-18
   - Added support for rate limiting and unique jobs.
   - Added lock and unlock methods to Minion and Minion::Backend::Pg.
