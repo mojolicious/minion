@@ -182,18 +182,34 @@ sub stats {
   my $self = shift;
 
   my $stats = $self->pg->db->query(
-    "select 'enqueued_jobs', case when is_called then last_value else 0 end
+    "with jobs_stats as (
+       select
+         count(*) filter (where state = 'inactive') as inactive_jobs,
+         count(*) filter (where state = 'active') as active_jobs,
+         count(*) filter (where state = 'failed') as failed_jobs,
+         count(*) filter (where state = 'finished') as finished_jobs,
+         count(*) filter (where (delayed > now() OR parents != '{}')
+           and state = 'inactive') as delayed_jobs,
+         count(distinct worker) filter (where state = 'active')
+           as active_workers
+       from minion_jobs
+     )
+     select 'enqueued_jobs', case when is_called then last_value else 0 end
      from minion_jobs_id_seq
-     union all
-     select state::text || '_jobs', count(*) from minion_jobs group by state
-     union all
-     select 'delayed_jobs', count(*) from minion_jobs
-     where (delayed > now() or parents != '{}') and state = 'inactive'
      union all
      select 'inactive_workers', count(*) from minion_workers
      union all
-     select 'active_workers', count(distinct worker) from minion_jobs
-     where state = 'active'"
+     select 'inactive_jobs', inactive_jobs from jobs_stats
+     union all
+     select 'active_jobs', active_jobs from jobs_stats
+     union all
+     select 'failed_jobs', failed_jobs from jobs_stats
+     union all
+     select 'finished_jobs', finished_jobs from jobs_stats
+     union all
+     select 'delayed_jobs', delayed_jobs from jobs_stats
+     union all
+     select 'active_workers', active_workers from jobs_stats"
   )->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
   $stats->{inactive_workers} -= $stats->{active_workers};
   $stats->{"${_}_jobs"} ||= 0 for qw(inactive active failed finished);
@@ -933,3 +949,8 @@ $$ language plpgsql;
 -- 16 down
 drop function if exists minion_lock(text, int, int);
 drop table if exists minion_locks;
+
+-- 17 up
+alter table minion_locks set unlogged;
+drop index minion_locks_expires_idx;
+create index on minion_locks (name, expires);

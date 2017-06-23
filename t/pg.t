@@ -24,11 +24,11 @@ my $worker = $minion->repair->worker;
 isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
 # Migrate up and down
-is $minion->backend->pg->migrations->active, 16, 'active version is 16';
+is $minion->backend->pg->migrations->active, 17, 'active version is 17';
 is $minion->backend->pg->migrations->migrate(0)->active, 0,
   'active version is 0';
-is $minion->backend->pg->migrations->migrate->active, 16,
-  'active version is 16';
+is $minion->backend->pg->migrations->migrate->active, 17,
+  'active version is 17';
 
 # Register and unregister
 $worker->register;
@@ -137,7 +137,8 @@ ok $minion->unlock('foo'), 'unlocked';
 ok !$minion->unlock('foo'), 'not unlocked again';
 ok $minion->lock('foo', -3600), 'locked';
 ok $minion->lock('foo', 3600),  'locked again';
-ok !$minion->lock('foo', 3600), 'not locked again';
+ok !$minion->lock('foo', -3600), 'not locked again';
+ok !$minion->lock('foo', 3600),  'not locked again';
 ok $minion->unlock('foo'), 'unlocked';
 ok !$minion->unlock('foo'), 'not unlocked again';
 ok $minion->lock('yada', 3600, {limit => 1}), 'locked';

@@ -29,6 +29,7 @@ $minion->enqueue($_ % 2 ? 'foo' : 'bar' => [] => {parents => \@parents})
 my $elapsed = time - $before;
 my $avg = sprintf '%.3f', $ENQUEUE / $elapsed;
 say "Enqueued $ENQUEUE jobs in $elapsed seconds ($avg/s)";
+$minion->backend->pg->db->query('analyze minion_jobs');
 
 # Dequeue
 sub dequeue {
@@ -36,7 +37,7 @@ sub dequeue {
   for (1 .. $WORKERS) {
     die "Couldn't fork: $!" unless defined(my $pid = fork);
     unless ($pid) {
-      my $worker = $minion->worker->register;
+      my $worker = $minion->repair->worker->register;
       say "$$ will finish $DEQUEUE jobs";
       my $before = time;
       $worker->dequeue(0.5)->finish for 1 .. $DEQUEUE;
