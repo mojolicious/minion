@@ -183,16 +183,16 @@ sub stats {
 
   my $stats = $self->pg->db->query(
     "select count(*) filter (where state = 'inactive') as inactive_jobs,
-     count(*) filter (where state = 'active') as active_jobs,
-     count(*) filter (where state = 'failed') as failed_jobs,
-     count(*) filter (where state = 'finished') as finished_jobs,
-     count(*) filter (where (delayed > now() OR parents != '{}')
-       and state = 'inactive' ) as delayed_jobs,
-     count(distinct worker) filter (where state = 'active') as active_workers,
-     (select case when is_called then last_value else 0 end
-       from minion_jobs_id_seq) as enqueued_jobs,
-     (select count(*) from minion_workers ) as inactive_workers
-   from minion_jobs"
+       count(*) filter (where state = 'active') as active_jobs,
+       count(*) filter (where state = 'failed') as failed_jobs,
+       count(*) filter (where state = 'finished') as finished_jobs,
+       count(*) filter (where (delayed > now() OR parents != '{}')
+         and state = 'inactive' ) as delayed_jobs,
+       count(distinct worker) filter (where state = 'active') as active_workers,
+       (select case when is_called then last_value else 0 end
+         from minion_jobs_id_seq) as enqueued_jobs,
+       (select count(*) from minion_workers ) as inactive_workers
+     from minion_jobs"
   )->hash;
   $stats->{inactive_workers} -= $stats->{active_workers};
 
