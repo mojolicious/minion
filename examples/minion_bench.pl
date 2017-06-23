@@ -3,7 +3,7 @@ use Mojo::Base -strict;
 use Minion;
 use Time::HiRes 'time';
 
-my $ENQUEUE     = 1000000;
+my $ENQUEUE     = 10000;
 my $DEQUEUE     = 1000;
 my $REPETITIONS = 2;
 my $WORKERS     = 4;
