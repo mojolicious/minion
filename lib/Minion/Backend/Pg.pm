@@ -186,12 +186,12 @@ sub stats {
        count(*) filter (where state = 'active') as active_jobs,
        count(*) filter (where state = 'failed') as failed_jobs,
        count(*) filter (where state = 'finished') as finished_jobs,
-       count(*) filter (where (delayed > now() or parents != '{}')
-         and state = 'inactive' ) as delayed_jobs,
+       count(*) filter (where state = 'inactive'
+         and (delayed > now() or parents != '{}')) as delayed_jobs,
        count(distinct worker) filter (where state = 'active') as active_workers,
        (select case when is_called then last_value else 0 end
          from minion_jobs_id_seq) as enqueued_jobs,
-       (select count(*) from minion_workers ) as inactive_workers
+       (select count(*) from minion_workers) as inactive_workers
      from minion_jobs"
   )->hash;
   $stats->{inactive_workers} -= $stats->{active_workers};
@@ -913,7 +913,6 @@ create table if not exists minion_locks (
   name    text not null,
   expires timestamp with time zone not null
 );
-create index on minion_locks (expires);
 create function minion_lock(text, int, int) returns bool as $$
 declare
   new_expires timestamp with time zone = now() + (interval '1 second' * $2);
@@ -934,5 +933,4 @@ drop table if exists minion_locks;
 
 -- 17 up
 alter table minion_locks set unlogged;
-drop index minion_locks_expires_idx;
 create index on minion_locks (name, expires);
