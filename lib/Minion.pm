@@ -609,7 +609,7 @@ Andrey Khozov
 
 Brian Medley
 
-Hubert Lubaczewski
+Hubert "depesz" Lubaczewski
 
 Joel Berger
 

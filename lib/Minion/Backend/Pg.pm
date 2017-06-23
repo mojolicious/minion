@@ -182,37 +182,19 @@ sub stats {
   my $self = shift;
 
   my $stats = $self->pg->db->query(
-    "with jobs_stats as (
-       select
-         count(*) filter (where state = 'inactive') as inactive_jobs,
-         count(*) filter (where state = 'active') as active_jobs,
-         count(*) filter (where state = 'failed') as failed_jobs,
-         count(*) filter (where state = 'finished') as finished_jobs,
-         count(*) filter (where (delayed > now() OR parents != '{}')
-           and state = 'inactive') as delayed_jobs,
-         count(distinct worker) filter (where state = 'active')
-           as active_workers
-       from minion_jobs
-     )
-     select 'enqueued_jobs', case when is_called then last_value else 0 end
-     from minion_jobs_id_seq
-     union all
-     select 'inactive_workers', count(*) from minion_workers
-     union all
-     select 'inactive_jobs', inactive_jobs from jobs_stats
-     union all
-     select 'active_jobs', active_jobs from jobs_stats
-     union all
-     select 'failed_jobs', failed_jobs from jobs_stats
-     union all
-     select 'finished_jobs', finished_jobs from jobs_stats
-     union all
-     select 'delayed_jobs', delayed_jobs from jobs_stats
-     union all
-     select 'active_workers', active_workers from jobs_stats"
-  )->arrays->reduce(sub { $a->{$b->[0]} = $b->[1]; $a }, {});
+    "select count(*) filter (where state = 'inactive') as inactive_jobs,
+     count(*) filter (where state = 'active') as active_jobs,
+     count(*) filter (where state = 'failed') as failed_jobs,
+     count(*) filter (where state = 'finished') as finished_jobs,
+     count(*) filter (where (delayed > now() OR parents != '{}')
+       and state = 'inactive' ) as delayed_jobs,
+     count(distinct worker) filter (where state = 'active') as active_workers,
+     (select case when is_called then last_value else 0 end
+       from minion_jobs_id_seq) as enqueued_jobs,
+     (select count(*) from minion_workers ) as inactive_workers
+   from minion_jobs"
+  )->hash;
   $stats->{inactive_workers} -= $stats->{active_workers};
-  $stats->{"${_}_jobs"} ||= 0 for qw(inactive active failed finished);
 
   return $stats;
 }
