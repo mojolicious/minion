@@ -186,7 +186,7 @@ sub stats {
        count(*) filter (where state = 'active') as active_jobs,
        count(*) filter (where state = 'failed') as failed_jobs,
        count(*) filter (where state = 'finished') as finished_jobs,
-       count(*) filter (where (delayed > now() OR parents != '{}')
+       count(*) filter (where (delayed > now() or parents != '{}')
          and state = 'inactive' ) as delayed_jobs,
        count(distinct worker) filter (where state = 'active') as active_workers,
        (select case when is_called then last_value else 0 end
