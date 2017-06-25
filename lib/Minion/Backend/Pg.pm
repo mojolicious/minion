@@ -949,7 +949,9 @@ begin
   if (select count(*) >= $3 from minion_locks where name = $1) then
     return false;
   end if;
-  insert into minion_locks (name, expires) values ($1, new_expires);
+  if new_expires > now() then
+    insert into minion_locks (name, expires) values ($1, new_expires);
+  end if;
   return true;
 end;
 $$ language plpgsql;
