@@ -38,11 +38,12 @@ sub enqueue {
   my $db = $self->pg->db;
   return $db->query(
     "insert into minion_jobs
-       (args, attempts, delayed, parents, priority, queue, task)
-     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?)
+       (args, attempts, delayed, meta, parents, priority, queue, task)
+     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?, ?)
      returning id", {json => $args}, $options->{attempts} // 1,
-    $options->{delay} // 0, $options->{parents} || [],
-    $options->{priority} // 0, $options->{queue} // 'default', $task
+    $options->{delay} // 0, {json => $options->{meta} || {}},
+    $options->{parents} || [], $options->{priority} // 0,
+    $options->{queue} // 'default', $task
   )->hash->{id};
 }
 
@@ -56,7 +57,7 @@ sub job_info {
          as children,
        extract(epoch from created) as created,
        extract(epoch from delayed) as delayed,
-       extract(epoch from finished) as finished, parents, priority, queue,
+       extract(epoch from finished) as finished, meta, parents, priority, queue,
        result, extract(epoch from retried) as retried, retries,
        extract(epoch from started) as started, state, task, worker
      from minion_jobs as j where id = ?', shift
@@ -87,6 +88,13 @@ sub lock {
   my ($self, $name, $duration, $options) = (shift, shift, shift, shift // {});
   return !!$self->pg->db->query('select * from minion_lock(?, ?, ?)',
     $name, $duration, $options->{limit} || 1)->array->[0];
+}
+
+sub meta {
+  my ($self, $id, $key, $value) = @_;
+  $self->pg->db->query(
+    'update minion_jobs set meta = jsonb_set(meta, ?, ?, true) where id = ?',
+    [$key], {json => $value}, $id);
 }
 
 sub new {
@@ -383,6 +391,12 @@ L<Minion/"backoff"> after the first attempt, defaults to C<1>.
 
 Delay job for this many seconds (from now), defaults to C<0>.
 
+=item meta
+
+  meta => {foo => 'bar'}
+
+Hash reference with arbitrary meta data.
+
 =item parents
 
   parents => [$id1, $id2, $id3]
@@ -475,6 +489,12 @@ Epoch time job was delayed to.
   finished => 784111777
 
 Epoch time job was finished.
+
+=item meta
+
+  meta => {foo => 'bar'}
+
+Hash reference with arbitrary meta data.
 
 =item parents
 
@@ -595,6 +615,12 @@ Number of shared locks with the same name that can be active at the same time,
 defaults to C<1>.
 
 =back
+
+=head2 meta
+
+  $backend->meta($job_id, foo => 'bar');
+
+Change a meta data field for a job.
 
 =head2 new
 
@@ -893,18 +919,18 @@ drop trigger if exists minion_jobs_notify_workers_trigger on minion_jobs;
 drop function if exists minion_jobs_notify_workers();
 
 -- 10 up
-alter table minion_jobs add column parents bigint[] default '{}';
+alter table minion_jobs add column parents bigint[] not null default '{}';
 
 -- 11 up
 create index on minion_jobs (state, priority desc, id);
 
 -- 12 up
 alter table minion_workers add column inbox jsonb
-  check(jsonb_typeof(inbox) = 'array') default '[]';
+  check(jsonb_typeof(inbox) = 'array') not null default '[]';
 
 -- 15 up
 alter table minion_workers add column status jsonb
-  check(jsonb_typeof(status) = 'object') default '{}';
+  check(jsonb_typeof(status) = 'object') not null default '{}';
 
 -- 16 up
 create index on minion_jobs using gin (parents);
@@ -932,5 +958,7 @@ drop function if exists minion_lock(text, int, int);
 drop table if exists minion_locks;
 
 -- 17 up
+alter table minion_jobs add column meta jsonb
+  check(jsonb_typeof(meta) = 'object') not null default '{}';
 alter table minion_locks set unlogged;
 create index on minion_locks (name, expires);

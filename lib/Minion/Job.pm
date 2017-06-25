@@ -30,7 +30,11 @@ sub is_finished {
   return 1;
 }
 
-sub stop { kill 'KILL', shift->{pid} }
+sub meta {
+  my ($self, $key, $value) = @_;
+  $self->minion->backend->meta($self->id, $key, $value);
+  return $self;
+}
 
 sub perform {
   my $self = shift;
@@ -65,6 +69,8 @@ sub start {
   } or $self->fail($@);
   POSIX::_exit(0);
 }
+
+sub stop { kill 'KILL', shift->{pid} }
 
 1;
 
@@ -230,6 +236,9 @@ Get job information.
   # Check job state
   my $state = $job->info->{state};
 
+  # Get job meta data
+  my $progress = $job->info->{meta}{progress};
+
   # Get job result
   my $result = $job->info->{result};
 
@@ -272,6 +281,12 @@ Epoch time job was delayed to.
   finished => 784111777
 
 Epoch time job was finished.
+
+=item meta
+
+  meta => {foo => 'bar'}
+
+Hash reference with arbitrary meta data.
 
 =item parents
 
@@ -340,6 +355,12 @@ Id of worker that is processing the job.
   my $bool = $job->is_finished;
 
 Check if job performed with L</"start"> is finished.
+
+=head2 meta
+
+  $job = $job->meta(foo => 'bar');
+
+Change a meta data field for this job.
 
 =head2 perform
 

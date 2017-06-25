@@ -364,6 +364,15 @@ L</"backoff"> after the first attempt, defaults to C<1>.
 
 Delay job for this many seconds (from now), defaults to C<0>.
 
+=item meta
+
+  meta => {foo => 'bar'}
+
+Hash reference with arbitrary meta data for this job that gets serialized by the
+L</"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects and be
+careful with binary data, nested data structures with hash and array references
+are fine though.
+
 =item parents
 
   parents => [$id1, $id2, $id3]
@@ -394,6 +403,9 @@ return C<undef> if job does not exist.
 
   # Check job state
   my $state = $minion->job($id)->info->{state};
+
+  # Get job meta data
+  my $progress = $minion->$job($id)->info->{meta}{progress};
 
   # Get job result
   my $result = $minion->job($id)->info->{result};
