@@ -356,7 +356,10 @@ Check if job performed with L</"start"> is finished.
 
   my $bool = $job->note(foo => 'bar');
 
-Change a metadata field for this job.
+Change a metadata field for this job. The new value will get serialized by
+L<Minion/"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects
+and be careful with binary data, nested data structures with hash and array
+references are fine though.
 
 =head2 perform
 
