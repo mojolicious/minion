@@ -1,4 +1,6 @@
 
+7.02  2017-06-26
+
 7.01  2017-06-25
   - Added note methods to Minion::Job and Minion::Backend::Pg.
   - Added notes option to enqueue methods in Minion and Minion::Backend::Pg.
