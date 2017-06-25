@@ -1,9 +1,8 @@
 
 7.01  2017-06-25
-  - Added support for arbitrary job meta data.
-  - Added meta methods to Minion::Job and Minion::Backend::Pg.
-  - Added meta option to enqueue methods in Minion and Minion::Backend::Pg.
-  - Added meta field to info method in Minion::Job and job_info method in
+  - Added note methods to Minion::Job and Minion::Backend::Pg.
+  - Added notes option to enqueue methods in Minion and Minion::Backend::Pg.
+  - Added notes field to info method in Minion::Job and job_info method in
     Minion::Backend::Pg.
   - Improved performance of stats and lock methods in Minion::Backend::Pg with a
     new index and other optimizations. (depesz)

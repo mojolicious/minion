@@ -30,9 +30,9 @@ sub is_finished {
   return 1;
 }
 
-sub meta {
+sub note {
   my ($self, $key, $value) = @_;
-  $self->minion->backend->meta($self->id, $key, $value);
+  $self->minion->backend->note($self->id, $key, $value);
   return $self;
 }
 
@@ -237,7 +237,7 @@ Get job information.
   my $state = $job->info->{state};
 
   # Get job meta data
-  my $progress = $job->info->{meta}{progress};
+  my $progress = $job->info->{notes}{progress};
 
   # Get job result
   my $result = $job->info->{result};
@@ -282,11 +282,11 @@ Epoch time job was delayed to.
 
 Epoch time job was finished.
 
-=item meta
+=item notes
 
-  meta => {foo => 'bar'}
+  notes => {foo => 'bar'}
 
-Hash reference with arbitrary meta data.
+Hash reference with arbitrary meta data for this job.
 
 =item parents
 
@@ -356,9 +356,9 @@ Id of worker that is processing the job.
 
 Check if job performed with L</"start"> is finished.
 
-=head2 meta
+=head2 note
 
-  $job = $job->meta(foo => 'bar');
+  $job = $job->note(foo => 'bar');
 
 Change a meta data field for this job.
 

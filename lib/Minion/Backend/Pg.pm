@@ -38,10 +38,10 @@ sub enqueue {
   my $db = $self->pg->db;
   return $db->query(
     "insert into minion_jobs
-       (args, attempts, delayed, meta, parents, priority, queue, task)
+       (args, attempts, delayed, notes, parents, priority, queue, task)
      values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?, ?)
      returning id", {json => $args}, $options->{attempts} // 1,
-    $options->{delay} // 0, {json => $options->{meta} || {}},
+    $options->{delay} // 0, {json => $options->{notes} || {}},
     $options->{parents} || [], $options->{priority} // 0,
     $options->{queue} // 'default', $task
   )->hash->{id};
@@ -57,8 +57,8 @@ sub job_info {
          as children,
        extract(epoch from created) as created,
        extract(epoch from delayed) as delayed,
-       extract(epoch from finished) as finished, meta, parents, priority, queue,
-       result, extract(epoch from retried) as retried, retries,
+       extract(epoch from finished) as finished, notes, parents, priority,
+       queue, result, extract(epoch from retried) as retried, retries,
        extract(epoch from started) as started, state, task, worker
      from minion_jobs as j where id = ?', shift
   )->expand->hash;
@@ -90,11 +90,12 @@ sub lock {
     $name, $duration, $options->{limit} || 1)->array->[0];
 }
 
-sub meta {
+sub note {
   my ($self, $id, $key, $value) = @_;
   $self->pg->db->query(
-    'update minion_jobs set meta = jsonb_set(meta, ?, ?, true) where id = ?',
-    [$key], {json => $value}, $id);
+    'update minion_jobs set notes = jsonb_set(notes, ?, ?, true) where id = ?',
+    [$key], {json => $value}, $id
+  );
 }
 
 sub new {
@@ -391,11 +392,11 @@ L<Minion/"backoff"> after the first attempt, defaults to C<1>.
 
 Delay job for this many seconds (from now), defaults to C<0>.
 
-=item meta
+=item notes
 
-  meta => {foo => 'bar'}
+  notes => {foo => 'bar'}
 
-Hash reference with arbitrary meta data.
+Hash reference with arbitrary meta data for this job.
 
 =item parents
 
@@ -490,11 +491,11 @@ Epoch time job was delayed to.
 
 Epoch time job was finished.
 
-=item meta
+=item notes
 
-  meta => {foo => 'bar'}
+  notes => {foo => 'bar'}
 
-Hash reference with arbitrary meta data.
+Hash reference with arbitrary meta data for this job.
 
 =item parents
 
@@ -616,9 +617,9 @@ defaults to C<1>.
 
 =back
 
-=head2 meta
+=head2 note
 
-  $backend->meta($job_id, foo => 'bar');
+  $backend->note($job_id, foo => 'bar');
 
 Change a meta data field for a job.
 
@@ -958,7 +959,7 @@ drop function if exists minion_lock(text, int, int);
 drop table if exists minion_locks;
 
 -- 17 up
-alter table minion_jobs add column meta jsonb
-  check(jsonb_typeof(meta) = 'object') not null default '{}';
+alter table minion_jobs add column notes jsonb
+  check(jsonb_typeof(notes) = 'object') not null default '{}';
 alter table minion_locks set unlogged;
 create index on minion_locks (name, expires);

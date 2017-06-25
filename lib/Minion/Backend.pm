@@ -14,7 +14,7 @@ sub job_info     { croak 'Method "job_info" not implemented by subclass' }
 sub list_jobs    { croak 'Method "list_jobs" not implemented by subclass' }
 sub list_workers { croak 'Method "list_workers" not implemented by subclass' }
 sub lock         { croak 'Method "lock" not implemented by subclass' }
-sub meta         { croak 'Method "meta" not implemented by subclass' }
+sub note         { croak 'Method "note" not implemented by subclass' }
 sub receive      { croak 'Method "receive" not implemented by subclass' }
 
 sub register_worker {
@@ -56,7 +56,7 @@ Minion::Backend - Backend base class
   sub list_jobs         {...}
   sub list_workers      {...}
   sub lock              {...}
-  sub meta              {...}
+  sub note              {...}
   sub receive           {...}
   sub register_worker   {...}
   sub remove_job        {...}
@@ -173,11 +173,11 @@ L<Minion/"backoff"> after the first attempt, defaults to C<1>.
 
 Delay job for this many seconds (from now), defaults to C<0>.
 
-=item meta
+=item notes
 
-  meta => {foo => 'bar'}
+  notes => {foo => 'bar'}
 
-Hash reference with arbitrary meta data.
+Hash reference with arbitrary meta data for this.
 
 =item parents
 
@@ -274,11 +274,11 @@ Epoch time job was delayed to.
 
 Epoch time job was finished.
 
-=item meta
+=item notes
 
-  meta => {foo => 'bar'}
+  notes => {foo => 'bar'}
 
-Hash reference with arbitrary meta data.
+Hash reference with arbitrary meta data for this job.
 
 =item parents
 
@@ -402,9 +402,9 @@ defaults to C<1>.
 
 =back
 
-=head2 meta
+=head2 note
 
-  $backend->meta($job_id, foo => 'bar');
+  $backend->note($job_id, foo => 'bar');
 
 Change a meta data field for a job.
 
