@@ -30,11 +30,7 @@ sub is_finished {
   return 1;
 }
 
-sub note {
-  my ($self, $key, $value) = @_;
-  $self->minion->backend->note($self->id, $key, $value);
-  return $self;
-}
+sub note { $_[0]->minion->backend->note($_[0]->id, @_[1, 2]) }
 
 sub perform {
   my $self = shift;
@@ -236,7 +232,7 @@ Get job information.
   # Check job state
   my $state = $job->info->{state};
 
-  # Get job meta data
+  # Get job metadata
   my $progress = $job->info->{notes}{progress};
 
   # Get job result
@@ -286,7 +282,7 @@ Epoch time job was finished.
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
 
-Hash reference with arbitrary meta data for this job.
+Hash reference with arbitrary metadata for this job.
 
 =item parents
 
@@ -358,9 +354,9 @@ Check if job performed with L</"start"> is finished.
 
 =head2 note
 
-  $job = $job->note(foo => 'bar');
+  my $bool = $job->note(foo => 'bar');
 
-Change a meta data field for this job.
+Change a metadata field for this job.
 
 =head2 perform
 

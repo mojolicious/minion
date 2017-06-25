@@ -92,10 +92,10 @@ sub lock {
 
 sub note {
   my ($self, $id, $key, $value) = @_;
-  $self->pg->db->query(
+  return !!$self->pg->db->query(
     'update minion_jobs set notes = jsonb_set(notes, ?, ?, true) where id = ?',
     [$key], {json => $value}, $id
-  );
+  )->rows;
 }
 
 sub new {
@@ -396,7 +396,7 @@ Delay job for this many seconds (from now), defaults to C<0>.
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
 
-Hash reference with arbitrary meta data for this job.
+Hash reference with arbitrary metadata for this job.
 
 =item parents
 
@@ -495,7 +495,7 @@ Epoch time job was finished.
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
 
-Hash reference with arbitrary meta data for this job.
+Hash reference with arbitrary metadata for this job.
 
 =item parents
 
@@ -619,9 +619,9 @@ defaults to C<1>.
 
 =head2 note
 
-  $backend->note($job_id, foo => 'bar');
+  my $bool = $backend->note($job_id, foo => 'bar');
 
-Change a meta data field for a job.
+Change a metadata field for a job.
 
 =head2 new
 

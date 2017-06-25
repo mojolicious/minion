@@ -368,7 +368,7 @@ Delay job for this many seconds (from now), defaults to C<0>.
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
 
-Hash reference with arbitrary meta data for this job that gets serialized by the
+Hash reference with arbitrary metadata for this job that gets serialized by the
 L</"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects and be
 careful with binary data, nested data structures with hash and array references
 are fine though.
@@ -404,7 +404,7 @@ return C<undef> if job does not exist.
   # Check job state
   my $state = $minion->job($id)->info->{state};
 
-  # Get job meta data
+  # Get job metadata
   my $progress = $minion->$job($id)->info->{notes}{progress};
 
   # Get job result
