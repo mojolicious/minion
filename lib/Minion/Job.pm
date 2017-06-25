@@ -361,6 +361,12 @@ L<Minion/"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects
 and be careful with binary data, nested data structures with hash and array
 references are fine though.
 
+  # Share progress information
+  $job->note(progress => 95);
+
+  # Share stats
+  $job->note(stats => {utime => '0.012628', stime => '0.002429'});
+
 =head2 perform
 
   $job->perform;

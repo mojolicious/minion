@@ -3,9 +3,9 @@
 
   A job queue for the [Mojolicious](http://mojolicious.org) real-time web
   framework, with support for multiple named queues, priorities, delayed jobs,
-  job results, retries with backoff, rate limiting, unique jobs, statistics,
-  distributed workers, parallel processing, autoscaling, resource leak
-  protection and multiple backends (such as
+  job progress, job results, retries with backoff, rate limiting, unique jobs,
+  statistics, distributed workers, parallel processing, autoscaling, resource
+  leak protection and multiple backends (such as
   [PostgreSQL](http://www.postgresql.org)).
 
   Job queues allow you to process time and/or computationally intensive tasks in
