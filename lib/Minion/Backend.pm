@@ -175,9 +175,9 @@ Delay job for this many seconds (from now), defaults to C<0>.
 
 =item notes
 
-  notes => {foo => 'bar'}
+  notes => {foo => 'bar', baz => [1, 2, 3]}
 
-Hash reference with arbitrary meta data for this.
+Hash reference with arbitrary meta data for this job.
 
 =item parents
 
@@ -276,7 +276,7 @@ Epoch time job was finished.
 
 =item notes
 
-  notes => {foo => 'bar'}
+  notes => {foo => 'bar', baz => [1, 2, 3]}
 
 Hash reference with arbitrary meta data for this job.
 

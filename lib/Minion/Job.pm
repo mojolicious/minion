@@ -284,7 +284,7 @@ Epoch time job was finished.
 
 =item notes
 
-  notes => {foo => 'bar'}
+  notes => {foo => 'bar', baz => [1, 2, 3]}
 
 Hash reference with arbitrary meta data for this job.
 

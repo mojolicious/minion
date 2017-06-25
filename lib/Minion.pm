@@ -366,7 +366,7 @@ Delay job for this many seconds (from now), defaults to C<0>.
 
 =item notes
 
-  notes => {foo => 'bar'}
+  notes => {foo => 'bar', baz => [1, 2, 3]}
 
 Hash reference with arbitrary meta data for this job that gets serialized by the
 L</"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects and be
