@@ -90,14 +90,6 @@ sub lock {
     $name, $duration, $options->{limit} || 1)->array->[0];
 }
 
-sub note {
-  my ($self, $id, $key, $value) = @_;
-  return !!$self->pg->db->query(
-    'update minion_jobs set notes = jsonb_set(notes, ?, ?, true) where id = ?',
-    [$key], {json => $value}, $id
-  )->rows;
-}
-
 sub new {
   my $self = shift->SUPER::new(pg => Mojo::Pg->new(@_));
 
@@ -107,6 +99,14 @@ sub new {
   $pg->migrations->name('minion')->from_data;
 
   return $self;
+}
+
+sub note {
+  my ($self, $id, $key, $value) = @_;
+  return !!$self->pg->db->query(
+    'update minion_jobs set notes = jsonb_set(notes, ?, ?, true) where id = ?',
+    [$key], {json => $value}, $id
+  )->rows;
 }
 
 sub receive {
@@ -617,17 +617,17 @@ defaults to C<1>.
 
 =back
 
-=head2 note
-
-  my $bool = $backend->note($job_id, foo => 'bar');
-
-Change a metadata field for a job.
-
 =head2 new
 
   my $backend = Minion::Backend::Pg->new('postgresql://postgres@/test');
 
 Construct a new L<Minion::Backend::Pg> object.
+
+=head2 note
+
+  my $bool = $backend->note($job_id, foo => 'bar');
+
+Change a metadata field for a job.
 
 =head2 receive
 
