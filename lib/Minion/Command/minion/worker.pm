@@ -1,6 +1,8 @@
 package Minion::Command::minion::worker;
 use Mojo::Base 'Mojolicious::Command';
 
+use Time::HiRes;
+
 use Mojo::Util qw(getopt steady_time);
 
 has description => 'Start Minion worker';
@@ -20,7 +22,8 @@ sub run {
     'I|heartbeat-interval=i' => \($status->{heartbeat_interval} //= 300),
     'j|jobs=i'               => \($status->{jobs}               //= 4),
     'q|queue=s'              => ($status->{queues}              //= []),
-    'R|repair-interval=i'    => \($status->{repair_interval}    //= 21600);
+    'R|repair-interval=i'    => \($status->{repair_interval}    //= 21600),
+    'W|wait-interval=f'      => \($status->{wait_interval}      //= 1);
   @{$status->{queues}} = ('default') unless @{$status->{queues}};
   $status->{repair_interval} -= int rand $status->{repair_interval} / 2;
   $self->{last_repair} = $fast ? steady_time : 0;
@@ -72,7 +75,9 @@ sub _work {
     for keys %$jobs;
 
   # Wait if job limit has been reached or worker is stopping
-  if (($status->{jobs} <= keys %$jobs) || $self->{finished}) { sleep 1 }
+  if (($status->{jobs} <= keys %$jobs) || $self->{finished}) {
+    Time::HiRes::sleep($status->{wait_interval});
+  }
 
   # Try to get more jobs
   elsif (my $job = $worker->dequeue(5 => {queues => $status->{queues}})) {
@@ -122,6 +127,10 @@ Minion::Command::minion::worker - Minion worker command
                                          value can be subtracted randomly to
                                          make sure not all workers repair at the
                                          same time, defaults to 21600 (6 hours)
+    -W, --wait-interval <seconds>        Wait interval for checking if more
+                                         jobs can be dequeued or the worker can
+                                         finish. Defaults to 1, can be
+                                         fractional.
 
 =head1 DESCRIPTION
 
