@@ -25,7 +25,7 @@ sub run {
   $status->{repair_interval} -= int rand $status->{repair_interval} / 2;
   $self->{last_repair} = $fast ? steady_time : 0;
 
-  local $SIG{CHLD} = 'DEFAULT';
+  local $SIG{CHLD} = sub { };
   local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
   local $SIG{QUIT}
     = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
@@ -38,7 +38,6 @@ sub run {
 
   # Log fatal errors
   $app->log->debug("Worker $$ started");
-  local $SIG{CHLD} = sub { };
   eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
     or $app->log->fatal("Worker error: $@");
   $worker->unregister;
