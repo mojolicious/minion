@@ -1,5 +1,7 @@
 
-7.02  2017-06-26
+7.02  2017-07-05
+  - Improved performance of worker command when processing jobs that are
+    finished very quickly.
 
 7.01  2017-06-25
   - Added note methods to Minion::Job and Minion::Backend::Pg.

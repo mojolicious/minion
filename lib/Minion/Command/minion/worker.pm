@@ -38,6 +38,7 @@ sub run {
 
   # Log fatal errors
   $app->log->debug("Worker $$ started");
+  local $SIG{CHLD} = sub { };
   eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
     or $app->log->fatal("Worker error: $@");
   $worker->unregister;
