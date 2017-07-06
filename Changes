@@ -1,8 +1,8 @@
 
 7.03  2017-07-06
   - Updated Mojo::Pg requirement to 4.0.
-  - Improved Minion::Backend::Pg with support for sharing the database
-    connection cache with an existing Mojo::Pg object.
+  - Improved Minion::Backend::Pg to support sharing the database connection
+    cache with existing Mojo::Pg objects.
 
 7.02  2017-07-05
   - Improved performance of worker command when processing jobs that are

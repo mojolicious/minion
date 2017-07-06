@@ -92,9 +92,14 @@ sub lock {
 
 sub new {
   my $self = shift->SUPER::new(pg => Mojo::Pg->new(@_));
+
+  my $db = Mojo::Pg->new(@_)->db;
   croak 'PostgreSQL 9.5 or later is required'
-    if Mojo::Pg->new(@_)->db->dbh->{pg_server_version} < 90500;
+    if $db->dbh->{pg_server_version} < 90500;
+  $db->disconnect;
+
   $self->pg->auto_migrate(1)->migrations->name('minion')->from_data;
+
   return $self;
 }
 
