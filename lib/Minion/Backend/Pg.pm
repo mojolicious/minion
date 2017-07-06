@@ -3,7 +3,7 @@ use Mojo::Base 'Minion::Backend';
 
 use Carp 'croak';
 use Mojo::IOLoop;
-use Mojo::Pg 2.18;
+use Mojo::Pg 4.0;
 use Sys::Hostname 'hostname';
 
 has 'pg';
@@ -92,12 +92,9 @@ sub lock {
 
 sub new {
   my $self = shift->SUPER::new(pg => Mojo::Pg->new(@_));
-
   croak 'PostgreSQL 9.5 or later is required'
     if Mojo::Pg->new(@_)->db->dbh->{pg_server_version} < 90500;
-  my $pg = $self->pg->auto_migrate(1)->max_connections(1);
-  $pg->migrations->name('minion')->from_data;
-
+  $self->pg->auto_migrate(1)->migrations->name('minion')->from_data;
   return $self;
 }
 
@@ -620,6 +617,7 @@ defaults to C<1>.
 =head2 new
 
   my $backend = Minion::Backend::Pg->new('postgresql://postgres@/test');
+  my $backend = Minion::Backend::Pg->new(Mojo::Pg->new);
 
 Construct a new L<Minion::Backend::Pg> object.
 

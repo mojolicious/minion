@@ -460,6 +460,7 @@ defaults to C<1>.
 =head2 new
 
   my $minion = Minion->new(Pg => 'postgresql://postgres@/test');
+  my $minion = Minion->new(Pg => Mojo::Pg->new);
 
 Construct a new L<Minion> object.
 

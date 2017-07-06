@@ -30,6 +30,10 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
   # Mojolicious::Lite (choose a backend)
   plugin Minion => {Pg => 'postgresql://postgres@/test'};
 
+  # Share the database connection cache (PostgreSQL backend)
+  helper pg => sub { state $pg = Mojo::Pg->new('postgresql://postgres@/test') };
+  plugin Minion => {Pg => app->pg};
+
   # Add tasks to your application
   app->minion->add_task(slow_log => sub {
     my ($job, $msg) = @_;
