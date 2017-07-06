@@ -1,4 +1,6 @@
 
+7.04  2017-07-07
+
 7.03  2017-07-06
   - Updated Mojo::Pg requirement to 4.0.
   - Improved Minion::Backend::Pg to support sharing the database connection
