@@ -10,6 +10,7 @@ sub run {
   my ($self, @args) = @_;
 
   my $app    = $self->app;
+  my $log    = $app->log;
   my $worker = $self->{worker} = $app->minion->worker;
   my $status = $worker->status;
   $status->{performed} //= 0;
@@ -26,9 +27,14 @@ sub run {
   $self->{last_repair} = $fast ? steady_time : 0;
 
   local $SIG{CHLD} = sub { };
-  local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
-  local $SIG{QUIT}
-    = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
+  local $SIG{INT} = local $SIG{TERM} = sub {
+    $log->info("Stopping worker $$ gracefully");
+    $self->{finished}++;
+  };
+  local $SIG{QUIT} = sub {
+    $log->info("Stopping worker $$ immediately");
+    ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}};
+  };
 
   # Remote control commands need to validate arguments carefully
   $worker->add_command(
@@ -37,10 +43,11 @@ sub run {
     stop => sub { $self->{jobs}{$_[1]}->stop if $self->{jobs}{$_[1] // ''} });
 
   # Log fatal errors
-  $app->log->debug("Worker $$ started");
+  $log->info("Worker $$ started");
   eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
     or $app->log->fatal("Worker error: $@");
   $worker->unregister;
+  $log->info("Worker $$ stopped");
 }
 
 sub _work {
