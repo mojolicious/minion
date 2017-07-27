@@ -37,11 +37,12 @@ sub run {
     stop => sub { $self->{jobs}{$_[1]}->stop if $self->{jobs}{$_[1] // ''} });
 
   # Log fatal errors
-  $app->log->info("Worker $$ started");
+  my $log = $app->log;
+  $log->info("Worker $$ started");
   eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
-    or $app->log->fatal("Worker error: $@");
+    or $log->fatal("Worker error: $@");
   $worker->unregister;
-  $app->log->info("Worker $$ stopped");
+  $log->info("Worker $$ stopped");
 }
 
 sub _work {
@@ -60,9 +61,10 @@ sub _work {
     if ($self->{last_command} + $status->{command_interval}) < steady_time;
 
   # Repair in regular intervals (randomize to avoid congestion)
+  my $app = $self->app;
+  my $log = $app->log;
   if (($self->{last_repair} + $status->{repair_interval}) < steady_time) {
-    my $app = $self->app;
-    $app->log->debug('Checking worker registry and job queue');
+    $log->debug('Checking worker registry and job queue');
     $app->minion->repair;
     $self->{last_repair} = steady_time;
   }
@@ -79,8 +81,7 @@ sub _work {
   elsif (my $job = $worker->dequeue(5 => {queues => $status->{queues}})) {
     $jobs->{my $id = $job->id} = $job->start;
     my ($pid, $task) = ($job->pid, $job->task);
-    $self->app->log->debug(
-      qq{Process $pid is performing job "$id" with task "$task"});
+    $log->debug(qq{Process $pid is performing job "$id" with task "$task"});
   }
 }
 
