@@ -23,12 +23,16 @@ sub run {
     'R|repair-interval=i'    => \($status->{repair_interval}    //= 21600);
   @{$status->{queues}} = ('default') unless @{$status->{queues}};
   $status->{repair_interval} -= int rand $status->{repair_interval} / 2;
-  $self->{last_repair} = $fast ? steady_time : 0;
 
+  my $now = steady_time;
+  $self->{next_heartbeat} = $now;
+  $self->{next_command}   = $now;
+  $self->{next_repair}    = $fast ? $now + $status->{repair_interval} : $now;
+
+  $self->{pid} = $$;
   local $SIG{CHLD} = sub { };
-  local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
-  local $SIG{QUIT}
-    = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
+  local $SIG{INT} = local $SIG{TERM} = sub { $self->_term(1) };
+  local $SIG{QUIT} = sub { $self->_term };
 
   # Remote control commands need to validate arguments carefully
   $worker->add_command(
@@ -39,34 +43,51 @@ sub run {
   # Log fatal errors
   my $log = $app->log;
   $log->info("Worker $$ started");
-  eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
+  eval { $self->_work until $self->{finished}; 1 }
     or $log->fatal("Worker error: $@");
   $worker->unregister;
   $log->info("Worker $$ stopped");
 }
 
+sub _term {
+  my ($self, $graceful) = @_;
+  return unless $self->{pid} == $$;
+  $self->{stopping}++;
+  $self->{graceful} = $graceful or kill 'KILL', keys %{$self->{jobs}};
+}
+
 sub _work {
   my $self = shift;
 
-  # Send heartbeats in regular intervals
+  my $app    = $self->app;
+  my $log    = $app->log;
   my $worker = $self->{worker};
   my $status = $worker->status;
-  $self->{last_heartbeat} ||= 0;
-  $worker->register and $self->{last_heartbeat} = steady_time
-    if ($self->{last_heartbeat} + $status->{heartbeat_interval}) < steady_time;
+
+  if ($self->{stopping} && !$self->{quit}++) {
+    $log->info("Stopping worker $$ "
+        . ($self->{graceful} ? 'gracefully' : 'immediately'));
+
+    # Skip hearbeats, remote command and repairs
+    delete @{$self}{qw(next_heartbeat next_command )} unless $self->{graceful};
+    delete $self->{next_repair};
+  }
+
+  # Send heartbeats in regular intervals
+  $worker->register
+    and $self->{next_heartbeat} = (steady_time + $status->{heartbeat_interval})
+    if ($self->{next_heartbeat} && $self->{next_heartbeat} < steady_time);
 
   # Process worker remote control commands in regular intervals
-  $self->{last_command} ||= 0;
-  $worker->process_commands and $self->{last_command} = steady_time
-    if ($self->{last_command} + $status->{command_interval}) < steady_time;
+  $worker->process_commands
+    and $self->{next_command} = (steady_time + $status->{command_interval})
+    if ($self->{next_command} && $self->{next_command} < steady_time);
 
   # Repair in regular intervals (randomize to avoid congestion)
-  my $app = $self->app;
-  my $log = $app->log;
-  if (($self->{last_repair} + $status->{repair_interval}) < steady_time) {
+  if ($self->{next_repair} && $self->{next_repair} < steady_time) {
     $log->debug('Checking worker registry and job queue');
     $app->minion->repair;
-    $self->{last_repair} = steady_time;
+    $self->{next_repair} = steady_time + $status->{repair_interval};
   }
 
   # Check if jobs are finished
@@ -74,8 +95,11 @@ sub _work {
   $jobs->{$_}->is_finished and ++$status->{performed} and delete $jobs->{$_}
     for keys %$jobs;
 
+  # Return if worker is finished
+  ++$self->{finished} and return if $self->{stopping} && !keys %{$self->{jobs}};
+
   # Wait if job limit has been reached or worker is stopping
-  if (($status->{jobs} <= keys %$jobs) || $self->{finished}) { sleep 1 }
+  if (($status->{jobs} <= keys %$jobs) || $self->{stopping}) { sleep 1 }
 
   # Try to get more jobs
   elsif (my $job = $worker->dequeue(5 => {queues => $status->{queues}})) {
