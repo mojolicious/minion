@@ -104,6 +104,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -w
     ./myapp.pl minion job -w 23
     ./myapp.pl minion job -s
+    ./myapp.pl minion job -f 10023
     ./myapp.pl minion job -q important -t foo -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
@@ -121,8 +122,9 @@ Minion::Command::minion::job - Minion job command
                                 workers
     -d, --delay <seconds>       Delay new job for this many seconds
     -e, --enqueue <task>        New job to be enqueued
-    -f, --foreground            Perform job right away in foreground, often used
-                                for debugging
+    -f, --foreground            Perform job right away in the foreground for
+                                debugging purposes (You have to make sure no
+                                worker can claim it in the meantime!)
     -h, --help                  Show this summary of available options
         --home <path>           Path to home directory of your application,
                                 defaults to the value of MOJO_HOME or
