@@ -21,6 +21,8 @@ sub finish {
   return $ok ? !!$self->emit(finished => $result) : undef;
 }
 
+sub foreground { $_[0]->_run and $_[0]->finish }
+
 sub info { $_[0]->minion->backend->job_info($_[0]->id) }
 
 sub is_finished {
@@ -55,18 +57,26 @@ sub start {
   return $self->emit(spawn => $pid) if $self->{pid} = $pid;
 
   # Child
-  eval {
+  $self->foreground;
+  POSIX::_exit(0);
+}
+
+sub stop { kill 'KILL', shift->{pid} }
+
+sub _run {
+  my $self = shift;
+
+  return 1 if eval {
 
     # Reset event loop
     Mojo::IOLoop->reset;
     $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
 
     1;
-  } or $self->fail($@);
-  POSIX::_exit(0);
+  };
+  $self->fail($@);
+  return undef;
 }
-
-sub stop { kill 'KILL', shift->{pid} }
 
 1;
 
@@ -222,6 +232,12 @@ L<Minion/"backoff">.
   my $bool = $job->finish({whatever => 'All went well!'});
 
 Transition from C<active> to C<finished> state.
+
+=head2 foreground
+
+  $job->foreground;
+
+Perform job in this process and wait for it to finish. Often used for debugging.
 
 =head2 info
 

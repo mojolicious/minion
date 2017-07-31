@@ -457,7 +457,7 @@ is $finished, 1,        'finished event has been emitted once';
 $minion->add_task(switcheroo => sub { });
 $minion->enqueue(switcheroo => [5, 3]);
 $job = $worker->dequeue(0);
-$job->perform;
+$job->foreground;
 is_deeply $job->info->{result}, {added => 9}, 'right result';
 $worker->unregister;
 
@@ -499,7 +499,7 @@ is $job->info->{result}, 'Something bad happened!', 'right result';
 $id  = $minion->enqueue('fail');
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
-$job->perform;
+$job->foreground;
 is $job->info->{state}, 'failed', 'right state';
 is $job->info->{result}, "Intentional failure!\n", 'right result';
 $worker->unregister;

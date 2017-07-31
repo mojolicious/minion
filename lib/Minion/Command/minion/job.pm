@@ -18,6 +18,7 @@ sub run {
     'b|broadcast=s' => (\my $command),
     'd|delay=i'     => \$options->{delay},
     'e|enqueue=s'   => \my $enqueue,
+    'f|foreground'  => \my $foreground,
     'l|limit=i'  => \(my $limit          = 100),
     'o|offset=i' => \(my $offset         = 0),
     'P|parent=s' => ($options->{parents} = []),
@@ -46,6 +47,9 @@ sub run {
     if $workers;
   return $self->_list_jobs($offset, $limit, $options) unless defined $id;
   die "Job does not exist.\n" unless my $job = $self->app->minion->job($id);
+
+  # Perform job in foreground
+  return $job->foreground if $foreground;
 
   # Remove job
   return $job->remove || die "Job is active.\n" if $remove;
@@ -117,6 +121,8 @@ Minion::Command::minion::job - Minion job command
                                 workers
     -d, --delay <seconds>       Delay new job for this many seconds
     -e, --enqueue <task>        New job to be enqueued
+    -f, --foreground            Perform job right away in foreground, often used
+                                for debugging
     -h, --help                  Show this summary of available options
         --home <path>           Path to home directory of your application,
                                 defaults to the value of MOJO_HOME or

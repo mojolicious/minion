@@ -1,5 +1,7 @@
 
-7.04  2017-07-27
+7.04  2017-08-01
+  - Added foreground method to Minion::Job.
+  - Added -f option to job command.
 
 7.03  2017-07-06
   - Updated Mojo::Pg requirement to 4.0.
