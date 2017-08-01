@@ -1,4 +1,6 @@
 
+7.05  2017-08-02
+
 7.04  2017-08-01
   - Added foreground method to Minion.
   - Added id option to dequeue methods in Minion::Worker and
