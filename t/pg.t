@@ -311,10 +311,6 @@ is_deeply $job->args, [2, 2], 'right arguments';
 is $job->retries, 0, 'job has not been retried';
 is $job->info->{state}, 'finished', 'right state';
 is $job->task, 'add', 'right task';
-$minion->foreground($job->id);
-is $job->info->{retries}, 1,                   'job has been retried';
-is $job->info->{state},   'finished',          'right state';
-is $job->info->{queue},   'minion_foreground', 'right queue';
 
 # Retry and remove
 $id = $minion->enqueue(add => [5, 6]);
@@ -503,9 +499,8 @@ is $job->info->{result}, 'Something bad happened!', 'right result';
 $id  = $minion->enqueue('fail');
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
-$minion->foreground($id);
-is $job->info->{state},  'failed',                 'right state';
-is $job->info->{queue},  'minion_foreground',      'right queue';
+$job->perform;
+is $job->info->{state}, 'failed', 'right state';
 is $job->info->{result}, "Intentional failure!\n", 'right result';
 $worker->unregister;
 
@@ -705,6 +700,35 @@ $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 ok $job->finish, 'job finished';
 $worker->unregister;
+
+# Foreground
+$id  = $minion->enqueue('test');
+$id2 = $minion->enqueue('test');
+$id3 = $minion->enqueue(test => [] => {parents => [$id, $id2]});
+ok !$minion->foreground($id3 + 1), 'job does not exist';
+ok !$minion->foreground($id3), 'job is not ready yet';
+ok $minion->foreground($id), 'performed first job';
+$info = $minion->job($id)->info;
+is $info->{retries}, 1,                   'job has been retried';
+is $info->{state},   'finished',          'right state';
+is $info->{queue},   'minion_foreground', 'right queue';
+ok $minion->foreground($id2), 'performed second job';
+$info = $minion->job($id2)->info;
+is $info->{retries}, 1,                   'job has been retried';
+is $info->{state},   'finished',          'right state';
+is $info->{queue},   'minion_foreground', 'right queue';
+ok $minion->foreground($id3), 'performed third job';
+$info = $minion->job($id3)->info;
+is $info->{retries}, 2,                   'job has been retried twice';
+is $info->{state},   'finished',          'right state';
+is $info->{queue},   'minion_foreground', 'right queue';
+$id = $minion->enqueue('fail');
+$minion->foreground($id);
+$info = $minion->job($id)->info;
+is $info->{retries}, 1,                        'job has been retried';
+is $info->{state},   'failed',                 'right state';
+is $info->{queue},   'minion_foreground',      'right queue';
+is $info->{result},  "Intentional failure!\n", 'right result';
 
 # Worker remote control commands
 $worker  = $minion->worker->register->process_commands;

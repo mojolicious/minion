@@ -30,12 +30,15 @@ sub enqueue {
 sub foreground {
   my ($self, $id) = @_;
 
-  $self->job($id)->retry({queue => 'minion_foreground'});
+  return undef unless my $job = $self->job($id);
+  return undef unless $job->retry({queue => 'minion_foreground'});
 
   my $worker = $self->worker->register;
-  my $job = $worker->dequeue(0 => {id => $id, queues => ['minion_foreground']});
-  $job->_run and $job->finish;
+  $job = $worker->dequeue(0 => {id => $id, queues => ['minion_foreground']});
+  $job->_run and $job->finish if $job;
   $worker->unregister;
+
+  return !!$job;
 }
 
 sub job {
@@ -407,7 +410,7 @@ Queue to put job in, defaults to C<default>.
 
 =head2 foreground
 
-  $minion->foreground($id);
+  my $bool = $minion->foreground($id);
 
 Retry job in C<minion_foreground> queue, then perform it right away with a
 temporary worker in this process, very useful for debugging.

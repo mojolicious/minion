@@ -55,7 +55,7 @@ sub run {
   return $job->retry($options) || die "Job is active.\n" if $retry;
 
   # Perform job in foreground
-  return $minion->foreground($id) if $foreground;
+  return $minion->foreground($id) || die "Job is not ready.\n" if $foreground;
 
   # Job info
   print dumper _datetime($job->info);
