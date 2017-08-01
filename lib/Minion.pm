@@ -31,7 +31,8 @@ sub foreground {
   my ($self, $id) = @_;
 
   return undef unless my $job = $self->job($id);
-  return undef unless $job->retry({queue => 'minion_foreground'});
+  return undef
+    unless $job->retry({attempts => 1, queue => 'minion_foreground'});
 
   my $worker = $self->worker->register;
   $job = $worker->dequeue(0 => {id => $id, queues => ['minion_foreground']});

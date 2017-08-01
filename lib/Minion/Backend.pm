@@ -474,6 +474,12 @@ These options are currently available:
 
 =over 2
 
+=item attempts
+
+  attempts => 25
+
+Number of times performing this job will be attempted.
+
 =item delay
 
   delay => 10

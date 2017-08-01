@@ -180,12 +180,13 @@ sub retry_job {
 
   return !!$self->pg->db->query(
     "update minion_jobs
-     set delayed = (now() + (interval '1 second' * ?)),
+     set attempts = coalesce(?, attempts),
+       delayed = (now() + (interval '1 second' * ?)),
        priority = coalesce(?, priority), queue = coalesce(?, queue),
        retried = now(), retries = retries + 1, state = 'inactive'
      where id = ? and retries = ?
-     returning 1", $options->{delay} // 0, @$options{qw(priority queue)}, $id,
-    $retries
+     returning 1", $options->{attempts}, $options->{delay} // 0,
+    @$options{qw(priority queue)}, $id, $retries
   )->rows;
 }
 
@@ -695,6 +696,12 @@ retried to change options.
 These options are currently available:
 
 =over 2
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing this job will be attempted.
 
 =item delay
 
