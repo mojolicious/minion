@@ -32,11 +32,11 @@ sub run {
     'w|workers'    => \my $workers;
 
   # Worker remote control command
-  return $self->app->minion->backend->broadcast($command, $args, \@args)
-    if $command;
+  my $minion = $self->app->minion;
+  return $minion->backend->broadcast($command, $args, \@args) if $command;
 
   # Enqueue
-  return say $self->app->minion->enqueue($enqueue, $args, $options) if $enqueue;
+  return say $minion->enqueue($enqueue, $args, $options) if $enqueue;
 
   # Show stats
   return $self->_stats if $stats;
@@ -46,16 +46,16 @@ sub run {
   return $id ? $self->_worker($id) : $self->_list_workers($offset, $limit)
     if $workers;
   return $self->_list_jobs($offset, $limit, $options) unless defined $id;
-  die "Job does not exist.\n" unless my $job = $self->app->minion->job($id);
-
-  # Perform job in foreground
-  return $job->foreground if $foreground;
+  die "Job does not exist.\n" unless my $job = $minion->job($id);
 
   # Remove job
   return $job->remove || die "Job is active.\n" if $remove;
 
   # Retry job
   return $job->retry($options) || die "Job is active.\n" if $retry;
+
+  # Perform job in foreground
+  return $minion->foreground($id) if $foreground;
 
   # Job info
   print dumper _datetime($job->info);
@@ -122,9 +122,9 @@ Minion::Command::minion::job - Minion job command
                                 workers
     -d, --delay <seconds>       Delay new job for this many seconds
     -e, --enqueue <task>        New job to be enqueued
-    -f, --foreground            Perform job right away in the foreground for
-                                debugging purposes (You have to make sure no
-                                worker can claim it in the meantime!)
+    -f, --foreground            Retry job in "minion_foreground" queue and
+                                perform it right away in the foreground (very
+                                useful for debugging)
     -h, --help                  Show this summary of available options
         --home <path>           Path to home directory of your application,
                                 defaults to the value of MOJO_HOME or

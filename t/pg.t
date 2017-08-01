@@ -311,6 +311,10 @@ is_deeply $job->args, [2, 2], 'right arguments';
 is $job->retries, 0, 'job has not been retried';
 is $job->info->{state}, 'finished', 'right state';
 is $job->task, 'add', 'right task';
+$minion->foreground($job->id);
+is $job->info->{retries}, 1,                   'job has been retried';
+is $job->info->{state},   'finished',          'right state';
+is $job->info->{queue},   'minion_foreground', 'right queue';
 
 # Retry and remove
 $id = $minion->enqueue(add => [5, 6]);
@@ -457,7 +461,7 @@ is $finished, 1,        'finished event has been emitted once';
 $minion->add_task(switcheroo => sub { });
 $minion->enqueue(switcheroo => [5, 3]);
 $job = $worker->dequeue(0);
-$job->foreground;
+$job->perform;
 is_deeply $job->info->{result}, {added => 9}, 'right result';
 $worker->unregister;
 
@@ -499,8 +503,9 @@ is $job->info->{result}, 'Something bad happened!', 'right result';
 $id  = $minion->enqueue('fail');
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
-$job->foreground;
-is $job->info->{state}, 'failed', 'right state';
+$minion->foreground($id);
+is $job->info->{state},  'failed',                 'right state';
+is $job->info->{queue},  'minion_foreground',      'right queue';
 is $job->info->{result}, "Intentional failure!\n", 'right result';
 $worker->unregister;
 

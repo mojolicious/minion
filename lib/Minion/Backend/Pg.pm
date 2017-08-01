@@ -242,16 +242,17 @@ sub _try {
      set started = now(), state = 'active', worker = ?
      where id = (
        select id from minion_jobs as j
-       where delayed <= now() and (parents = '{}' or not exists (
-         select 1 from minion_jobs
-         where id = any (j.parents)
-           and state in ('inactive', 'active', 'failed')
-       )) and queue = any (?) and state = 'inactive' and task = any (?)
+       where delayed <= now() and id = coalesce(?, id)
+         and (parents = '{}' or not exists (
+           select 1 from minion_jobs
+           where id = any (j.parents)
+             and state in ('inactive', 'active', 'failed')
+         )) and queue = any (?) and state = 'inactive' and task = any (?)
        order by priority desc, id
        limit 1
        for update skip locked
      )
-     returning id, args, retries, task", $id,
+     returning id, args, retries, task", $id, $options->{id},
     $options->{queues} || ['default'], [keys %{$self->minion->tasks}]
   )->expand->hash;
 }
@@ -330,6 +331,12 @@ C<inactive> to C<active> state, or return C<undef> if queues were empty.
 These options are currently available:
 
 =over 2
+
+=item id
+
+  id => '10023'
+
+Dequeue a specific job.
 
 =item queues
 

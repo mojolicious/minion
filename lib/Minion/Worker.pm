@@ -149,6 +149,12 @@ These options are currently available:
 
 =over 2
 
+=item id
+
+  id => '10023'
+
+Dequeue a specific job.
+
 =item queues
 
   queues => ['important']

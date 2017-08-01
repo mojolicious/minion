@@ -1,6 +1,8 @@
 
 7.04  2017-08-01
-  - Added foreground method to Minion::Job.
+  - Added foreground method to Minion.
+  - Added id option to dequeue methods in Minion::Worker and
+    Minion::Backend::Pg.
   - Added -f option to job command.
 
 7.03  2017-07-06

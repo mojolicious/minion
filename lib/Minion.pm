@@ -27,6 +27,17 @@ sub enqueue {
   return $id;
 }
 
+sub foreground {
+  my ($self, $id) = @_;
+
+  $self->job($id)->retry({queue => 'minion_foreground'});
+
+  my $worker = $self->worker->register;
+  my $job = $worker->dequeue(0 => {id => $id, queues => ['minion_foreground']});
+  $job->_run and $job->finish;
+  $worker->unregister;
+}
+
 sub job {
   my ($self, $id) = @_;
 
@@ -393,6 +404,13 @@ Job priority, defaults to C<0>. Jobs with a higher priority get performed first.
 Queue to put job in, defaults to C<default>.
 
 =back
+
+=head2 foreground
+
+  $minion->foreground($id);
+
+Retry job in C<minion_foreground> queue, then perform it right away with a
+temporary worker in this process, very useful for debugging.
 
 =head2 job
 
