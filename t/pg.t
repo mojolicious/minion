@@ -741,6 +741,7 @@ $id = $minion->enqueue('fail');
 eval { $minion->foreground($id) };
 like $@, qr/Intentional failure!/, 'right error';
 $info = $minion->job($id)->info;
+ok $info->{worker}, 'has worker';
 ok !$minion->backend->worker_info($info->{worker}), 'not registered';
 is $info->{retries}, 1,                        'job has been retried';
 is $info->{state},   'failed',                 'right state';
