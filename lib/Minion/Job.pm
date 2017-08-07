@@ -64,7 +64,7 @@ sub stop { kill 'KILL', shift->{pid} }
 sub _run {
   my $self = shift;
 
-  return 1 if eval {
+  return undef if eval {
 
     # Reset event loop
     Mojo::IOLoop->reset;
@@ -72,8 +72,8 @@ sub _run {
 
     1;
   };
-  $self->fail($@);
-  return undef;
+  $self->fail(my $err = $@);
+  return $err;
 }
 
 1;

@@ -36,10 +36,11 @@ sub foreground {
 
   my $worker = $self->worker->register;
   $job = $worker->dequeue(0 => {id => $id, queues => ['minion_foreground']});
-  $job->_run and $job->finish if $job;
+  my $err;
+  if ($job) { $job->finish unless defined($err = $job->_run) }
   $worker->unregister;
 
-  return !!$job;
+  return defined $err ? die $err : !!$job;
 }
 
 sub job {
