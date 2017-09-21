@@ -43,6 +43,12 @@ sub foreground {
   return defined $err ? die $err : !!$job;
 }
 
+sub guard {
+  my ($self, $lock) = (shift, shift);
+  return undef unless $self->lock($lock, @_);
+  return Minion::_Guard->new(minion => $self, lock => $lock);
+}
+
 sub job {
   my ($self, $id) = @_;
 
@@ -102,6 +108,11 @@ sub _delegate {
   $self->backend->$method;
   return $self;
 }
+
+package Minion::_Guard;
+use Mojo::Base -base;
+
+sub DESTROY { $_[0]{minion}->unlock($_[0]{lock}) }
 
 1;
 
@@ -417,6 +428,31 @@ Queue to put job in, defaults to C<default>.
 Retry job in C<minion_foreground> queue, then perform it right away with a
 temporary worker in this process, very useful for debugging.
 
+=head2 guard
+
+  my $guard = $minion->guard('foo', 3600);
+  my $guard = $minion->guard('foo', 3600, {limit => 20});
+
+Same as L</"lock">, but returns a scope guard object that automatically releases
+the lock as soon as the object is destroyed, or C<undef> if aquiring the lock
+failed.
+
+  # Only one job should run at a time (unique job)
+  $minion->add_task(do_unique_stuff => sub {
+    my ($job, @args) = @_;
+    return $job->finish('Previous job is still active')
+      unless my $guard = $minion->guard('fragile_backend_service', 7200);
+    ...
+  });
+
+  # Only five jobs should run at a time and we try again later if necessary
+  $minion->add_task(do_concurrent_stuff => sub {
+    my ($job, @args) = @_;
+    return $job->retry({delay => 30})
+      unless my $guard = $minion->guard('some_web_service', 60, {limit => 5});
+    ...
+  });
+
 =head2 job
 
   my $job = $minion->job($id);
@@ -440,7 +476,9 @@ return C<undef> if job does not exist.
 
 Try to acquire a named lock that will expire automatically after the given
 amount of time in seconds. You can release the lock manually with L</"unlock">
-to limit concurrency, or let it expire for rate limiting.
+to limit concurrency, or let it expire for rate limiting. For convenience you
+can also use L</"guard"> to release the lock automatically, even if the job
+failed.
 
   # Only one job should run at a time (unique job)
   $minion->add_task(do_unique_stuff => sub {

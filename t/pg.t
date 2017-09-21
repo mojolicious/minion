@@ -160,6 +160,16 @@ ok !$minion->unlock('bar'), 'not unlocked again';
 ok $minion->unlock('baz'), 'unlocked';
 ok !$minion->unlock('baz'), 'not unlocked again';
 
+# Lock with guard
+ok my $guard = $minion->guard('foo', 3600, {limit => 1}), 'locked';
+ok !$minion->guard('foo', 3600, {limit => 1}), 'not locked again';
+undef $guard;
+ok $guard = $minion->guard('foo', 3600), 'locked';
+ok !$minion->guard('foo', 3600), 'not locked again';
+undef $guard;
+ok $minion->guard('foo', 3600, {limit => 1}), 'locked again';
+ok $minion->guard('foo', 3600, {limit => 1}), 'locked again';
+
 # Reset
 $minion->reset->repair;
 ok !$minion->backend->pg->db->query(

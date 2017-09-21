@@ -1,5 +1,6 @@
 
-7.06  2017-08-08
+7.06  2017-09-21
+  - Added guard method to Minion.
 
 7.05  2017-08-07
   - Improved foreground method in Minion to rethrow job exceptions.
