@@ -26,7 +26,7 @@ sub info { $_[0]->minion->backend->job_info($_[0]->id) }
 sub is_finished {
   my $self = shift;
   return undef unless waitpid($self->{pid}, WNOHANG) == $self->{pid};
-  $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
+  $self->_handle;
   return 1;
 }
 
@@ -35,7 +35,7 @@ sub note { $_[0]->minion->backend->note($_[0]->id, @_[1, 2]) }
 sub perform {
   my $self = shift;
   waitpid $self->start->pid, 0;
-  $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
+  $self->_handle;
 }
 
 sub pid { shift->{pid} }
@@ -60,6 +60,12 @@ sub start {
 }
 
 sub stop { kill 'KILL', shift->{pid} }
+
+sub _handle {
+  my $self = shift;
+  $self->emit(reap => $self->{pid});
+  $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
+}
 
 sub _run {
   my $self = shift;
@@ -128,6 +134,22 @@ after it has transitioned to the C<finished> state.
     my ($job, $result) = @_;
     my $id = $job->id;
     say "Job $id is finished.";
+  });
+
+=head2 reap
+
+  $job->on(reap => sub {
+    my ($job, $pid) = @_;
+    ...
+  });
+
+Emitted in the worker process managing this job, after the process performing it
+has died.
+
+  $job->on(reap => sub {
+    my ($job, $pid) = @_;
+    my $id = $job->id;
+    say "Job $id ran in process $pid";
   });
 
 =head2 spawn

@@ -1,5 +1,6 @@
 
-7.07  2017-09-22
+7.07  2017-10-11
+  - Added reap event to Minion::Job.
 
 7.06  2017-09-21
   - Added guard method to Minion.

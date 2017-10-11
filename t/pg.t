@@ -418,7 +418,7 @@ ok $minion->job($id)->remove, 'job has been removed';
 $worker->unregister;
 
 # Events
-my ($enqueue, $pid);
+my ($enqueue, $pid_start, $pid_stop);
 my $failed = $finished = 0;
 $minion->once(enqueue => sub { $enqueue = pop });
 $minion->once(
@@ -429,7 +429,8 @@ $minion->once(
         my ($worker, $job) = @_;
         $job->on(failed   => sub { $failed++ });
         $job->on(finished => sub { $finished++ });
-        $job->on(spawn    => sub { $pid = pop });
+        $job->on(spawn    => sub { $pid_start = pop });
+        $job->on(reap     => sub { $pid_stop = pop });
         $job->on(
           start => sub {
             my $job = shift;
@@ -455,7 +456,9 @@ $job->perform;
 is $result,   'Everything is fine!', 'right result';
 is $failed,   0,                     'failed event has not been emitted';
 is $finished, 1,                     'finished event has been emitted once';
-isnt $pid, $$, 'new process id';
+isnt $pid_start, $$,        'new process id';
+isnt $pid_stop,  $$,        'new process id';
+is $pid_start,   $pid_stop, 'same process id';
 $job = $worker->dequeue(0);
 my $err;
 $job->on(failed => sub { $err = pop });
