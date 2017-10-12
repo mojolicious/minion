@@ -144,7 +144,7 @@ after it has transitioned to the C<finished> state.
   });
 
 Emitted in the worker process managing this job, after the process performing it
-has died.
+has exited.
 
   $job->on(reap => sub {
     my ($job, $pid) = @_;
