@@ -1,5 +1,7 @@
 
-7.08  2017-10-12
+7.08  2017-10-18
+  - Fixed a bug in the worker command where processing jobs could be
+    delayed significantly after a system restart. (rgci)
 
 7.07  2017-10-11
   - Added reap event to Minion::Job.
