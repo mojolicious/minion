@@ -51,7 +51,7 @@ sub _work {
   # Send heartbeats in regular intervals
   my $worker = $self->{worker};
   my $status = $worker->status;
-  $self->{last_heartbeat} ||= 0;
+  $self->{last_heartbeat} ||= -$status->{heartbeat_interval};
   $worker->register and $self->{last_heartbeat} = steady_time
     if ($self->{last_heartbeat} + $status->{heartbeat_interval}) < steady_time;
 
