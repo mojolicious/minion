@@ -957,12 +957,23 @@ create table if not exists minion_locks (
   name    text not null,
   expires timestamp with time zone not null
 );
-create function minion_lock(text, int, int) returns bool as $$
+
+-- 16 down
+drop table if exists minion_locks;
+
+-- 17 up
+alter table minion_jobs add column notes jsonb
+  check(jsonb_typeof(notes) = 'object') not null default '{}';
+alter table minion_locks set unlogged;
+create index on minion_locks (name, expires);
+
+-- 18 up
+create or replace function minion_lock(text, int, int) returns bool as $$
 declare
   new_expires timestamp with time zone = now() + (interval '1 second' * $2);
 begin
-  delete from minion_locks where expires < now();
   lock table minion_locks in exclusive mode;
+  delete from minion_locks where expires < now();
   if (select count(*) >= $3 from minion_locks where name = $1) then
     return false;
   end if;
@@ -973,12 +984,5 @@ begin
 end;
 $$ language plpgsql;
 
--- 16 down
+-- 18 down
 drop function if exists minion_lock(text, int, int);
-drop table if exists minion_locks;
-
--- 17 up
-alter table minion_jobs add column notes jsonb
-  check(jsonb_typeof(notes) = 'object') not null default '{}';
-alter table minion_locks set unlogged;
-create index on minion_locks (name, expires);
