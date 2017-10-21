@@ -116,8 +116,8 @@ Minion::Command::minion::job - Minion job command
   Options:
     -A, --attempts <number>     Number of times performing this new job will be
                                 attempted, defaults to 1
-    -a, --args <JSON array>     Arguments for new job, worker remote control
-                                command or job metadata in JSON format
+    -a, --args <JSON array>     Arguments for new job or worker remote control
+                                command in JSON format
     -b, --broadcast <command>   Broadcast remote control command to one or more
                                 workers
     -d, --delay <seconds>       Delay new job for this many seconds
