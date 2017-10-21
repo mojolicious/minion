@@ -20,6 +20,7 @@ sub run {
     'e|enqueue=s'   => \my $enqueue,
     'f|foreground'  => \my $foreground,
     'l|limit=i'  => \(my $limit          = 100),
+    'n|note=s'   => \(my $note),
     'o|offset=i' => \(my $offset         = 0),
     'P|parent=s' => ($options->{parents} = []),
     'p|priority=i' => \$options->{priority},
@@ -47,6 +48,9 @@ sub run {
     if $workers;
   return $self->_list_jobs($offset, $limit, $options) unless defined $id;
   die "Job does not exist.\n" unless my $job = $minion->job($id);
+
+  # Change job metadata
+  return $job->note($note => $args) if defined $note;
 
   # Remove job
   return $job->remove || die "Job is active.\n" if $remove;
@@ -110,14 +114,15 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
     ./myapp.pl minion job -R -d 10 10023
     ./myapp.pl minion job --remove 10023
+    ./myapp.pl minion job -n foo -a '{"bar": 23}' 10023
     ./myapp.pl minion job -b jobs -a '[12]'
     ./myapp.pl minion job -b jobs -a '[12]' 23 24 25
 
   Options:
     -A, --attempts <number>     Number of times performing this new job will be
                                 attempted, defaults to 1
-    -a, --args <JSON array>     Arguments for new job or worker remote control
-                                command in JSON format
+    -a, --args <JSON array>     Arguments for new job, worker remote control
+                                command or job metadata in JSON format
     -b, --broadcast <command>   Broadcast remote control command to one or more
                                 workers
     -d, --delay <seconds>       Delay new job for this many seconds
@@ -134,6 +139,7 @@ Minion::Command::minion::job - Minion job command
     -m, --mode <name>           Operating mode for your application, defaults to
                                 the value of MOJO_MODE/PLACK_ENV or
                                 "development"
+    -n, --note <field>          Change a job metadata field
     -o, --offset <number>       Number of jobs/workers to skip when listing
                                 them, defaults to 0
     -P, --parent <id>           One or more jobs the new job depends on
