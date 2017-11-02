@@ -15,9 +15,7 @@
   imagine that's not super fast.
 
 ```perl
-use Mojolicious::Lite;
-use 5.20.0;
-use experimental 'signatures';
+use Mojolicious::Lite -signatures;
 
 plugin Minion => {Pg => 'postgresql://postgres@/test'};
 
