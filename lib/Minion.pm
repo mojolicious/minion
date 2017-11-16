@@ -690,6 +690,8 @@ This is the class hierarchy of the L<Minion> distribution.
 
 =item * L<Mojolicious::Plugin::Minion>
 
+=item * L<Mojolicious::Plugin::Minion::Admin>
+
 =back
 
 =head1 BUNDLED FILES
