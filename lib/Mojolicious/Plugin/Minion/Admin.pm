@@ -117,7 +117,7 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
   # Mojolicious::Lite
   plugin 'Minion::Admin';
 
-  # Secure access to the Admin UI with Basic authentication
+  # Secure access to the admin ui with Basic authentication
   my $under = $self->routes->under('/minion' =>sub {
     my $c = shift;
     return 1 if $c->req->url->to_abs->userinfo eq 'Bender:rocks';
@@ -129,7 +129,7 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
 =head1 DESCRIPTION
 
 L<Mojolicious::Plugin::Minion::Admin> is a L<Mojolicious> plugin providing an
-Admin UI for the L<Minion> job queue.
+admin ui for the L<Minion> job queue.
 
 =head1 OPTIONS
 
@@ -140,7 +140,7 @@ L<Mojolicious::Plugin::Minion::Admin> supports the following options.
   # Mojolicious::Lite
   plugin 'Minion::Admin' => {route => app->routes->any('/admin')};
 
-L<Mojolicious::Routes::Route> object to attach the Admin UI to, defaults to
+L<Mojolicious::Routes::Route> object to attach the admin ui to, defaults to
 generating a new one with the prefix C</minion>.
 
 =head1 METHODS

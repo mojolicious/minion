@@ -1,9 +1,11 @@
 % use POSIX;
+
 % my $last_page    = POSIX::ceil($total / $limit);
 % my $current_page = int($offset / $limit) + 1;
 % my $prev_offset  = ($offset - $limit) < 0 ? 0 : $offset - $limit;
 % my $next_offset  = $offset + $limit;
 % my $last_offset  = ($last_page - 1) * $limit;
+
 <nav class="text-center">
   <ul class="pagination">
     % if ($current_page == 1) {
