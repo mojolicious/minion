@@ -58,6 +58,10 @@ $t->post_ok('/minion/jobs' => form => {id => $finished, do => 'remove'})
   ->status_is(302)->header_like(Location => qr/id=$finished/);
 is app->minion->job($finished), undef, 'job has been removed';
 
+# Different prefix
+plugin 'Minion::Admin' => {route => app->routes->any('/also_minion')};
+$t->get_ok('/also_minion')->status_is(200)->content_like(qr/Dashboard/);
+
 # Clean up once we are done
 $pg->db->query('drop schema minion_admin_test cascade');
 

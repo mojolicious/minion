@@ -4,7 +4,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::File 'path';
 
 sub register {
-  my ($self, $app) = @_;
+  my ($self, $app, $config) = @_;
 
   # Static files
   my $resources = path(__FILE__)->sibling('resources');
@@ -14,14 +14,12 @@ sub register {
   push @{$app->renderer->paths}, $resources->child('templates')->to_string;
 
   # Routes
-  my $prefix = $app->routes->any('/minion');
+  my $prefix = $config->{route} // $app->routes->any('/minion');
   $prefix->get('/'      => \&_dashboard)->name('minion_dashboard');
   $prefix->get('/stats' => \&_stats)->name('minion_stats');
   $prefix->get('/jobs'  => \&_list_jobs)->name('minion_jobs');
   $prefix->post('/jobs' => \&_manage_jobs)->name('minion_manage_jobs');
   $prefix->get('/workers' => \&_list_workers)->name('minion_workers');
-
-  return $prefix;
 }
 
 sub _dashboard {
@@ -120,15 +118,13 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
   plugin 'Minion::Admin';
 
   # Secure access to the administration interface with Basic authentication
-  my $admin = $self->plugin('Minion::Admin');
   my $under = $self->routes->under('/minion' =>sub {
     my $c = shift;
     return 1 if $c->req->url->to_abs->userinfo eq 'Bender:rocks';
     $c->res->headers->www_authenticate('Basic');
     $c->render(text => 'Authentication required!', status => 401);
   });
-  my @children = @{$admin->remove->children};
-  $under->add_child($_) for @children;
+  $self->plugin('Minion::Admin' => {route => $under});
 
 =head1 DESCRIPTION
 
@@ -140,9 +136,21 @@ administration interface for the L<Minion> job queue.
 L<Mojolicious::Plugin::Minion::Admin> inherits all methods from
 L<Mojolicious::Plugin> and implements the following new ones.
 
+=head1 OPTIONS
+
+L<Mojolicious::Plugin::Minion::Admin> supports the following options.
+
+=head2 route
+
+  # Mojolicious::Lite
+  plugin 'Minion::Admin' => {route => app->routes->any('/admin')};
+
+L<Mojolicious::Routes::Route> object to attach the administration interface to,
+defaults to generating a new one with the prefix C</minion>.
+
 =head2 register
 
-  my $route = $plugin->register(Mojolicious->new);
+  $plugin->register(Mojolicious->new);
 
 Register plugin in L<Mojolicious> application.
 
