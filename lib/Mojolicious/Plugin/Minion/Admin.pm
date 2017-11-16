@@ -131,11 +131,6 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
 L<Mojolicious::Plugin::Minion::Admin> is a L<Mojolicious> plugin providing an
 Admin UI for the L<Minion> job queue.
 
-=head1 METHODS
-
-L<Mojolicious::Plugin::Minion::Admin> inherits all methods from
-L<Mojolicious::Plugin> and implements the following new ones.
-
 =head1 OPTIONS
 
 L<Mojolicious::Plugin::Minion::Admin> supports the following options.
@@ -147,6 +142,11 @@ L<Mojolicious::Plugin::Minion::Admin> supports the following options.
 
 L<Mojolicious::Routes::Route> object to attach the Admin UI to, defaults to
 generating a new one with the prefix C</minion>.
+
+=head1 METHODS
+
+L<Mojolicious::Plugin::Minion::Admin> inherits all methods from
+L<Mojolicious::Plugin> and implements the following new ones.
 
 =head2 register
 
