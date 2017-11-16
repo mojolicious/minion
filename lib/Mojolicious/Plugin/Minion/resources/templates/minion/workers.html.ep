@@ -74,11 +74,13 @@
               % }
             </td>
             <td class="accordion-toggle collapsed expand" data-toggle="collapse"
-              data-target="#worker<%= $i %>"></td>
+              data-target="#worker<%= $i %>">
+              <span class="expand-icon"></span>
+            </td>
           </tr>
           <tr>
-            <td colspan="2" class="hiddenRow"></td>
-            <td colspan="5" class="hiddenRow">
+            <td class="hiddenRow"></td>
+            <td colspan="6" class="hiddenRow">
               <div class="collapse" id="worker<%= $i %>">
                 <pre><code><%= dumper Minion::_datetime $worker %></code></pre>
               </div>

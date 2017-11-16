@@ -118,7 +118,9 @@
                 % }
               </td>
             <td class="accordion-toggle collapsed expand" data-toggle="collapse"
-              data-target="#job<%= $i %>"></td>
+              data-target="#job<%= $i %>">
+              <span class="expand-icon"></span>
+            </td>
             </tr>
             <tr>
               <td colspan="2" class="hiddenRow"></td>
