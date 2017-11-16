@@ -111,10 +111,10 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
 
 =head1 SYNOPSIS
 
-  # Mojolicious (Admin UI under "/minion")
+  # Mojolicious
   $self->plugin('Minion::Admin');
 
-  # Mojolicious::Lite (Admin UI under "/minion")
+  # Mojolicious::Lite
   plugin 'Minion::Admin';
 
   # Secure access to the Admin UI with Basic authentication
