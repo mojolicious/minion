@@ -123,8 +123,7 @@
             </td>
             </tr>
             <tr>
-              <td colspan="2" class="hiddenRow"></td>
-              <td colspan="6" class="hiddenRow">
+              <td colspan="8" class="hiddenRow">
                 <div class="collapse" id="job<%= $i %>">
                   <pre><code><%= dumper Minion::_datetime $job %></code></pre>
                 </div>

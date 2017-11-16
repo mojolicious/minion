@@ -79,8 +79,7 @@
             </td>
           </tr>
           <tr>
-            <td class="hiddenRow"></td>
-            <td colspan="6" class="hiddenRow">
+            <td colspan="7" class="hiddenRow">
               <div class="collapse" id="worker<%= $i %>">
                 <pre><code><%= dumper Minion::_datetime $worker %></code></pre>
               </div>
