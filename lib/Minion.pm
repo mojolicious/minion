@@ -167,8 +167,8 @@ L<Minion> is a job queue for the L<Mojolicious|http://mojolicious.org> real-time
 web framework, with support for multiple named queues, priorities, delayed jobs,
 job dependencies, job progress, job results, retries with backoff, rate
 limiting, unique jobs, statistics, distributed workers, parallel processing,
-autoscaling, remote control, resource leak protection and multiple backends
-(such as L<PostgreSQL|http://www.postgresql.org>).
+autoscaling, remote control, Admin UI, resource leak protection and multiple
+backends (such as L<PostgreSQL|http://www.postgresql.org>).
 
 Job queues allow you to process time and/or computationally intensive tasks in
 background processes, outside of the request/response lifecycle. Among those
@@ -207,11 +207,11 @@ L<Minion::Command::minion::job>.
 
   $ ./myapp.pl minion job
 
-You can also add a web administration interface by loading the plugin
+You can also add an Admin UI to your application by loading the plugin
 L<Mojolicious::Plugin::Minion::Admin>. Just make sure to secure access before
 making your application publically accessible.
 
-  # Admininstration interface under "/minion"
+  # Admin UI under "/minion"
   plugin 'Minion::Admin';
 
 To manage background worker processes with systemd, you can use a unit

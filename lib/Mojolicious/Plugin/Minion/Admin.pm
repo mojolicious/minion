@@ -111,13 +111,13 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
 
 =head1 SYNOPSIS
 
-  # Mojolicious (administration interface under "/minion")
+  # Mojolicious (Admin UI under "/minion")
   $self->plugin('Minion::Admin');
 
-  # Mojolicious::Lite (administration interface under "/minion")
+  # Mojolicious::Lite (Admin UI under "/minion")
   plugin 'Minion::Admin';
 
-  # Secure access to the administration interface with Basic authentication
+  # Secure access to the Admin UI with Basic authentication
   my $under = $self->routes->under('/minion' =>sub {
     my $c = shift;
     return 1 if $c->req->url->to_abs->userinfo eq 'Bender:rocks';
@@ -129,7 +129,7 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
 =head1 DESCRIPTION
 
 L<Mojolicious::Plugin::Minion::Admin> is a L<Mojolicious> plugin providing an
-administration interface for the L<Minion> job queue.
+Admin UI for the L<Minion> job queue.
 
 =head1 METHODS
 
@@ -145,8 +145,8 @@ L<Mojolicious::Plugin::Minion::Admin> supports the following options.
   # Mojolicious::Lite
   plugin 'Minion::Admin' => {route => app->routes->any('/admin')};
 
-L<Mojolicious::Routes::Route> object to attach the administration interface to,
-defaults to generating a new one with the prefix C</minion>.
+L<Mojolicious::Routes::Route> object to attach the Admin UI to, defaults to
+generating a new one with the prefix C</minion>.
 
 =head2 register
 
