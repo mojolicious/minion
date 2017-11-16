@@ -1,7 +1,6 @@
 package Minion::Command::minion::job;
 use Mojo::Base 'Mojolicious::Command';
 
-use Mojo::Date;
 use Mojo::JSON 'decode_json';
 use Mojo::Util qw(dumper getopt tablify);
 
@@ -58,23 +57,16 @@ sub run {
   return $minion->foreground($id) || die "Job is not ready.\n" if $foreground;
 
   # Job info
-  print dumper _datetime($job->info);
-}
-
-sub _datetime {
-  my $hash = shift;
-  $hash->{$_} and $hash->{$_} = Mojo::Date->new($hash->{$_})->to_datetime
-    for qw(created delayed finished notified retried started);
-  return $hash;
+  print dumper Minion::_datetime($job->info);
 }
 
 sub _list_jobs {
-  my $jobs = shift->app->minion->backend->list_jobs(@_);
+  my $jobs = shift->app->minion->backend->list_jobs(@_)->{jobs};
   print tablify [map { [@$_{qw(id state queue task)}] } @$jobs];
 }
 
 sub _list_workers {
-  my $workers = shift->app->minion->backend->list_workers(@_);
+  my $workers = shift->app->minion->backend->list_workers(@_)->{workers};
   my @workers = map { [$_->{id}, $_->{host} . ':' . $_->{pid}] } @$workers;
   print tablify \@workers;
 }
@@ -82,9 +74,10 @@ sub _list_workers {
 sub _stats { print dumper shift->app->minion->stats }
 
 sub _worker {
-  die "Worker does not exist.\n"
-    unless my $worker = shift->app->minion->backend->worker_info(@_);
-  print dumper _datetime($worker);
+  my $worker = shift->app->minion->backend->list_workers(0, 1, {ids => [shift]})
+    ->{workers}[0];
+  die "Worker does not exist.\n" unless $worker;
+  print dumper Minion::_datetime($worker);
 }
 
 1;

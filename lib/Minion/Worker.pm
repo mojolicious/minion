@@ -25,7 +25,10 @@ sub dequeue {
   return $job;
 }
 
-sub info { $_[0]->minion->backend->worker_info($_[0]->id) }
+sub info {
+  $_[0]->minion->backend->list_workers(0, 1, {ids => [$_[0]->id]})
+    ->{workers}[0];
+}
 
 sub process_commands {
   my $self = shift;

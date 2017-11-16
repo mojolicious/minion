@@ -50,38 +50,45 @@ sub enqueue {
 sub fail_job   { shift->_update(1, @_) }
 sub finish_job { shift->_update(0, @_) }
 
-sub job_info {
-  shift->pg->db->query(
-    'select id, args, attempts,
-       array(select id from minion_jobs where parents @> ARRAY[j.id])
-         as children,
-       extract(epoch from created) as created,
-       extract(epoch from delayed) as delayed,
-       extract(epoch from finished) as finished, notes, parents, priority,
-       queue, result, extract(epoch from retried) as retried, retries,
-       extract(epoch from started) as started, state, task, worker
-     from minion_jobs as j where id = ?', shift
-  )->expand->hash;
-}
-
 sub list_jobs {
   my ($self, $offset, $limit, $options) = @_;
 
-  return $self->pg->db->query(
-    'select id from minion_jobs
-     where (queue = $1 or $1 is null) and (state = $2 or $2 is null)
-       and (task = $3 or $3 is null)
+  my $jobs = $self->pg->db->query(
+    'select id, args, attempts,
+       array(select id from minion_jobs where parents @> ARRAY[j.id])
+         as children, extract(epoch from created) as created,
+       extract(epoch from delayed) as delayed,
+       extract(epoch from finished) as finished, notes, parents, priority,
+       queue, result, extract(epoch from retried) as retried, retries,
+       extract(epoch from started) as started, state, task,
+       count(*) over() as total, worker
+     from minion_jobs as j
+     where (id = any ($1) or $1 is null) and (queue = $2 or $2 is null)
+       and (state = $3 or $3 is null) and (task = $4 or $4 is null)
      order by id desc
-     limit $4 offset $5', @$options{qw(queue state task)}, $limit, $offset
-  )->arrays->map(sub { $self->job_info($_->[0]) })->to_array;
+     limit $5 offset $6', @$options{qw(ids queue state task)}, $limit, $offset
+  )->expand->hashes->to_array;
+  my $total = @$jobs ? $jobs->[0]{total} : 0;
+  delete $_->{total} for @$jobs;
+  return {jobs => $jobs, total => $total};
 }
 
 sub list_workers {
-  my ($self, $offset, $limit) = @_;
+  my ($self, $offset, $limit, $options) = @_;
 
-  my $sql = 'select id from minion_workers order by id desc limit ? offset ?';
-  return $self->pg->db->query($sql, $limit, $offset)
-    ->arrays->map(sub { $self->worker_info($_->[0]) })->to_array;
+  my $workers = $self->pg->db->query(
+    "select id, extract(epoch from notified) as notified, array(
+        select id from minion_jobs
+        where state = 'active' and worker = minion_workers.id
+      ) as jobs, host, pid, status, extract(epoch from started) as started,
+      count(*) over() as total
+     from minion_workers
+     where (id = any (\$1) or \$1 is null)
+     order by id desc limit \$2 offset \$3", $options->{ids}, $limit, $offset
+  )->expand->hashes->to_array;
+  my $total = @$workers ? $workers->[0]{total} : 0;
+  delete $_->{total} for @$workers;
+  return {total => $total, workers => $workers};
 }
 
 sub lock {
@@ -199,11 +206,12 @@ sub stats {
        count(*) filter (where state = 'failed') as failed_jobs,
        count(*) filter (where state = 'finished') as finished_jobs,
        count(*) filter (where state = 'inactive'
-         and (delayed > now() or parents != '{}')) as delayed_jobs,
+         and delayed > now()) as delayed_jobs,
        count(distinct worker) filter (where state = 'active') as active_workers,
        (select case when is_called then last_value else 0 end
          from minion_jobs_id_seq) as enqueued_jobs,
-       (select count(*) from minion_workers) as inactive_workers
+       (select count(*) from minion_workers) as inactive_workers,
+       extract(epoch from now() - pg_postmaster_start_time()) as uptime
      from minion_jobs"
   )->hash;
   $stats->{inactive_workers} -= $stats->{active_workers};
@@ -222,17 +230,6 @@ sub unlock {
 
 sub unregister_worker {
   shift->pg->db->query('delete from minion_workers where id = ?', shift);
-}
-
-sub worker_info {
-  shift->pg->db->query(
-    "select id, extract(epoch from notified) as notified, array(
-       select id from minion_jobs
-       where state = 'active' and worker = minion_workers.id
-     ) as jobs, host, pid, status, extract(epoch from started) as started
-     from minion_workers
-     where id = ?", shift
-  )->expand->hash;
 }
 
 sub _try {
@@ -449,17 +446,51 @@ L<Minion/"backoff">.
 
 Transition from C<active> to C<finished> state.
 
-=head2 job_info
+=head2 list_jobs
 
-  my $job_info = $backend->job_info($job_id);
+  my $results = $backend->list_jobs($offset, $limit);
+  my $results = $backend->list_jobs($offset, $limit, {state => 'inactive'});
 
-Get information about a job, or return C<undef> if job does not exist.
+Returns the information about jobs in batches. Meant to be overloaded in a
+subclass.
 
   # Check job state
-  my $state = $backend->job_info($job_id)->{state};
+  my $results = $backend->list_jobs(0, 1, {ids => [$job_id]});
+  my $state = $results->{jobs}[0]{state};
 
   # Get job result
-  my $result = $backend->job_info($job_id)->{result};
+  my $results = $backend->list_jobs(0, 1, {ids => [$job_id]});
+  my $result  = $results->{jobs}[0]{result};
+
+These options are currently available:
+
+=over 2
+
+=item ids
+
+  ids => ['23', '24']
+
+List only jobs with these ids.
+
+=item queue
+
+  queue => 'important'
+
+List only jobs in this queue.
+
+=item state
+
+  state => 'inactive'
+
+List only jobs in this state.
+
+=item task
+
+  task => 'test'
+
+List only jobs for this task.
+
+=back
 
 These fields are currently available:
 
@@ -569,42 +600,70 @@ Id of worker that is processing the job.
 
 =back
 
-=head2 list_jobs
+=head2 list_workers
 
-  my $batch = $backend->list_jobs($offset, $limit);
-  my $batch = $backend->list_jobs($offset, $limit, {state => 'inactive'});
+  my $results = $backend->list_workers($offset, $limit);
+  my $results = $backend->list_workers($offset, $limit, {ids => [23]});
 
-Returns the same information as L</"job_info"> but in batches.
+Returns information about workers in batches.
+
+  # Check worker host
+  my $results = $backend->list_workers(0, 1, {ids => [$worker_id]});
+  my $host    = $results->{workers}[0]{host};
 
 These options are currently available:
 
 =over 2
 
-=item queue
+=item ids
 
-  queue => 'important'
+  ids => ['23', '24']
 
-List only jobs in this queue.
-
-=item state
-
-  state => 'inactive'
-
-List only jobs in this state.
-
-=item task
-
-  task => 'test'
-
-List only jobs for this task.
+List only workers with these ids.
 
 =back
 
-=head2 list_workers
+These fields are currently available:
 
-  my $batch = $backend->list_workers($offset, $limit);
+=over 2
 
-Returns the same information as L</"worker_info"> but in batches.
+=item host
+
+  host => 'localhost'
+
+Worker host.
+
+=item jobs
+
+  jobs => ['10023', '10024', '10025', '10029']
+
+Ids of jobs the worker is currently processing.
+
+=item notified
+
+  notified => 784111777
+
+Epoch time worker sent the last heartbeat.
+
+=item pid
+
+  pid => 12345
+
+Process id of worker.
+
+=item started
+
+  started => 784111777
+
+Epoch time worker was started.
+
+=item status
+
+  status => {queues => ['default', 'important']}
+
+Hash reference with whatever status information the worker would like to share.
+
+=back
 
 =head2 lock
 
@@ -750,8 +809,8 @@ Number of workers that are currently processing a job.
   delayed_jobs => 100
 
 Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future or have unresolved dependencies. Note that this field is
-EXPERIMENTAL and might change without warning!
+in the future. Note that this field is EXPERIMENTAL and might change without
+warning!
 
 =item enqueued_jobs
 
@@ -784,6 +843,12 @@ Number of jobs in C<inactive> state.
 
 Number of workers that are currently not processing a job.
 
+=item uptime
+
+  uptime => 1000
+
+Uptime in seconds.
+
 =back
 
 =head2 unlock
@@ -797,57 +862,6 @@ Release a named lock.
   $backend->unregister_worker($worker_id);
 
 Unregister worker.
-
-=head2 worker_info
-
-  my $worker_info = $backend->worker_info($worker_id);
-
-Get information about a worker, or return C<undef> if worker does not exist.
-
-  # Check worker host
-  my $host = $backend->worker_info($worker_id)->{host};
-
-These fields are currently available:
-
-=over 2
-
-=item host
-
-  host => 'localhost'
-
-Worker host.
-
-=item jobs
-
-  jobs => ['10023', '10024', '10025', '10029']
-
-Ids of jobs the worker is currently processing.
-
-=item notified
-
-  notified => 784111777
-
-Epoch time worker sent the last heartbeat.
-
-=item pid
-
-  pid => 12345
-
-Process id of worker.
-
-=item started
-
-  started => 784111777
-
-Epoch time worker was started.
-
-=item status
-
-  status => {queues => ['default', 'important']}
-
-Hash reference with whatever status information the worker would like to share.
-
-=back
 
 =head1 SEE ALSO
 

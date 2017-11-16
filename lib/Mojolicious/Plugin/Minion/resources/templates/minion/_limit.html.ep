@@ -1,0 +1,12 @@
+<nav>
+  <ul class="pagination pull-right">
+    % for my $i (10, 20, 50, 100) {
+      % if ($limit == $i) {
+        <li class="active"><a><%= $i %></a></li>
+      % }
+      % else {
+        <li><%= link_to $i => url_with->query([limit => $i]) %></li>
+      % }
+    % }
+  </ul>
+</nav>

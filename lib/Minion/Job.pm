@@ -21,7 +21,9 @@ sub finish {
   return $ok ? !!$self->emit(finished => $result) : undef;
 }
 
-sub info { $_[0]->minion->backend->job_info($_[0]->id) }
+sub info {
+  $_[0]->minion->backend->list_jobs(0, 1, {ids => [$_[0]->id]})->{jobs}[0];
+}
 
 sub is_finished {
   my $self = shift;

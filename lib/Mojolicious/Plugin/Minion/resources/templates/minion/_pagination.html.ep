@@ -1,0 +1,64 @@
+% use POSIX;
+% my $last_page    = POSIX::ceil($total / $limit);
+% my $current_page = int($offset / $limit) + 1;
+% my $prev_offset  = ($offset - $limit) < 0 ? 0 : $offset - $limit;
+% my $next_offset  = $offset + $limit;
+% my $last_offset  = ($last_page - 1) * $limit;
+<nav class="text-center">
+  <ul class="pagination">
+    % if ($current_page == 1) {
+      <li class="disabled">
+        <a>First</a>
+    % }
+    % else {
+      <li>
+        <a href="<%= url_with->query([offset => 0]) %>">First</a>
+    % }
+    </li>
+    % if ($current_page == 1) {
+      <li class="disabled">
+        <a>Previous</a>
+    % }
+    % else {
+      <li>
+        <a href="<%= url_with->query([offset => $prev_offset]) %>">Previous</a>
+    % }
+    </li>
+    % my $start = $current_page >= 3 ? $current_page - 2 : 1;
+    % $start = $start >= ($last_page - 4) ? $last_page - 4 : $start;
+    % $start = 1 if $start < 1;
+    % my $end = $last_page < ($start + 4) ? $last_page : $start + 4;
+    % for my $i ($start .. $end) {
+      % if ($i == $current_page) {
+        <li class="active"><a><%= $i %></a></li>
+      % }
+      % else {
+        <li>
+          <a href="<%= url_with->query([offset => ($i - 1) * $limit]) %>">
+            <%= $i %>
+          </a>
+        </li>
+      % }
+    % }
+    % if ($current_page >= $last_page) {
+      <li class="disabled">
+        <a>Next</a>
+    % }
+    % else {
+      <li>
+        <a href="<%= url_with->query([offset => $next_offset]) %>">
+          Next
+        </a>
+    % }
+    </li>
+    % if ($current_page >= $last_page) {
+      <li class="disabled">
+        <a>Last</a>
+    % }
+    % else {
+      <li>
+        <a href="<%= url_with->query([offset => $last_offset]) %>">Last</a>
+    % }
+    </li>
+  </ul>
+</nav>

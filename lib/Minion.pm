@@ -5,6 +5,7 @@ use Carp 'croak';
 use Config;
 use Minion::Job;
 use Minion::Worker;
+use Mojo::Date;
 use Mojo::Loader 'load_class';
 use Mojo::Server;
 use Scalar::Util 'weaken';
@@ -16,7 +17,7 @@ has missing_after => 1800;
 has remove_after  => 172800;
 has tasks         => sub { {} };
 
-our $VERSION = '7.10';
+our $VERSION = '8.0';
 
 sub add_task { ($_[0]->tasks->{$_[1]} = $_[2]) and return $_[0] }
 
@@ -52,7 +53,8 @@ sub guard {
 sub job {
   my ($self, $id) = @_;
 
-  return undef unless my $job = $self->backend->job_info($id);
+  return undef
+    unless my $job = $self->backend->list_jobs(0, 1, {ids => [$id]})->{jobs}[0];
   return Minion::Job->new(
     args    => $job->{args},
     id      => $job->{id},
@@ -102,6 +104,14 @@ sub worker {
 }
 
 sub _backoff { (shift()**4) + 15 }
+
+# Used by the job command and admin plugin
+sub _datetime {
+  my $hash = shift;
+  $hash->{$_} and $hash->{$_} = Mojo::Date->new($hash->{$_})->to_datetime
+    for qw(created delayed finished notified retried started);
+  return $hash;
+}
 
 sub _delegate {
   my ($self, $method) = @_;
@@ -196,6 +206,13 @@ Jobs can be managed right from the command line with
 L<Minion::Command::minion::job>.
 
   $ ./myapp.pl minion job
+
+You can also add a web administration interface by loading the plugin
+L<Mojolicious::Plugin::Minion::Admin>. Just make sure to secure access before
+making your application publically accessible.
+
+  # Admininstration interface under "/minion"
+  plugin 'Minion::Admin';
 
 To manage background worker processes with systemd, you can use a unit
 configuration file like this.
@@ -625,6 +642,12 @@ Number of jobs in C<inactive> state.
 
 Number of workers that are currently not processing a job.
 
+=item uptime
+
+  uptime => 1000
+
+Uptime in seconds.
+
 =back
 
 =head2 unlock
@@ -668,6 +691,50 @@ This is the class hierarchy of the L<Minion> distribution.
 =item * L<Mojolicious::Plugin::Minion>
 
 =back
+
+=head1 BUNDLED FILES
+
+The L<Minion> distribution includes a few files with different licenses that
+have been bundled for internal use.
+
+=head2 Minion Artwork
+
+  Copyright (C) 2017, Sebastian Riedel.
+
+Licensed under the CC-SA License, Version 4.0
+L<http://creativecommons.org/licenses/by-sa/4.0>.
+
+=head2 Bootstrap
+
+  Copyright (C) 2011-2016 Twitter, Inc.
+
+Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
+
+=head2 D3.js
+
+  Copyright (C) 2010-2016, Michael Bostock.
+
+Licensed under the 3-Clause BSD License,
+L<https://opensource.org/licenses/BSD-3-Clause>.
+
+=head2 epoch.js
+
+  Copyright (C) 2014 Fastly, Inc.
+
+Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
+
+=head2 Font Awesome
+
+  Copyright (C) Dave Gandy.
+
+Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>, and
+the SIL OFL 1.1, L<http://scripts.sil.org/OFL>.
+
+=head2 moment.js
+
+  Copyright (C) JS Foundation and other contributors.
+
+Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
 
 =head1 AUTHOR
 

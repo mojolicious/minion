@@ -1,5 +1,14 @@
 
-7.10  2017-10-21
+8.0  2017-11-16
+  - Removed job_info and worker_info methods from Minion::Backend and
+    Minion::Backend::Pg.
+  - Changed return value of list_jobs and list_workers methods in
+    Minion::Backend and Minion::Backend::Pg.
+  - Added new module Mojolicious::Plugin::Minion::Admin.
+  - Added ids option to list_jobs and list_workers methods in Minion::Backend
+    and Minion::Backend::Pg.
+  - Added uptime field to stats methods in Minion, Minion::Backend and
+    Minion::Backend::Pg.
 
 7.09  2017-10-20
   - Fixed a deadlock problem in Minion::Backend::Pg where jobs could fail if two

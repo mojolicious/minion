@@ -1,0 +1,142 @@
+% layout 'minion', title => 'Minion - Jobs';
+
+% my $related = begin
+  % my $job = shift;
+
+  % my ($parents, $children, $id) = @{$job}{qw(parents children worker)};
+  % if (@$parents || @$children || $id) {
+    <div class="btn-group">
+      <button type="button"
+        class="btn btn-default btn-xs dropdown-toggle"
+        data-toggle="dropdown" aria-haspopup="true"
+        aria-expanded="false">
+        Related
+        <span class="caret"></span>
+        <span class="sr-only">Toggle Dropdown</span>
+      </button>
+      <ul class="dropdown-menu">
+        % if (@$parents) {
+          <li>
+            <%= link_to
+              Parents => url_for('minion_jobs')->query(id => $parents) %>
+          </li>
+        % }
+        % if (@$children) {
+          <li>
+            <%= link_to
+              Children => url_for('minion_jobs')->query(id => $children) %>
+          </li>
+        % }
+        % if ($id) {
+          <li>
+            <%= link_to Worker => url_for('minion_workers')->query(id => $id) %>
+          </li>
+        % }
+      </ul>
+    </div>
+  % }
+% end
+
+%= form_for 'minion_manage_jobs' => begin
+  <div class="row">
+    <div class="col-md-4 btn-group" role="group">
+      <button class="btn btn-default" name="do" value="retry" type="submit">
+        <i class="fa fa-repeat" aria-hidden="true"></i> Retry
+      </button>
+      <button class="btn btn-default" name="do" value="stop" type="submit">
+        <i class="fa fa-ban" aria-hidden="true"></i> Stop
+      </button>
+      <button class="btn btn-default" name="do" value="remove" type="submit">
+        <i class="fa fa-remove" aria-hidden="true"></i> Remove
+      </button>
+    </div>
+    <div class="col-md-4">
+      <p class="text-center">
+        % if (@$jobs) {
+          <%= $offset + 1 %>-<%= $offset + @$jobs %> of <%= $total %>
+        % }
+      </p>
+    </div>
+    <div class="col-md-4">
+      %= include 'minion/_limit'
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table">
+        <thead>
+          <tr>
+            <th><input class="checkall" data-check="id" type="checkbox"></th>
+            <th>Job ID</th>
+            <th>Task</th>
+            <th>Queue</th>
+            <th>Created</th>
+            <th></th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        % my $i = 0;
+        % for my $job (@$jobs) {
+          % $i++;
+          <tbody>
+            <tr>
+              <td>
+                <input type="checkbox" name="id" value="<%= $job->{id} %>">
+              </td>
+              <td>
+                <a href="<%= url_for->query([id => $job->{id}]) %>">
+                  <%= $job->{id} %>
+                </a>
+              </td>
+              <td>
+                <a href="<%= url_with->query([task => $job->{task}]) %>">
+                  <%= $job->{task} %>
+                </a>
+              </td>
+              <td>
+                <a href="<%= url_with->query([queue => $job->{queue}]) %>">
+                  <%= $job->{queue} %>
+                </a>
+              </td>
+              <td class="from-now"><%= $job->{created} %></td>
+              <td><%= $related->($job) %></td>
+              <td class="accordion-toggle collapsed" data-toggle="collapse"
+                data-target="#job<%= $i %>">
+                % if ($job->{state} eq 'active') {
+                  <span class="label label-warning">active</span>
+                % }
+                % elsif ($job->{state} eq 'failed') {
+                  <span class="label label-danger">failed</span>
+                % }
+                % elsif ($job->{state} eq 'finished') {
+                  <span class="label label-success">finished</span>
+                % }
+                % else {
+                  <span class="label label-info">inactive</span>
+                % }
+              </td>
+            <td class="accordion-toggle collapsed expand" data-toggle="collapse"
+              data-target="#job<%= $i %>"></td>
+            </tr>
+            <tr>
+              <td colspan="2" class="hiddenRow"></td>
+              <td colspan="6" class="hiddenRow">
+                <div class="collapse" id="job<%= $i %>">
+                  <pre><code><%= dumper Minion::_datetime $job %></code></pre>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        % }
+      </table>
+    </div>
+  </div>
+% end
+
+<div class="row">
+  <div class="col-md-12">
+    %= include 'minion/_pagination'
+  </div>
+</div>

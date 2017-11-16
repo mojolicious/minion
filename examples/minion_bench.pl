@@ -64,7 +64,7 @@ dequeue() for 1 .. $REPETITIONS;
 say "Requesting job info $INFO times";
 $before = time;
 my $backend = $minion->backend;
-$backend->job_info($_) for 1 .. $INFO;
+$backend->list_jobs(0, 1, {ids => [$_]}) for 1 .. $INFO;
 $elapsed = time - $before;
 $avg = sprintf '%.3f', $INFO / $elapsed;
 say "Received job info $INFO times in $elapsed seconds ($avg/s)";

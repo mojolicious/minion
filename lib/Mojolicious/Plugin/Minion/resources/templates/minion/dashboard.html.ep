@@ -1,0 +1,98 @@
+% layout 'minion', title => 'Minion - Dashboard';
+
+% content_for head => begin
+  <script>
+    var chart;
+    var backlog = 0;
+    function pageStats(data) {
+      $('.minion-stats-uptime').text(Math.round(data.uptime / 86400));
+      $('.minion-stats-delayed-jobs').text(data.delayed_jobs);
+      var proc = data.enqueued_jobs - (data.inactive_jobs + data.active_jobs);
+      $('.minion-stats-processed-jobs').text(proc);
+      backlog = data.active_jobs + (data.inactive_jobs - data.delayed_jobs);
+    }
+    function updateBacklogChart() {
+      if (chart == null) {
+        chart = $('#backlog-chart').epoch({
+          type: 'time.area',
+          axes: ['bottom', 'left'],
+          windowSize: 120,
+          historySize: 0,
+          tickFormats: {
+            bottom: function (d) { return moment(d).format('HH:mm') }
+          },
+          data: [{
+            label: 'Inactive Jobs',
+            values: [{time: new Date().getTime(), y: backlog}]
+          }]
+        });
+      }
+      else {
+        chart.push([{time: new Date().getTime(), y: backlog}]);
+      }
+      setTimeout(updateBacklogChart, 1000);
+    }
+    $(function () { updateBacklogChart() });
+  </script>
+% end
+
+<div class="row">
+
+  <div class="col-md-2">
+    <div class="stats">
+      <div class="stats-body">
+        <%= $Minion::VERSION %>
+      </div>
+      <div class="stats-description">Minion Version</div>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <div class="stats">
+      <div class="stats-body">
+        <%= (split '::', ref minion->backend)[-1] %>
+      </div>
+      <div class="stats-description">Backend</div>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <div class="stats">
+      <div class="minion-stats-uptime stats-body">0</div>
+      <div class="stats-description">Uptime in Days</div>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <div class="stats">
+      <div class="stats-body">
+        % my $days = minion->remove_after / 86400;
+        <%= int $days == $days ? $days : sprintf '%.2f', $days %>
+      </div>
+      <div class="stats-description">Days of Results</div>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <div class="stats">
+      <div class="minion-stats-processed-jobs stats-body">0</div>
+      <div class="stats-description">Processed Jobs</div>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <div class="stats">
+      <div class="minion-stats-delayed-jobs stats-body">0</div>
+      <div class="stats-description">Delayed Jobs</div>
+    </div>
+  </div>
+
+</div>
+
+<h3>Real-time</h3>
+
+<div class="row">
+  <div class="col-md-12">
+    <div id="backlog-chart" class="epoch category20c"></div>
+  </div>
+</div>

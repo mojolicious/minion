@@ -1,0 +1,60 @@
+body {
+  margin-bottom: 60px;
+}
+html {
+  min-height: 100%;
+  position: relative;
+}
+div.stats {
+  border: solid 1px #777;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+  color: #777;
+  margin-bottom: 20px;
+}
+div.stats .stats-description {
+  font-size: 0.8em;
+  padding: 0 15px 15px;
+  text-align: center;
+}
+div.stats .stats-body {
+  font-size: 26px;
+  padding: 15px 15px 0;
+  text-align: center;
+}
+.expand.accordion-toggle:after {
+  color: grey;
+  content: "\f078";
+  float: right;
+  font-family: FontAwesome;
+}
+.expand.accordion-toggle.collapsed:after {
+  content: "\f054";
+}
+.hiddenRow {
+  padding: 0 !important;
+}
+.label-pill {
+  border-radius: 10rem;
+  padding-bottom: 0.3em;
+  padding-left: 0.8em;
+  padding-right: 0.8em;
+  padding-top: 0.3em;
+}
+.pagination {
+  margin: 0px !important;
+}
+.table {
+  table-layout: fixed;
+}
+.table td {
+  border: 0 !important;
+}
+#backlog-chart {
+  height: 200px;
+}
+#backlog-chart .inactive-jobs .area {
+  fill: #a9e3be;
+  stroke: #77c293;
+  stroke-width: 8;
+}

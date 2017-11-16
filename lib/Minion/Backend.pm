@@ -10,7 +10,6 @@ sub dequeue      { croak 'Method "dequeue" not implemented by subclass' }
 sub enqueue      { croak 'Method "enqueue" not implemented by subclass' }
 sub fail_job     { croak 'Method "fail_job" not implemented by subclass' }
 sub finish_job   { croak 'Method "finish_job" not implemented by subclass' }
-sub job_info     { croak 'Method "job_info" not implemented by subclass' }
 sub list_jobs    { croak 'Method "list_jobs" not implemented by subclass' }
 sub list_workers { croak 'Method "list_workers" not implemented by subclass' }
 sub lock         { croak 'Method "lock" not implemented by subclass' }
@@ -32,8 +31,6 @@ sub unregister_worker {
   croak 'Method "unregister_worker" not implemented by subclass';
 }
 
-sub worker_info { croak 'Method "worker_info" not implemented by subclass' }
-
 1;
 
 =encoding utf8
@@ -52,7 +49,6 @@ Minion::Backend - Backend base class
   sub enqueue           {...}
   sub fail_job          {...}
   sub finish_job        {...}
-  sub job_info          {...}
   sub list_jobs         {...}
   sub list_workers      {...}
   sub lock              {...}
@@ -66,7 +62,6 @@ Minion::Backend - Backend base class
   sub stats             {...}
   sub unlock            {...}
   sub unregister_worker {...}
-  sub worker_info       {...}
 
 =head1 DESCRIPTION
 
@@ -227,18 +222,51 @@ L<Minion/"backoff">. Meant to be overloaded in a subclass.
 Transition from C<active> to C<finished> state. Meant to be overloaded in a
 subclass.
 
-=head2 job_info
+=head2 list_jobs
 
-  my $job_info = $backend->job_info($job_id);
+  my $results = $backend->list_jobs($offset, $limit);
+  my $results = $backend->list_jobs($offset, $limit, {state => 'inactive'});
 
-Get information about a job, or return C<undef> if job does not exist. Meant to
-be overloaded in a subclass.
+Returns the information about jobs in batches. Meant to be overloaded in a
+subclass.
 
   # Check job state
-  my $state = $backend->job_info($job_id)->{state};
+  my $results = $backend->list_jobs(0, 1, {ids => [$job_id]});
+  my $state = $results->{jobs}[0]{state};
 
   # Get job result
-  my $result = $backend->job_info($job_id)->{result};
+  my $results = $backend->list_jobs(0, 1, {ids => [$job_id]});
+  my $result  = $results->{jobs}[0]{result};
+
+These options are currently available:
+
+=over 2
+
+=item ids
+
+  ids => ['23', '24']
+
+List only jobs with these ids.
+
+=item queue
+
+  queue => 'important'
+
+List only jobs in this queue.
+
+=item state
+
+  state => 'inactive'
+
+List only jobs in this state.
+
+=item task
+
+  task => 'test'
+
+List only jobs for this task.
+
+=back
 
 These fields are currently available:
 
@@ -348,44 +376,71 @@ Id of worker that is processing the job.
 
 =back
 
-=head2 list_jobs
+=head2 list_workers
 
-  my $batch = $backend->list_jobs($offset, $limit);
-  my $batch = $backend->list_jobs($offset, $limit, {state => 'inactive'});
+  my $results = $backend->list_workers($offset, $limit);
+  my $results = $backend->list_workers($offset, $limit, {ids => [23]});
 
-Returns the same information as L</"job_info"> but in batches. Meant to be
-overloaded in a subclass.
+Returns information about workers in batches. Meant to be overloaded in a
+subclass.
+
+  # Check worker host
+  my $results = $backend->list_workers(0, 1, {ids => [$worker_id]});
+  my $host    = $results->{workers}[0]{host};
 
 These options are currently available:
 
 =over 2
 
-=item queue
+=item ids
 
-  queue => 'important'
+  ids => ['23', '24']
 
-List only jobs in this queue.
-
-=item state
-
-  state => 'inactive'
-
-List only jobs in this state.
-
-=item task
-
-  task => 'test'
-
-List only jobs for this task.
+List only workers with these ids.
 
 =back
 
-=head2 list_workers
+These fields are currently available:
 
-  my $batch = $backend->list_workers($offset, $limit);
+=over 2
 
-Returns the same information as L</"worker_info"> but in batches. Meant to be
-overloaded in a subclass.
+=item host
+
+  host => 'localhost'
+
+Worker host.
+
+=item jobs
+
+  jobs => ['10023', '10024', '10025', '10029']
+
+Ids of jobs the worker is currently processing.
+
+=item notified
+
+  notified => 784111777
+
+Epoch time worker sent the last heartbeat.
+
+=item pid
+
+  pid => 12345
+
+Process id of worker.
+
+=item started
+
+  started => 784111777
+
+Epoch time worker was started.
+
+=item status
+
+  status => {queues => ['default', 'important']}
+
+Hash reference with whatever status information the worker would like to share.
+
+=back
 
 =head2 lock
 
@@ -554,6 +609,12 @@ Number of jobs in C<inactive> state.
 
 Number of workers that are currently not processing a job.
 
+=item uptime
+
+  uptime => 1000
+
+Uptime in seconds.
+
 =back
 
 =head2 unlock
@@ -567,58 +628,6 @@ Release a named lock.
   $backend->unregister_worker($worker_id);
 
 Unregister worker. Meant to be overloaded in a subclass.
-
-=head2 worker_info
-
-  my $worker_info = $backend->worker_info($worker_id);
-
-Get information about a worker, or return C<undef> if worker does not exist.
-Meant to be overloaded in a subclass.
-
-  # Check worker host
-  my $host = $backend->worker_info($worker_id)->{host};
-
-These fields are currently available:
-
-=over 2
-
-=item host
-
-  host => 'localhost'
-
-Worker host.
-
-=item jobs
-
-  jobs => ['10023', '10024', '10025', '10029']
-
-Ids of jobs the worker is currently processing.
-
-=item notified
-
-  notified => 784111777
-
-Epoch time worker sent the last heartbeat.
-
-=item pid
-
-  pid => 12345
-
-Process id of worker.
-
-=item started
-
-  started => 784111777
-
-Epoch time worker was started.
-
-=item status
-
-  status => {queues => ['default', 'important']}
-
-Hash reference with whatever status information the worker would like to share.
-
-=back
 
 =head1 SEE ALSO
 

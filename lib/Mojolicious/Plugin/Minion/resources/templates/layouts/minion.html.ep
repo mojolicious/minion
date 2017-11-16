@@ -1,0 +1,106 @@
+<!doctype html><html>
+  <head>
+    <title><%= title() || 'Minion' %></title>
+    %= javascript '/mojo/jquery/jquery.js'
+    %= javascript '/minion/bootstrap/bootstrap.js'
+    %= stylesheet '/minion/bootstrap/bootstrap.css'
+    %= javascript '/minion/moment/moment.js'
+    %= javascript '/minion/d3/d3.js'
+    %= javascript '/minion/epoch/epoch.js'
+    %= stylesheet '/minion/epoch/epoch.css'
+    %= stylesheet '/minion/fontawesome/font-awesome.css'
+    %= stylesheet '/minion/app.css'
+    %= javascript '/minion/app.js'
+    <script>
+      $(function () {
+        checkAll();
+        fromNow();
+        pollStats('<%= url_for "minion_stats" %>');
+      });
+    </script>
+    %= content_for 'head'
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-static-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed"
+            data-toggle="collapse" data-target=".navbar-collapse"
+            aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          %= link_to 'minion_dashboard' => (class => 'navbar-brand') => begin
+            <picture>
+              <img src="<%= url_for '/minion/logo-black.png' %>"
+                srcset="<%= url_for '/minion/logo-black@2x.png' %> 2x">
+            </picture>
+          % end
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            % my $jobs = url_for 'minion_jobs';
+            <li>
+              <a href="<%= $jobs->query(state => 'inactive') %>">
+                Inactive
+                <span class="label label-pill label-info
+                  minion-stats-inactive-jobs">
+                  0
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="<%= $jobs->query(state => 'failed') %>">
+                Failed
+                <span class="label label-pill label-danger
+                  minion-stats-failed-jobs">
+                  0
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="<%= $jobs->query(state => 'finished') %>">
+                Finished
+                <span class="label label-pill label-success
+                  minion-stats-finished-jobs">
+                  0
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="<%= $jobs->query(state => 'active') %>">
+                Active
+                <span class="label label-pill label-warning
+                  minion-stats-active-jobs">
+                  0
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="<%= url_for 'minion_workers' %>">
+                Workers
+                <span class="label label-pill label-default
+                  minion-stats-workers">
+                  0
+                </span>
+              </a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <a href="<%= url_for '/' %>">
+                <i class="fa fa-sign-out" aria-hidden="true"></i>
+                Back to Site
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      %= content
+    </div>
+  </body>
+</html>

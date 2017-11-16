@@ -1,0 +1,97 @@
+% layout 'minion', title => 'Minion - Workers';
+
+% my $related = begin
+  % my $worker = shift;
+  % my $jobs = $worker->{jobs};
+  % if (@$jobs) {
+    <div class="btn-group">
+      <button type="button"
+        class="btn btn-default btn-xs dropdown-toggle"
+        data-toggle="dropdown" aria-haspopup="true"
+        aria-expanded="false">
+        Related
+        <span class="caret"></span>
+        <span class="sr-only">Toggle Dropdown</span>
+      </button>
+      <ul class="dropdown-menu">
+        <li>
+          <%= link_to Jobs => url_for('minion_jobs')->query(id => $jobs) %>
+        </li>
+      </ul>
+    </div>
+  % }
+% end
+
+<div class="row">
+  <div class="col-md-4"></div>
+  <div class="col-md-4">
+    <p class="text-center">
+      % if (@$workers) {
+        <%= $offset + 1 %>-<%= $offset + @$workers %> of <%= $total %>
+      % }
+    </p>
+  </div>
+  <div class="col-md-4">
+    %= include 'minion/_limit'
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Worker ID</th>
+          <th>Host</th>
+          <th>Process ID</th>
+          <th>Started</th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      % my $i = 0;
+      % for my $worker (@$workers) {
+        % $i++;
+        <tbody>
+          <tr>
+            <td>
+              <a href="<%= url_for->query([id => $worker->{id}]) %>">
+                <%= $worker->{id} %>
+              </a>
+            </td>
+            <td><%= $worker->{host} %></td>
+            <td><%= $worker->{pid} %></td>
+            <td class="from-now"><%= $worker->{started} %></td>
+            <td><%= $related->($worker) %></td>
+            <td class="accordion-toggle collapsed"
+              data-toggle="collapse" data-target="#worker<%= $i %>">
+              % if (@{$worker->{jobs}}) {
+                <span class="label label-warning">busy</span>
+              % }
+              % else {
+                <span class="label label-default">idle</span>
+              % }
+            </td>
+            <td class="accordion-toggle collapsed expand" data-toggle="collapse"
+              data-target="#worker<%= $i %>"></td>
+          </tr>
+          <tr>
+            <td colspan="2" class="hiddenRow"></td>
+            <td colspan="5" class="hiddenRow">
+              <div class="collapse" id="worker<%= $i %>">
+                <pre><code><%= dumper Minion::_datetime $worker %></code></pre>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      % }
+    </table>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    %= include 'minion/_pagination'
+  </div>
+</div>
