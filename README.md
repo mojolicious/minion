@@ -1,7 +1,7 @@
 
 # Minion [![Build Status](https://travis-ci.org/kraih/minion.svg?branch=master)](https://travis-ci.org/kraih/minion)
 
-![Screenshot](https://raw.github.com/kraih/minion/master/examples/admin.png)
+![Screenshot](https://raw.github.com/kraih/minion/master/examples/admin.png?raw=true)
 
   A job queue for the [Mojolicious](http://mojolicious.org) real-time web
   framework, with support for multiple named queues, priorities, delayed jobs,
