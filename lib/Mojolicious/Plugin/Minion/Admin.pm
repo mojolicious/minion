@@ -126,6 +126,7 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
     return 1 if $c->req->url->to_abs->userinfo eq 'Bender:rocks';
     $c->res->headers->www_authenticate('Basic');
     $c->render(text => 'Authentication required!', status => 401);
+    return undef;
   });
   $self->plugin('Minion::Admin' => {route => $under});
 
