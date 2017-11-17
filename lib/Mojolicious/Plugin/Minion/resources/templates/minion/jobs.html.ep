@@ -38,7 +38,7 @@
 % end
 
 %= form_for 'minion_manage_jobs' => begin
-  <div class="row">
+  <div class="row center-md">
     <div class="col-md-4 btn-group" role="group">
       <button class="btn btn-default" name="do" value="retry" type="submit">
         <i class="fa fa-repeat" aria-hidden="true"></i> Retry

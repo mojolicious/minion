@@ -1,6 +1,7 @@
 <!doctype html><html>
   <head>
     <title><%= title() || 'Minion' %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     %= javascript '/mojo/jquery/jquery.js'
     %= javascript '/minion/bootstrap/bootstrap.js'
     %= stylesheet '/minion/bootstrap/bootstrap.css'
@@ -88,7 +89,7 @@
               </a>
             </li>
           </ul>
-          <ul class="nav navbar-nav navbar-right">
+          <ul class="nav navbar-nav navbar-right hidden-sm">
             <li>
               <a href="<%= url_for $return_to %>">
                 <i class="fa fa-sign-out" aria-hidden="true"></i>

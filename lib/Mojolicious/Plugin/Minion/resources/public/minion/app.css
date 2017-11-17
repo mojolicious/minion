@@ -22,6 +22,9 @@ div.stats .stats-body {
   padding: 15px 15px 0;
   text-align: center;
 }
+.center-md p {
+  padding-top: 8px;
+}
 .expand.accordion-toggle .expand-icon:after {
   color: grey;
   content: "\f078";
@@ -60,4 +63,12 @@ div.stats .stats-body {
   fill: #a9e3be;
   stroke: #77c293;
   stroke-width: 8;
+}
+@media (max-width: 992px) {
+  .center-md {
+    text-align: center;
+  }
+  .center-md ul {
+    float: none !important;
+  }
 }
