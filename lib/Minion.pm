@@ -163,6 +163,14 @@ Minion - Job queue
 
 =head1 DESCRIPTION
 
+=begin html
+
+<p><img
+  src="https://raw.github.com/kraih/minion/master/examples/admin.png?raw=true"
+  alt="Screenshot" width="600px"></p>
+
+=end html
+
 L<Minion> is a job queue for the L<Mojolicious|http://mojolicious.org> real-time
 web framework, with support for multiple named queues, priorities, delayed jobs,
 job dependencies, job progress, job results, retries with backoff, rate
