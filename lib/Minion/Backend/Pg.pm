@@ -451,8 +451,7 @@ Transition from C<active> to C<finished> state.
   my $results = $backend->list_jobs($offset, $limit);
   my $results = $backend->list_jobs($offset, $limit, {state => 'inactive'});
 
-Returns the information about jobs in batches. Meant to be overloaded in a
-subclass.
+Returns the information about jobs in batches.
 
   # Check job state
   my $results = $backend->list_jobs(0, 1, {ids => [$job_id]});
