@@ -90,7 +90,7 @@
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>
-              <a href="<%= url_for '/' %>">
+              <a href="<%= url_for $return_to %>">
                 <i class="fa fa-sign-out" aria-hidden="true"></i>
                 Back to Site
               </a>

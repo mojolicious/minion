@@ -6,6 +6,10 @@ use Mojo::File 'path';
 sub register {
   my ($self, $app, $config) = @_;
 
+  # Config
+  my $prefix = $config->{route} // $app->routes->any('/minion');
+  $prefix->to(return_to => $config->{return_to} // '/');
+
   # Static files
   my $resources = path(__FILE__)->sibling('resources');
   push @{$app->static->paths}, $resources->child('public')->to_string;
@@ -14,7 +18,6 @@ sub register {
   push @{$app->renderer->paths}, $resources->child('templates')->to_string;
 
   # Routes
-  my $prefix = $config->{route} // $app->routes->any('/minion');
   $prefix->get('/'      => \&_dashboard)->name('minion_dashboard');
   $prefix->get('/stats' => \&_stats)->name('minion_stats');
   $prefix->get('/jobs'  => \&_list_jobs)->name('minion_jobs');
@@ -134,6 +137,13 @@ admin ui for the L<Minion> job queue.
 =head1 OPTIONS
 
 L<Mojolicious::Plugin::Minion::Admin> supports the following options.
+
+=head2 return_to
+
+  # Mojolicious::Lite
+  plugin 'Minion::Admin' => {return_to => 'some_route'};
+
+Name of route or path to retrurn to when leaving the admin ui, defaults to C</>.
 
 =head2 route
 
