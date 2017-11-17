@@ -165,9 +165,11 @@ Minion - Job queue
 
 =begin html
 
-<p><img
-  src="https://raw.github.com/kraih/minion/master/examples/admin.png?raw=true"
-  alt="Screenshot" width="600px"></p>
+<p>
+  <img alt="Screenshot"
+    src="https://raw.github.com/kraih/minion/master/examples/admin.png?raw=true"
+    width="600px">
+</p>
 
 =end html
 
