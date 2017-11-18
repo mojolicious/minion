@@ -36,7 +36,7 @@
           %= link_to 'minion_dashboard' => (class => 'navbar-brand') => begin
             <picture>
               <img src="<%= url_for '/minion/logo-black.png' %>"
-                srcset="<%= url_for '/minion/logo-black@2x.png' %> 2x">
+                srcset="<%= url_for '/minion/logo-black-2x.png' %> 2x">
             </picture>
           % end
         </div>
