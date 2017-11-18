@@ -1,5 +1,6 @@
 
-8.01  2017-11-17
+8.01  2017-11-18
+  - Fixed installation problems with some versions of Perl on Windows.
 
 8.0  2017-11-16
   - Removed job_info and worker_info methods from Minion::Backend and
