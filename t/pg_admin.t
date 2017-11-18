@@ -63,6 +63,34 @@ $t->post_ok('/minion/jobs' => form => {id => $finished, do => 'remove'})
   ->status_is(302)->header_like(Location => qr/id=$finished/);
 is app->minion->job($finished), undef, 'job has been removed';
 
+# Bundled static files
+$t->get_ok('/minion/bootstrap/bootstrap.js')->status_is(200)
+  ->content_type_is('application/javascript');
+$t->get_ok('/minion/bootstrap/bootstrap.css')->status_is(200)
+  ->content_type_is('text/css');
+$t->get_ok('/minion/d3/d3.js')->status_is(200)
+  ->content_type_is('application/javascript');
+$t->get_ok('/minion/epoch/epoch.js')->status_is(200)
+  ->content_type_is('application/javascript');
+$t->get_ok('/minion/epoch/epoch.css')->status_is(200)
+  ->content_type_is('text/css');
+$t->get_ok('/minion/fontawesome/font-awesome.css')->status_is(200)
+  ->content_type_is('text/css');
+$t->get_ok('/minion/fonts/fontawesome-webfont.eot')->status_is(200);
+$t->get_ok('/minion/fonts/fontawesome-webfont.svg')->status_is(200);
+$t->get_ok('/minion/fonts/fontawesome-webfont.ttf')->status_is(200);
+$t->get_ok('/minion/fonts/fontawesome-webfont.woff')->status_is(200);
+$t->get_ok('/minion/fonts/fontawesome-webfont.woff2')->status_is(200);
+$t->get_ok('/minion/moment/moment.js')->status_is(200)
+  ->content_type_is('application/javascript');
+$t->get_ok('/minion/app.js')->status_is(200)
+  ->content_type_is('application/javascript');
+$t->get_ok('/minion/app.css')->status_is(200)->content_type_is('text/css');
+$t->get_ok('/minion/logo-black-2x.png')->status_is(200)
+  ->content_type_is('image/png');
+$t->get_ok('/minion/logo-black.png')->status_is(200)
+  ->content_type_is('image/png');
+
 # Different prefix and return route
 plugin 'Minion::Admin' =>
   {route => app->routes->any('/also_minion'), return_to => 'test_home'};
