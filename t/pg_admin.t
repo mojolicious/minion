@@ -32,8 +32,11 @@ $t->get_ok('/minion')->status_is(200)->content_like(qr/Dashboard/)
   ->element_exists('a[href=/]');
 
 # Stats
-$t->get_ok('/minion/stats')->status_is(200)->json_is('/finished_jobs' => 1)
-  ->json_is('/inactive_jobs' => 1)->json_is('/delayed_jobs' => 0);
+$t->get_ok('/minion/stats')->status_is(200)->json_is('/active_jobs' => 0)
+  ->json_is('/active_workers' => 0)->json_is('/delayed_jobs'  => 0)
+  ->json_is('/enqueued_jobs'  => 2)->json_is('/failed_jobs'   => 0)
+  ->json_is('/finished_jobs'  => 1)->json_is('/inactive_jobs' => 1)
+  ->json_is('/inactive_workers' => 0)->json_has('/uptime');
 
 # Jobs
 $t->get_ok('/minion/jobs?state=inactive')->status_is(200)
