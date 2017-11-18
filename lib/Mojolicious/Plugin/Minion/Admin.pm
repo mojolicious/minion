@@ -18,16 +18,12 @@ sub register {
   push @{$app->renderer->paths}, $resources->child('templates')->to_string;
 
   # Routes
-  $prefix->get('/'      => \&_dashboard)->name('minion_dashboard');
+  $prefix->get('/')->to(template => 'minion/dashboard')
+    ->name('minion_dashboard');
   $prefix->get('/stats' => \&_stats)->name('minion_stats');
   $prefix->get('/jobs'  => \&_list_jobs)->name('minion_jobs');
   $prefix->post('/jobs' => \&_manage_jobs)->name('minion_manage_jobs');
   $prefix->get('/workers' => \&_list_workers)->name('minion_workers');
-}
-
-sub _dashboard {
-  my $c = shift;
-  $c->render('minion/dashboard');
 }
 
 sub _list_jobs {
