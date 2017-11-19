@@ -90,13 +90,13 @@ sub _manage_jobs {
   my $do     = $validation->param('do');
   if ($do eq 'retry') {
     my $i = grep { $minion->job($_)->retry ? 1 : () } @$ids;
-    if (@$ids - $i) { $c->flash(danger => "Couldn't retry all jobs.") }
-    else { $c->flash(success => 'All selected jobs have been retried.') }
+    if   (@$ids - $i) { $c->flash(danger  => "Couldn't retry all jobs.") }
+    else              { $c->flash(success => 'All selected jobs retried.') }
   }
   elsif ($do eq 'remove') {
     my $i = grep { $minion->job($_)->remove ? 1 : () } @$ids;
-    if (@$ids - $i) { $c->flash(danger => "Couldn't remove all jobs.") }
-    else { $c->flash(success => 'All selected jobs have been removed.') }
+    if   (@$ids - $i) { $c->flash(danger  => "Couldn't remove all jobs.") }
+    else              { $c->flash(success => 'All selected jobs removed.') }
   }
   elsif ($do eq 'stop') {
     $minion->backend->broadcast(stop => [$_]) for @$ids;
