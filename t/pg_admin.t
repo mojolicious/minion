@@ -59,7 +59,7 @@ $t->ua->max_redirects(5);
 is app->minion->job($finished)->info->{state}, 'finished', 'right state';
 $t->post_ok(
   '/minion/jobs?_method=PATCH' => form => {id => $finished, do => 'retry'})
-  ->text_like('.alert-success', qr/All selected jobs retried/);
+  ->text_like('.alert-success', qr/All selected jobs have been retried/);
 is $t->tx->previous->res->code, 302, 'right status';
 like $t->tx->previous->res->headers->location, qr/id=$finished/,
   'right "Location" value';
@@ -72,7 +72,7 @@ like $t->tx->previous->res->headers->location, qr/id=$finished/,
   'right "Location" value';
 $t->post_ok(
   '/minion/jobs?_method=PATCH' => form => {id => $finished, do => 'remove'})
-  ->text_like('.alert-success', qr/All selected jobs removed/);
+  ->text_like('.alert-success', qr/All selected jobs have been removed/);
 is $t->tx->previous->res->code, 302, 'right status';
 like $t->tx->previous->res->headers->location, qr/id=$finished/,
   'right "Location" value';
