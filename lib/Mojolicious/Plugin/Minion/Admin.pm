@@ -92,16 +92,16 @@ sub _manage_jobs {
   if ($do eq 'retry') {
     $minion->job($_)->retry and $i++ for @$ids;
     if   (@$ids - $i) { $c->flash(danger  => "Couldn't retry all jobs.") }
-    else              { $c->flash(success => 'All jobs retried.') }
+    else              { $c->flash(success => 'All selected jobs retried.') }
   }
   elsif ($do eq 'remove') {
     $minion->job($_)->remove and $i++ for @$ids;
     if   (@$ids - $i) { $c->flash(danger  => "Couldn't remove all jobs.") }
-    else              { $c->flash(success => 'All jobs removed.') }
+    else              { $c->flash(success => 'All selected jobs removed.') }
   }
   elsif ($do eq 'stop') {
     $minion->backend->broadcast(stop => [$_]) for @$ids;
-    $c->flash(info => 'Trying to stop all jobs.');
+    $c->flash(info => 'Trying to stop all selected jobs.');
   }
 
   $c->redirect_to($c->url_for('minion_jobs')->query(id => $ids));
