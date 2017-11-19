@@ -55,12 +55,27 @@ $worker->unregister;
 $t->get_ok('/minion/workers')->status_is(200)->element_exists_not('tbody td a');
 
 # Manage jobs
+$t->ua->max_redirects(5);
 is app->minion->job($finished)->info->{state}, 'finished', 'right state';
-$t->post_ok('/minion/jobs' => form => {id => $finished, do => 'retry'})
-  ->status_is(302)->header_like(Location => qr/id=$finished/);
+$t->post_ok(
+  '/minion/jobs?_method=PATCH' => form => {id => $finished, do => 'retry'})
+  ->text_like('.alert-success', qr/All jobs retried/);
+is $t->tx->previous->res->code, 302, 'right status';
+like $t->tx->previous->res->headers->location, qr/id=$finished/,
+  'right "Location" value';
 is app->minion->job($finished)->info->{state}, 'inactive', 'right state';
-$t->post_ok('/minion/jobs' => form => {id => $finished, do => 'remove'})
-  ->status_is(302)->header_like(Location => qr/id=$finished/);
+$t->post_ok(
+  '/minion/jobs?_method=PATCH' => form => {id => $finished, do => 'stop'})
+  ->text_like('.alert-info', qr/Trying to stop all jobs/);
+is $t->tx->previous->res->code, 302, 'right status';
+like $t->tx->previous->res->headers->location, qr/id=$finished/,
+  'right "Location" value';
+$t->post_ok(
+  '/minion/jobs?_method=PATCH' => form => {id => $finished, do => 'remove'})
+  ->text_like('.alert-success', qr/All jobs removed/);
+is $t->tx->previous->res->code, 302, 'right status';
+like $t->tx->previous->res->headers->location, qr/id=$finished/,
+  'right "Location" value';
 is app->minion->job($finished), undef, 'job has been removed';
 
 # Bundled static files

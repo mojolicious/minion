@@ -22,7 +22,7 @@ sub register {
     ->name('minion_dashboard');
   $prefix->get('/stats' => \&_stats)->name('minion_stats');
   $prefix->get('/jobs'  => \&_list_jobs)->name('minion_jobs');
-  $prefix->post('/jobs' => \&_manage_jobs)->name('minion_manage_jobs');
+  $prefix->patch('/jobs' => \&_manage_jobs)->name('minion_manage_jobs');
   $prefix->get('/workers' => \&_list_workers)->name('minion_workers');
 }
 
@@ -88,9 +88,21 @@ sub _manage_jobs {
   my $minion = $c->minion;
   my $ids    = $validation->every_param('id');
   my $do     = $validation->param('do');
-  if    ($do eq 'retry')  { $minion->job($_)->retry  for @$ids }
-  elsif ($do eq 'remove') { $minion->job($_)->remove for @$ids }
-  elsif ($do eq 'stop') { $minion->backend->broadcast(stop => [$_]) for @$ids }
+  my $i      = 0;
+  if ($do eq 'retry') {
+    $minion->job($_)->retry and $i++ for @$ids;
+    if   (@$ids - $i) { $c->flash(danger  => "Couldn't retry all jobs.") }
+    else              { $c->flash(success => 'All jobs retried.') }
+  }
+  elsif ($do eq 'remove') {
+    $minion->job($_)->remove and $i++ for @$ids;
+    if   (@$ids - $i) { $c->flash(danger  => "Couldn't remove all jobs.") }
+    else              { $c->flash(success => 'All jobs removed.') }
+  }
+  elsif ($do eq 'stop') {
+    $minion->backend->broadcast(stop => [$_]) for @$ids;
+    $c->flash(info => 'Trying to stop all jobs.');
+  }
 
   $c->redirect_to($c->url_for('minion_jobs')->query(id => $ids));
 }
