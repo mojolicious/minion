@@ -22,7 +22,8 @@ sub register {
     ->name('minion_dashboard');
   $prefix->get('/stats' => \&_stats)->name('minion_stats');
   $prefix->get('/jobs'  => \&_list_jobs)->name('minion_jobs');
-  $prefix->post('/jobs' => \&_manage_jobs)->name('minion_manage_jobs');
+  $prefix->post('/jobs' => \&_store_job)->name('minion_store_job');
+  $prefix->patch('/jobs' => \&_manage_jobs)->name('minion_manage_jobs');
   $prefix->get('/workers' => \&_list_workers)->name('minion_workers');
 }
 
@@ -98,6 +99,19 @@ sub _manage_jobs {
 sub _stats {
   my $c = shift;
   $c->render(json => $c->minion->stats);
+}
+
+sub _store_job {
+  my $c = shift;
+
+  my $validation = $c->validation;
+  $validation->required('task');
+
+  return $c->redirect_to('minion_jobs') if $validation->has_error;
+
+  my $task = $validation->param('task');
+  my $id   = $c->minion->enqueue($task);
+  $c->redirect_to($c->url_for('minion_jobs')->query(id => $id));
 }
 
 1;

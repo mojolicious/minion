@@ -37,6 +37,44 @@
   % }
 % end
 
+% content_for head => begin
+<script>
+  $(function () {
+    $("#create").popover({
+      title: '<h4>Create Job</h4>',
+      container: 'body',
+      placement: 'bottom',
+      html: true, 
+      content: function () {
+        return $('#popover-form').html();
+      }
+    });
+  });
+</script>
+% end
+
+<div id="popover-form" class="hide">
+  %= form_for minion_store_job => begin
+    <div class="form-group">
+      <label for="task">Task</label>
+      <input type="text" name="task" class="form-control">
+      <label for="args">Arguments</label>
+      <textarea name="args" class="form-control" rows="5">[]</textarea>
+      <label for="queue">Queue</label>
+      <input type="text" name="Queue" value="default" class="form-control">
+      <label for="priority">Priority</label>
+      <input type="text" name="priority" value="1" class="form-control">
+      <label for="delay">Delay</label>
+      <input type="text" name="priority" value="0" class="form-control">
+      <label for="parents">Parents</label>
+      <input type="text" name="parents" class="form-control">
+      <label for="notes">Notes</label>
+      <textarea name="notes" class="form-control" rows="5">{}</textarea>
+    </div>
+    <button type="submit" class="btn btn-warning">Create</button>
+  % end
+</div>
+
 %= form_for 'minion_manage_jobs' => begin
   <div class="row center-md">
     <div class="col-md-4 btn-group" role="group">
@@ -48,6 +86,10 @@
       </button>
       <button class="btn btn-default" name="do" value="remove" type="submit">
         <i class="fa fa-remove" aria-hidden="true"></i> Remove
+      </button>
+      <button id="create" type="button" class="btn btn-default"
+        data-toggle="popover">
+        <i class="fa fa-plus" aria-hidden="true"></i> Create
       </button>
     </div>
     <div class="col-md-4">
