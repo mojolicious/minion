@@ -1,7 +1,7 @@
 package Minion::Command::minion::worker;
 use Mojo::Base 'Mojolicious::Command';
 
-use Mojo::Util qw(getopt steady_time);
+use Mojo::Util 'getopt';
 
 has description => 'Start Minion worker';
 has usage => sub { shift->extract_usage };
@@ -9,80 +9,30 @@ has usage => sub { shift->extract_usage };
 sub run {
   my ($self, @args) = @_;
 
-  my $app    = $self->app;
-  my $worker = $self->{worker} = $app->minion->worker;
+  my $worker = $self->app->minion->worker;
   my $status = $worker->status;
-  $status->{performed} //= 0;
-
   getopt \@args,
-    'C|command-interval=i'   => \($status->{command_interval}   //= 10),
-    'f|fast-start'           => \my $fast,
-    'I|heartbeat-interval=i' => \($status->{heartbeat_interval} //= 300),
-    'j|jobs=i'               => \($status->{jobs}               //= 4),
-    'q|queue=s'              => ($status->{queues}              //= []),
-    'R|repair-interval=i'    => \($status->{repair_interval}    //= 21600);
-  @{$status->{queues}} = ('default') unless @{$status->{queues}};
-  $status->{repair_interval} -= int rand $status->{repair_interval} / 2;
-  $self->{last_repair} = $fast ? steady_time : 0;
+    'C|command-interval=i'   => \$status->{command_interval},
+    'I|heartbeat-interval=i' => \$status->{heartbeat_interval},
+    'j|jobs=i'               => \$status->{jobs},
+    'q|queue=s'              => ($status->{queues} //= []),
+    'R|repair-interval=i'    => \$status->{repair_interval};
 
-  local $SIG{CHLD} = sub { };
-  local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
-  local $SIG{QUIT}
-    = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
-
-  # Remote control commands need to validate arguments carefully
-  $worker->add_command(
-    jobs => sub { $status->{jobs} = $_[1] if ($_[1] // '') =~ /^\d+$/ });
-  $worker->add_command(
-    stop => sub { $self->{jobs}{$_[1]}->stop if $self->{jobs}{$_[1] // ''} });
-
-  # Log fatal errors
-  my $log = $app->log;
+  my $log = $self->app->log;
   $log->info("Worker $$ started");
-  eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}}; 1 }
-    or $log->fatal("Worker error: $@");
-  $worker->unregister;
+  $worker->on(
+    dequeue => sub {
+      pop->once(spawn => sub { _spawn($log, @_) });
+    }
+  );
+  $worker->run;
   $log->info("Worker $$ stopped");
 }
 
-sub _work {
-  my $self = shift;
-
-  # Send heartbeats in regular intervals
-  my $worker = $self->{worker};
-  my $status = $worker->status;
-  $self->{last_heartbeat} ||= -$status->{heartbeat_interval};
-  $worker->register and $self->{last_heartbeat} = steady_time
-    if ($self->{last_heartbeat} + $status->{heartbeat_interval}) < steady_time;
-
-  # Process worker remote control commands in regular intervals
-  $self->{last_command} ||= 0;
-  $worker->process_commands and $self->{last_command} = steady_time
-    if ($self->{last_command} + $status->{command_interval}) < steady_time;
-
-  # Repair in regular intervals (randomize to avoid congestion)
-  my $app = $self->app;
-  my $log = $app->log;
-  if (($self->{last_repair} + $status->{repair_interval}) < steady_time) {
-    $log->debug('Checking worker registry and job queue');
-    $app->minion->repair;
-    $self->{last_repair} = steady_time;
-  }
-
-  # Check if jobs are finished
-  my $jobs = $self->{jobs} ||= {};
-  $jobs->{$_}->is_finished and ++$status->{performed} and delete $jobs->{$_}
-    for keys %$jobs;
-
-  # Wait if job limit has been reached or worker is stopping
-  if (($status->{jobs} <= keys %$jobs) || $self->{finished}) { sleep 1 }
-
-  # Try to get more jobs
-  elsif (my $job = $worker->dequeue(5 => {queues => $status->{queues}})) {
-    $jobs->{my $id = $job->id} = $job->start;
-    my ($pid, $task) = ($job->pid, $job->task);
-    $log->debug(qq{Process $pid is performing job "$id" with task "$task"});
-  }
+sub _spawn {
+  my ($log, $job, $pid) = @_;
+  my ($id, $task) = ($job->id, $job->task);
+  $log->debug(qq{Process $pid is performing job "$id" with task "$task"});
 }
 
 1;
@@ -105,8 +55,6 @@ Minion::Command::minion::worker - Minion worker command
   Options:
     -C, --command-interval <seconds>     Worker remote control command interval,
                                          defaults to 10
-    -f, --fast-start                     Start processing jobs as fast as
-                                         possible and skip repairing on startup
     -h, --help                           Show this summary of available options
         --home <path>                    Path to home directory of your
                                          application, defaults to the value of

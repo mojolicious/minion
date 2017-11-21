@@ -1,5 +1,8 @@
 
-8.03  2017-11-20
+8.03  2017-11-21
+  - Removed -f option from worker command.
+  - Added broadcast method to Minion.
+  - Added run method to Minion::Worker.
 
 8.02  2017-11-19
   - Improved admin ui with alerts for job management.
