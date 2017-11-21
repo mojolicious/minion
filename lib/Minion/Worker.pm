@@ -203,7 +203,8 @@ L<Minion> object this worker belongs to.
   my $status = $worker->status;
   $worker    = $worker->status({queues => ['default', 'important']);
 
-Status information to share every time L</"register"> is called.
+Status information to configure workers started with L</"run"> and to share
+every time L</"register"> is called.
 
 =head1 METHODS
 
