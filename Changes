@@ -1,4 +1,6 @@
 
+8.04  2017-11-22
+
 8.03  2017-11-21
   - Removed -f option from worker command.
   - Added broadcast method to Minion.
