@@ -161,7 +161,7 @@ Minion - Job queue
   $worker->status->{jobs} = 12;
   $worker->run;
 
-  # Build more sophisticated workers
+  # Build custom workers
   my $worker = $minion->repair->worker;
   while (int rand 2) {
     if (my $job = $worker->register->dequeue(5)) { $job->perform }
@@ -687,6 +687,15 @@ Release a named lock that has been previously acquired with L</"lock">.
   my $worker = $minion->worker;
 
 Build L<Minion::Worker> object.
+
+  # Start a worker
+  $minion->worker->run;
+
+  # Perform one job manually
+  my $worker = $minion->repair->worker->register;
+  my $job    = $worker->dequeue(5);
+  $job->perform;
+  $worker->unregister;
 
 =head1 REFERENCE
 

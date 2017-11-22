@@ -57,7 +57,7 @@ sub run {
   $status->{command_interval}   //= 10;
   $status->{heartbeat_interval} //= 300;
   $status->{jobs}               //= 4;
-  $status->{queues} = ['default'] unless @{$status->{queues} // []};
+  $status->{queues} ||= ['default'];
   $status->{performed}       //= 0;
   $status->{repair_interval} //= 21600;
   $status->{repair_interval} -= int rand $status->{repair_interval} / 2;

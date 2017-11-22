@@ -34,6 +34,15 @@ my $id = $minion->enqueue('test');
 $worker->run;
 is_deeply $minion->job($id)->info->{result}, {just => 'works!'}, 'right result';
 
+# Status
+my $status = $worker->status;
+is $status->{command_interval},   10,  'right value';
+is $status->{heartbeat_interval}, 300, 'right value';
+is $status->{jobs},               4,   'right value';
+is_deeply $status->{queues}, ['default'], 'right structure';
+is $status->{performed}, 1, 'right value';
+ok $status->{repair_interval}, 'has a value';
+
 # Clean up once we are done
 $pg->db->query('drop schema minion_worker_test cascade');
 
