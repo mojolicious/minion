@@ -221,7 +221,7 @@ L<Mojolicious> applications with the plugin L<Mojolicious::Plugin::Minion>.
 
 Background worker processes are usually started with the command
 L<Minion::Command::minion::worker>, which becomes automatically available when
-an application loads the plugin L<Mojolicious::Plugin::Minion>.
+an application loads L<Mojolicious::Plugin::Minion>.
 
   $ ./myapp.pl minion worker
 
