@@ -21,19 +21,16 @@ sub run {
 
   my $log = $self->app->log;
   $log->info("Worker $$ started");
-  $worker->on(
-    dequeue => sub {
-      pop->once(spawn => sub { _spawn($log, @_) });
-    }
-  );
+  $worker->on(dequeue => sub { pop->once(spawn => \&_spawn) });
   $worker->run;
   $log->info("Worker $$ stopped");
 }
 
 sub _spawn {
-  my ($log, $job, $pid) = @_;
+  my ($job, $pid) = @_;
   my ($id, $task) = ($job->id, $job->task);
-  $log->debug(qq{Process $pid is performing job "$id" with task "$task"});
+  $job->app->log->debug(
+    qq{Process $pid is performing job "$id" with task "$task"});
 }
 
 1;
