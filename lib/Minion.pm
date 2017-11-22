@@ -194,6 +194,11 @@ tasks you'll commonly find image resizing, spam filtering, HTTP downloads,
 building tarballs, warming caches and basically everything else you can imagine
 that's not super fast.
 
+=head1 BASICS
+
+You can use L<Minion> as a standalone job queue or integrate it into
+L<Mojolicious> applications with the plugin L<Mojolicious::Plugin::Minion>.
+
   use Mojolicious::Lite;
 
   plugin Minion => {Pg => 'postgresql://sri:s3cret@localhost/test'};
