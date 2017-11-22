@@ -15,8 +15,9 @@ sub run {
     'C|command-interval=i'   => \$status->{command_interval},
     'I|heartbeat-interval=i' => \$status->{heartbeat_interval},
     'j|jobs=i'               => \$status->{jobs},
-    'q|queue=s'              => ($status->{queues} //= []),
+    'q|queue=s'              => \my @queues,
     'R|repair-interval=i'    => \$status->{repair_interval};
+  $status->{queues} = \@queues if @queues;
 
   my $log = $self->app->log;
   $log->info("Worker $$ started");
