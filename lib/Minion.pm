@@ -411,6 +411,12 @@ Register a task.
 
 Broadcast remote control command to one or more workers.
 
+  # Broadcast "stop" command to all workers to kill job 10025
+  $minion->broadcast('stop', [10025]);
+
+  # Broadcast "jobs" command to pause worker 23
+  $minion->broadcast('jobs', [0], [23]);
+
 =head2 enqueue
 
   my $id = $minion->enqueue('foo');
