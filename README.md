@@ -12,10 +12,10 @@
   [PostgreSQL](http://www.postgresql.org)).
 
   Job queues allow you to process time and/or computationally intensive tasks in
-  background processes, outside of the request/response lifecycle. Among those
-  tasks you'll commonly find image resizing, spam filtering, HTTP downloads,
-  building tarballs, warming caches and basically everything else you can
-  imagine that's not super fast.
+  background processes, outside of the request/response lifecycle of web
+  applications. Among those tasks you'll commonly find image resizing, spam
+  filtering, HTTP downloads, building tarballs, warming caches and basically
+  everything else you can imagine that's not super fast.
 
 ```perl
 use Mojolicious::Lite -signatures;
