@@ -75,7 +75,7 @@
             </td>
             <td class="accordion-toggle collapsed expand" data-toggle="collapse"
               data-target="#worker<%= $i %>">
-              <span class="expand-icon"></span>
+              <span class="fas fa-lg expand-icon"></span>
             </td>
           </tr>
           <tr>

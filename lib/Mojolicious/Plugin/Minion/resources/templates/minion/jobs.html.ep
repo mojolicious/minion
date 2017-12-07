@@ -73,13 +73,13 @@
   <div class="row center-md">
     <div class="col-md-4 btn-group" role="group">
       <button class="btn btn-default" name="do" value="retry" type="submit">
-        <i class="fa fa-repeat" aria-hidden="true"></i> Retry
+        <i class="fas fa-redo" aria-hidden="true"></i> Retry
       </button>
       <button class="btn btn-default" name="do" value="stop" type="submit">
-        <i class="fa fa-ban" aria-hidden="true"></i> Stop
+        <i class="fas fa-ban" aria-hidden="true"></i> Stop
       </button>
       <button class="btn btn-default" name="do" value="remove" type="submit">
-        <i class="fa fa-remove" aria-hidden="true"></i> Remove
+        <i class="fas fa-trash" aria-hidden="true"></i> Remove
       </button>
     </div>
     <div class="col-md-4">
@@ -151,7 +151,7 @@
               </td>
             <td class="accordion-toggle collapsed expand" data-toggle="collapse"
               data-target="#job<%= $i %>">
-              <span class="expand-icon"></span>
+              <span class="fas fa-lg expand-icon"></span>
             </td>
             </tr>
             <tr>

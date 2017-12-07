@@ -1,5 +1,6 @@
 
-8.04  2017-11-22
+8.04  2017-12-07
+  - Updated Font Awesome to version 5.
 
 8.03  2017-11-21
   - Removed -f option from worker command.

@@ -9,7 +9,7 @@
     %= javascript '/minion/d3/d3.js'
     %= javascript '/minion/epoch/epoch.js'
     %= stylesheet '/minion/epoch/epoch.css'
-    %= stylesheet '/minion/fontawesome/font-awesome.css'
+    %= stylesheet '/minion/fontawesome/fontawesome.css'
     %= stylesheet '/minion/app.css'
     %= javascript '/minion/app.js'
     <script>
@@ -92,7 +92,7 @@
           <ul class="nav navbar-nav navbar-right hidden-sm">
             <li>
               <a href="<%= url_for $return_to %>">
-                <i class="fa fa-sign-out" aria-hidden="true"></i>
+                <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
                 Back to Site
               </a>
             </li>
