@@ -559,6 +559,12 @@ failed.
     ...
   });
 
+An expiration time of C<0> can be used to check if a named lock already exists
+without creating one.
+
+  # Check if the lock "foo" already exists
+  say 'Lock exists' unless $minion->lock('foo', 0, {limit => 1});
+
 These options are currently available:
 
 =over 2

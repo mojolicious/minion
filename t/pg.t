@@ -142,6 +142,7 @@ ok !$minion->lock('foo', 3600), 'not locked again';
 ok $minion->unlock('foo'), 'unlocked';
 ok !$minion->unlock('foo'), 'not unlocked again';
 ok $minion->lock('foo', -3600), 'locked';
+ok $minion->lock('foo', 0),     'locked again';
 ok $minion->lock('foo', 3600),  'locked again';
 ok !$minion->lock('foo', -3600), 'not locked again';
 ok !$minion->lock('foo', 3600),  'not locked again';

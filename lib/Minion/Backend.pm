@@ -448,7 +448,8 @@ Hash reference with whatever status information the worker would like to share.
   my $bool = $backend->lock('foo', 3600, {limit => 20});
 
 Try to acquire a named lock that will expire automatically after the given
-amount of time in seconds.
+amount of time in seconds. An expiration time of C<0> can be used to check if a
+named lock already exists without creating one.
 
 These options are currently available:
 
