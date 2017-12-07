@@ -76,6 +76,7 @@ sub _run {
 
     # Reset event loop
     Mojo::IOLoop->reset;
+    local @{$SIG}{qw(CHLD INT TERM QUIT)} = ('default') x 4;
     $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
 
     1;
