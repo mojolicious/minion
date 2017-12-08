@@ -13,6 +13,7 @@ sub startup {
   #   $ script/linkcheck minion worker
   #
   $self->plugin(Minion => {Pg => $config->{pg}});
+  $self->plugin('Minion::Admin');
   $self->plugin('LinkCheck::Task::CheckLinks');
 
   # Controller
