@@ -11,6 +11,7 @@ sub enqueue      { croak 'Method "enqueue" not implemented by subclass' }
 sub fail_job     { croak 'Method "fail_job" not implemented by subclass' }
 sub finish_job   { croak 'Method "finish_job" not implemented by subclass' }
 sub list_jobs    { croak 'Method "list_jobs" not implemented by subclass' }
+sub list_locks   { croak 'Method "list_locks" not implemented by subclass' }
 sub list_workers { croak 'Method "list_workers" not implemented by subclass' }
 sub lock         { croak 'Method "lock" not implemented by subclass' }
 sub note         { croak 'Method "note" not implemented by subclass' }
@@ -50,6 +51,7 @@ Minion::Backend - Backend base class
   sub fail_job          {...}
   sub finish_job        {...}
   sub list_jobs         {...}
+  sub list_locks        {...}
   sub list_workers      {...}
   sub lock              {...}
   sub note              {...}
@@ -373,6 +375,30 @@ Task name.
   worker => '154'
 
 Id of worker that is processing the job.
+
+=back
+
+=head2 list_locks
+
+  my $results = $backend->list_locks($offset, $limit);
+
+Returns information about locks in batches.
+
+These fields are currently available:
+
+=over 2
+
+=item expires
+
+  expires => 784111777
+
+Epoch time this lock will expire.
+
+=item name
+
+  name => 'foo'
+
+Lock name.
 
 =back
 

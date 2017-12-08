@@ -18,6 +18,7 @@ sub run {
     'd|delay=i'     => \$options->{delay},
     'e|enqueue=s'   => \my $enqueue,
     'f|foreground'  => \my $foreground,
+    'L|locks'       => \my $locks,
     'l|limit=i'  => \(my $limit          = 100),
     'o|offset=i' => \(my $offset         = 0),
     'P|parent=s' => ($options->{parents} = []),
@@ -28,6 +29,7 @@ sub run {
     'S|state=s'    => \$options->{state},
     's|stats'      => \my $stats,
     't|task=s'     => \$options->{task},
+    'U|unlock=s'   => \my $unlock,
     'w|workers'    => \my $workers;
 
   # Worker remote control command
@@ -40,10 +42,16 @@ sub run {
   # Show stats
   return $self->_stats if $stats;
 
-  # List jobs/workers
+  # Workers
   my $id = @args ? shift @args : undef;
   return $id ? $self->_worker($id) : $self->_list_workers($offset, $limit)
     if $workers;
+
+  # Locks
+  return $minion->unlock($unlock) if $unlock;
+  return $self->_list_locks($offset, $limit) if $locks;
+
+  # List jobs
   return $self->_list_jobs($offset, $limit, $options) unless defined $id;
   die "Job does not exist.\n" unless my $job = $minion->job($id);
 
@@ -63,6 +71,12 @@ sub run {
 sub _list_jobs {
   my $jobs = shift->app->minion->backend->list_jobs(@_)->{jobs};
   print tablify [map { [@$_{qw(id state queue task)}] } @$jobs];
+}
+
+sub _list_locks {
+  my $locks = shift->app->minion->backend->list_locks(@_)->{locks};
+  @$locks = map { Minion::_datetime($_) } @$locks;
+  print tablify [map { [@$_{qw(name expires)}] } @$locks];
 }
 
 sub _list_workers {
@@ -122,6 +136,7 @@ Minion::Command::minion::job - Minion job command
         --home <path>           Path to home directory of your application,
                                 defaults to the value of MOJO_HOME or
                                 auto-detection
+    -L, --locks                 List active named locks
     -l, --limit <number>        Number of jobs/workers to show when listing
                                 them, defaults to 100
     -m, --mode <name>           Operating mode for your application, defaults to
@@ -138,6 +153,7 @@ Minion::Command::minion::job - Minion job command
     -S, --state <name>          List only jobs in this state
     -s, --stats                 Show queue statistics
     -t, --task <name>           List only jobs for this task
+    -t, --unlock <name>         Release named lock
     -w, --workers               List workers instead of jobs, or show
                                 information for a specific worker
 

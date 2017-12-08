@@ -167,6 +167,24 @@ ok !$minion->unlock('bar'), 'not unlocked again';
 ok $minion->unlock('baz'), 'unlocked';
 ok !$minion->unlock('baz'), 'not unlocked again';
 
+# List locks
+$results = $minion->backend->list_locks(0, 2);
+is $results->{locks}[0]{name},      'yada',       'right name';
+like $results->{locks}[0]{expires}, qr/^[\d.]+$/, 'expires';
+is $results->{locks}[1], undef, 'no more locks';
+is $results->{total}, 1, 'one result';
+$minion->unlock('yada');
+$minion->lock('yada', 3600, {limit => 2});
+$minion->lock('test', 3600, {limit => 1});
+$minion->lock('yada', 3600, {limit => 2});
+$results = $minion->backend->list_locks(1, 1);
+is $results->{locks}[0]{name},      'test',       'right name';
+like $results->{locks}[0]{expires}, qr/^[\d.]+$/, 'expires';
+is $results->{locks}[1], undef, 'no more locks';
+is $results->{total}, 3, 'three results';
+$minion->unlock($_) for qw(yada yada test);
+is $minion->backend->list_locks(0, 10)->{total}, 0, 'no results';
+
 # Lock with guard
 ok my $guard = $minion->guard('foo', 3600, {limit => 1}), 'locked';
 ok !$minion->guard('foo', 3600, {limit => 1}), 'not locked again';

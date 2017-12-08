@@ -68,9 +68,18 @@ sub list_jobs {
      order by id desc
      limit $5 offset $6', @$options{qw(ids queue state task)}, $limit, $offset
   )->expand->hashes->to_array;
-  my $total = @$jobs ? $jobs->[0]{total} : 0;
-  delete $_->{total} for @$jobs;
-  return {jobs => $jobs, total => $total};
+  return _total('jobs', $jobs);
+}
+
+sub list_locks {
+  my ($self, $offset, $limit) = @_;
+
+  my $locks = $self->pg->db->query(
+    'select name, extract(epoch from expires) as expires,
+       count(*) over() as total from minion_locks
+     order by expires limit ? offset ?', $limit, $offset
+  )->expand->hashes->to_array;
+  return _total('locks', $locks);
 }
 
 sub list_workers {
@@ -86,9 +95,7 @@ sub list_workers {
      where (id = any (\$1) or \$1 is null)
      order by id desc limit \$2 offset \$3", $options->{ids}, $limit, $offset
   )->expand->hashes->to_array;
-  my $total = @$workers ? $workers->[0]{total} : 0;
-  delete $_->{total} for @$workers;
-  return {total => $total, workers => $workers};
+  return _total('workers', $workers);
 }
 
 sub lock {
@@ -230,6 +237,13 @@ sub unlock {
 
 sub unregister_worker {
   shift->pg->db->query('delete from minion_workers where id = ?', shift);
+}
+
+sub _total {
+  my ($name, $results) = @_;
+  my $total = @$results ? $results->[0]{total} : 0;
+  delete $_->{total} for @$results;
+  return {total => $total, $name => $results};
 }
 
 sub _try {
@@ -596,6 +610,30 @@ Task name.
   worker => '154'
 
 Id of worker that is processing the job.
+
+=back
+
+=head2 list_locks
+
+  my $results = $backend->list_locks($offset, $limit);
+
+Returns information about locks in batches.
+
+These fields are currently available:
+
+=over 2
+
+=item expires
+
+  expires => 784111777
+
+Epoch time this lock will expire.
+
+=item name
+
+  name => 'foo'
+
+Lock name.
 
 =back
 
