@@ -2,6 +2,8 @@
 8.04  2017-12-08
   - Added list_locks method to Minion::Backend and Minion::Backend::Pg.
   - Added -L and -U options to job command.
+  - Added active_locks field to stats methods in Minion, Minion::Backend and
+    Minion::Backend::Pg.
   - Updated Font Awesome to version 5.
   - Improved Minion::Job to clear signal handlers in job processes.
 
