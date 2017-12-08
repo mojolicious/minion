@@ -825,7 +825,7 @@ Queue to put job in.
 
   my $stats = $backend->stats;
 
-Get statistics for jobs and workers.
+Get statistics for the job queue.
 
 These fields are currently available:
 

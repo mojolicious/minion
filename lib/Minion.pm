@@ -625,7 +625,7 @@ Reset job queue.
 
   my $stats = $minion->stats;
 
-Get statistics for jobs and workers.
+Get statistics for the job queue.
 
   # Check idle workers
   my $idle = $minion->stats->{inactive_workers};

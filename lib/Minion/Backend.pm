@@ -92,7 +92,8 @@ following new ones.
   my $bool = $backend->broadcast('some_command', [@args]);
   my $bool = $backend->broadcast('some_command', [@args], [$id1, $id2, $id3]);
 
-Broadcast remote control command to one or more workers.
+Broadcast remote control command to one or more workers. Meant to be overloaded
+in a subclass.
 
 =head2 dequeue
 
@@ -382,7 +383,8 @@ Id of worker that is processing the job.
 
   my $results = $backend->list_locks($offset, $limit);
 
-Returns information about locks in batches.
+Returns information about locks in batches. Meant to be overloaded in a
+subclass.
 
 These fields are currently available:
 
@@ -475,7 +477,8 @@ Hash reference with whatever status information the worker would like to share.
 
 Try to acquire a named lock that will expire automatically after the given
 amount of time in seconds. An expiration time of C<0> can be used to check if a
-named lock already exists without creating one.
+named lock already exists without creating one. Meant to be overloaded in a
+subclass.
 
 These options are currently available:
 
@@ -494,13 +497,14 @@ defaults to C<1>.
 
   $backend->note($job_id, foo => 'bar');
 
-Change a metadata field for a job.
+Change a metadata field for a job. Meant to be overloaded in a subclass.
 
 =head2 receive
 
   my $commands = $backend->receive($worker_id);
 
-Receive remote control commands for worker.
+Receive remote control commands for worker. Meant to be overloaded in a
+subclass.
 
 =head2 register_worker
 
@@ -586,7 +590,7 @@ Queue to put job in.
 
   my $stats = $backend->stats;
 
-Get statistics for jobs and workers. Meant to be overloaded in a subclass.
+Get statistics for the job queue. Meant to be overloaded in a subclass.
 
 These fields are currently available:
 
@@ -654,7 +658,7 @@ Uptime in seconds.
 
   my $bool = $backend->unlock('foo');
 
-Release a named lock.
+Release a named lock. Meant to be overloaded in a subclass.
 
 =head2 unregister_worker
 
