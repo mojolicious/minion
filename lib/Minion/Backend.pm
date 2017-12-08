@@ -382,9 +382,22 @@ Id of worker that is processing the job.
 =head2 list_locks
 
   my $results = $backend->list_locks($offset, $limit);
+  my $results = $backend->list_locks($offset, $limit, {name => 'foo'});
 
 Returns information about locks in batches. Meant to be overloaded in a
 subclass.
+
+These options are currently available:
+
+=over 2
+
+=item name
+
+  name => 'name'
+
+List only locks with this name.
+
+=back
 
 These fields are currently available:
 

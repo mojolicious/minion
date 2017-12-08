@@ -49,7 +49,7 @@ sub run {
 
   # Locks
   return $minion->unlock($unlock) if $unlock;
-  return $self->_list_locks($offset, $limit) if $locks;
+  return $self->_list_locks($offset, $limit, {name => $id}) if $locks;
 
   # List jobs
   return $self->_list_jobs($offset, $limit, $options) unless defined $id;
@@ -117,6 +117,8 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
     ./myapp.pl minion job -R -d 10 10023
     ./myapp.pl minion job --remove 10023
+    ./myapp.pl minion job -L
+    ./myapp.pl minion job -L some_lock
     ./myapp.pl minion job -b jobs -a '[12]'
     ./myapp.pl minion job -b jobs -a '[12]' 23 24 25
 

@@ -184,6 +184,13 @@ is $results->{locks}[0]{name},      'test',       'right name';
 like $results->{locks}[0]{expires}, qr/^[\d.]+$/, 'expires';
 is $results->{locks}[1], undef, 'no more locks';
 is $results->{total}, 3, 'three results';
+$results = $minion->backend->list_locks(0, 10, {name => 'yada'});
+is $results->{locks}[0]{name},      'yada',       'right name';
+like $results->{locks}[0]{expires}, qr/^[\d.]+$/, 'expires';
+is $results->{locks}[1]{name},      'yada',       'right name';
+like $results->{locks}[1]{expires}, qr/^[\d.]+$/, 'expires';
+is $results->{locks}[2], undef, 'no more locks';
+is $results->{total}, 2, 'two results';
 $minion->unlock($_) for qw(yada yada test);
 is $minion->backend->list_locks(0, 10)->{total}, 0, 'no results';
 

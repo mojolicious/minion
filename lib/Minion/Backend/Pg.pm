@@ -72,12 +72,13 @@ sub list_jobs {
 }
 
 sub list_locks {
-  my ($self, $offset, $limit) = @_;
+  my ($self, $offset, $limit, $options) = @_;
 
   my $locks = $self->pg->db->query(
     'select name, extract(epoch from expires) as expires,
        count(*) over() as total from minion_locks
-     order by expires limit ? offset ?', $limit, $offset
+     where (name = $1 or $1 is null) order by expires limit $2 offset $3',
+    $options->{name}, $limit, $offset
   )->expand->hashes->to_array;
   return _total('locks', $locks);
 }
@@ -617,8 +618,21 @@ Id of worker that is processing the job.
 =head2 list_locks
 
   my $results = $backend->list_locks($offset, $limit);
+  my $results = $backend->list_locks($offset, $limit, {name => 'foo'});
 
 Returns information about locks in batches.
+
+These options are currently available:
+
+=over 2
+
+=item name
+
+  name => 'name'
+
+List only locks with this name.
+
+=back
 
 These fields are currently available:
 
