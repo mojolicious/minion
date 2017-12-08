@@ -79,7 +79,7 @@
         <i class="fas fa-ban" aria-hidden="true"></i> Stop
       </button>
       <button class="btn btn-default" name="do" value="remove" type="submit">
-        <i class="fas fa-trash" aria-hidden="true"></i> Remove
+        <i class="fas fa-times" aria-hidden="true"></i> Remove
       </button>
     </div>
     <div class="col-md-4">
