@@ -112,6 +112,7 @@
         % my $i = 0;
         % for my $job (@$jobs) {
           % $i++;
+          % my $base = url_with->query(offset => 0);
           <tbody>
             <tr>
               <td>
@@ -123,12 +124,12 @@
                 </a>
               </td>
               <td>
-                <a href="<%= url_with->query([task => $job->{task}]) %>">
+                <a href="<%= $base->clone->query([task => $job->{task}]) %>">
                   <%= $job->{task} %>
                 </a>
               </td>
               <td>
-                <a href="<%= url_with->query([queue => $job->{queue}]) %>">
+                <a href="<%= $base->clone->query([queue => $job->{queue}]) %>">
                   <%= $job->{queue} %>
                 </a>
               </td>

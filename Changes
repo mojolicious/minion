@@ -6,6 +6,8 @@
     Minion::Backend::Pg.
   - Updated Font Awesome to version 5.
   - Improved Minion::Job to clear signal handlers in job processes.
+  - Fixed a bug in Mojolicious::Plugin::Minion::Admin where filtering jobs by
+    task or queue would not reset the offset.
 
 8.03  2017-11-21
   - Removed -f option from worker command.
