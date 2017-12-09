@@ -1,4 +1,6 @@
 
+8.05  2017-12-10
+
 8.04  2017-12-08
   - Added list_locks method to Minion::Backend and Minion::Backend::Pg.
   - Added -L and -U options to job command.
