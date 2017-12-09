@@ -77,9 +77,9 @@ sub list_locks {
   my $locks = $self->pg->db->query(
     'select name, extract(epoch from expires) as expires,
        count(*) over() as total from minion_locks
-     where (name = $1 or $1 is null) order by expires limit $2 offset $3',
+     where (name = $1 or $1 is null) order by id desc limit $2 offset $3',
     $options->{name}, $limit, $offset
-  )->expand->hashes->to_array;
+  )->hashes->to_array;
   return _total('locks', $locks);
 }
 
