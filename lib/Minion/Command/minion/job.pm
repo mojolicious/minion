@@ -155,7 +155,7 @@ Minion::Command::minion::job - Minion job command
     -S, --state <name>          List only jobs in this state
     -s, --stats                 Show queue statistics
     -t, --task <name>           List only jobs for this task
-    -t, --unlock <name>         Release named lock
+    -U, --unlock <name>         Release named lock
     -w, --workers               List workers instead of jobs, or show
                                 information for a specific worker
 
