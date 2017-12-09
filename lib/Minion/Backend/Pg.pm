@@ -628,7 +628,7 @@ These options are currently available:
 
 =item name
 
-  name => 'name'
+  name => 'foo'
 
 List only locks with this name.
 
