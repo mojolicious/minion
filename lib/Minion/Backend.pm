@@ -387,6 +387,10 @@ Id of worker that is processing the job.
 Returns information about locks in batches. Meant to be overloaded in a
 subclass.
 
+  # Check expiration time
+  my $results = $backend->list_locks(0, 1, {name => 'foo'});
+  my $expires = $results->{locks}[0]{expires};
+
 These options are currently available:
 
 =over 2
