@@ -161,13 +161,6 @@ Minion - Job queue
   $worker->status->{jobs} = 12;
   $worker->run;
 
-  # Build custom workers
-  my $worker = $minion->repair->worker;
-  while (int rand 2) {
-    if (my $job = $worker->register->dequeue(5)) { $job->perform }
-  }
-  $worker->unregister;
-
 =head1 DESCRIPTION
 
 =begin html
@@ -718,6 +711,14 @@ Build L<Minion::Worker> object.
   my $worker = $minion->repair->worker->register;
   my $job    = $worker->dequeue(5);
   $job->perform;
+  $worker->unregister;
+
+  # Build a custom worker
+  my $worker = $minion->repair->worker;
+  while (int rand 2) {
+    next unless my $job = $worker->register->dequeue(5);
+    $job->perform;
+  }
   $worker->unregister;
 
 =head1 REFERENCE
