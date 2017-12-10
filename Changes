@@ -1,4 +1,6 @@
 
+8.06  2017-12-11
+
 8.05  2017-12-10
   - Removed active_locks field from stats methods again since it did not work
     correctly and there is no efficient way to fix it.
