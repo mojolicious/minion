@@ -1,0 +1,61 @@
+% layout 'minion', title => 'Minion - Locks';
+
+%= include 'minion/_notifications'
+
+%= form_for 'minion_unlock' => begin
+  <div class="row center-md">
+    <div class="col-md-4 btn-group" role="group">
+      <button class="btn btn-default" type="submit">
+        <i class="fas fa-lock"></i> Unlock
+      </button>
+    </div>
+    <div class="col-md-4">
+      <p class="text-center">
+        % if (@$locks) {
+          <%= $offset + 1 %>-<%= $offset + @$locks %> of <%= $total %>
+        % }
+      </p>
+    </div>
+    <div class="col-md-4">
+      %= include 'minion/_limit'
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table">
+        <thead>
+          <tr>
+            <th><input class="checkall" data-check="name" type="checkbox"></th>
+            <th>Name</th>
+            <th>Expires</th>
+          </tr>
+        </thead>
+        % my $i = 0;
+        % for my $lock (@$locks) {
+          % $i++;
+          % my $base = url_with->query(offset => 0);
+          <tbody>
+            <tr>
+              <td>
+                <input type="checkbox" name="name" value="<%= $lock->{name} %>">
+              </td>
+              <td>
+                <a href="<%= url_for->query([name => $lock->{name}]) %>">
+                  <%= $lock->{name} %>
+                </a>
+              </td>
+              <td class="from-now"><%= $lock->{expires} %></td>
+            </tr>
+          </tbody>
+        % }
+      </table>
+    </div>
+  </div>
+% end
+
+<div class="row">
+  <div class="col-md-12">
+    %= include 'minion/_pagination'
+  </div>
+</div>

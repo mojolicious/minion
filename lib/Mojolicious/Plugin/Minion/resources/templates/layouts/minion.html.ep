@@ -80,6 +80,15 @@
               </a>
             </li>
             <li>
+              <a href="<%= url_for 'minion_locks' %>">
+                Locks
+                <span class="label label-pill label-default
+                  minion-stats-active-locks">
+                  0
+                </span>
+              </a>
+            </li>
+            <li>
               <a href="<%= url_for 'minion_workers' %>">
                 Workers
                 <span class="label label-pill label-default
@@ -89,7 +98,7 @@
               </a>
             </li>
           </ul>
-          <ul class="nav navbar-nav navbar-right hidden-sm">
+          <ul class="nav navbar-nav navbar-right">
             <li>
               <a href="<%= url_for $return_to %>">
                 <i class="fas fa-sign-out-alt" aria-hidden="true"></i>

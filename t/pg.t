@@ -168,6 +168,7 @@ ok $minion->unlock('baz'), 'unlocked';
 ok !$minion->unlock('baz'), 'not unlocked again';
 
 # List locks
+is $minion->stats->{active_locks}, 1, 'one active lock';
 $results = $minion->backend->list_locks(0, 2);
 is $results->{locks}[0]{name},      'yada',       'right name';
 like $results->{locks}[0]{expires}, qr/^[\d.]+$/, 'expires';
@@ -177,6 +178,7 @@ $minion->unlock('yada');
 $minion->lock('yada', 3600, {limit => 2});
 $minion->lock('test', 3600, {limit => 1});
 $minion->lock('yada', 3600, {limit => 2});
+is $minion->stats->{active_locks}, 3, 'three active locks';
 $results = $minion->backend->list_locks(1, 1);
 is $results->{locks}[0]{name},      'test',       'right name';
 like $results->{locks}[0]{expires}, qr/^[\d.]+$/, 'expires';
@@ -234,6 +236,7 @@ is $stats->{failed_jobs},      0, 'no failed jobs';
 is $stats->{finished_jobs},    0, 'no finished jobs';
 is $stats->{inactive_jobs},    0, 'no inactive jobs';
 is $stats->{delayed_jobs},     0, 'no delayed jobs';
+is $stats->{active_locks},     0, 'no active locks';
 ok $stats->{uptime},           'has uptime';
 $worker = $minion->worker->register;
 is $minion->stats->{inactive_workers}, 1, 'one inactive worker';

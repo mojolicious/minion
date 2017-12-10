@@ -1,5 +1,8 @@
 
 8.06  2017-12-11
+  - Added active_locks field to stats methods in Minion, Minion::Backend and
+    Minion::Backend::Pg again.
+  - Improved Mojolicious::Plugin::Minion::Admin with support for locks.
 
 8.05  2017-12-10
   - Removed active_locks field from stats methods again since it did not work

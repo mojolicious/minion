@@ -73,4 +73,11 @@ div.stats .stats-body {
   .center-md ul {
     float: none !important;
   }
+  .navbar-nav {
+    margin-left: -15px !important;
+  }
+  .navbar-right {
+    float: left !important;
+    margin-left: -15px !important;
+  }
 }

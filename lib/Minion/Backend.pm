@@ -619,6 +619,12 @@ These fields are currently available:
 
 Number of jobs in C<active> state.
 
+=item active_locks
+
+  active_locks => 100
+
+Number of active named locks.
+
 =item active_workers
 
   active_workers => 100

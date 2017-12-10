@@ -23,6 +23,8 @@ sub register {
   $prefix->get('/stats' => \&_stats)->name('minion_stats');
   $prefix->get('/jobs'  => \&_list_jobs)->name('minion_jobs');
   $prefix->patch('/jobs' => \&_manage_jobs)->name('minion_manage_jobs');
+  $prefix->get('/locks' => \&_list_locks)->name('minion_locks');
+  $prefix->delete('/locks' => \&_unlock)->name('minion_unlock');
   $prefix->get('/workers' => \&_list_workers)->name('minion_workers');
 }
 
@@ -47,6 +49,27 @@ sub _list_jobs {
   $c->render(
     'minion/jobs',
     jobs   => $results->{jobs},
+    total  => $results->{total},
+    limit  => $limit,
+    offset => $offset
+  );
+}
+
+sub _list_locks {
+  my $c = shift;
+
+  my $validation = $c->validation;
+  $validation->optional('limit')->num;
+  $validation->optional('offset')->num;
+  $validation->optional('name');
+  my $options = {name => $validation->param('name')};
+  my $limit  = $validation->param('limit')  || 10;
+  my $offset = $validation->param('offset') || 0;
+
+  my $results = $c->minion->backend->list_locks($offset, $limit, $options);
+  $c->render(
+    'minion/locks',
+    locks  => $results->{locks},
     total  => $results->{total},
     limit  => $limit,
     offset => $offset
@@ -99,7 +122,7 @@ sub _manage_jobs {
     else         { $c->flash(success => 'All selected jobs removed.') }
   }
   elsif ($do eq 'stop') {
-    $minion->backend->broadcast(stop => [$_]) for @$ids;
+    $minion->broadcast(stop => [$_]) for @$ids;
     $c->flash(info => 'Trying to stop all selected jobs.');
   }
 
@@ -109,6 +132,22 @@ sub _manage_jobs {
 sub _stats {
   my $c = shift;
   $c->render(json => $c->minion->stats);
+}
+
+sub _unlock {
+  my $c = shift;
+
+  my $validation = $c->validation;
+  $validation->required('name');
+
+  $c->redirect_to('minion_locks') if $validation->has_error;
+
+  my $names  = $validation->every_param('name');
+  my $minion = $c->minion;
+  $minion->unlock($_) for @$names;
+  $c->flash(info => 'Released all selected named locks.');
+
+  $c->redirect_to('minion_locks');
 }
 
 1;
