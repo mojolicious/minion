@@ -1,0 +1,31 @@
+<div class="row">
+  <div class="col-md-12">
+    % if (my $info = flash 'info') {
+      <div class="alert alert-dismissible alert-info" role="alert">
+        <button type="button" class="close" data-dismiss="alert"
+          aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <%= $info %>
+      </div>
+    % }
+    % if (my $success = flash 'success') {
+      <div class="alert alert-dismissible alert-success" role="alert">
+        <button type="button" class="close" data-dismiss="alert"
+          aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <%= $success %>
+      </div>
+    % }
+    % if (my $danger = flash 'danger') {
+      <div class="alert alert-dismissible alert-danger" role="alert">
+        <button type="button" class="close" data-dismiss="alert"
+          aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <%= $danger %>
+      </div>
+    % }
+  </div>
+</div>
