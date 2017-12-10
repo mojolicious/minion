@@ -1,4 +1,6 @@
 
+8.07  2017-12-12
+
 8.06  2017-12-11
   - Added active_locks field to stats methods in Minion, Minion::Backend and
     Minion::Backend::Pg again.
