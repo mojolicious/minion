@@ -77,8 +77,8 @@ sub list_locks {
   my $locks = $self->pg->db->query(
     'select name, extract(epoch from expires) as expires,
        count(*) over() as total from minion_locks
-     where (name = $1 or $1 is null) order by id desc limit $2 offset $3',
-    $options->{name}, $limit, $offset
+     where expires > now() and (name = $1 or $1 is null)
+     order by id desc limit $2 offset $3', $options->{name}, $limit, $offset
   )->hashes->to_array;
   return _total('locks', $locks);
 }
@@ -215,7 +215,6 @@ sub stats {
        count(*) filter (where state = 'finished') as finished_jobs,
        count(*) filter (where state = 'inactive'
          and delayed > now()) as delayed_jobs,
-       (select count(*) from minion_locks) as active_locks,
        count(distinct worker) filter (where state = 'active') as active_workers,
        (select case when is_called then last_value else 0 end
          from minion_jobs_id_seq) as enqueued_jobs,
@@ -854,12 +853,6 @@ These fields are currently available:
   active_jobs => 100
 
 Number of jobs in C<active> state.
-
-=item active_locks
-
-  active_locks => 100
-
-Number of active named locks.
 
 =item active_workers
 
