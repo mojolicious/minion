@@ -8,6 +8,7 @@ use Minion::Worker;
 use Mojo::Date;
 use Mojo::Loader 'load_class';
 use Mojo::Server;
+use Mojo::Util 'steady_time';
 use Scalar::Util 'weaken';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
@@ -47,9 +48,10 @@ sub foreground {
 }
 
 sub guard {
-  my ($self, $lock) = (shift, shift);
-  return undef unless $self->lock($lock, @_);
-  return Minion::_Guard->new(minion => $self, lock => $lock);
+  my ($self, $name, $duration, $options) = @_;
+  my $time = steady_time + $duration;
+  return undef unless $self->lock($name, $duration, $options);
+  return Minion::_Guard->new(minion => $self, name => $name, time => $time);
 }
 
 sub job {
@@ -124,7 +126,9 @@ sub _delegate {
 package Minion::_Guard;
 use Mojo::Base -base;
 
-sub DESTROY { $_[0]{minion}->unlock($_[0]{lock}) }
+use Mojo::Util 'steady_time';
+
+sub DESTROY { $_[0]{minion}->unlock($_[0]{name}) if steady_time < $_[0]{time} }
 
 1;
 
@@ -556,7 +560,7 @@ An expiration time of C<0> can be used to check if a named lock already exists
 without creating one.
 
   # Check if the lock "foo" already exists
-  say 'Lock exists' unless $minion->lock('foo', 0, {limit => 1});
+  say 'Lock exists' unless $minion->lock('foo', 0);
 
 These options are currently available:
 

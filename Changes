@@ -1,5 +1,6 @@
 
-8.07  2017-12-12
+8.07  2017-12-11
+  - Fixed guard method in Minion not to release already expired locks.
 
 8.06  2017-12-11
   - Added active_locks field to stats methods in Minion, Minion::Backend and

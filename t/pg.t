@@ -209,6 +209,13 @@ ok !$minion->guard('foo', 3600), 'not locked again';
 undef $guard;
 ok $minion->guard('foo', 3600, {limit => 1}), 'locked again';
 ok $minion->guard('foo', 3600, {limit => 1}), 'locked again';
+ok $guard     = $minion->guard('bar', 3600, {limit => 2}), 'locked';
+ok my $guard2 = $minion->guard('bar', 0,    {limit => 2}), 'locked';
+ok my $guard3 = $minion->guard('bar', 3600, {limit => 2}), 'locked';
+undef $guard2;
+ok !$minion->guard('bar', 3600, {limit => 2}), 'not locked again';
+undef $guard;
+undef $guard3;
 
 # Reset
 $minion->reset->repair;
