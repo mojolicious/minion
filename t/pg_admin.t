@@ -33,10 +33,11 @@ $t->get_ok('/minion')->status_is(200)->content_like(qr/Dashboard/)
 
 # Stats
 $t->get_ok('/minion/stats')->status_is(200)->json_is('/active_jobs' => 0)
-  ->json_is('/active_workers' => 0)->json_is('/delayed_jobs'  => 0)
-  ->json_is('/enqueued_jobs'  => 2)->json_is('/failed_jobs'   => 0)
-  ->json_is('/finished_jobs'  => 1)->json_is('/inactive_jobs' => 1)
-  ->json_is('/inactive_workers' => 0)->json_has('/uptime');
+  ->json_is('/active_locks'  => 0)->json_is('/active_workers'   => 0)
+  ->json_is('/delayed_jobs'  => 0)->json_is('/enqueued_jobs'    => 2)
+  ->json_is('/failed_jobs'   => 0)->json_is('/finished_jobs'    => 1)
+  ->json_is('/inactive_jobs' => 1)->json_is('/inactive_workers' => 0)
+  ->json_has('/uptime');
 
 # Jobs
 $t->get_ok('/minion/jobs?state=inactive')->status_is(200)
@@ -54,8 +55,19 @@ $t->get_ok('/minion/workers')->status_is(200)->element_exists('tbody td a')
 $worker->unregister;
 $t->get_ok('/minion/workers')->status_is(200)->element_exists_not('tbody td a');
 
-# Manage jobs
+# Locks
+$t->app->minion->lock('foo', 3600);
+$t->app->minion->lock('bar', 3600);
 $t->ua->max_redirects(5);
+$t->get_ok('/minion/locks')->status_is(200)->text_like('tbody td a' => qr/bar/);
+$t->get_ok('/minion/locks?name=foo')->status_is(200)
+  ->text_like('tbody td a' => qr/foo/);
+$t->post_ok('/minion/locks?_method=DELETE&name=bar')->status_is(200)
+  ->text_like('tbody td a' => qr/foo/);
+$t->post_ok('/minion/locks?_method=DELETE&name=foo')->status_is(200)
+  ->element_exists_not('tbody td a');
+
+# Manage jobs
 is app->minion->job($finished)->info->{state}, 'finished', 'right state';
 $t->post_ok(
   '/minion/jobs?_method=PATCH' => form => {id => $finished, do => 'retry'})

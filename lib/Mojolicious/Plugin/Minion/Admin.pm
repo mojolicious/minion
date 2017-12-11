@@ -145,7 +145,7 @@ sub _unlock {
   my $names  = $validation->every_param('name');
   my $minion = $c->minion;
   $minion->unlock($_) for @$names;
-  $c->flash(info => 'Released all selected named locks.');
+  $c->flash(success => 'All selected named locks released.');
 
   $c->redirect_to('minion_locks');
 }
