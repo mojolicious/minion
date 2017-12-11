@@ -63,9 +63,17 @@ $t->get_ok('/minion/locks')->status_is(200)->text_like('tbody td a' => qr/bar/);
 $t->get_ok('/minion/locks?name=foo')->status_is(200)
   ->text_like('tbody td a' => qr/foo/);
 $t->post_ok('/minion/locks?_method=DELETE&name=bar')->status_is(200)
-  ->text_like('tbody td a' => qr/foo/);
+  ->text_like('tbody td a' => qr/foo/)
+  ->text_like('.alert-success', qr/All selected named locks released/);
+is $t->tx->previous->res->code, 302, 'right status';
+like $t->tx->previous->res->headers->location, qr/locks/,
+  'right "Location" value';
 $t->post_ok('/minion/locks?_method=DELETE&name=foo')->status_is(200)
-  ->element_exists_not('tbody td a');
+  ->element_exists_not('tbody td a')
+  ->text_like('.alert-success', qr/All selected named locks released/);
+is $t->tx->previous->res->code, 302, 'right status';
+like $t->tx->previous->res->headers->location, qr/locks/,
+  'right "Location" value';
 
 # Manage jobs
 is app->minion->job($finished)->info->{state}, 'finished', 'right state';
