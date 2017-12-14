@@ -6,6 +6,7 @@ use Mojo::Util 'steady_time';
 
 has [qw(commands status)] => sub { {} };
 has [qw(id minion)];
+has dequeue_interval => 5;
 
 sub add_command { $_[0]->commands->{$_[1]} = $_[2] and return $_[0] }
 
@@ -116,7 +117,7 @@ sub _work {
   if (($status->{jobs} <= keys %$jobs) || $self->{finished}) { sleep 1 }
 
   # Try to get more jobs
-  elsif (my $job = $self->dequeue(5 => {queues => $status->{queues}})) {
+  elsif (my $job = $self->dequeue($self->dequeue_interval => {queues => $status->{queues}})) {
     $jobs->{my $id = $job->id} = $job->start;
     my ($pid, $task) = ($job->pid, $job->task);
   }

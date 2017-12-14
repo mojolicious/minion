@@ -34,6 +34,9 @@ my $id = $minion->enqueue('test');
 $worker->run;
 is_deeply $minion->job($id)->info->{result}, {just => 'works!'}, 'right result';
 
+# Dequeue interval
+is $worker->dequeue_interval, 5, 'right value';
+
 # Status
 my $status = $worker->status;
 is $status->{command_interval},   10,  'right value';
