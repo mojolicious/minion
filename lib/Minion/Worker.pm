@@ -6,6 +6,7 @@ use Mojo::Util 'steady_time';
 
 has [qw(commands status)] => sub { {} };
 has [qw(id minion)];
+has dequeue_interval => 5;
 
 sub add_command { $_[0]->commands->{$_[1]} = $_[2] and return $_[0] }
 
@@ -116,7 +117,7 @@ sub _work {
   if (($status->{jobs} <= keys %$jobs) || $self->{finished}) { sleep 1 }
 
   # Try to get more jobs
-  elsif (my $job = $self->dequeue(5 => {queues => $status->{queues}})) {
+  elsif (my $job = $self->dequeue($self->dequeue_interval => {queues => $status->{queues}})) {
     $jobs->{my $id = $job->id} = $job->start;
     my ($pid, $task) = ($job->pid, $job->task);
   }
@@ -183,6 +184,13 @@ L<Minion::Worker> implements the following attributes.
   $worker      = $worker->commands({jobs => sub {...}});
 
 Registered worker remote control commands.
+
+=head2 dequeue_interval
+
+  my $interval = $worker->dequeue_interval;
+  $worker      = $worker->dequeue_interval(2);
+
+The rate in seconds at which the worker will poll for additional jobs to dequeue.
 
 =head2 id
 
