@@ -185,6 +185,13 @@ L<Minion::Worker> implements the following attributes.
 
 Registered worker remote control commands.
 
+=head2 dequeue_interval
+
+  my $interval = $worker->dequeue_interval;
+  $worker      = $worker->dequeue_interval(2);
+
+The rate in seconds at which the worker will poll for additional jobs to dequeue.
+
 =head2 id
 
   my $id  = $worker->id;
