@@ -55,6 +55,7 @@ sub run {
 
   my $status = $self->status;
   $status->{command_interval}   //= 10;
+  $status->{dequeue_timeout}    //= 5;
   $status->{heartbeat_interval} //= 300;
   $status->{jobs}               //= 4;
   $status->{queues} ||= ['default'];
@@ -113,10 +114,11 @@ sub _work {
     for keys %$jobs;
 
   # Wait if job limit has been reached or worker is stopping
+  my $timeout = $status->{dequeue_timeout};
   if (($status->{jobs} <= keys %$jobs) || $self->{finished}) { sleep 1 }
 
   # Try to get more jobs
-  elsif (my $job = $self->dequeue(5 => {queues => $status->{queues}})) {
+  elsif (my $job = $self->dequeue($timeout => {queues => $status->{queues}})) {
     $jobs->{my $id = $job->id} = $job->start;
     my ($pid, $task) = ($job->pid, $job->task);
   }
@@ -327,6 +329,12 @@ These L</"status"> options are currently available:
   command_interval => 20
 
 Worker remote control command interval, defaults to C<10>.
+
+=item dequeue_timeout
+
+  dequeue_timeout => 5
+
+Maximum amount time in seconds to wait for a job, defaults to C<5>.
 
 =item heartbeat_interval
 

@@ -13,6 +13,7 @@ sub run {
   my $status = $worker->status;
   getopt \@args,
     'C|command-interval=i'   => \$status->{command_interval},
+    'D|dequeue-timeout=i'    => \$status->{dequeue_timeout},
     'I|heartbeat-interval=i' => \$status->{heartbeat_interval},
     'j|jobs=i'               => \$status->{jobs},
     'q|queue=s'              => \my @queues,
@@ -53,6 +54,8 @@ Minion::Command::minion::worker - Minion worker command
   Options:
     -C, --command-interval <seconds>     Worker remote control command interval,
                                          defaults to 10
+    -D, dequeue-timeout <seconds>        Maximum amount of time to wait for
+                                         jobs, defaults to 5
     -h, --help                           Show this summary of available options
         --home <path>                    Path to home directory of your
                                          application, defaults to the value of
