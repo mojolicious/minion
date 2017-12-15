@@ -33,6 +33,12 @@ sub info {
     ->{workers}[0];
 }
 
+sub new {
+  my $self = shift->SUPER::new(@_);
+  $self->on(busy => sub { sleep 1 });
+  return $self;
+}
+
 sub process_commands {
   my $self = shift;
 
@@ -113,15 +119,14 @@ sub _work {
   $jobs->{$_}->is_finished and ++$status->{performed} and delete $jobs->{$_}
     for keys %$jobs;
 
-  # Wait if job limit has been reached or worker is stopping
-  my $timeout = $status->{dequeue_timeout};
-  if (($status->{jobs} <= keys %$jobs) || $self->{finished}) { sleep 1 }
+  # Job limit has been reached or worker is stopping
+  return $self->emit('busy')
+    if ($status->{jobs} <= keys %$jobs) || $self->{finished};
 
   # Try to get more jobs
-  elsif (my $job = $self->dequeue($timeout => {queues => $status->{queues}})) {
-    $jobs->{my $id = $job->id} = $job->start;
-    my ($pid, $task) = ($job->pid, $job->task);
-  }
+  my ($max, $queues) = @{$status}{qw(dequeue_timeout queues)};
+  my $job = $self->emit('wait')->dequeue($max => {queues => $queues});
+  $jobs->{$job->id} = $job->start if $job;
 }
 
 1;
@@ -160,6 +165,22 @@ Stop immediately without finishing the current jobs.
 L<Minion::Worker> inherits all events from L<Mojo::EventEmitter> and can emit
 the following new ones.
 
+=head2 busy
+
+  $worker->on(busy => sub {
+    my $worker = shift;
+    ...
+  });
+
+Emitted in the worker process when it is performing the maximum number of jobs
+in parallel.
+
+  $worker->on(busy => sub {
+    my $worker = shift;
+    my $max = $worker->status->{jobs};
+    say "Performing $max jobs.";
+  });
+
 =head2 dequeue
 
   $worker->on(dequeue => sub {
@@ -173,6 +194,21 @@ Emitted in the worker process after a job has been dequeued.
     my ($worker, $job) = @_;
     my $id = $job->id;
     say "Job $id has been dequeued.";
+  });
+
+=head2 wait
+
+  $worker->on(wait => sub {
+    my $worker = shift;
+    ...
+  });
+
+Emitted in the worker process before it tries to dequeue a job.
+
+  $worker->on(wait => sub {
+    my $worker = shift;
+    my $max = $worker->status->{dequeue_timeout};
+    say "Waiting up to $max seconds for a new job.";
   });
 
 =head1 ATTRIBUTES
@@ -301,6 +337,15 @@ Epoch time worker was started.
 Hash reference with whatever status information the worker would like to share.
 
 =back
+
+=head2 new
+
+  my $worker = Minion::Worker->new;
+  my $worker = Minion::Worker->new(status => {foo => 'bar'});
+  my $worker = Minion::Worker->new({status => {foo => 'bar'}});
+
+Construct a new L<Minion::Worker> object and subscribe to L</"busy"> event with
+default handler that sleeps for one second.
 
 =head2 process_commands
 

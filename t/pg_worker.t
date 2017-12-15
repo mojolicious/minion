@@ -31,7 +31,10 @@ $worker->on(
   }
 );
 my $id = $minion->enqueue('test');
+my $max;
+$worker->once(wait => sub { $max = shift->status->{jobs} });
 $worker->run;
+is $max, 4, 'right value';
 is_deeply $minion->job($id)->info->{result}, {just => 'works!'}, 'right result';
 
 # Status
