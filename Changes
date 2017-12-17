@@ -1,4 +1,6 @@
 
+8.09  2017-12-17
+
 8.08  2017-12-15
   - Added busy and wait events to Minion::Worker.
   - Added dequeue_timeout option to run method in Minion::Worker.
