@@ -3,22 +3,18 @@
 %= include 'minion/_notifications'
 
 %= form_for 'minion_unlock' => begin
-  <div class="row center-md">
-    <div class="col-md-4 btn-group" role="group">
+  <div class="d-flex justify-content-between">
+    <div>
       <button class="btn btn-outline-secondary" type="submit">
         <i class="fas fa-lock"></i> Unlock
       </button>
     </div>
-    <div class="col-md-4">
-      <p class="text-center">
-        % if (@$locks) {
-          <%= $offset + 1 %>-<%= $offset + @$locks %> of <%= $total %>
-        % }
-      </p>
-    </div>
-    <div class="col-md-4">
-      %= include 'minion/_limit'
-    </div>
+    <p class="text-center">
+      % if (@$locks) {
+        <%= $offset + 1 %>-<%= $offset + @$locks %> of <%= $total %>
+      % }
+    </p>
+    %= include 'minion/_limit'
   </div>
 
   <div class="row">
@@ -54,8 +50,6 @@
   </div>
 % end
 
-<div class="row">
-  <div class="col-md-12">
-    %= include 'minion/_pagination'
-  </div>
+<div class="d-flex justify-content-center">
+  %= include 'minion/_pagination'
 </div>

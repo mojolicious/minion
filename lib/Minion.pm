@@ -801,6 +801,12 @@ the SIL OFL 1.1, L<http://scripts.sil.org/OFL>.
 
 Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
 
+=head2 popper.js
+
+  Copyright (C) Federico Zivolo 2017.
+
+Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
+
 =head1 AUTHOR
 
 Sebastian Riedel, C<sri@cpan.org>.

@@ -15,6 +15,15 @@ div.stats .stats-body {
   padding: 15px 15px 0;
   text-align: center;
 }
+pre {
+  background: #fafafa;
+  border: solid 1px #ccc;
+  border-radius: 4px;
+  padding: 10px;
+}
+.d-flex p {
+  padding: 8px;
+}
 .expand.accordion-toggle {
   vertical-align: middle;
 }
@@ -35,6 +44,9 @@ div.stats .stats-body {
 .hiddenRow {
   padding: 0 !important;
 }
+.table thead tr th {
+  border-top: 0 !important;
+}
 .table td {
   border: 0 !important;
 }
@@ -45,12 +57,4 @@ div.stats .stats-body {
   fill: #a9e3be;
   stroke: #77c293;
   stroke-width: 8;
-}
-@media (max-width: 992px) {
-  .center-md {
-    text-align: center;
-  }
-  .center-md ul {
-    float: none !important;
-  }
 }

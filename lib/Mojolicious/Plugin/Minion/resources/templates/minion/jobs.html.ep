@@ -32,28 +32,26 @@
 %= include 'minion/_notifications'
 
 %= form_for 'minion_manage_jobs' => begin
-  <div class="row center-md">
-    <div class="col-md-4 btn-group" role="group">
-      <button class="btn btn-outline-secondary" name="do" value="retry" type="submit">
-        <i class="fas fa-redo" aria-hidden="true"></i> Retry
-      </button>
-      <button class="btn btn-outline-secondary" name="do" value="stop" type="submit">
-        <i class="fas fa-ban" aria-hidden="true"></i> Stop
-      </button>
-      <button class="btn btn-outline-secondary" name="do" value="remove" type="submit">
-        <i class="fas fa-times" aria-hidden="true"></i> Remove
-      </button>
+  <div class="d-flex justify-content-between">
+    <div>
+      <div class="btn-group" role="group">
+        <button class="btn btn-outline-secondary" name="do" value="retry" type="submit">
+          <i class="fas fa-redo" aria-hidden="true"></i> Retry
+        </button>
+        <button class="btn btn-outline-secondary" name="do" value="stop" type="submit">
+          <i class="fas fa-ban" aria-hidden="true"></i> Stop
+        </button>
+        <button class="btn btn-outline-secondary" name="do" value="remove" type="submit">
+          <i class="fas fa-times" aria-hidden="true"></i> Remove
+        </button>
+      </div>
     </div>
-    <div class="col-md-4">
-      <p class="text-center">
-        % if (@$jobs) {
-          <%= $offset + 1 %>-<%= $offset + @$jobs %> of <%= $total %>
-        % }
-      </p>
-    </div>
-    <div class="col-md-4">
-      %= include 'minion/_limit'
-    </div>
+    <p class="align-middle">
+      % if (@$jobs) {
+        <%= $offset + 1 %>-<%= $offset + @$jobs %> of <%= $total %>
+      % }
+    </p>
+    %= include 'minion/_limit'
   </div>
 
   <div class="row">
@@ -131,8 +129,6 @@
   </div>
 % end
 
-<div class="row">
-  <div class="col-md-12">
-    %= include 'minion/_pagination'
-  </div>
+<div class="d-flex justify-content-center">
+  %= include 'minion/_pagination'
 </div>
