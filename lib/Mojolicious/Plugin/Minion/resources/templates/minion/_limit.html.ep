@@ -6,8 +6,8 @@
       % }
       % else {
         <li class="page-item">
-          <%= link_to $i => url_with->query([limit => $i])
-            => (class => 'page-link') %>
+          % my $url = url_with->query([limit => $i]);
+          <a class="page-link" href="<%= $url %>"><%= $i %></a>
         </li>
       % }
     % }

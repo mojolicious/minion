@@ -14,16 +14,16 @@
       </button>
       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
         % if (@$parents) {
-          <%= link_to Parents => url_for('minion_jobs')->query(id => $parents)
-            => (class => 'dropdown-item') %>
+          % my $url = url_for('minion_jobs')->query(id => $parents);
+          <a class="dropdown-item" href="<%= $url %>">Parents</a>
         % }
         % if (@$children) {
-          <%= link_to Children => url_for('minion_jobs')->query(id => $children)
-            => (class => 'dropdown-item') %>
+          % my $url = url_for('minion_jobs')->query(id => $children);
+          <a class="dropdown-item" href="<%= $url %>">Children</a>
         % }
         % if ($id) {
-          <%= link_to Worker => url_for('minion_workers')->query(id => $id)
-            => (class => 'dropdown-item') %>
+          % my $url = url_for('minion_workers')->query(id => $id);
+          <a class="dropdown-item" href="<%= $url %>">Worker</a>
         % }
       </div>
     </div>
