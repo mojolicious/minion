@@ -44,6 +44,9 @@ pre {
 .hiddenRow {
   padding: 0 !important;
 }
+.navbar {
+  border-bottom: solid 1px #ddd;
+}
 .table thead tr th {
   border-top: 0 !important;
 }

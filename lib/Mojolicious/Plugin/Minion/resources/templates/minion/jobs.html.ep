@@ -14,15 +14,16 @@
       </button>
       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
         % if (@$parents) {
-            <%= link_to
-              Parents => url_for('minion_jobs')->query(id => $parents) => (class => 'dropdown-item') %>
+          <%= link_to Parents => url_for('minion_jobs')->query(id => $parents)
+            => (class => 'dropdown-item') %>
         % }
         % if (@$children) {
-            <%= link_to
-              Children => url_for('minion_jobs')->query(id => $children) => (class => 'dropdown-item') %>
+          <%= link_to Children => url_for('minion_jobs')->query(id => $children)
+            => (class => 'dropdown-item') %>
         % }
         % if ($id) {
-            <%= link_to Worker => url_for('minion_workers')->query(id => $id) => (class => 'dropdown-item') %>
+          <%= link_to Worker => url_for('minion_workers')->query(id => $id)
+            => (class => 'dropdown-item') %>
         % }
       </div>
     </div>
@@ -35,13 +36,16 @@
   <div class="d-flex justify-content-between">
     <div>
       <div class="btn-group" role="group">
-        <button class="btn btn-outline-secondary" name="do" value="retry" type="submit">
+        <button class="btn btn-outline-secondary" name="do" value="retry"
+          type="submit">
           <i class="fas fa-redo" aria-hidden="true"></i> Retry
         </button>
-        <button class="btn btn-outline-secondary" name="do" value="stop" type="submit">
+        <button class="btn btn-outline-secondary" name="do" value="stop"
+          type="submit">
           <i class="fas fa-ban" aria-hidden="true"></i> Stop
         </button>
-        <button class="btn btn-outline-secondary" name="do" value="remove" type="submit">
+        <button class="btn btn-outline-secondary" name="do" value="remove"
+          type="submit">
           <i class="fas fa-times" aria-hidden="true"></i> Remove
         </button>
       </div>

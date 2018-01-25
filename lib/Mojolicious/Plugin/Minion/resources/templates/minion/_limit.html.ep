@@ -5,7 +5,10 @@
         <li class="page-item active"><a class="page-link"><%= $i %></a></li>
       % }
       % else {
-        <li class="page-item"><%= link_to $i => url_with->query([limit => $i]) => (class => 'page-link') %></li>
+        <li class="page-item">
+          <%= link_to $i => url_with->query([limit => $i])
+            => (class => 'page-link') %>
+        </li>
       % }
     % }
   </ul>

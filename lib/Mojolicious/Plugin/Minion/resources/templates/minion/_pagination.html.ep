@@ -14,7 +14,9 @@
     % }
     % else {
       <li class="page-item">
-        <a class="page-link" href="<%= url_with->query([offset => 0]) %>">First</a>
+        <a class="page-link" href="<%= url_with->query([offset => 0]) %>">
+          First
+        </a>
     % }
     </li>
     % if ($current_page == 1) {
@@ -23,7 +25,10 @@
     % }
     % else {
       <li class="page-item">
-        <a class="page-link" href="<%= url_with->query([offset => $prev_offset]) %>">Previous</a>
+        <a class="page-link"
+          href="<%= url_with->query([offset => $prev_offset]) %>">
+          Previous
+        </a>
     % }
     </li>
     % my $start = $current_page >= 3 ? $current_page - 2 : 1;
@@ -36,7 +41,8 @@
       % }
       % else {
         <li class="page-item">
-          <a class="page-link" href="<%= url_with->query([offset => ($i - 1) * $limit]) %>">
+          <a class="page-link"
+            href="<%= url_with->query([offset => ($i - 1) * $limit]) %>">
             <%= $i %>
           </a>
         </li>
@@ -48,7 +54,8 @@
     % }
     % else {
       <li class="page-item">
-        <a class="page-link" href="<%= url_with->query([offset => $next_offset]) %>">
+        <a class="page-link"
+          href="<%= url_with->query([offset => $next_offset]) %>">
           Next
         </a>
     % }
@@ -59,7 +66,10 @@
     % }
     % else {
       <li class="page-item">
-        <a class="page-link" href="<%= url_with->query([offset => $last_offset]) %>">Last</a>
+        <a class="page-link"
+          href="<%= url_with->query([offset => $last_offset]) %>">
+          Last
+        </a>
     % }
     </li>
   </ul>

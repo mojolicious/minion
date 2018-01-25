@@ -22,18 +22,16 @@
   % }
 % end
 
-<div class="row center-md">
-  <div class="col-md-4"></div>
-  <div class="col-md-4">
+<div class="d-flex justify-content-between">
+  <div></div>
+  <div>
     <p class="text-center">
       % if (@$workers) {
         <%= $offset + 1 %>-<%= $offset + @$workers %> of <%= $total %>
       % }
     </p>
   </div>
-  <div class="col-md-4">
-    %= include 'minion/_limit'
-  </div>
+  %= include 'minion/_limit'
 </div>
 
 <div class="row">
@@ -91,8 +89,6 @@
   </div>
 </div>
 
-<div class="row">
-  <div class="col-md-12">
-    %= include 'minion/_pagination'
-  </div>
+<div class="d-flex justify-content-center">
+  %= include 'minion/_pagination'
 </div>
