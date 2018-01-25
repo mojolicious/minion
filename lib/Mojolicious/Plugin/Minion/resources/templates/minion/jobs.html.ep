@@ -5,34 +5,26 @@
 
   % my ($parents, $children, $id) = @{$job}{qw(parents children worker)};
   % if (@$parents || @$children || $id) {
-    <div class="btn-group">
+    <div class="dropdown">
       <button type="button"
-        class="btn btn-default btn-xs dropdown-toggle"
-        data-toggle="dropdown" aria-haspopup="true"
+        class="btn btn-outline-secondary dropdown-toggle"
+        id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
         aria-expanded="false">
         Related
-        <span class="caret"></span>
-        <span class="sr-only">Toggle Dropdown</span>
       </button>
-      <ul class="dropdown-menu">
+      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
         % if (@$parents) {
-          <li>
             <%= link_to
-              Parents => url_for('minion_jobs')->query(id => $parents) %>
-          </li>
+              Parents => url_for('minion_jobs')->query(id => $parents) => (class => 'dropdown-item') %>
         % }
         % if (@$children) {
-          <li>
             <%= link_to
-              Children => url_for('minion_jobs')->query(id => $children) %>
-          </li>
+              Children => url_for('minion_jobs')->query(id => $children) => (class => 'dropdown-item') %>
         % }
         % if ($id) {
-          <li>
-            <%= link_to Worker => url_for('minion_workers')->query(id => $id) %>
-          </li>
+            <%= link_to Worker => url_for('minion_workers')->query(id => $id) => (class => 'dropdown-item') %>
         % }
-      </ul>
+      </div>
     </div>
   % }
 % end
@@ -42,13 +34,13 @@
 %= form_for 'minion_manage_jobs' => begin
   <div class="row center-md">
     <div class="col-md-4 btn-group" role="group">
-      <button class="btn btn-default" name="do" value="retry" type="submit">
+      <button class="btn btn-outline-secondary" name="do" value="retry" type="submit">
         <i class="fas fa-redo" aria-hidden="true"></i> Retry
       </button>
-      <button class="btn btn-default" name="do" value="stop" type="submit">
+      <button class="btn btn-outline-secondary" name="do" value="stop" type="submit">
         <i class="fas fa-ban" aria-hidden="true"></i> Stop
       </button>
-      <button class="btn btn-default" name="do" value="remove" type="submit">
+      <button class="btn btn-outline-secondary" name="do" value="remove" type="submit">
         <i class="fas fa-times" aria-hidden="true"></i> Remove
       </button>
     </div>
@@ -108,16 +100,16 @@
               <td class="accordion-toggle collapsed" data-toggle="collapse"
                 data-target="#job<%= $i %>">
                 % if ($job->{state} eq 'active') {
-                  <span class="label label-warning">active</span>
+                  <span class="badge badge-warning">active</span>
                 % }
                 % elsif ($job->{state} eq 'failed') {
-                  <span class="label label-danger">failed</span>
+                  <span class="badge badge-danger">failed</span>
                 % }
                 % elsif ($job->{state} eq 'finished') {
-                  <span class="label label-success">finished</span>
+                  <span class="badge badge-success">finished</span>
                 % }
                 % else {
-                  <span class="label label-info">inactive</span>
+                  <span class="badge badge-info">inactive</span>
                 % }
               </td>
               <td class="accordion-toggle collapsed expand"

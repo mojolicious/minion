@@ -2,10 +2,10 @@
   <ul class="pagination pull-right">
     % for my $i (10, 20, 50, 100) {
       % if ($limit == $i) {
-        <li class="active"><a><%= $i %></a></li>
+        <li class="page-item active"><a class="page-link"><%= $i %></a></li>
       % }
       % else {
-        <li><%= link_to $i => url_with->query([limit => $i]) %></li>
+        <li class="page-item"><%= link_to $i => url_with->query([limit => $i]) => (class => 'page-link') %></li>
       % }
     % }
   </ul>

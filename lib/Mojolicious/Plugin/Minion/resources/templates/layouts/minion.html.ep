@@ -3,13 +3,14 @@
     <title><%= title() || 'Minion' %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     %= javascript '/mojo/jquery/jquery.js'
-    %= javascript '/minion/bootstrap/bootstrap.js'
-    %= stylesheet '/minion/bootstrap/bootstrap.css'
     %= javascript '/minion/moment/moment.js'
     %= javascript '/minion/d3/d3.js'
     %= javascript '/minion/epoch/epoch.js'
     %= stylesheet '/minion/epoch/epoch.css'
     %= stylesheet '/minion/fontawesome/fontawesome.css'
+    %= javascript '/minion/popper/popper.js'
+    %= javascript '/minion/bootstrap/bootstrap.js'
+    %= stylesheet '/minion/bootstrap/bootstrap.css'
     %= stylesheet '/minion/app.css'
     %= javascript '/minion/app.js'
     <script>
@@ -22,84 +23,75 @@
     %= content_for 'head'
   </head>
   <body>
-    <nav class="navbar navbar-default navbar-static-top">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed"
-            data-toggle="collapse" data-target=".navbar-collapse"
-            aria-expanded="false">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
           %= link_to 'minion_dashboard' => (class => 'navbar-brand') => begin
             <picture>
               <img src="<%= url_for '/minion/logo-black.png' %>"
                 srcset="<%= url_for '/minion/logo-black-2x.png' %> 2x">
             </picture>
           % end
-        </div>
-        <div class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
             % my $jobs = url_for 'minion_jobs';
-            <li>
+            <li class="nav-item">
               <a href="<%= $jobs->query(state => 'inactive') %>">
                 Inactive
-                <span class="label label-pill label-info
+                <span class="badge badge-pill badge-info
                   minion-stats-inactive-jobs">
                   0
                 </span>
               </a>
             </li>
-            <li>
+            <li class="nav-item">
               <a href="<%= $jobs->query(state => 'failed') %>">
                 Failed
-                <span class="label label-pill label-danger
+                <span class="badge badge-pill badge-danger
                   minion-stats-failed-jobs">
                   0
                 </span>
               </a>
             </li>
-            <li>
+            <li class="nav-item">
               <a href="<%= $jobs->query(state => 'finished') %>">
                 Finished
-                <span class="label label-pill label-success
+                <span class="badge badge-pill badge-success
                   minion-stats-finished-jobs">
                   0
                 </span>
               </a>
             </li>
-            <li>
+            <li class="nav-item">
               <a href="<%= $jobs->query(state => 'active') %>">
                 Active
-                <span class="label label-pill label-warning
+                <span class="badge badge-pill badge-warning
                   minion-stats-active-jobs">
                   0
                 </span>
               </a>
             </li>
-            <li>
+            <li class="nav-item">
               <a href="<%= url_for 'minion_locks' %>">
                 Locks
-                <span class="label label-pill label-default
+                <span class="badge badge-pill badge-secondary
                   minion-stats-active-locks">
                   0
                 </span>
               </a>
             </li>
-            <li>
+            <li class="nav-item">
               <a href="<%= url_for 'minion_workers' %>">
                 Workers
-                <span class="label label-pill label-default
+                <span class="badge badge-pill badge-secondary
                   minion-stats-workers">
                   0
                 </span>
               </a>
             </li>
-          </ul>
-          <ul class="nav navbar-nav navbar-right">
-            <li>
+            <li class="nav-item">
               <a href="<%= url_for $return_to %>">
                 <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
                 Back to Site

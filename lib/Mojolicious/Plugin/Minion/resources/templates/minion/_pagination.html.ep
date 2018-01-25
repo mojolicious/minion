@@ -9,21 +9,21 @@
 <nav class="text-center">
   <ul class="pagination">
     % if ($current_page == 1) {
-      <li class="disabled">
-        <a>First</a>
+      <li class="page-item disabled">
+        <a class="page-link">First</a>
     % }
     % else {
-      <li>
-        <a href="<%= url_with->query([offset => 0]) %>">First</a>
+      <li class="page-item">
+        <a class="page-link" href="<%= url_with->query([offset => 0]) %>">First</a>
     % }
     </li>
     % if ($current_page == 1) {
-      <li class="disabled">
-        <a>Previous</a>
+      <li class="page-item disabled">
+        <a class="page-link">Previous</a>
     % }
     % else {
-      <li>
-        <a href="<%= url_with->query([offset => $prev_offset]) %>">Previous</a>
+      <li class="page-item">
+        <a class="page-link" href="<%= url_with->query([offset => $prev_offset]) %>">Previous</a>
     % }
     </li>
     % my $start = $current_page >= 3 ? $current_page - 2 : 1;
@@ -32,34 +32,34 @@
     % my $end = $last_page < ($start + 4) ? $last_page : $start + 4;
     % for my $i ($start .. $end) {
       % if ($i == $current_page) {
-        <li class="active"><a><%= $i %></a></li>
+        <li class="page-item active"><a class="page-link"><%= $i %></a></li>
       % }
       % else {
-        <li>
-          <a href="<%= url_with->query([offset => ($i - 1) * $limit]) %>">
+        <li class="page-item">
+          <a class="page-link" href="<%= url_with->query([offset => ($i - 1) * $limit]) %>">
             <%= $i %>
           </a>
         </li>
       % }
     % }
     % if ($current_page >= $last_page) {
-      <li class="disabled">
-        <a>Next</a>
+      <li class="page-item disabled">
+        <a class="page-link">Next</a>
     % }
     % else {
-      <li>
-        <a href="<%= url_with->query([offset => $next_offset]) %>">
+      <li class="page-item">
+        <a class="page-link" href="<%= url_with->query([offset => $next_offset]) %>">
           Next
         </a>
     % }
     </li>
     % if ($current_page >= $last_page) {
-      <li class="disabled">
-        <a>Last</a>
+      <li class="page-item disabled">
+        <a class="page-link">Last</a>
     % }
     % else {
-      <li>
-        <a href="<%= url_with->query([offset => $last_offset]) %>">Last</a>
+      <li class="page-item">
+        <a class="page-link" href="<%= url_with->query([offset => $last_offset]) %>">Last</a>
     % }
     </li>
   </ul>

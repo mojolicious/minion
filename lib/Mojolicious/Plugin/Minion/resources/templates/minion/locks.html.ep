@@ -5,7 +5,7 @@
 %= form_for 'minion_unlock' => begin
   <div class="row center-md">
     <div class="col-md-4 btn-group" role="group">
-      <button class="btn btn-default" type="submit">
+      <button class="btn btn-outline-secondary" type="submit">
         <i class="fas fa-lock"></i> Unlock
       </button>
     </div>

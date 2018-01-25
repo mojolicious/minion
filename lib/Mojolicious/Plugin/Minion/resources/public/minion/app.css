@@ -1,10 +1,3 @@
-body {
-  margin-bottom: 60px;
-}
-html {
-  min-height: 100%;
-  position: relative;
-}
 div.stats {
   border: solid 1px #777;
   border-radius: 4px;
@@ -21,9 +14,6 @@ div.stats .stats-body {
   font-size: 26px;
   padding: 15px 15px 0;
   text-align: center;
-}
-.center-md p {
-  padding-top: 8px;
 }
 .expand.accordion-toggle {
   vertical-align: middle;
@@ -45,16 +35,6 @@ div.stats .stats-body {
 .hiddenRow {
   padding: 0 !important;
 }
-.label-pill {
-  border-radius: 10rem;
-  padding-bottom: 0.3em;
-  padding-left: 0.8em;
-  padding-right: 0.8em;
-  padding-top: 0.3em;
-}
-.pagination {
-  margin: 0px !important;
-}
 .table td {
   border: 0 !important;
 }
@@ -72,12 +52,5 @@ div.stats .stats-body {
   }
   .center-md ul {
     float: none !important;
-  }
-  .navbar-nav {
-    margin-left: -15px !important;
-  }
-  .navbar-right {
-    float: left !important;
-    margin-left: -15px !important;
   }
 }
