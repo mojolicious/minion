@@ -7,7 +7,7 @@
   % if (@$parents || @$children || $id) {
     <div class="dropdown">
       <button type="button"
-        class="btn btn-outline-secondary dropdown-toggle"
+        class="btn btn-sm btn-outline-secondary dropdown-toggle"
         id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
         aria-expanded="false">
         Related

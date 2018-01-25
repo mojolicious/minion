@@ -3,14 +3,14 @@
     <title><%= title() || 'Minion' %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     %= javascript '/mojo/jquery/jquery.js'
+    %= javascript '/minion/popper/popper.js'
+    %= javascript '/minion/bootstrap/bootstrap.js'
+    %= stylesheet '/minion/bootstrap/bootstrap.css'
     %= javascript '/minion/moment/moment.js'
     %= javascript '/minion/d3/d3.js'
     %= javascript '/minion/epoch/epoch.js'
     %= stylesheet '/minion/epoch/epoch.css'
     %= stylesheet '/minion/fontawesome/fontawesome.css'
-    %= javascript '/minion/popper/popper.js'
-    %= javascript '/minion/bootstrap/bootstrap.js'
-    %= stylesheet '/minion/bootstrap/bootstrap.css'
     %= stylesheet '/minion/app.css'
     %= javascript '/minion/app.js'
     <script>
@@ -31,14 +31,18 @@
                 srcset="<%= url_for '/minion/logo-black-2x.png' %> 2x">
             </picture>
           % end
-          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <button class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false"
+            aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mr-auto">
             % my $jobs = url_for 'minion_jobs';
             <li class="nav-item">
-              <a class="nav-link" href="<%= $jobs->query(state => 'inactive') %>">
+              <a class="nav-link"
+                href="<%= $jobs->query(state => 'inactive') %>">
                 Inactive
                 <span class="badge badge-pill badge-info
                   minion-stats-inactive-jobs">
@@ -47,7 +51,8 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="<%= $jobs->query(state => 'failed') %>">
+              <a class="nav-link"
+                href="<%= $jobs->query(state => 'failed') %>">
                 Failed
                 <span class="badge badge-pill badge-danger
                   minion-stats-failed-jobs">
@@ -56,7 +61,8 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="<%= $jobs->query(state => 'finished') %>">
+              <a class="nav-link"
+                href="<%= $jobs->query(state => 'finished') %>">
                 Finished
                 <span class="badge badge-pill badge-success
                   minion-stats-finished-jobs">
@@ -91,6 +97,8 @@
                 </span>
               </a>
             </li>
+          </ul>
+          <ul class="navbar-nav">
             <li class="nav-item">
               <a class="nav-link" href="<%= url_for $return_to %>">
                 <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
