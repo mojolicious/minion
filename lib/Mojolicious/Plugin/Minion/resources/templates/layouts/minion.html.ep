@@ -45,7 +45,7 @@
               <a class="nav-link"
                 href="<%= $jobs->query(state => 'inactive') %>">
                 Inactive
-                <span class="badge badge-pill badge-info
+                <span class="badge badge-pill badge-primary
                   minion-stats-inactive-jobs">
                   0
                 </span>
