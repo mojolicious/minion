@@ -79,7 +79,7 @@
           <tr>
             <td colspan="7" class="hiddenRow">
               <div class="collapse" id="worker<%= $i %>">
-                <pre><code><%= dumper Minion::_datetime $worker %></code></pre>
+                <pre class="border rounded"><%= dumper Minion::_datetime $worker %></pre>
               </div>
             </td>
           </tr>

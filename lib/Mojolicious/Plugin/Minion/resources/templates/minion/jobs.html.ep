@@ -7,7 +7,7 @@
   % if (@$parents || @$children || $id) {
     <div class="dropdown">
       <button type="button"
-        class="btn btn-sm btn-outline-secondary dropdown-toggle"
+        class="btn btn-sm btn-secondary dropdown-toggle"
         id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
         aria-expanded="false">
         Related
@@ -36,15 +36,15 @@
   <div class="d-flex justify-content-between">
     <div>
       <div class="btn-group" role="group">
-        <button class="btn btn-outline-secondary" name="do" value="retry"
+        <button class="btn btn-primary" name="do" value="retry"
           type="submit">
           <i class="fas fa-redo" aria-hidden="true"></i> Retry
         </button>
-        <button class="btn btn-outline-secondary" name="do" value="stop"
+        <button class="btn btn-secondary" name="do" value="stop"
           type="submit">
           <i class="fas fa-ban" aria-hidden="true"></i> Stop
         </button>
-        <button class="btn btn-outline-secondary" name="do" value="remove"
+        <button class="btn btn-secondary" name="do" value="remove"
           type="submit">
           <i class="fas fa-times" aria-hidden="true"></i> Remove
         </button>
@@ -122,7 +122,7 @@
             <tr>
               <td colspan="8" class="hiddenRow">
                 <div class="collapse" id="job<%= $i %>">
-                  <pre><code><%= dumper Minion::_datetime $job %></code></pre>
+                  <pre class="border rounded"><%= dumper Minion::_datetime $job %></pre>
                 </div>
               </td>
             </tr>

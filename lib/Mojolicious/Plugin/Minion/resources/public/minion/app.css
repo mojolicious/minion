@@ -17,8 +17,6 @@ div.stats .stats-body {
 }
 pre {
   background: #fafafa;
-  border: solid 1px #ccc;
-  border-radius: 4px;
   padding: 10px;
 }
 .d-flex p {
@@ -43,9 +41,6 @@ pre {
 }
 .hiddenRow {
   padding: 0 !important;
-}
-.navbar {
-  border-bottom: solid 1px #ddd;
 }
 .table thead tr th {
   border-top: 0 !important;
