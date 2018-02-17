@@ -1,5 +1,8 @@
 
-8.10  2018-01-27
+8.10  2018-02-18
+  - Improved Mojolicious::Plugin::Minion::Admin to use less distracting colors.
+  - Fixed a bug in Mojolicious::Plugin::Minion::Admin where job results
+    containing very long strings could not be displayed properly.
 
 8.09  2018-01-25
   - Converted Mojolicious::Plugin::Minion::Admin to Bootstrap 4.

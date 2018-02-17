@@ -18,6 +18,7 @@ div.stats .stats-body {
 pre {
   background: #fafafa;
   padding: 10px;
+  white-space: pre-wrap;
 }
 .d-flex p {
   padding: 8px;

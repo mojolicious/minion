@@ -65,7 +65,7 @@
             <td class="accordion-toggle collapsed"
               data-toggle="collapse" data-target="#worker<%= $i %>">
               % if (@{$worker->{jobs}}) {
-                <span class="badge badge-warning">busy</span>
+                <span class="badge badge-primary">busy</span>
               % }
               % else {
                 <span class="badge badge-secondary">idle</span>

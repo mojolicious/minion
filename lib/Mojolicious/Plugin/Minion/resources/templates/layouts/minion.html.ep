@@ -45,18 +45,17 @@
               <a class="nav-link"
                 href="<%= $jobs->query(state => 'inactive') %>">
                 Inactive
-                <span class="badge badge-pill badge-primary
+                <span class="badge badge-pill badge-secondary
                   minion-stats-inactive-jobs">
                   0
                 </span>
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link"
-                href="<%= $jobs->query(state => 'failed') %>">
-                Failed
-                <span class="badge badge-pill badge-danger
-                  minion-stats-failed-jobs">
+              <a class="nav-link" href="<%= $jobs->query(state => 'active') %>">
+                Active
+                <span class="badge badge-pill badge-primary
+                  minion-stats-active-jobs">
                   0
                 </span>
               </a>
@@ -72,10 +71,11 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="<%= $jobs->query(state => 'active') %>">
-                Active
-                <span class="badge badge-pill badge-warning
-                  minion-stats-active-jobs">
+              <a class="nav-link"
+                href="<%= $jobs->query(state => 'failed') %>">
+                Failed
+                <span class="badge badge-pill badge-danger
+                  minion-stats-failed-jobs">
                   0
                 </span>
               </a>
