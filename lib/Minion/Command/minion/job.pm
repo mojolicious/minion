@@ -19,18 +19,18 @@ sub run {
     'e|enqueue=s'   => \my $enqueue,
     'f|foreground'  => \my $foreground,
     'L|locks'       => \my $locks,
-    'l|limit=i'  => \(my $limit          = 100),
-    'o|offset=i' => \(my $offset         = 0),
-    'P|parent=s' => ($options->{parents} = []),
-    'p|priority=i' => \$options->{priority},
-    'q|queue=s'    => \$options->{queue},
-    'R|retry'      => \my $retry,
-    'remove'       => \my $remove,
-    'S|state=s'    => \$options->{state},
-    's|stats'      => \my $stats,
-    't|task=s'     => \$options->{task},
-    'U|unlock=s'   => \my $unlock,
-    'w|workers'    => \my $workers;
+    'l|limit=i'     => \(my $limit = 100),
+    'o|offset=i'    => \(my $offset = 0),
+    'P|parent=s'    => ($options->{parents} = []),
+    'p|priority=i'  => \$options->{priority},
+    'q|queue=s'     => \$options->{queue},
+    'R|retry'       => \my $retry,
+    'remove'        => \my $remove,
+    'S|state=s'     => \$options->{state},
+    's|stats'       => \my $stats,
+    't|task=s'      => \$options->{task},
+    'U|unlock=s'    => \my $unlock,
+    'w|workers'     => \my $workers;
 
   # Worker remote control command
   my $minion = $self->app->minion;

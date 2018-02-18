@@ -592,7 +592,7 @@ is $job->info->{state}, 'finished', 'right state';
 ok $job->note(yada => ['works']), 'added metadata';
 ok !$minion->backend->note(-1, yada => ['failed']), 'not added metadata';
 my $notes = {
-  foo => [4, 5, 6],
+  foo  => [4, 5, 6],
   bar  => {baz => [1, 2, 3]},
   baz  => 'yada',
   yada => ['works']

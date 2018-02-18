@@ -13,7 +13,7 @@ use Scalar::Util 'weaken';
 
 has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
 has 'backend';
-has backoff => sub { \&_backoff };
+has backoff       => sub { \&_backoff };
 has missing_after => 1800;
 has remove_after  => 172800;
 has tasks         => sub { {} };
