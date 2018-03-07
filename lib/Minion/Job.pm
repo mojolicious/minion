@@ -442,6 +442,12 @@ Number of times performing this job will be attempted.
 
 Delay job for this many seconds (from now), defaults to C<0>.
 
+=item parents
+
+  parents => [$id1, $id2, $id3]
+
+Jobs this job depends on.
+
 =item priority
 
   priority => 5

@@ -197,11 +197,12 @@ sub retry_job {
     "update minion_jobs
      set attempts = coalesce(?, attempts),
        delayed = (now() + (interval '1 second' * ?)),
-       priority = coalesce(?, priority), queue = coalesce(?, queue),
-       retried = now(), retries = retries + 1, state = 'inactive'
+       parents = coalesce(?, parents), priority = coalesce(?, priority),
+       queue = coalesce(?, queue), retried = now(), retries = retries + 1,
+       state = 'inactive'
      where id = ? and retries = ?
      returning 1", $options->{attempts}, $options->{delay} // 0,
-    @$options{qw(priority queue)}, $id, $retries
+    @$options{qw(parents priority queue)}, $id, $retries
   )->rows;
 }
 
@@ -825,6 +826,12 @@ Number of times performing this job will be attempted.
   delay => 10
 
 Delay job for this many seconds (from now), defaults to C<0>.
+
+=item parents
+
+  parents => [$id1, $id2, $id3]
+
+Jobs this job depends on.
 
 =item priority
 
