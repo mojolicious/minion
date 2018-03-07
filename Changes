@@ -1,5 +1,7 @@
 
-8.12  2018-03-01
+8.12  2018-03-07
+  - Added parents option to retry and retry_job methods in Minion::Job and
+    Minion::Backend::Pg. (CandyAngel)
 
 8.11  2018-02-28
   - Fixed worker page links in Mojolicious::Plugin::Minion::Admin.
