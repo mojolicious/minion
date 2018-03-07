@@ -776,6 +776,15 @@ $id = $minion->enqueue(test => [] => {parents => [-1]});
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 ok $job->finish, 'job finished';
+$id = $minion->enqueue(test => [] => {parents => [-1]});
+$job = $worker->dequeue(0);
+is $job->id, $id, 'right id';
+is_deeply $job->info->{parents}, [-1], 'right parents';
+$job->retry({parents => [-1, -2]});
+$job = $worker->dequeue(0);
+is $job->id, $id, 'right id';
+is_deeply $job->info->{parents}, [-1, -2], 'right parents';
+ok $job->finish, 'job finished';
 $worker->unregister;
 
 # Foreground
