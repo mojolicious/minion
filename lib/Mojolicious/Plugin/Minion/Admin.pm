@@ -18,7 +18,7 @@ sub register {
   push @{$app->renderer->paths}, $resources->child('templates')->to_string;
 
   # Routes
-  $prefix->get('/')->to(template => 'minion/dashboard')
+  $prefix->get('/')->to(template => 'minion/dashboard', format => 'html')
     ->name('minion_dashboard');
   $prefix->get('/stats' => \&_stats)->name('minion_stats');
   $prefix->get('/jobs'  => \&_list_jobs)->name('minion_jobs');
@@ -48,6 +48,7 @@ sub _list_jobs {
   my $results = $c->minion->backend->list_jobs($offset, $limit, $options);
   $c->render(
     'minion/jobs',
+    format => 'html',
     jobs   => $results->{jobs},
     total  => $results->{total},
     limit  => $limit,
@@ -69,6 +70,7 @@ sub _list_locks {
   my $results = $c->minion->backend->list_locks($offset, $limit, $options);
   $c->render(
     'minion/locks',
+    format => 'html',
     locks  => $results->{locks},
     total  => $results->{total},
     limit  => $limit,
@@ -92,6 +94,7 @@ sub _list_workers {
   my $results = $c->minion->backend->list_workers($offset, $limit, $options);
   $c->render(
     'minion/workers',
+    format  => 'html',
     workers => $results->{workers},
     total   => $results->{total},
     limit   => $limit,
