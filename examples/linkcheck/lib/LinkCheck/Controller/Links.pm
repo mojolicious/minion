@@ -4,11 +4,11 @@ use Mojo::Base 'Mojolicious::Controller';
 sub check {
   my $self = shift;
 
-  my $validation = $self->validation;
-  $validation->required('url');
-  return $self->render(action => 'index') if $validation->has_error;
+  my $v = $self->validation;
+  $v->required('url');
+  return $self->render(action => 'index') if $v->has_error;
 
-  my $id = $self->minion->enqueue(check_links => [$validation->param('url')]);
+  my $id = $self->minion->enqueue(check_links => [$v->param('url')]);
   $self->redirect_to('result', id => $id);
 }
 
