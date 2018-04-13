@@ -49,6 +49,21 @@ sub retry {
   return $self->minion->backend->retry_job($self->id, $self->retries, @_);
 }
 
+sub run {
+  my $self = shift;
+
+  return $@ unless eval {
+
+    # Reset event loop
+    Mojo::IOLoop->reset;
+    local @{$SIG}{qw(CHLD INT TERM QUIT)} = ('default') x 4;
+    $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
+
+    1;
+  };
+  return undef;
+}
+
 sub start {
   my $self = shift;
 
@@ -57,7 +72,7 @@ sub start {
   return $self->emit(spawn => $pid) if $self->{pid} = $pid;
 
   # Child
-  $self->_run;
+  if (defined(my $err = $self->run)) { $self->fail($err) }
   POSIX::_exit(0);
 }
 
@@ -67,22 +82,6 @@ sub _handle {
   my $self = shift;
   $self->emit(reap => $self->{pid});
   $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
-}
-
-sub _run {
-  my $self = shift;
-
-  return undef if eval {
-
-    # Reset event loop
-    Mojo::IOLoop->reset;
-    local @{$SIG}{qw(CHLD INT TERM QUIT)} = ('default') x 4;
-    $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
-
-    1;
-  };
-  $self->fail(my $err = $@);
-  return $err;
 }
 
 1;
@@ -461,6 +460,17 @@ Job priority.
 Queue to put job in.
 
 =back
+
+=head2 run
+
+  my $err = $job->run;
+
+Perform job in this process and return C<undef> if the task was successful or an
+exception if one was thrown.
+
+  # Perform job in foreground
+  if (my $err = $job->run) { $job->fail($err) }
+  else                     { $job->finish }
 
 =head2 start
 

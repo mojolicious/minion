@@ -1,5 +1,6 @@
 
-8.13  2018-03-08
+8.13  2018-04-13
+  - Added run method to Minion::Job.
 
 8.12  2018-03-07
   - Added parents option to retry and retry_job methods in Minion::Job and
