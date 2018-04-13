@@ -39,8 +39,8 @@ sub _list_jobs {
   $v->optional('state')->in(qw(active failed finished inactive));
   $v->optional('task');
   my $options = {};
-  $options->{$_} = $v->param($_) for qw(queue state task);
-  $options->{ids} = $v->every_param('id') if $v->is_valid('id');
+  $v->is_valid($_) && ($options->{"${_}s"} = $v->every_param($_))
+    for qw(id queue state task);
   my $limit  = $v->param('limit')  || 10;
   my $offset = $v->param('offset') || 0;
 
@@ -61,7 +61,8 @@ sub _list_locks {
   $v->optional('limit')->num;
   $v->optional('offset')->num;
   $v->optional('name');
-  my $options = {name => $v->param('name')};
+  my $options = {};
+  $options->{names} = $v->every_param('name') if $v->is_valid('name');
   my $limit  = $v->param('limit')  || 10;
   my $offset = $v->param('offset') || 0;
 

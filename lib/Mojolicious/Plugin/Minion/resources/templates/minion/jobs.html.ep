@@ -76,7 +76,7 @@
         % my $i = 0;
         % for my $job (@$jobs) {
           % $i++;
-          % my $base = url_with->query(offset => 0);
+          % my $base = url_with->query([offset => 0]);
           <tbody>
             <tr>
               <td>

@@ -228,7 +228,7 @@ subclass.
 =head2 list_jobs
 
   my $results = $backend->list_jobs($offset, $limit);
-  my $results = $backend->list_jobs($offset, $limit, {state => 'inactive'});
+  my $results = $backend->list_jobs($offset, $limit, {states => ['inactive']});
 
 Returns the information about jobs in batches. Meant to be overloaded in a
 subclass.
@@ -251,23 +251,23 @@ These options are currently available:
 
 List only jobs with these ids.
 
-=item queue
+=item queues
 
-  queue => 'important'
+  queues => ['important', 'unimportant']
 
-List only jobs in this queue.
+List only jobs in these queues.
 
-=item state
+=item states
 
-  state => 'inactive'
+  states => ['inactive', 'active']
 
-List only jobs in this state.
+List only jobs in these states.
 
-=item task
+=item tasks
 
-  task => 'test'
+  tasks => ['foo', 'bar']
 
-List only jobs for this task.
+List only jobs for these tasks.
 
 =back
 
@@ -382,24 +382,24 @@ Id of worker that is processing the job.
 =head2 list_locks
 
   my $results = $backend->list_locks($offset, $limit);
-  my $results = $backend->list_locks($offset, $limit, {name => 'foo'});
+  my $results = $backend->list_locks($offset, $limit, {names => ['foo']});
 
 Returns information about locks in batches. Meant to be overloaded in a
 subclass.
 
   # Check expiration time
-  my $results = $backend->list_locks(0, 1, {name => 'foo'});
+  my $results = $backend->list_locks(0, 1, {names => ['foo']});
   my $expires = $results->{locks}[0]{expires};
 
 These options are currently available:
 
 =over 2
 
-=item name
+=item names
 
-  name => 'foo'
+  names => ['foo', 'bar']
 
-List only locks with this name.
+List only locks with these names.
 
 =back
 

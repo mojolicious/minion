@@ -184,7 +184,7 @@ is $results->{locks}[0]{name},      'test',       'right name';
 like $results->{locks}[0]{expires}, qr/^[\d.]+$/, 'expires';
 is $results->{locks}[1], undef, 'no more locks';
 is $results->{total}, 3, 'three results';
-$results = $minion->backend->list_locks(0, 10, {name => 'yada'});
+$results = $minion->backend->list_locks(0, 10, {names => ['yada']});
 is $results->{locks}[0]{name},      'yada',       'right name';
 like $results->{locks}[0]{expires}, qr/^[\d.]+$/, 'expires';
 is $results->{locks}[1]{name},      'yada',       'right name';
@@ -195,7 +195,7 @@ $minion->backend->pg->db->query(
   "update minion_locks set expires = now() - interval '1 second' * 1
    where name = 'yada'",
 );
-is $minion->backend->list_locks(0, 10, {name => 'yada'})->{total}, 0,
+is $minion->backend->list_locks(0, 10, {names => ['yada']})->{total}, 0,
   'no results';
 $minion->unlock('test');
 is $minion->backend->list_locks(0, 10)->{total}, 0, 'no results';
@@ -313,22 +313,28 @@ is $batch->[3]{task},       'fail',       'right task';
 is $batch->[3]{state},      'finished',   'right state';
 is $batch->[3]{retries},    0,            'job has not been retried';
 ok !$batch->[4], 'no more results';
-$batch = $minion->backend->list_jobs(0, 10, {state => 'inactive'})->{jobs};
+$batch = $minion->backend->list_jobs(0, 10, {states => ['inactive']})->{jobs};
 is $batch->[0]{state},   'inactive', 'right state';
 is $batch->[0]{retries}, 0,          'job has not been retried';
 ok !$batch->[1], 'no more results';
-$batch = $minion->backend->list_jobs(0, 10, {task => 'add'})->{jobs};
+$batch = $minion->backend->list_jobs(0, 10, {tasks => ['add']})->{jobs};
 is $batch->[0]{task},    'add', 'right task';
 is $batch->[0]{retries}, 0,     'job has not been retried';
 ok !$batch->[1], 'no more results';
-$batch = $minion->backend->list_jobs(0, 10, {queue => 'default'})->{jobs};
+$batch = $minion->backend->list_jobs(0, 10, {tasks => ['add', 'fail']})->{jobs};
+is $batch->[0]{task}, 'add',  'right task';
+is $batch->[1]{task}, 'fail', 'right task';
+is $batch->[2]{task}, 'fail', 'right task';
+is $batch->[3]{task}, 'fail', 'right task';
+ok !$batch->[4], 'no more results';
+$batch = $minion->backend->list_jobs(0, 10, {queues => ['default']})->{jobs};
 is $batch->[0]{queue}, 'default', 'right queue';
 is $batch->[1]{queue}, 'default', 'right queue';
 is $batch->[2]{queue}, 'default', 'right queue';
 is $batch->[3]{queue}, 'default', 'right queue';
 ok !$batch->[4], 'no more results';
 $batch
-  = $minion->backend->list_jobs(0, 10, {queue => 'does_not_exist'})->{jobs};
+  = $minion->backend->list_jobs(0, 10, {queues => ['does_not_exist']})->{jobs};
 is_deeply $batch, [], 'no results';
 $results = $minion->backend->list_jobs(0, 1);
 $batch = $results->{jobs};

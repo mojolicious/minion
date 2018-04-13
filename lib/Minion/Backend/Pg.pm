@@ -63,10 +63,11 @@ sub list_jobs {
        extract(epoch from started) as started, state, task,
        count(*) over() as total, worker
      from minion_jobs as j
-     where (id = any ($1) or $1 is null) and (queue = $2 or $2 is null)
-       and (state = $3 or $3 is null) and (task = $4 or $4 is null)
+     where (id = any ($1) or $1 is null) and (queue = any ($2) or $2 is null)
+       and (state = any ($3) or $3 is null) and (task = any ($4) or $4 is null)
      order by id desc
-     limit $5 offset $6', @$options{qw(ids queue state task)}, $limit, $offset
+     limit $5 offset $6', @$options{qw(ids queues states tasks)}, $limit,
+    $offset
   )->expand->hashes->to_array;
   return _total('jobs', $jobs);
 }
@@ -77,8 +78,8 @@ sub list_locks {
   my $locks = $self->pg->db->query(
     'select name, extract(epoch from expires) as expires,
        count(*) over() as total from minion_locks
-     where expires > now() and (name = $1 or $1 is null)
-     order by id desc limit $2 offset $3', $options->{name}, $limit, $offset
+     where expires > now() and (name = any ($1) or $1 is null)
+     order by id desc limit $2 offset $3', $options->{names}, $limit, $offset
   )->hashes->to_array;
   return _total('locks', $locks);
 }
@@ -467,7 +468,7 @@ Transition from C<active> to C<finished> state.
 =head2 list_jobs
 
   my $results = $backend->list_jobs($offset, $limit);
-  my $results = $backend->list_jobs($offset, $limit, {state => 'inactive'});
+  my $results = $backend->list_jobs($offset, $limit, {states => ['inactive']});
 
 Returns the information about jobs in batches.
 
@@ -489,23 +490,23 @@ These options are currently available:
 
 List only jobs with these ids.
 
-=item queue
+=item queues
 
-  queue => 'important'
+  queues => ['important', 'unimportant']
 
-List only jobs in this queue.
+List only jobs in these queues.
 
-=item state
+=item states
 
-  state => 'inactive'
+  states => ['inactive', 'active']
 
-List only jobs in this state.
+List only jobs in these states.
 
-=item task
+=item tasks
 
-  task => 'test'
+  tasks => ['foo', 'bar']
 
-List only jobs for this task.
+List only jobs for these tasks.
 
 =back
 
@@ -620,21 +621,21 @@ Id of worker that is processing the job.
 =head2 list_locks
 
   my $results = $backend->list_locks($offset, $limit);
-  my $results = $backend->list_locks($offset, $limit, {name => 'foo'});
+  my $results = $backend->list_locks($offset, $limit, {names => ['foo']});
 
 Returns information about locks in batches.
 
   # Check expiration time
-  my $results = $backend->list_locks(0, 1, {name => 'foo'});
+  my $results = $backend->list_locks(0, 1, {names => ['foo']});
   my $expires = $results->{locks}[0]{expires};
 
 These options are currently available:
 
 =over 2
 
-=item name
+=item names
 
-  name => 'foo'
+  names => ['foo', 'bar']
 
 List only locks with this name.
 
