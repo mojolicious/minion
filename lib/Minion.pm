@@ -38,10 +38,14 @@ sub foreground {
   return undef
     unless $job->retry({attempts => 1, queue => 'minion_foreground'});
 
+  # Reset event loop
+  Mojo::IOLoop->reset;
+  local @{$SIG}{qw(CHLD INT TERM QUIT)} = ('default') x 4;
+
   my $worker = $self->worker->register;
   $job = $worker->dequeue(0 => {id => $id, queues => ['minion_foreground']});
   my $err;
-  if ($job) { defined($err = $job->run) ? $job->fail($err) : $job->finish }
+  if ($job) { defined($err = $job->execute) ? $job->fail($err) : $job->finish }
   $worker->unregister;
 
   return defined $err ? die $err : !!$job;

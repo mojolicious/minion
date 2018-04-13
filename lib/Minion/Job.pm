@@ -8,6 +8,14 @@ has [qw(args id minion retries task)];
 
 sub app { shift->minion->app }
 
+sub execute {
+  my $self = shift;
+  return eval {
+    $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
+    1;
+  } ? undef : $@;
+}
+
 sub fail {
   my ($self, $err) = (shift, shift // 'Unknown error');
   my $ok = $self->minion->backend->fail_job($self->id, $self->retries, $err);
@@ -49,20 +57,6 @@ sub retry {
   return $self->minion->backend->retry_job($self->id, $self->retries, @_);
 }
 
-sub run {
-  my $self = shift;
-
-  return eval {
-
-    # Reset event loop
-    Mojo::IOLoop->reset;
-    local @{$SIG}{qw(CHLD INT TERM QUIT)} = ('default') x 4;
-    $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
-
-    1;
-  } ? undef : $@;
-}
-
 sub start {
   my $self = shift;
 
@@ -70,8 +64,12 @@ sub start {
   die "Can't fork: $!" unless defined(my $pid = fork);
   return $self->emit(spawn => $pid) if $self->{pid} = $pid;
 
+  # Reset event loop
+  Mojo::IOLoop->reset;
+  local @{$SIG}{qw(CHLD INT TERM QUIT)} = ('default') x 4;
+
   # Child
-  if (defined(my $err = $self->run)) { $self->fail($err) }
+  if (defined(my $err = $self->execute)) { $self->fail($err) }
   POSIX::_exit(0);
 }
 
@@ -235,6 +233,17 @@ Get application from L<Minion/"app">.
 
   # Longer version
   my $app = $job->minion->app;
+
+=head2 execute
+
+  my $err = $job->execute;
+
+Perform job in this process and return C<undef> if the task was successful or an
+exception otherwise.
+
+  # Perform job in foreground
+  if (my $err = $job->execute) { $job->fail($err) }
+  else                         { $job->finish }
 
 =head2 fail
 
@@ -459,17 +468,6 @@ Job priority.
 Queue to put job in.
 
 =back
-
-=head2 run
-
-  my $err = $job->run;
-
-Perform job in this process and return C<undef> if the task was successful or an
-exception if one was thrown.
-
-  # Perform job in foreground
-  if (my $err = $job->run) { $job->fail($err) }
-  else                     { $job->finish }
 
 =head2 start
 
