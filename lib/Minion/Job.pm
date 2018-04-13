@@ -52,7 +52,7 @@ sub retry {
 sub run {
   my $self = shift;
 
-  return $@ unless eval {
+  return eval {
 
     # Reset event loop
     Mojo::IOLoop->reset;
@@ -60,8 +60,7 @@ sub run {
     $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
 
     1;
-  };
-  return undef;
+  } ? undef : $@;
 }
 
 sub start {
