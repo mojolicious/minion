@@ -4,8 +4,11 @@
     Minion::Backend::Pg with queues, states and tasks options.
   - Replaced name option of list_locks method in Minion::Backend::Pg with names
     option.
+  - Added EXPERIMENTAL support for displaying a 24 hour history graph on the
+    Mojolicious::Plugin::Minion::Admin dashboard.
+  - Added EXPERIMENTAL history methods to Minion and Minion::Backend::Pg.
   - Added execute method to Minion::Job.
-  - Fixed a bug where the job command could remove all parents ffrom retried
+  - Fixed a bug where the job command could remove all parents from retried
     jobs.
   - Fixed filtering of jobs by queue and state in
     Mojolicious::Plugin::Minion::Admin.

@@ -57,3 +57,9 @@ pre {
   stroke: #77c293;
   stroke-width: 8;
 }
+#history-chart {
+  height: 200px;
+}
+#history-chart .day {
+  fill: #a9e3be;
+}

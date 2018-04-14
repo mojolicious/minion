@@ -282,6 +282,17 @@ is $stats->{finished_jobs},    3, 'three finished jobs';
 is $stats->{inactive_jobs},    0, 'no inactive jobs';
 is $stats->{delayed_jobs},     0, 'no delayed jobs';
 
+# History
+my $history = $minion->history;
+is $#{$history->{day}}, 23, 'data for 24 hours';
+is $history->{day}[0]{finished},  3, 'three finished jobs in the last hour';
+is $history->{day}[-1]{finished}, 0, 'no finished jobs 24 hours ago';
+ok defined $history->{day}[0]{hour},  'has hour value';
+ok defined $history->{day}[1]{hour},  'has hour value';
+ok defined $history->{day}[12]{hour}, 'has hour value';
+ok defined $history->{day}[-1]{hour}, 'has hour value';
+isnt $history->{day}[0]{hour}, $history->{day}[1]{hours}, 'different hour';
+
 # List jobs
 $id      = $minion->enqueue('add');
 $results = $minion->backend->list_jobs(0, 10);

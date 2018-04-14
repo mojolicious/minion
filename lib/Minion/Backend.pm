@@ -5,11 +5,15 @@ use Carp 'croak';
 
 has 'minion';
 
-sub broadcast    { croak 'Method "broadcast" not implemented by subclass' }
-sub dequeue      { croak 'Method "dequeue" not implemented by subclass' }
-sub enqueue      { croak 'Method "enqueue" not implemented by subclass' }
-sub fail_job     { croak 'Method "fail_job" not implemented by subclass' }
-sub finish_job   { croak 'Method "finish_job" not implemented by subclass' }
+sub broadcast  { croak 'Method "broadcast" not implemented by subclass' }
+sub dequeue    { croak 'Method "dequeue" not implemented by subclass' }
+sub enqueue    { croak 'Method "enqueue" not implemented by subclass' }
+sub fail_job   { croak 'Method "fail_job" not implemented by subclass' }
+sub finish_job { croak 'Method "finish_job" not implemented by subclass' }
+
+# TODO: This method will croak after the experimentation period
+sub history { {day => []} }
+
 sub list_jobs    { croak 'Method "list_jobs" not implemented by subclass' }
 sub list_locks   { croak 'Method "list_locks" not implemented by subclass' }
 sub list_workers { croak 'Method "list_workers" not implemented by subclass' }
@@ -50,6 +54,7 @@ Minion::Backend - Backend base class
   sub enqueue           {...}
   sub fail_job          {...}
   sub finish_job        {...}
+  sub history           {...}
   sub list_jobs         {...}
   sub list_locks        {...}
   sub list_workers      {...}
@@ -224,6 +229,25 @@ L<Minion/"backoff">. Meant to be overloaded in a subclass.
 
 Transition from C<active> to C<finished> state. Meant to be overloaded in a
 subclass.
+
+=head2 history
+
+  my $history = $backend->history;
+
+Get history information for job queue. Meant to be overloaded in a subclass.
+Note that this method is EXPERIMENTAL and might change without warning!
+
+These fields are currently available:
+
+=over 2
+
+=item day
+
+  day => [{hour => 3, jobs => 384}, {hour => 4, jobs => 12}, ...]
+
+Hourly counts for processed jobs from the past day.
+
+=back
 
 =head2 list_jobs
 

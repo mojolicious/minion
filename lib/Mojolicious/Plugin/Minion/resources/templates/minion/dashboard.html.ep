@@ -32,7 +32,23 @@
       }
       setTimeout(updateBacklogChart, 1000);
     }
-    $(function () { updateBacklogChart() });
+    $(function () {
+      updateBacklogChart();
+      $('#history-chart').epoch({
+        type: 'bar',
+        data: [{
+          label: 'day',
+          values: [
+            % for my $hour (@{$history->{day}}) {
+              {
+                x: '<%= sprintf '%02d:00', $hour->{hour} %>',
+                y: <%= $hour->{finished} %>
+              },
+            % }
+          ]
+        }]
+      });
+    });
   </script>
 % end
 
@@ -94,5 +110,13 @@
 <div class="row">
   <div class="col-md-12">
     <div id="backlog-chart" class="epoch category20c"></div>
+  </div>
+</div>
+
+<h3>History</h3>
+
+<div class="row">
+  <div class="col-md-12">
+    <div id="history-chart" class="epoch category20"></div>
   </div>
 </div>

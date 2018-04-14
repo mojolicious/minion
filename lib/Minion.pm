@@ -58,6 +58,8 @@ sub guard {
   return Minion::_Guard->new(minion => $self, name => $name, time => $time);
 }
 
+sub history { shift->backend->history }
+
 sub job {
   my ($self, $id) = @_;
 
@@ -507,6 +509,25 @@ failed.
       unless my $guard = $minion->guard('some_web_service', 60, {limit => 5});
     ...
   });
+
+=head2 history
+
+  my $history = $minion->history;
+
+Get history information for job queue. Note that this method is EXPERIMENTAL and
+might change without warning!
+
+These fields are currently available:
+
+=over 2
+
+=item day
+
+  day => [{hour => 3, jobs => 384}, {hour => 4, jobs => 12}, ...]
+
+Hourly counts for processed jobs from the past day.
+
+=back
 
 =head2 job
 

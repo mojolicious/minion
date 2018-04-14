@@ -50,6 +50,27 @@ sub enqueue {
 sub fail_job   { shift->_update(1, @_) }
 sub finish_job { shift->_update(0, @_) }
 
+sub history {
+  my $self = shift;
+
+  my $day = $self->pg->db->query(
+    "select extract(hour from ts) as hour, coalesce(finished, 0) as finished
+     from (
+       select extract (day from finished) as day,
+         extract(hour from finished) as hour, count(*) as finished
+       from minion_jobs
+       where finished > now() - interval '23 hours'
+       group by day, hour
+     ) as j right outer join (
+       select *
+       from generate_series(now() - interval '23 hour', now(), '1 hour') as ts
+     ) as s on extract(hour from ts) = j.hour and extract(day from ts) = j.day
+     order by j.day, hour asc"
+  )->hashes->to_array;
+
+  return {day => $day};
+}
+
 sub list_jobs {
   my ($self, $offset, $limit, $options) = @_;
 
@@ -464,6 +485,25 @@ L<Minion/"backoff">.
     $job_id, $retries, {whatever => 'All went well!'});
 
 Transition from C<active> to C<finished> state.
+
+=head2 history
+
+  my $history = $backend->history;
+
+Get history information for job queue. Note that this method is EXPERIMENTAL and
+might change without warning!
+
+These fields are currently available:
+
+=over 2
+
+=item day
+
+  day => [{hour => 3, jobs => 384}, {hour => 4, jobs => 12}, ...]
+
+Hourly counts for processed jobs from the past day.
+
+=back
 
 =head2 list_jobs
 
