@@ -378,7 +378,8 @@ C<1800> (30 minutes).
 
 Amount of time in seconds after which jobs that have reached the state
 C<finished> and have no unresolved dependencies will be removed automatically by
-L</"repair">, defaults to C<172800> (2 days).
+L</"repair">, defaults to C<172800> (2 days). It is not recommended to set this
+value below 2 days.
 
 =head2 tasks
 
