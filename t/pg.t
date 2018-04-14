@@ -285,8 +285,8 @@ is $stats->{delayed_jobs},     0, 'no delayed jobs';
 # History
 my $history = $minion->history;
 is $#{$history->{day}}, 23, 'data for 24 hours';
-is $history->{day}[0]{finished},  3, 'three finished jobs in the last hour';
-is $history->{day}[-1]{finished}, 0, 'no finished jobs 24 hours ago';
+is $history->{day}[-1]{finished}, 3, 'three finished jobs in the last hour';
+is $history->{day}[0]{finished},  0, 'no finished jobs 24 hours ago';
 ok defined $history->{day}[0]{hour},  'has hour value';
 ok defined $history->{day}[1]{hour},  'has hour value';
 ok defined $history->{day}[12]{hour}, 'has hour value';

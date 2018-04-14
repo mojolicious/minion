@@ -54,7 +54,8 @@ sub history {
   my $self = shift;
 
   my $day = $self->pg->db->query(
-    "select extract(hour from ts) as hour, coalesce(finished, 0) as finished
+    "select extract(day from ts) as day, extract(hour from ts) as hour,
+       coalesce(finished, 0) as finished
      from (
        select extract (day from finished) as day,
          extract(hour from finished) as hour, count(*) as finished
@@ -65,8 +66,8 @@ sub history {
        select *
        from generate_series(now() - interval '23 hour', now(), '1 hour') as ts
      ) as s on extract(hour from ts) = j.hour and extract(day from ts) = j.day
-     order by j.day, hour asc"
-  )->hashes->to_array;
+     order by day, hour asc"
+  )->hashes->map(sub { delete $_->{day}; $_ })->to_array;
 
   return {day => $day};
 }
