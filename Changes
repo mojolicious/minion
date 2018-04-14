@@ -1,5 +1,5 @@
 
-9.0  2018-04-13
+9.0  2018-04-14
   - Replaced queue, state and task options of list_jobs method in
     Minion::Backend::Pg with queues, states and tasks options.
   - Replaced name option of list_locks method in Minion::Backend::Pg with names

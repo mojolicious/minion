@@ -737,17 +737,31 @@ Build L<Minion::Worker> object.
   # Start a worker
   $minion->worker->run;
 
-  # Perform one job manually
+  # Perform one job manually in a separate process
   my $worker = $minion->repair->worker->register;
   my $job    = $worker->dequeue(5);
   $job->perform;
   $worker->unregister;
 
-  # Build a custom worker
+  # Perform one job manually in this process
+  my $worker = $minion->repair->worker->register;
+  my $job    = $worker->dequeue(5);
+  if (my $err = $job->execute) { $job->fail($err) }
+  else                         { $job->finish }
+  $worker->unregister;
+
+  # Build a custom worker performing multiple jobs at the same time
+  my %jobs;
   my $worker = $minion->repair->worker;
-  while (int rand 2) {
-    next unless my $job = $worker->register->dequeue(5);
-    $job->perform;
+  while (1) {
+    for my $id (keys %jobs) {
+      delete $jobs{$id} if $jobs{$id}->is_finished;
+    }
+    if (keys %jobs >= 4) { sleep 5 }
+    else {
+      my $job = $worker->dequeue(5);
+      $jobs{$job->id} = $job->start if $job;
+    }
   }
   $worker->unregister;
 
