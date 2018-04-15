@@ -734,8 +734,11 @@ Release a named lock that has been previously acquired with L</"lock">.
 
 Build L<Minion::Worker> object.
 
-  # Start a worker
-  $minion->worker->run;
+  # Use the standard worker with all its features
+  my $worker = $minion->worker;
+  $worker->status->{jobs} = 12;
+  $worker->status->{queues} = ['important'];
+  $worker->run;
 
   # Perform one job manually in a separate process
   my $worker = $minion->repair->worker->register;
@@ -752,7 +755,7 @@ Build L<Minion::Worker> object.
 
   # Build a custom worker performing multiple jobs at the same time
   my %jobs;
-  my $worker = $minion->repair->worker;
+  my $worker = $minion->repair->worker->register;
   while (1) {
     for my $id (keys %jobs) {
       delete $jobs{$id} if $jobs{$id}->is_finished;
@@ -762,6 +765,7 @@ Build L<Minion::Worker> object.
       my $job = $worker->dequeue(5);
       $jobs{$job->id} = $job->start if $job;
     }
+    last unless keys %jobs;
   }
   $worker->unregister;
 
