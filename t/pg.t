@@ -283,15 +283,29 @@ is $stats->{inactive_jobs},    0, 'no inactive jobs';
 is $stats->{delayed_jobs},     0, 'no delayed jobs';
 
 # History
+$minion->enqueue('fail');
+$worker = $minion->worker->register;
+$job    = $worker->dequeue(0);
+ok $job->fail, 'job failed';
+$worker->unregister;
 my $history = $minion->history;
-is $#{$history->{day}}, 23, 'data for 24 hours';
-is $history->{day}[-1]{finished}, 3, 'three finished jobs in the last hour';
-is $history->{day}[0]{finished},  0, 'no finished jobs 24 hours ago';
-ok defined $history->{day}[0]{hour},  'has hour value';
-ok defined $history->{day}[1]{hour},  'has hour value';
-ok defined $history->{day}[12]{hour}, 'has hour value';
-ok defined $history->{day}[-1]{hour}, 'has hour value';
-isnt $history->{day}[0]{hour}, $history->{day}[1]{hours}, 'different hour';
+is $#{$history->{daily}}, 23, 'data for 24 hours';
+is $history->{daily}[-1]{finished_jobs}, 3, 'one failed job in the last hour';
+is $history->{daily}[-1]{failed_jobs}, 1,
+  'three finished jobs in the last hour';
+is $history->{daily}[0]{finished_jobs}, 0, 'no finished jobs 24 hours ago';
+is $history->{daily}[0]{failed_jobs},   0, 'no failed jobs 24 hours ago';
+ok defined $history->{daily}[0]{day},   'has day value';
+ok defined $history->{daily}[0]{hour},  'has hour value';
+ok defined $history->{daily}[1]{day},   'has day value';
+ok defined $history->{daily}[1]{hour},  'has hour value';
+ok defined $history->{daily}[12]{day},  'has day value';
+ok defined $history->{daily}[12]{hour}, 'has hour value';
+ok defined $history->{daily}[-1]{day},  'has day value';
+ok defined $history->{daily}[-1]{hour}, 'has hour value';
+isnt $history->{daily}[0]{day},  $history->{daily}[1]{day},   'different day';
+isnt $history->{daily}[0]{hour}, $history->{daily}[1]{hours}, 'different hour';
+$job->remove;
 
 # List jobs
 $id      = $minion->enqueue('add');

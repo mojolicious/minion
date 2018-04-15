@@ -522,9 +522,9 @@ These fields are currently available:
 
 =over 2
 
-=item day
+=item daily
 
-  day => [{hour => 3, finished => 384}, {hour => 4, finished => 12}, ...]
+  daily => [{day => 12, hour => 20, finished_jobs => 95, failed_jobs => 2}, ...]
 
 Hourly counts for processed jobs from the past day.
 

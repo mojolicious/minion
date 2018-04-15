@@ -18,6 +18,7 @@ sub run {
     'd|delay=i'     => \$opts->{delay},
     'e|enqueue=s'   => \my $enqueue,
     'f|foreground'  => \my $foreground,
+    'H|history'     => \my $history,
     'L|locks'       => \my $locks,
     'l|limit=i'     => \(my $limit = 100),
     'o|offset=i'    => \(my $offset = 0),
@@ -41,6 +42,9 @@ sub run {
 
   # Show stats
   return $self->_stats if $stats;
+
+  # Show history
+  return print dumper $minion->history if $history;
 
   # Locks
   return $minion->unlock($unlock) if $unlock;

@@ -37,12 +37,12 @@
       $('#history-chart').epoch({
         type: 'bar',
         data: [{
-          label: 'day',
+          label: 'processed',
           values: [
-            % for my $hour (@{$history->{day}}) {
+            % for my $hour (@{$history->{daily}}) {
               {
                 x: '<%= sprintf '%02d:00', $hour->{hour} %>',
-                y: <%= $hour->{finished} %>
+                y: <%= $hour->{finished_jobs} + $hour->{failed_jobs} %>
               },
             % }
           ]

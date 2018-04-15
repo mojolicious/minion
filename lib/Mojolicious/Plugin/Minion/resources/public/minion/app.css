@@ -60,6 +60,6 @@ pre {
 #history-chart {
   height: 200px;
 }
-#history-chart .day {
+#history-chart .processed {
   fill: #a9e3be;
 }

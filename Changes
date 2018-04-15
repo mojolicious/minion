@@ -11,6 +11,7 @@
   - Added EXPERIMENTAL finish event to Minion::Job.
   - Added EXPERIMENTAL history methods to Minion and Minion::Backend::Pg.
   - Added execute method to Minion::Job.
+  - Added -H option to job command.
   - Improved note method in Minion::Job to allow for multiple metadata fields to
     be changed at once.
   - Fixed a bug where the job command could remove all parents from retried

@@ -53,12 +53,15 @@ sub finish_job { shift->_update(0, @_) }
 sub history {
   my $self = shift;
 
-  my $day = $self->pg->db->query(
+  my $daily = $self->pg->db->query(
     "select extract(day from ts) as day, extract(hour from ts) as hour,
-       coalesce(finished, 0) as finished
+       coalesce(failed_jobs, 0) as failed_jobs,
+       coalesce(finished_jobs, 0) as finished_jobs
      from (
        select extract (day from finished) as day,
-         extract(hour from finished) as hour, count(*) as finished
+         extract(hour from finished) as hour,
+         count(case when state = 'failed' then 1 end) as failed_jobs,
+         count(case when state = 'finished' then 1 end) as finished_jobs
        from minion_jobs
        where finished > now() - interval '23 hours'
        group by day, hour
@@ -67,9 +70,9 @@ sub history {
        from generate_series(now() - interval '23 hour', now(), '1 hour') as ts
      ) as s on extract(hour from ts) = j.hour and extract(day from ts) = j.day
      order by day, hour asc"
-  )->hashes->map(sub { delete $_->{day}; $_ })->to_array;
+  )->hashes->to_array;
 
-  return {day => $day};
+  return {daily => $daily};
 }
 
 sub list_jobs {
@@ -497,9 +500,9 @@ These fields are currently available:
 
 =over 2
 
-=item day
+=item daily
 
-  day => [{hour => 3, finished => 384}, {hour => 4, finished => 12}, ...]
+  daily => [{day => 12, hour => 20, finished_jobs => 95, failed_jobs => 2}, ...]
 
 Hourly counts for processed jobs from the past day.
 
