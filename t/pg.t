@@ -510,13 +510,6 @@ $minion->once(
             $job->task('add')->args->[-1] += 1;
           }
         );
-        $job->on(
-          finish => sub {
-            my $job = shift;
-            return unless defined(my $old = $job->info->{notes}{finish_count});
-            $job->note(finish_count => $old + 1);
-          }
-        );
       }
     );
   }
@@ -547,11 +540,10 @@ is $err,      "test\n", 'right error';
 is $failed,   1,        'failed event has been emitted once';
 is $finished, 1,        'finished event has been emitted once';
 $minion->add_task(switcheroo => sub { });
-$minion->enqueue(switcheroo => [5, 3] => {notes => {finish_count => 0}});
+$minion->enqueue(switcheroo => [5, 3]);
 $job = $worker->dequeue(0);
 $job->perform;
 is_deeply $job->info->{result}, {added => 9}, 'right result';
-is $job->info->{notes}{finish_count}, 1, 'finish event has been emitted once';
 $worker->unregister;
 
 # Queues

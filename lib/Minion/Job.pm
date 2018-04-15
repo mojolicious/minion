@@ -12,7 +12,7 @@ sub execute {
   my $self = shift;
   return eval {
     $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
-    !!$self->emit('finish');
+    1;
   } ? undef : $@;
 }
 
@@ -117,23 +117,6 @@ after it has transitioned to the C<failed> state.
   $job->on(failed => sub {
     my ($job, $err) = @_;
     say "Something went wrong: $err";
-  });
-
-=head2 finish
-
-  $job->on(finish => sub {
-    my $job = shift;
-    ...
-  });
-
-Emitted in the process performing this job if the task was successful. Note that
-this event is EXPERIMENTAL and might change without warning!
-
-  $job->on(finish => sub {
-    my $job  = shift;
-    my $id   = $job->id;
-    my $task = $job->task;
-    $job->app->log->debug(qq{Job "$id" was performed with task "$task"});
   });
 
 =head2 finished
