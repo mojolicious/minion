@@ -303,7 +303,6 @@ ok defined $history->{daily}[12]{day},  'has day value';
 ok defined $history->{daily}[12]{hour}, 'has hour value';
 ok defined $history->{daily}[-1]{day},  'has day value';
 ok defined $history->{daily}[-1]{hour}, 'has hour value';
-isnt $history->{daily}[0]{day},  $history->{daily}[1]{day},   'different day';
 isnt $history->{daily}[0]{hour}, $history->{daily}[1]{hours}, 'different hour';
 $job->remove;
 
