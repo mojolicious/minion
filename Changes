@@ -6,9 +6,9 @@
     option.
   - Replaced key/value argument of note method in Minion::Backend::Pg with hash
     reference.
-  - Added EXPERIMENTAL finish event to Minion::Job.
   - Added EXPERIMENTAL support for displaying a 24 hour history graph on the
     Mojolicious::Plugin::Minion::Admin dashboard.
+  - Added EXPERIMENTAL finish event to Minion::Job.
   - Added EXPERIMENTAL history methods to Minion and Minion::Backend::Pg.
   - Added execute method to Minion::Job.
   - Improved note method in Minion::Job to allow for multiple metadata fields to
