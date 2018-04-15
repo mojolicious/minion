@@ -139,6 +139,7 @@ Minion::Command::minion::job - Minion job command
     -f, --foreground            Retry job in "minion_foreground" queue and
                                 perform it right away in the foreground (very
                                 useful for debugging)
+    -H, --history               Show queue history
     -h, --help                  Show this summary of available options
         --home <path>           Path to home directory of your application,
                                 defaults to the value of MOJO_HOME or
