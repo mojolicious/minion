@@ -536,9 +536,10 @@ defaults to C<1>.
 
 =head2 note
 
-  $backend->note($job_id, foo => 'bar');
+  my $bool = $backend->note($job_id, {mojo => 'rocks', minion => 'too'});
 
-Change a metadata field for a job. Meant to be overloaded in a subclass.
+Change one or more metadata fields for a job. Meant to be overloaded in a
+subclass.
 
 =head2 receive
 

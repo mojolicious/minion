@@ -142,11 +142,10 @@ sub new {
 }
 
 sub note {
-  my ($self, $id, $key, $value) = @_;
+  my ($self, $id, $merge) = @_;
   return !!$self->pg->db->query(
-    'update minion_jobs set notes = jsonb_set(notes, ?, ?, true) where id = ?',
-    [$key], {json => $value}, $id
-  )->rows;
+    'update minion_jobs set notes = notes || ? where id = ?',
+    {json => $merge}, $id)->rows;
 }
 
 sub receive {
@@ -796,9 +795,9 @@ Construct a new L<Minion::Backend::Pg> object.
 
 =head2 note
 
-  my $bool = $backend->note($job_id, foo => 'bar');
+  my $bool = $backend->note($job_id, {mojo => 'rocks', minion => 'too'});
 
-Change a metadata field for a job.
+Change one or more metadata fields for a job.
 
 =head2 receive
 

@@ -12,7 +12,7 @@ sub execute {
   my $self = shift;
   return eval {
     $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
-    1;
+    !!$self->emit('finish');
   } ? undef : $@;
 }
 
@@ -40,7 +40,10 @@ sub is_finished {
   return 1;
 }
 
-sub note { $_[0]->minion->backend->note($_[0]->id, @_[1, 2]) }
+sub note {
+  my $self = shift;
+  return $self->minion->backend->note($self->id, {@_});
+}
 
 sub perform {
   my $self = shift;
@@ -117,6 +120,23 @@ after it has transitioned to the C<failed> state.
   $job->on(failed => sub {
     my ($job, $err) = @_;
     say "Something went wrong: $err";
+  });
+
+=head2 finish
+
+  $job->on(finish => sub {
+    my $job = shift;
+    ...
+  });
+
+Emitted in the process performing this job if the task was successful. Note that
+this event is EXPERIMENTAL and might change without warning!
+
+  $job->on(finish => sub {
+    my $job  = shift;
+    my $id   = $job->id;
+    my $task = $job->task;
+    $job->app->log->debug(qq{Job "$id" was performed with task "$task"});
   });
 
 =head2 finished
@@ -394,12 +414,12 @@ Check if job performed with L</"start"> is finished.
 
 =head2 note
 
-  my $bool = $job->note(foo => 'bar');
+  my $bool = $job->note(mojo => 'rocks', minion => 'too');
 
-Change a metadata field for this job. The new value will get serialized by
-L<Minion/"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects
-and be careful with binary data, nested data structures with hash and array
-references are fine though.
+Change one or more metadata fields for this job. The new values will get
+serialized by L<Minion/"backend"> (often with L<Mojo::JSON>), so you shouldn't
+send objects and be careful with binary data, nested data structures with hash
+and array references are fine though.
 
   # Share progress information
   $job->note(progress => 95);

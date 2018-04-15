@@ -4,10 +4,15 @@
     Minion::Backend::Pg with queues, states and tasks options.
   - Replaced name option of list_locks method in Minion::Backend::Pg with names
     option.
+  - Replaced key/value argument of note mehtod in Minion::Backend::Pg with hash
+    reference.
+  - Added EXPERIMENTAL finish event to Minion::Job.
   - Added EXPERIMENTAL support for displaying a 24 hour history graph on the
     Mojolicious::Plugin::Minion::Admin dashboard.
   - Added EXPERIMENTAL history methods to Minion and Minion::Backend::Pg.
   - Added execute method to Minion::Job.
+  - Improved note method in Minion::Job to allow for multiple metadata fields to
+    be changed at once.
   - Fixed a bug where the job command could remove all parents from retried
     jobs.
   - Fixed filtering of jobs by queue and state in
