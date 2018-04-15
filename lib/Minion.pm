@@ -524,7 +524,7 @@ These fields are currently available:
 
 =item day
 
-  day => [{hour => 3, jobs => 384}, {hour => 4, jobs => 12}, ...]
+  day => [{hour => 3, finished => 384}, {hour => 4, finished => 12}, ...]
 
 Hourly counts for processed jobs from the past day.
 
