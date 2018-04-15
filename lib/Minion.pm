@@ -756,7 +756,7 @@ Build L<Minion::Worker> object.
   # Build a custom worker performing multiple jobs at the same time
   my %jobs;
   my $worker = $minion->repair->worker->register;
-  while (1) {
+  do {
     for my $id (keys %jobs) {
       delete $jobs{$id} if $jobs{$id}->is_finished;
     }
@@ -765,8 +765,7 @@ Build L<Minion::Worker> object.
       my $job = $worker->dequeue(5);
       $jobs{$job->id} = $job->start if $job;
     }
-    last unless keys %jobs;
-  }
+  } while keys %jobs;
   $worker->unregister;
 
 =head1 REFERENCE
