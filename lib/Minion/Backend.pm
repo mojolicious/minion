@@ -12,7 +12,7 @@ sub fail_job   { croak 'Method "fail_job" not implemented by subclass' }
 sub finish_job { croak 'Method "finish_job" not implemented by subclass' }
 
 # TODO: This method will croak after the experimentation period
-sub history { {day => []} }
+sub history { {daily => []} }
 
 sub list_jobs    { croak 'Method "list_jobs" not implemented by subclass' }
 sub list_locks   { croak 'Method "list_locks" not implemented by subclass' }
