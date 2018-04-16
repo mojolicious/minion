@@ -60,8 +60,8 @@ sub history {
      from (
        select extract (day from finished) as day,
          extract(hour from finished) as hour,
-         count(case when state = 'failed' then 1 end) as failed_jobs,
-         count(case when state = 'finished' then 1 end) as finished_jobs
+         count(*) filter (where state = 'failed') as failed_jobs,
+         count(*) filter (where state = 'finished') as finished_jobs
        from minion_jobs
        where finished > now() - interval '23 hours'
        group by day, hour
