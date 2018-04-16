@@ -680,7 +680,7 @@ These options are currently available:
 
   names => ['foo', 'bar']
 
-List only locks with this name.
+List only locks with these names.
 
 =back
 
