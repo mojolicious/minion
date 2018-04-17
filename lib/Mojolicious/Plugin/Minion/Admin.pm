@@ -18,10 +18,10 @@ sub register {
   push @{$app->renderer->paths}, $resources->child('templates')->to_string;
 
   # Routes
-  $prefix->get('/'      => \&_dashboard)->name('minion_dashboard');
+  $prefix->get('/'        => \&_dashboard)->name('minion_dashboard');
+  $prefix->get('/stats'   => \&_stats)->name('minion_stats');
   $prefix->get('/history' => \&_history)->name('minion_history');
-  $prefix->get('/stats' => \&_stats)->name('minion_stats');
-  $prefix->get('/jobs'  => \&_list_jobs)->name('minion_jobs');
+  $prefix->get('/jobs'    => \&_list_jobs)->name('minion_jobs');
   $prefix->patch('/jobs' => \&_manage_jobs)->name('minion_manage_jobs');
   $prefix->get('/locks' => \&_list_locks)->name('minion_locks');
   $prefix->delete('/locks' => \&_unlock)->name('minion_unlock');
@@ -29,7 +29,7 @@ sub register {
 }
 
 sub _dashboard {
-  my $c = shift;
+  my $c       = shift;
   my $history = $c->minion->backend->history;
   $c->render('minion/dashboard', history => $history);
 }
