@@ -1,4 +1,6 @@
 
+9.02  2018-04-18
+
 9.01  2018-04-17
   - Improved 24 hour history graph to refresh automatically every 5 minutes in
     Mojolicious::Plugin::Minion::Admin. (s1037989)
