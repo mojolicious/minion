@@ -19,6 +19,7 @@ sub register {
 
   # Routes
   $prefix->get('/'      => \&_dashboard)->name('minion_dashboard');
+  $prefix->get('/history' => \&_history)->name('minion_history');
   $prefix->get('/stats' => \&_stats)->name('minion_stats');
   $prefix->get('/jobs'  => \&_list_jobs)->name('minion_jobs');
   $prefix->patch('/jobs' => \&_manage_jobs)->name('minion_manage_jobs');
@@ -31,6 +32,11 @@ sub _dashboard {
   my $c = shift;
   my $history = $c->minion->backend->history;
   $c->render('minion/dashboard', history => $history);
+}
+
+sub _history {
+  my $c = shift;
+  $c->render(json => $c->minion->history);
 }
 
 sub _list_jobs {
