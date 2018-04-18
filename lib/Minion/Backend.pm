@@ -243,7 +243,8 @@ These fields are currently available:
 
 =item daily
 
-  daily => [{day => 12, hour => 20, finished_jobs => 95, failed_jobs => 2}, ...]
+  daily =>
+    [{epoch => 12345, hour => 20, finished_jobs => 95, failed_jobs => 2}, ...]
 
 Hourly counts for processed jobs from the past day.
 

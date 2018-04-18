@@ -54,7 +54,7 @@ sub history {
   my $self = shift;
 
   my $daily = $self->pg->db->query(
-    "select extract(day from ts) as day, extract(hour from ts) as hour,
+    "select extract(epoch from ts) as epoch, extract(hour from ts) as hour,
        coalesce(failed_jobs, 0) as failed_jobs,
        coalesce(finished_jobs, 0) as finished_jobs
      from (
@@ -69,7 +69,7 @@ sub history {
        select *
        from generate_series(now() - interval '23 hour', now(), '1 hour') as ts
      ) as s on extract(hour from ts) = j.hour and extract(day from ts) = j.day
-     order by day, hour asc"
+     order by epoch asc"
   )->hashes->to_array;
 
   return {daily => $daily};
@@ -502,7 +502,8 @@ These fields are currently available:
 
 =item daily
 
-  daily => [{day => 12, hour => 20, finished_jobs => 95, failed_jobs => 2}, ...]
+  daily =>
+    [{epoch => 12345, hour => 20, finished_jobs => 95, failed_jobs => 2}, ...]
 
 Hourly counts for processed jobs from the past day.
 

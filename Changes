@@ -1,5 +1,9 @@
 
 9.02  2018-04-18
+  - Changed 24 hour history graph on Mojolicious::Plugin::Minion::Admin
+    dashboard to refresh in 10 minute intervals.
+  - Changed daily history data to include an epoch value instead of a day.
+  - Fixed a few ordering bugs in history methods.
 
 9.01  2018-04-17
   - Improved 24 hour history graph to refresh automatically every 5 minutes in

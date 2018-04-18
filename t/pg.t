@@ -290,20 +290,20 @@ ok $job->fail, 'job failed';
 $worker->unregister;
 my $history = $minion->history;
 is $#{$history->{daily}}, 23, 'data for 24 hours';
-is $history->{daily}[-1]{finished_jobs}, 3, 'one failed job in the last hour';
-is $history->{daily}[-1]{failed_jobs}, 1,
+is $history->{daily}[-1]{finished_jobs} + $history->{daily}[-2]{finished_jobs},
+  3, 'one failed job in the last hour';
+is $history->{daily}[-1]{failed_jobs} + $history->{daily}[-2]{failed_jobs}, 1,
   'three finished jobs in the last hour';
 is $history->{daily}[0]{finished_jobs}, 0, 'no finished jobs 24 hours ago';
 is $history->{daily}[0]{failed_jobs},   0, 'no failed jobs 24 hours ago';
-ok defined $history->{daily}[0]{day},   'has day value';
-ok defined $history->{daily}[0]{hour},  'has hour value';
-ok defined $history->{daily}[1]{day},   'has day value';
-ok defined $history->{daily}[1]{hour},  'has hour value';
-ok defined $history->{daily}[12]{day},  'has day value';
-ok defined $history->{daily}[12]{hour}, 'has hour value';
-ok defined $history->{daily}[-1]{day},  'has day value';
-ok defined $history->{daily}[-1]{hour}, 'has hour value';
-isnt $history->{daily}[0]{hour}, $history->{daily}[1]{hours}, 'different hour';
+ok defined $history->{daily}[0]{epoch},  'has epoch value';
+ok defined $history->{daily}[0]{hour},   'has hour value';
+ok defined $history->{daily}[1]{epoch},  'has epoch value';
+ok defined $history->{daily}[1]{hour},   'has hour value';
+ok defined $history->{daily}[12]{epoch}, 'has epoch value';
+ok defined $history->{daily}[12]{hour},  'has hour value';
+ok defined $history->{daily}[-1]{epoch}, 'has epoch value';
+ok defined $history->{daily}[-1]{hour},  'has hour value';
 $job->remove;
 
 # List jobs

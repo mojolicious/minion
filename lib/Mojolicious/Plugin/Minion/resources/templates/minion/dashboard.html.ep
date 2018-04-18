@@ -56,7 +56,7 @@
           });
         }
         else { historychart.update([{label: 'processed', values: historylog}]) }
-        setTimeout(updateHistoryChart, 1000 * 60 * 5);
+        setTimeout(updateHistoryChart, 1000 * 60 * 10);
       }).fail(function () { setTimeout(updateHistoryChart, 1000 * 60) });
     }
     $(function () {
