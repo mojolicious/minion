@@ -39,7 +39,7 @@
         var historylog = [];
         for (hour = 0; hour < data.daily.length; hour++) { 
           historylog.push({
-            x: data.daily[hour].hour,
+            x: new Date(data.daily[hour].epoch * 1000).getTime(),
             y: data.daily[hour].finished_jobs + data.daily[hour].failed_jobs
           });
         }
@@ -47,7 +47,7 @@
           historychart = $('#history-chart').epoch({
             type: 'bar',
             tickFormats: {
-              bottom: function (d) { return ('0' + d).slice(-2) + ':00' }
+              bottom: function (d) { return moment(d).format('HH:00') }
             },
             data: [{
               label: 'processed',

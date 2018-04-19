@@ -1,5 +1,8 @@
 
 9.03  2018-04-19
+  - Removed hour value from daily history data.
+  - Improved 24 hour history graph on Mojolicious::Plugin::Minion::Admin
+    dashboard to use the local time, consistent with the real-time graph.
 
 9.02  2018-04-18
   - Changed 24 hour history graph on Mojolicious::Plugin::Minion::Admin
