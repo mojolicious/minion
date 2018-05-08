@@ -187,9 +187,9 @@ L<Minion> is a high performance job queue for the Perl programming language,
 with support for multiple named queues, priorities, delayed jobs, job
 dependencies, job progress, job results, retries with backoff, rate limiting,
 unique jobs, statistics, distributed workers, parallel processing, autoscaling,
-remote control, L<Mojolicious|http://mojolicious.org> admin ui, resource leak
+remote control, L<Mojolicious|https://mojolicious.org> admin ui, resource leak
 protection and multiple backends (such as
-L<PostgreSQL|http://www.postgresql.org>).
+L<PostgreSQL|https://www.postgresql.org>).
 
 Job queues allow you to process time and/or computationally intensive tasks in
 background processes, outside of the request/response lifecycle of web
@@ -884,6 +884,6 @@ the terms of the Artistic License version 2.0.
 =head1 SEE ALSO
 
 L<https://github.com/kraih/minion>, L<Mojolicious::Guides>,
-L<http://mojolicious.org>.
+L<https://mojolicious.org>.
 
 =cut

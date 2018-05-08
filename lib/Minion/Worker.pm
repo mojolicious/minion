@@ -442,6 +442,6 @@ Unregister worker.
 
 =head1 SEE ALSO
 
-L<Minion>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
+L<Minion>, L<Mojolicious::Guides>, L<https://mojolicious.org>.
 
 =cut

@@ -1,5 +1,5 @@
 % layout 'linkcheck', title => 'Check links';
 %= form_for 'check' => begin
-  %= url_field url => 'http://mojolicious.org/perldoc'
+  %= url_field url => 'https://mojolicious.org/perldoc'
   %= submit_button 'Check'
 % end

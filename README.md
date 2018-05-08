@@ -7,9 +7,9 @@
   for multiple named queues, priorities, delayed jobs, job dependencies, job
   progress, job results, retries with backoff, rate limiting, unique jobs,
   statistics, distributed workers, parallel processing, autoscaling, remote
-  control, [Mojolicious](http://mojolicious.org) admin ui, resource leak
+  control, [Mojolicious](https://mojolicious.org) admin ui, resource leak
   protection and multiple backends (such as
-  [PostgreSQL](http://www.postgresql.org)).
+  [PostgreSQL](https://www.postgresql.org)).
 
   Job queues allow you to process time and/or computationally intensive tasks in
   background processes, outside of the request/response lifecycle of web
@@ -53,4 +53,4 @@ app->start;
 ## Want to know more?
 
   Take a look at our excellent
-  [documentation](http://mojolicious.org/perldoc/Minion)!
+  [documentation](https://mojolicious.org/perldoc/Minion)!

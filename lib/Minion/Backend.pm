@@ -737,6 +737,6 @@ Unregister worker. Meant to be overloaded in a subclass.
 
 =head1 SEE ALSO
 
-L<Minion>, L<Mojolicious::Guides>, L<http://mojolicious.org>.
+L<Minion>, L<Mojolicious::Guides>, L<https://mojolicious.org>.
 
 =cut

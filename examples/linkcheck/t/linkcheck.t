@@ -26,7 +26,7 @@ $t->ua->max_redirects(10);
 # Enqueue a background job
 $t->get_ok('/')->status_is(200)->text_is('title' => 'Check links')
   ->element_exists('form input[type=url]');
-$t->post_ok('/links' => form => {url => 'http://mojolicious.org'})
+$t->post_ok('/links' => form => {url => 'https://mojolicious.org'})
   ->status_is(200)->text_is('title' => 'Result')
   ->text_is('p' => 'Waiting for result...')->element_exists_not('table');
 
