@@ -515,6 +515,9 @@ Hourly counts for processed jobs from the past day.
 
 Returns the information about jobs in batches.
 
+  # Get the total number of results (without limit)
+  my $num = $backend->list_jobs(0, 100, {queue => 'important'})->{total};
+
   # Check job state
   my $results = $backend->list_jobs(0, 1, {ids => [$job_id]});
   my $state = $results->{jobs}[0]{state};
@@ -593,6 +596,12 @@ Epoch time job was delayed to.
 
 Epoch time job was finished.
 
+=item id
+
+  id => 10025
+
+Job id.
+
 =item notes
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
@@ -668,6 +677,9 @@ Id of worker that is processing the job.
 
 Returns information about locks in batches.
 
+  # Get the total number of results (without limit)
+  my $num = $backend->list_locks(0, 100, {names => ['bar']})->{total};
+
   # Check expiration time
   my $results = $backend->list_locks(0, 1, {names => ['foo']});
   my $expires = $results->{locks}[0]{expires};
@@ -709,6 +721,9 @@ Lock name.
 
 Returns information about workers in batches.
 
+  # Get the total number of results (without limit)
+  my $num = $backend->list_workers(0, 100)->{total};
+
   # Check worker host
   my $results = $backend->list_workers(0, 1, {ids => [$worker_id]});
   my $host    = $results->{workers}[0]{host};
@@ -728,6 +743,12 @@ List only workers with these ids.
 These fields are currently available:
 
 =over 2
+
+=item id
+
+  id => 22
+
+Worker id.
 
 =item host
 
