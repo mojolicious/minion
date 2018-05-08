@@ -216,9 +216,9 @@ Queue to put job in, defaults to C<default>.
   my $bool = $backend->fail_job(
     $job_id, $retries, {whatever => 'Something went wrong!'});
 
-Transition from C<active> to C<failed> state, and if there are attempts
-remaining, transition back to C<inactive> with a delay based on
-L<Minion/"backoff">. Meant to be overloaded in a subclass.
+Transition from C<active> to C<failed> state with or without a result, and if
+there are attempts remaining, transition back to C<inactive> with a delay based
+on L<Minion/"backoff">. Meant to be overloaded in a subclass.
 
 =head2 finish_job
 
@@ -227,8 +227,8 @@ L<Minion/"backoff">. Meant to be overloaded in a subclass.
   my $bool = $backend->finish_job(
     $job_id, $retries, {whatever => 'All went well!'});
 
-Transition from C<active> to C<finished> state. Meant to be overloaded in a
-subclass.
+Transition from C<active> to C<finished> state with or without a result. Meant
+to be overloaded in a subclass.
 
 =head2 history
 
