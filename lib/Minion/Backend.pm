@@ -258,7 +258,7 @@ Returns the information about jobs in batches. Meant to be overloaded in a
 subclass.
 
   # Get the total number of results (without limit)
-  my $num = $backend->list_jobs(0, 100, {queue => 'important'})->{total};
+  my $num = $backend->list_jobs(0, 100, {queues => ['important']})->{total};
 
   # Check job state
   my $results = $backend->list_jobs(0, 1, {ids => [$job_id]});
