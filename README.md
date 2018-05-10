@@ -1,5 +1,5 @@
 
-# Minion [![Build Status](https://travis-ci.org/kraih/minion.svg?branch=master)](https://travis-ci.org/kraih/minion)
+# Minion [![Build Status](https://travis-ci.com/kraih/minion.svg?branch=master)](https://travis-ci.com/kraih/minion)
 
 ![Screenshot](https://raw.github.com/kraih/minion/master/examples/admin.png?raw=true)
 
