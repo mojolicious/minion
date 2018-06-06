@@ -2,12 +2,28 @@ package Mojolicious::Plugin::Minion;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use Minion;
+use Mojo::IOLoop;
+use Scalar::Util 'weaken';
 
 sub register {
   my ($self, $app, $conf) = @_;
   push @{$app->commands->namespaces}, 'Minion::Command';
   my $minion = Minion->new(%$conf)->app($app);
   $app->helper(minion => sub {$minion});
+  $app->helper(minion_dev_server => \&_dev_server);
+}
+
+sub _dev_server {
+  my ($c, @args) = @_;
+
+  $c->app->hook(
+    before_server_start => sub {
+      my ($server, $app) = @_;
+      return unless $server->isa('Mojo::Server::Daemon');
+      $app->minion->missing_after(0)->repair;
+      Mojo::IOLoop->recurring(1 => sub { $app->minion->perform_jobs(@args) });
+    }
+  ) if $c->app->mode eq 'development';
 }
 
 1;
@@ -29,6 +45,10 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
   # Share the database connection cache (PostgreSQL backend)
   helper pg => sub { state $pg = Mojo::Pg->new('postgresql://postgres@/test') };
   plugin Minion => {Pg => app->pg};
+
+  # Perform jobs in the web server during development
+  plugin Minion => {Pg =>  'postgresql://postgres@/test'};
+  app->minion_dev_server;
 
   # Add tasks to your application
   app->minion->add_task(slow_log => sub {
@@ -66,6 +86,14 @@ Get L<Minion> object for application.
 
   # Perform jobs for testing
   $app->minion->perform_jobs;
+
+=head2 minion_dev_server
+
+  $app->minion_dev_server;
+
+In C<development> mode when started with a development web server perform all
+jobs from the web server without starting a separate worker process, takes the
+same arguments as L<Minion/"perform_jobs">.
 
 =head1 METHODS
 
