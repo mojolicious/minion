@@ -9,7 +9,7 @@ plan skip_all => 'set TEST_ONLINE to enable this test' unless $ENV{TEST_ONLINE};
 use Minion;
 use Mojo::IOLoop;
 use Sys::Hostname 'hostname';
-use Time::HiRes qw(time usleep);
+use Time::HiRes 'usleep';
 
 # Isolate tests
 require Mojo::Pg;
@@ -476,7 +476,8 @@ $worker->unregister;
 $id = $minion->enqueue(add => [2, 1] => {delay => 100});
 is $minion->stats->{delayed_jobs}, 1, 'one delayed job';
 is $worker->register->dequeue(0), undef, 'too early for job';
-ok $minion->job($id)->info->{delayed} > time, 'delayed timestamp';
+$job = $minion->job($id);
+ok $job->info->{delayed} > $job->info->{created}, 'delayed timestamp';
 $minion->backend->pg->db->query(
   "update minion_jobs set delayed = now() - interval '1 day' where id = ?",
   $id);
@@ -485,16 +486,19 @@ is $job->id, $id, 'right id';
 like $job->info->{delayed}, qr/^[\d.]+$/, 'has delayed timestamp';
 ok $job->finish, 'job finished';
 ok $job->retry,  'job retried';
-ok $minion->job($id)->info->{delayed} < time, 'no delayed timestamp';
+$info = $minion->job($id)->info;
+ok $info->{delayed} <= $info->{retried}, 'no delayed timestamp';
 ok $job->remove, 'job removed';
 ok !$job->retry, 'job not retried';
-$id = $minion->enqueue(add => [6, 9]);
-$job = $worker->dequeue(0);
-ok $job->info->{delayed} < time, 'no delayed timestamp';
+$id   = $minion->enqueue(add => [6, 9]);
+$job  = $worker->dequeue(0);
+$info = $minion->job($id)->info;
+ok $info->{delayed} <= $info->{created}, 'no delayed timestamp';
 ok $job->fail, 'job failed';
 ok $job->retry({delay => 100}), 'job retried with delay';
-is $job->info->{retries}, 1, 'job has been retried once';
-ok $job->info->{delayed} > time, 'delayed timestamp';
+$info = $minion->job($id)->info;
+is $info->{retries}, 1, 'job has been retried once';
+ok $info->{delayed} > $info->{retried}, 'delayed timestamp';
 ok $minion->job($id)->remove, 'job has been removed';
 $worker->unregister;
 

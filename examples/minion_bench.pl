@@ -15,7 +15,7 @@ my $UNLOCK      = 1000;
 
 # A benchmark script for comparing backends and evaluating the performance
 # impact of proposed changes
-my $minion = Minion->new(Pg => 'postgresql://tester:testing@/test');
+my $minion = Minion->new(Pg => 'postgresql://postgres@127.0.0.1:5432/postgres');
 $minion->add_task(foo => sub { });
 $minion->add_task(bar => sub { });
 $minion->reset;
