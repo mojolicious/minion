@@ -8,9 +8,9 @@
     function pageStats(data) {
       $('.minion-stats-uptime').text(Math.round(data.uptime / 86400));
       $('.minion-stats-delayed-jobs').text(data.delayed_jobs);
-      var proc = data.enqueued_jobs - (data.inactive_jobs + data.active_jobs);
+      var proc = parseInt(data.enqueued_jobs, 10) - (parseInt(data.inactive_jobs, 10) + parseInt(data.active_jobs, 10));
       $('.minion-stats-processed-jobs').text(proc);
-      backlog = data.active_jobs + (data.inactive_jobs - data.delayed_jobs);
+      backlog = parseInt(data.active_jobs, 10) + (parseInt(data.inactive_jobs, 10) - parseInt(data.delayed_jobs, 10));
     }
     function updateBacklogChart() {
       if (chart == null) {
@@ -40,7 +40,7 @@
         for (hour = 0; hour < data.daily.length; hour++) { 
           historylog.push({
             x: new Date(data.daily[hour].epoch * 1000).getTime(),
-            y: data.daily[hour].finished_jobs + data.daily[hour].failed_jobs
+            y: parseInt(data.daily[hour].finished_jobs, 10) + parseInt(data.daily[hour].failed_jobs, 10)
           });
         }
         if (historychart == null) {
