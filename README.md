@@ -1,7 +1,7 @@
 
-# Minion [![Build Status](https://travis-ci.com/kraih/minion.svg?branch=master)](https://travis-ci.com/kraih/minion)
+# Minion [![Build Status](https://travis-ci.com/mojolicious/minion.svg?branch=master)](https://travis-ci.com/mojolicious/minion)
 
-![Screenshot](https://raw.github.com/kraih/minion/master/examples/admin.png?raw=true)
+![Screenshot](https://raw.github.com/mojolicious/minion/master/examples/admin.png?raw=true)
 
   A high performance job queue for the Perl programming language, with support
   for multiple named queues, priorities, delayed jobs, job dependencies, job

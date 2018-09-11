@@ -177,7 +177,7 @@ Minion - Job queue
 
 <p>
   <img alt="Screenshot"
-    src="https://raw.github.com/kraih/minion/master/examples/admin.png?raw=true"
+    src="https://raw.github.com/kraih/mojolicious/master/examples/admin.png?raw=true"
     width="600px">
 </p>
 
@@ -292,7 +292,8 @@ Which are loaded like any other plugin from your application.
 
 This distribution also contains a great example application you can use for
 inspiration. The
-L<link checker|https://github.com/kraih/minion/tree/master/examples/linkcheck>
+L<link
+checker|https://github.com/mojolicious/minion/tree/master/examples/linkcheck>
 will show you how to integrate background jobs into well-structured
 L<Mojolicious> applications.
 
@@ -883,7 +884,7 @@ the terms of the Artistic License version 2.0.
 
 =head1 SEE ALSO
 
-L<https://github.com/kraih/minion>, L<Mojolicious::Guides>,
+L<https://github.com/mojolicious/minion>, L<Mojolicious::Guides>,
 L<https://mojolicious.org>.
 
 =cut

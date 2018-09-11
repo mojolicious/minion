@@ -17,13 +17,13 @@ WriteMakefile(
     no_index       => {directory => ['t']},
     prereqs        => {runtime => {requires => {perl => '5.010001'}}},
     resources      => {
-      bugtracker => {web => 'https://github.com/kraih/minion/issues'},
+      bugtracker => {web => 'https://github.com/mojolicious/minion/issues'},
       homepage   => 'https://mojolicious.org',
       license    => ['http://www.opensource.org/licenses/artistic-license-2.0'],
       repository => {
         type => 'git',
-        url  => 'https://github.com/kraih/minion.git',
-        web  => 'https://github.com/kraih/minion',
+        url  => 'https://github.com/mojolicious/minion.git',
+        web  => 'https://github.com/mojolicious/minion',
       },
       x_IRC => 'irc://irc.perl.org/#mojo'
     },
