@@ -25,7 +25,7 @@ WriteMakefile(
         url  => 'https://github.com/mojolicious/minion.git',
         web  => 'https://github.com/mojolicious/minion',
       },
-      x_IRC => 'irc://irc.perl.org/#mojo'
+      x_IRC => 'irc://irc.freenode.net/#mojo'
     },
   },
   PREREQ_PM => {Mojolicious => '7.56'},
