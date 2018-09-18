@@ -177,7 +177,7 @@ Minion - Job queue
 
 <p>
   <img alt="Screenshot"
-    src="https://raw.github.com/kraih/mojolicious/master/examples/admin.png?raw=true"
+    src="https://raw.github.com/mojolicious/minion/master/examples/admin.png?raw=true"
     width="600px">
 </p>
 
