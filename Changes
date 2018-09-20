@@ -1,5 +1,10 @@
 
-9.06  2018-09-19
+9.06  2018-09-20
+  - Added support for stopping job processes gracefully by installing an INT
+    signal handler in tasks.
+  - Added interrupt method to Minion::Job.
+  - Added int remote control command to worker command.
+  - Improved admin ui with a new button to interrupt jobs.
 
 9.05  2018-09-18
   - Fixed screenshot in documentation.

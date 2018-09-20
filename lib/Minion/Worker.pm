@@ -76,6 +76,8 @@ sub run {
 
   # Remote control commands need to validate arguments carefully
   my $commands = $self->commands;
+  local $commands->{int}
+    = sub { $self->{jobs}{$_[1]}->interrupt if $self->{jobs}{$_[1] // ''} };
   local $commands->{jobs}
     = sub { $status->{jobs} = $_[1] if ($_[1] // '') =~ /^\d+$/ };
   local $commands->{stop}
@@ -147,7 +149,7 @@ Minion::Worker - Minion worker
 
 L<Minion::Worker> performs jobs for L<Minion>.
 
-=head1 SIGNALS
+=head1 WORKER SIGNALS
 
 The L<Minion::Worker> process can be controlled at runtime with the following
 signals.
@@ -159,6 +161,16 @@ Stop gracefully after finishing the current jobs.
 =head2 QUIT
 
 Stop immediately without finishing the current jobs.
+
+=head1 JOB SIGNALS
+
+The job processes spawned by the L<Minion::Worker> process can be controlled at
+runtime with the following signals.
+
+=head2 INT
+
+This signal starts out with the operating system default and allows for jobs to
+install a custom signal handler to stop gracefully.
 
 =head1 EVENTS
 
@@ -412,6 +424,15 @@ sure not all workers repair at the same time, defaults to C<21600> (6 hours).
 These remote control L</"commands"> are currently available:
 
 =over 2
+
+=item int
+
+  $minion->broadcast('int', [10025]);
+  $minion->broadcast('int', [10025], [$worker_id]);
+
+Instruct one or more workers to interrupt a job that is currently being
+performed. This command will be ignored by workers that do not have a job
+matching the id. That means it is safe to broadcast this command to all workers.
 
 =item jobs
 

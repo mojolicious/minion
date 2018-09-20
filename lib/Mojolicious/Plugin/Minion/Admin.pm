@@ -114,7 +114,7 @@ sub _manage_jobs {
 
   my $v = $c->validation;
   $v->required('id');
-  $v->required('do')->in('remove', 'retry', 'stop');
+  $v->required('do')->in('int', 'remove', 'retry', 'stop');
 
   $c->redirect_to('minion_jobs') if $v->has_error;
 
@@ -130,6 +130,10 @@ sub _manage_jobs {
     my $fail = grep { $minion->job($_)->remove ? () : 1 } @$ids;
     if   ($fail) { $c->flash(danger  => "Couldn't remove all jobs.") }
     else         { $c->flash(success => 'All selected jobs removed.') }
+  }
+  elsif ($do eq 'int') {
+    $minion->broadcast(int => [$_]) for @$ids;
+    $c->flash(info => 'Trying to interrupt all selected jobs.');
   }
   elsif ($do eq 'stop') {
     $minion->broadcast(stop => [$_]) for @$ids;

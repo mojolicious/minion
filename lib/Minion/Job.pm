@@ -33,6 +33,8 @@ sub info {
   $_[0]->minion->backend->list_jobs(0, 1, {ids => [$_[0]->id]})->{jobs}[0];
 }
 
+sub interrupt { kill 'INT', shift->{pid} }
+
 sub is_finished {
   my $self = shift;
   return undef unless waitpid($self->{pid}, WNOHANG) == $self->{pid};
@@ -405,6 +407,12 @@ Task name.
 Id of worker that is processing the job.
 
 =back
+
+=head2 interrupt
+
+  $job->interrupt;
+
+Interrupt job performed with L</"start">.
 
 =head2 is_finished
 

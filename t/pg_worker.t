@@ -37,6 +37,28 @@ $worker->run;
 is $max, 4, 'right value';
 is_deeply $minion->job($id)->info->{result}, {just => 'works!'}, 'right result';
 
+# Interrupt
+$minion->add_task(
+  int => sub {
+    my $job     = shift;
+    my $forever = 1;
+    local $SIG{INT} = sub { $forever = 0 };
+    while ($forever) { kill 'INT', $$ }
+    $job->finish({just => 'works too!'});
+  }
+);
+$worker = $minion->worker;
+$worker->on(
+  dequeue => sub {
+    my ($worker, $job) = @_;
+    $job->on(reap => sub { kill 'INT', $$ });
+  }
+);
+$id = $minion->enqueue('int');
+$worker->run;
+is_deeply $minion->job($id)->info->{result}, {just => 'works too!'},
+  'right result';
+
 # Status
 my $status = $worker->status;
 is $status->{command_interval},   10,  'right value';

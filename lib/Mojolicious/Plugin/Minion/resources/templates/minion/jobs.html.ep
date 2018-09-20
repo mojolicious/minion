@@ -40,6 +40,10 @@
           type="submit">
           <i class="fas fa-redo" aria-hidden="true"></i> Retry
         </button>
+        <button class="btn btn-outline-secondary" name="do" value="int"
+          type="submit">
+          <i class="fas fa-exclamation-circle" aria-hidden="true"></i> Interrupt
+        </button>
         <button class="btn btn-outline-secondary" name="do" value="stop"
           type="submit">
           <i class="fas fa-ban" aria-hidden="true"></i> Stop
