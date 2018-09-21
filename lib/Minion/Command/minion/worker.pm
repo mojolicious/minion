@@ -101,20 +101,16 @@ be controlled at runtime with the following signals.
 This signal starts out with the operating system default and allows for jobs to
 install a custom signal handler to stop gracefully.
 
+=head2 USR1, USR2
+
+These signals start out being ignored and allow for jobs to install custom
+signal handlers.
+
 =head1 REMOTE CONTROL COMMANDS
 
 The L<Minion::Command::minion::worker> process can be controlled at runtime
 through L<Minion::Command::minion::job>, from anywhere in the network, by
 broadcasting the following remote control commands.
-
-=head2 int
-
-  $ ./myapp.pl minion job -b int -a '[10025]'
-  $ ./myapp.pl minion job -b int -a '[10025]' 23
-
-Instruct one or more workers to interrupt a job that is currently being
-performed. This command will be ignored by workers that do not have a job
-matching the id. That means it is safe to broadcast this command to all workers.
 
 =head2 jobs
 
@@ -125,6 +121,15 @@ Instruct one or more workers to change the number of jobs to perform
 concurrently. Setting this value to C<0> will effectively pause the worker. That
 means all current jobs will be finished, but no new ones accepted, until the
 number is increased again.
+
+=head2 kill
+
+  $ ./myapp.pl minion job -b kill -a '["INT", 10025]'
+  $ ./myapp.pl minion job -b kill -a '["INT", 10025]' 23
+
+Instruct one or more workers to send a signal to a job that is currently being
+performed. This command will be ignored by workers that do not have a job
+matching the id. That means it is safe to broadcast this command to all workers.
 
 =head2 stop
 

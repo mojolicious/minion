@@ -770,13 +770,30 @@ is $minion->job($id4)->info->{result}, 'Non-zero exit status (1)',
 $worker->unregister;
 
 # Stopping jobs
-$minion->add_task(long_running => sub { sleep 1000 });
+$minion->add_task(
+  long_running => sub {
+    shift->note(started => 1);
+    sleep 1000;
+  }
+);
 $worker = $minion->worker->register;
 $minion->enqueue('long_running');
 $job = $worker->dequeue(0);
 ok $job->start->pid, 'has a process id';
 ok !$job->is_finished, 'job is not finished';
 $job->stop;
+usleep 5000 until $job->is_finished;
+is $job->info->{state}, 'failed', 'right state';
+like $job->info->{result}, qr/Non-zero exit status/, 'right result';
+$minion->enqueue('long_running');
+$job = $worker->dequeue(0);
+ok $job->start->pid, 'has a process id';
+ok !$job->is_finished, 'job is not finished';
+usleep 5000 until $job->info->{notes}{started};
+$job->kill('USR1');
+$job->kill('USR2');
+is $job->info->{state}, 'active', 'right state';
+$job->kill('INT');
 usleep 5000 until $job->is_finished;
 is $job->info->{state}, 'failed', 'right state';
 like $job->info->{result}, qr/Non-zero exit status/, 'right result';

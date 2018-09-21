@@ -114,7 +114,8 @@ sub _manage_jobs {
 
   my $v = $c->validation;
   $v->required('id');
-  $v->required('do')->in('int', 'remove', 'retry', 'stop');
+  $v->required('do')
+    ->in('remove', 'retry', 'sig_int', 'sig_usr1', 'sig_usr2', 'stop');
 
   $c->redirect_to('minion_jobs') if $v->has_error;
 
@@ -131,13 +132,14 @@ sub _manage_jobs {
     if   ($fail) { $c->flash(danger  => "Couldn't remove all jobs.") }
     else         { $c->flash(success => 'All selected jobs removed.') }
   }
-  elsif ($do eq 'int') {
-    $minion->broadcast(int => [$_]) for @$ids;
-    $c->flash(info => 'Trying to interrupt all selected jobs.');
-  }
   elsif ($do eq 'stop') {
     $minion->broadcast(stop => [$_]) for @$ids;
     $c->flash(info => 'Trying to stop all selected jobs.');
+  }
+  elsif ($do =~ /^sig_(.+)$/) {
+    my $signal = uc $1;
+    $minion->broadcast(kill => [$signal, $_]) for @$ids;
+    $c->flash(info => "Trying to send $signal signal to all selected jobs.");
   }
 
   $c->redirect_to($c->url_for('minion_jobs')->query(id => $ids));

@@ -76,12 +76,14 @@ sub run {
 
   # Remote control commands need to validate arguments carefully
   my $commands = $self->commands;
-  local $commands->{int}
-    = sub { $self->{jobs}{$_[1]}->interrupt if $self->{jobs}{$_[1] // ''} };
+  my $kill     = sub {
+    return unless grep { $_[1] eq $_ } qw(INT KILL USR1 USR2);
+    $self->{jobs}{$_[2]}->kill($_[1]) if $self->{jobs}{$_[2] // ''};
+  };
   local $commands->{jobs}
     = sub { $status->{jobs} = $_[1] if ($_[1] // '') =~ /^\d+$/ };
-  local $commands->{stop}
-    = sub { $self->{jobs}{$_[1]}->stop if $self->{jobs}{$_[1] // ''} };
+  local $commands->{kill} = $kill;
+  local $commands->{stop} = sub { $kill->('KILL', $_[1]) };
 
   eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}} };
   my $err = $@;
@@ -171,6 +173,11 @@ runtime with the following signals.
 
 This signal starts out with the operating system default and allows for jobs to
 install a custom signal handler to stop gracefully.
+
+=head2 USR1, USR2
+
+These signals start out being ignored and allow for jobs to install custom
+signal handlers.
 
 =head1 EVENTS
 
@@ -425,15 +432,6 @@ These remote control L</"commands"> are currently available:
 
 =over 2
 
-=item int
-
-  $minion->broadcast('int', [10025]);
-  $minion->broadcast('int', [10025], [$worker_id]);
-
-Instruct one or more workers to interrupt a job that is currently being
-performed. This command will be ignored by workers that do not have a job
-matching the id. That means it is safe to broadcast this command to all workers.
-
 =item jobs
 
   $minion->broadcast('jobs', [10]);
@@ -443,6 +441,15 @@ Instruct one or more workers to change the number of jobs to perform
 concurrently. Setting this value to C<0> will effectively pause the worker. That
 means all current jobs will be finished, but no new ones accepted, until the
 number is increased again.
+
+=item kill
+
+  $minion->broadcast('kill', ["INT", 10025]);
+  $minion->broadcast('kill', ["INT", 10025], [$worker_id]);
+
+Instruct one or more workers to send a signal to a job that is currently being
+performed. This command will be ignored by workers that do not have a job
+matching the id. That means it is safe to broadcast this command to all workers.
 
 =item stop
 

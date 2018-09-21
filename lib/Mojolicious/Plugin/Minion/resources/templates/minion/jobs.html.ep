@@ -40,10 +40,6 @@
           type="submit">
           <i class="fas fa-redo" aria-hidden="true"></i> Retry
         </button>
-        <button class="btn btn-outline-secondary" name="do" value="int"
-          type="submit">
-          <i class="fas fa-exclamation-circle" aria-hidden="true"></i> Interrupt
-        </button>
         <button class="btn btn-outline-secondary" name="do" value="stop"
           type="submit">
           <i class="fas fa-ban" aria-hidden="true"></i> Stop
@@ -52,6 +48,24 @@
           type="submit">
           <i class="fas fa-times" aria-hidden="true"></i> Remove
         </button>
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+          id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true"
+          aria-expanded="false">
+          <i class="fas fa-traffic-light"></i> Signal
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
+          <button class="dropdown-item" name="do" value="sig_int" type="submit">
+            INT
+          </button>
+          <button class="dropdown-item" name="do" value="sig_usr1"
+            type="submit">
+            USR1
+          </button>
+          <button class="dropdown-item" name="do" value="sig_usr2"
+            type="submit">
+            USR2
+          </button>
+        </div>
       </div>
     </div>
     <p class="align-middle">

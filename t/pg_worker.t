@@ -37,17 +37,22 @@ $worker->run;
 is $max, 4, 'right value';
 is_deeply $minion->job($id)->info->{result}, {just => 'works!'}, 'right result';
 
-# Interrupt
+# Signals
 $minion->add_task(
   int => sub {
     my $job     = shift;
     my $forever = 1;
+    my $message = 'signals:';
     local $SIG{INT} = sub { $forever = 0 };
-    while ($forever) { kill 'INT', $$ }
-    $job->finish({just => 'works too!'});
+    local $SIG{USR1} = sub { $message .= ' usr1' };
+    local $SIG{USR2} = sub { $message .= ' usr2' };
+    $job->minion->broadcast('kill', [$_, $job->id]) for qw(USR1 USR2 INT);
+    while ($forever) { sleep 1 }
+    $job->finish({msg => $message});
   }
 );
 $worker = $minion->worker;
+$worker->status->{command_interval} = 1;
 $worker->on(
   dequeue => sub {
     my ($worker, $job) = @_;
@@ -56,12 +61,12 @@ $worker->on(
 );
 $id = $minion->enqueue('int');
 $worker->run;
-is_deeply $minion->job($id)->info->{result}, {just => 'works too!'},
+is_deeply $minion->job($id)->info->{result}, {msg => 'signals: usr1 usr2'},
   'right result';
 
 # Status
 my $status = $worker->status;
-is $status->{command_interval},   10,  'right value';
+is $status->{command_interval},   1,   'right value';
 is $status->{dequeue_timeout},    5,   'right value';
 is $status->{heartbeat_interval}, 300, 'right value';
 is $status->{jobs},               4,   'right value';
