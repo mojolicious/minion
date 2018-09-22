@@ -77,7 +77,7 @@ sub run {
   # Remote control commands need to validate arguments carefully
   my $commands = $self->commands;
   my $kill     = sub {
-    return unless grep { $_[1] eq $_ } qw(INT KILL USR1 USR2);
+    return unless grep { ($_[1] // '') eq $_ } qw(INT KILL USR1 USR2);
     $self->{jobs}{$_[2]}->kill($_[1]) if $self->{jobs}{$_[2] // ''};
   };
   local $commands->{jobs}

@@ -419,6 +419,9 @@ Broadcast remote control command to one or more workers.
   # Broadcast "stop" command to all workers to kill job 10025
   $minion->broadcast('stop', [10025]);
 
+  # Broadcast "kill" command to all workers to interrupt job 10026
+  $minion->broadcast('kill', ['INT', 10026]);
+
   # Broadcast "jobs" command to pause worker 23
   $minion->broadcast('jobs', [0], [23]);
 

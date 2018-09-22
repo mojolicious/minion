@@ -1,10 +1,10 @@
 
-9.06  2018-09-20
+9.06  2018-09-22
   - Added support for controlling job processes by installing signal handlers
     for INT, USR1 and USR2 in tasks.
   - Added kill method to Minion::Job.
   - Improved worker command with support for kill remote control command.
-  - Improved admin ui with a new menu to send signals.
+  - Improved admin ui with a new menu to send signals to job processes.
 
 9.05  2018-09-18
   - Fixed screenshot in documentation.
