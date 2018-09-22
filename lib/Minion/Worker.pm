@@ -444,8 +444,8 @@ number is increased again.
 
 =item kill
 
-  $minion->broadcast('kill', ["INT", 10025]);
-  $minion->broadcast('kill', ["INT", 10025], [$worker_id]);
+  $minion->broadcast('kill', ['INT', 10025]);
+  $minion->broadcast('kill', ['INT', 10025], [$worker_id]);
 
 Instruct one or more workers to send a signal to a job that is currently being
 performed. This command will be ignored by workers that do not have a job
