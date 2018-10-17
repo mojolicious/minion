@@ -28,6 +28,6 @@ WriteMakefile(
       x_IRC => 'irc://irc.freenode.net/#mojo'
     },
   },
-  PREREQ_PM => {Mojolicious => '7.56'},
+  PREREQ_PM => {Mojolicious => '8.03'},
   test      => {TESTS       => 't/*.t t/*/*.t'}
 );

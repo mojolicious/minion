@@ -2,15 +2,11 @@ package Mojolicious::Plugin::Minion;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use Minion;
-use Scalar::Util 'weaken';
 
 sub register {
   my ($self, $app, $conf) = @_;
-
   push @{$app->commands->namespaces}, 'Minion::Command';
-
-  my $minion = Minion->new(each %$conf);
-  weaken $minion->app($app)->{app};
+  my $minion = Minion->new(each %$conf)->app($app);
   $app->helper(minion => sub {$minion});
 }
 

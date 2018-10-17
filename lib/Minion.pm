@@ -9,9 +9,11 @@ use Mojo::Date;
 use Mojo::Loader 'load_class';
 use Mojo::Server;
 use Mojo::Util 'steady_time';
-use Scalar::Util 'weaken';
 
-has app => sub { Mojo::Server->new->build_app('Mojo::HelloWorld') };
+has
+  app =>
+  sub { $_[0]{app_ref} = Mojo::Server->new->build_app('Mojo::HelloWorld') },
+  weak => 1;
 has 'backend';
 has backoff       => sub { \&_backoff };
 has missing_after => 1800;
@@ -83,10 +85,7 @@ sub new {
   my $e     = load_class $class;
   croak ref $e ? $e : qq{Backend "$class" missing} if $e;
 
-  $self->backend($class->new(@_));
-  weaken $self->backend->minion($self)->{minion};
-
-  return $self;
+  return $self->backend($class->new(@_)->minion($self));
 }
 
 sub perform_jobs {
@@ -340,7 +339,8 @@ L<Minion> implements the following attributes.
   my $app = $minion->app;
   $minion = $minion->app(MyApp->new);
 
-Application for job queue, defaults to a L<Mojo::HelloWorld> object.
+Application for job queue, defaults to a L<Mojo::HelloWorld> object. Note that
+this attribute is weakened.
 
 =head2 backend
 

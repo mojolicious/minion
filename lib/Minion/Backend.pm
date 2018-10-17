@@ -3,7 +3,7 @@ use Mojo::Base -base;
 
 use Carp 'croak';
 
-has 'minion';
+has minion => undef, weak => 1;
 
 sub broadcast  { croak 'Method "broadcast" not implemented by subclass' }
 sub dequeue    { croak 'Method "dequeue" not implemented by subclass' }
@@ -84,7 +84,7 @@ L<Minion::Backend> implements the following attributes.
   my $minion = $backend->minion;
   $backend   = $backend->minion(Minion->new);
 
-L<Minion> object this backend belongs to.
+L<Minion> object this backend belongs to. Note that this attribute is weakened.
 
 =head1 METHODS
 

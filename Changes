@@ -1,5 +1,7 @@
 
-9.07  2018-09-23
+9.07  2018-10-18
+  - Improved various attributes to use new Mojolicious 8.03 features to avoid
+    memory leaks.
 
 9.06  2018-09-22
   - Added support for controlling job processes by installing signal handlers
