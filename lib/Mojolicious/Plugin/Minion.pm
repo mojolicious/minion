@@ -6,7 +6,7 @@ use Minion;
 sub register {
   my ($self, $app, $conf) = @_;
   push @{$app->commands->namespaces}, 'Minion::Command';
-  my $minion = Minion->new(each %$conf)->app($app);
+  my $minion = Minion->new(%$conf)->app($app);
   $app->helper(minion => sub {$minion});
 }
 
