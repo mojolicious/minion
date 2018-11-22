@@ -43,7 +43,7 @@ $minion->add_task(
     my $job     = shift;
     my $forever = 1;
     my $message = 'signals:';
-    local $SIG{INT} = sub { $forever = 0 };
+    local $SIG{INT}  = sub { $forever = 0 };
     local $SIG{USR1} = sub { $message .= ' usr1' };
     local $SIG{USR2} = sub { $message .= ' usr2' };
     $job->minion->broadcast('kill', [$_, $job->id]) for qw(USR1 USR2 INT);

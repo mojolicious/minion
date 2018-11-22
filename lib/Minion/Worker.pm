@@ -51,7 +51,7 @@ sub process_commands {
 }
 
 sub register {
-  my $self = shift;
+  my $self   = shift;
   my $status = {status => $self->status};
   return $self->id($self->minion->backend->register_worker($self->id, $status));
 }

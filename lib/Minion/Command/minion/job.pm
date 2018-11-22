@@ -5,7 +5,7 @@ use Mojo::JSON 'decode_json';
 use Mojo::Util qw(dumper getopt tablify);
 
 has description => 'Manage Minion jobs';
-has usage => sub { shift->extract_usage };
+has usage       => sub { shift->extract_usage };
 
 sub run {
   my ($self, @args) = @_;
