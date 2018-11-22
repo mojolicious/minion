@@ -109,7 +109,7 @@ ok !$minion->job($id2), 'job has been cleaned up';
 ok !$minion->job($id3), 'job has been cleaned up';
 
 # List workers
-$worker = $minion->worker->register;
+$worker  = $minion->worker->register;
 $worker2 = $minion->worker->status({whatever => 'works!'})->register;
 my $results = $minion->backend->list_workers(0, 10);
 is $results->{total}, 2, 'two workers total';
@@ -122,7 +122,7 @@ is $batch->[1]{host},      $host, 'right host';
 is $batch->[1]{pid},       $$, 'right pid';
 ok !$batch->[2], 'no more results';
 $results = $minion->backend->list_workers(0, 1);
-$batch = $results->{workers};
+$batch   = $results->{workers};
 is $results->{total}, 2, 'two workers total';
 is $batch->[0]{id}, $worker2->id, 'right id';
 is_deeply $batch->[0]{status}, {whatever => 'works!'}, 'right status';
@@ -357,7 +357,7 @@ $batch
   = $minion->backend->list_jobs(0, 10, {queues => ['does_not_exist']})->{jobs};
 is_deeply $batch, [], 'no results';
 $results = $minion->backend->list_jobs(0, 1);
-$batch = $results->{jobs};
+$batch   = $results->{jobs};
 is $results->{total}, 4, 'four jobs total';
 is $batch->[0]{state},   'inactive', 'right state';
 is $batch->[0]{retries}, 0,          'job has not been retried';
@@ -404,7 +404,7 @@ is $job->info->{state}, 'finished', 'right state';
 is $job->task, 'add', 'right task';
 
 # Retry and remove
-$id = $minion->enqueue(add => [5, 6]);
+$id  = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue(0);
 is $job->info->{attempts}, 1, 'job will be attempted once';
 is $job->info->{retries},  0, 'job has not been retried';
@@ -428,7 +428,7 @@ ok $job->finish, 'job finished';
 ok $job->remove, 'job has been removed';
 ok !$job->retry, 'job not retried';
 is $job->info, undef, 'no information';
-$id = $minion->enqueue(add => [6, 5]);
+$id  = $minion->enqueue(add => [6, 5]);
 $job = $minion->job($id);
 is $job->info->{state},   'inactive', 'right state';
 is $job->info->{retries}, 0,          'job has not been retried';
@@ -440,20 +440,20 @@ is $job->id, $id, 'right id';
 ok $job->fail,   'job failed';
 ok $job->remove, 'job has been removed';
 is $job->info,   undef, 'no information';
-$id = $minion->enqueue(add => [5, 5]);
+$id  = $minion->enqueue(add => [5, 5]);
 $job = $minion->job("$id");
 ok $job->remove, 'job has been removed';
 $worker->unregister;
 
 # Jobs with priority
 $minion->enqueue(add => [1, 2]);
-$id = $minion->enqueue(add => [2, 4], {priority => 1});
+$id  = $minion->enqueue(add => [2, 4], {priority => 1});
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 is $job->info->{priority}, 1, 'right priority';
 ok $job->finish, 'job finished';
 isnt $worker->dequeue(0)->id, $id, 'different id';
-$id = $minion->enqueue(add => [2, 5]);
+$id  = $minion->enqueue(add => [2, 5]);
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 is $job->info->{priority}, 0, 'right priority';
@@ -535,7 +535,7 @@ $minion->once(
   }
 );
 $worker = $minion->worker->register;
-$id = $minion->enqueue(add => [3, 3]);
+$id     = $minion->enqueue(add => [3, 3]);
 is $enqueue, $id, 'enqueue event has been emitted';
 $minion->enqueue(add => [4, 3]);
 $job = $worker->dequeue(0);
@@ -592,7 +592,7 @@ ok $job->finish, 'job finished';
 $worker->unregister;
 
 # Failed jobs
-$id = $minion->enqueue(add => [5, 6]);
+$id  = $minion->enqueue(add => [5, 6]);
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 is $job->info->{result}, undef, 'no result';
@@ -600,7 +600,7 @@ ok $job->fail, 'job failed';
 ok !$job->finish, 'job not finished';
 is $job->info->{state},  'failed',        'right state';
 is $job->info->{result}, 'Unknown error', 'right result';
-$id = $minion->enqueue(add => [6, 7]);
+$id  = $minion->enqueue(add => [6, 7]);
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 ok $job->fail('Something bad happened!'), 'job failed';
@@ -667,7 +667,7 @@ is $minion->backoff->(3),  96,     'right result';
 is $minion->backoff->(4),  271,    'right result';
 is $minion->backoff->(5),  640,    'right result';
 is $minion->backoff->(25), 390640, 'right result';
-$id = $minion->enqueue(exit => [] => {attempts => 2});
+$id  = $minion->enqueue(exit => [] => {attempts => 2});
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 is $job->retries, 0, 'job has not been retried';
@@ -698,7 +698,7 @@ is $info->{result}, 'Non-zero exit status (1)', 'right result';
 $worker->unregister;
 
 # Multiple attempts during maintenance
-$id = $minion->enqueue(exit => [] => {attempts => 2});
+$id  = $minion->enqueue(exit => [] => {attempts => 2});
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 is $job->retries, 0, 'job has not been retried';
@@ -831,11 +831,11 @@ is $minion->repair->stats->{finished_jobs}, 2, 'two finished jobs';
 ok $job->finish, 'job finished';
 is $minion->stats->{finished_jobs}, 3, 'three finished jobs';
 is $minion->repair->stats->{finished_jobs}, 0, 'no finished jobs';
-$id = $minion->enqueue(test => [] => {parents => [-1]});
+$id  = $minion->enqueue(test => [] => {parents => [-1]});
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 ok $job->finish, 'job finished';
-$id = $minion->enqueue(test => [] => {parents => [-1]});
+$id  = $minion->enqueue(test => [] => {parents => [-1]});
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 is_deeply $job->info->{parents}, [-1], 'right parents';
@@ -911,6 +911,34 @@ is_deeply \@commands,
   'right structure';
 $_->unregister for $worker, $worker2;
 ok !$minion->broadcast('test_id', []), 'command not sent';
+
+# Single process worker
+$worker = $minion->repair->worker->register;
+$minion->add_task(
+  good_job => sub {
+    my ($job, $message) = @_;
+    $job->finish("$message Mojo!");
+  }
+);
+$minion->add_task(
+  bad_job => sub {
+    my ($job, $message) = @_;
+    die 'Bad job!';
+  }
+);
+$id  = $minion->enqueue('good_job', ['Hello']);
+$id2 = $minion->enqueue('bad_job',  ['Hello']);
+while (my $job = $worker->dequeue(0)) {
+  next unless my $err = $job->execute;
+  $job->fail("Error: $err");
+}
+$worker->unregister;
+$job = $minion->job($id);
+is $job->info->{state},  'finished',    'right state';
+is $job->info->{result}, 'Hello Mojo!', 'right result';
+$job2 = $minion->job($id2);
+is $job2->info->{state},    'failed',            'right state';
+like $job2->info->{result}, qr/Error: Bad job!/, 'right error';
 
 # Clean up once we are done
 $pg->db->query('drop schema minion_test cascade');
