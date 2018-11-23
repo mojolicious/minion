@@ -195,7 +195,7 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
 =head1 DESCRIPTION
 
 L<Mojolicious::Plugin::Minion::Admin> is a L<Mojolicious> plugin providing an
-admin ui for the L<Minion> job queue.
+admin UI for the L<Minion> job queue.
 
 =head1 OPTIONS
 
@@ -206,14 +206,14 @@ L<Mojolicious::Plugin::Minion::Admin> supports the following options.
   # Mojolicious::Lite
   plugin 'Minion::Admin' => {return_to => 'some_route'};
 
-Name of route or path to retrurn to when leaving the admin ui, defaults to C</>.
+Name of route or path to return to when leaving the admin UI. Defaults to C</>.
 
 =head2 route
 
   # Mojolicious::Lite
   plugin 'Minion::Admin' => {route => app->routes->any('/admin')};
 
-L<Mojolicious::Routes::Route> object to attach the admin ui to, defaults to
+L<Mojolicious::Routes::Route> object to attach the admin UI to. Defaults to
 generating a new one with the prefix C</minion>.
 
 =head1 METHODS
