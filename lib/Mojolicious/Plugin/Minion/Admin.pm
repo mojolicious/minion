@@ -206,7 +206,7 @@ L<Mojolicious::Plugin::Minion::Admin> supports the following options.
   # Mojolicious::Lite
   plugin 'Minion::Admin' => {return_to => 'some_route'};
 
-Name of route or path to retrurn to when leaving the admin ui, defaults to C</>.
+Name of route or path to return to when leaving the admin ui, defaults to C</>.
 
 =head2 route
 
