@@ -100,12 +100,12 @@ sub perform_jobs {
 sub repair { shift->_delegate('repair') }
 sub reset  { shift->_delegate('reset') }
 
-sub result_for_p {
+sub result_p {
   my ($self, $id, $options) = (shift, shift, shift // {});
 
   my $promise  = Mojo::Promise->new;
   my $interval = $options->{interval} // 3;
-  my $cb       = sub { $self->_result_for($promise, $id) };
+  my $cb       = sub { $self->_result($promise, $id) };
   my $timer    = Mojo::IOLoop->recurring($interval => $cb);
   $promise->finally(sub { Mojo::IOLoop->remove($timer) });
   $cb->();
@@ -143,7 +143,7 @@ sub _delegate {
   return $self;
 }
 
-sub _result_for {
+sub _result {
   my ($self, $promise, $id) = @_;
   return $promise->resolve(undef) unless my $job = $self->job($id);
   my $info = $job->info;
@@ -671,10 +671,10 @@ Repair worker registry and job queue if necessary.
 
 Reset job queue.
 
-=head2 result_for_p
+=head2 result_p
 
-  my $promise = $minion->result_for_p($id);
-  my $promise = $minion->result_for_p($id, {interval => 5});
+  my $promise = $minion->result_p($id);
+  my $promise = $minion->result_p($id, {interval => 5});
 
 Return a L<Mojo::Promise> object for the result of a job. The state C<finished>
 will result in the promise being C<fullfilled>, and the state C<failed> in the
@@ -683,7 +683,7 @@ change without warning!
 
   # Enqueue job and receive the result at some point in the future
   my $id = $minion->enqueue('foo');
-  $minion->result_for_p($id)->then(sub{
+  $minion->result_p($id)->then(sub{
     my $result = shift;
     say "Finished: $result";
   })->catch(sub {

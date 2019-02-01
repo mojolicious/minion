@@ -50,8 +50,9 @@ $minion->add_task(test => sub { });
 $worker = $minion->worker->register;
 $id     = $minion->enqueue('test');
 my (@finished, @failed);
-my $promise = $minion->result_for_p($id, {interval => 0.25})
-  ->then(sub { @finished = @_ })->catch(sub { @failed = @_ });
+my $promise
+  = $minion->result_p($id, {interval => 0.25})->then(sub { @finished = @_ })
+  ->catch(sub { @failed = @_ });
 my $job = $worker->dequeue(0);
 is $job->id, $id, 'same id';
 Mojo::IOLoop->one_tick;
@@ -63,8 +64,9 @@ is_deeply \@finished, [{just => 'works!'}], 'finished';
 is_deeply \@failed, [], 'not failed';
 (@finished, @failed) = ();
 my $id2 = $minion->enqueue('test');
-$promise = $minion->result_for_p($id2, {interval => 0.25})
-  ->then(sub { @finished = @_ })->catch(sub { @failed = @_ });
+$promise
+  = $minion->result_p($id2, {interval => 0.25})->then(sub { @finished = @_ })
+  ->catch(sub { @failed = @_ });
 $job = $worker->dequeue(0);
 is $job->id, $id2, 'same id';
 $job->fail({works => 'too!'});
@@ -75,24 +77,24 @@ $worker->unregister;
 
 # Job results (already finished)
 (@finished, @failed) = ();
-$minion->result_for_p($id)->then(sub { @finished = @_ })
-  ->catch(sub                        { @failed   = @_ })->wait;
+$minion->result_p($id)->then(sub { @finished = @_ })
+  ->catch(sub                    { @failed   = @_ })->wait;
 is_deeply \@finished, [{just => 'works!'}], 'finished';
 is_deeply \@failed, [], 'not failed';
 $minion->job($id)->retry;
 
 # Job results (timeout)
 (@finished, @failed) = ();
-$minion->result_for_p($id)->timeout(0.25)->then(sub { @finished = @_ })
-  ->catch(sub                                       { @failed   = @_ })->wait;
+$minion->result_p($id)->timeout(0.25)->then(sub { @finished = @_ })
+  ->catch(sub                                   { @failed   = @_ })->wait;
 is_deeply \@finished, [], 'not finished';
 is_deeply \@failed, ['Promise timeout'], 'failed';
 $minion->job($id)->remove;
 
 # Job results (missing job)
 (@finished, @failed) = ();
-$minion->result_for_p($id)->then(sub { @finished = @_ })
-  ->catch(sub                        { @failed   = @_ })->wait;
+$minion->result_p($id)->then(sub { @finished = @_ })
+  ->catch(sub                    { @failed   = @_ })->wait;
 is_deeply \@finished, [undef], 'job no longer exists';
 is_deeply \@failed, [], 'not failed';
 
