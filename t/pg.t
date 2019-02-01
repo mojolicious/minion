@@ -45,12 +45,44 @@ is $worker->register->info->{host}, $host, 'right host';
 is $worker->info->{pid}, $$, 'right pid';
 is $worker->unregister->info, undef, 'no information';
 
-# Repair missing worker
+# Results
 $minion->add_task(test => sub { });
+$worker = $minion->worker->register;
+$id     = $minion->enqueue('test');
+my (@finished, @failed);
+my $promise = $minion->result_for_p($id, {interval => 0.25})
+  ->then(sub { @finished = @_ })->catch(sub { @failed = @_ });
+my $job = $worker->dequeue(0);
+is $job->id, $id, 'same id';
+Mojo::IOLoop->one_tick;
+is_deeply \@finished, [], 'not finished';
+is_deeply \@failed,   [], 'not failed';
+$job->finish({just => 'works!'});
+$promise->wait;
+is_deeply \@finished, [{just => 'works!'}], 'finished';
+is_deeply \@failed, [], 'not failed';
+(@finished, @failed) = ();
+my $id2 = $minion->enqueue('test');
+$promise = $minion->result_for_p($id2, {interval => 0.25})
+  ->then(sub { @finished = @_ })->catch(sub { @failed = @_ });
+$job = $worker->dequeue(0);
+is $job->id, $id2, 'same id';
+$job->fail({works => 'too!'});
+$promise->wait;
+is_deeply \@finished, [], 'not finished';
+is_deeply \@failed, [{works => 'too!'}], 'failed';
+(@finished, @failed) = ();
+$promise = $minion->result_for_p($id)->then(sub { @finished = @_ })
+  ->catch(sub { @failed = @_ })->wait;
+is_deeply \@finished, [{just => 'works!'}], 'finished';
+is_deeply \@failed, [], 'not failed';
+$worker->unregister;
+
+# Repair missing worker
 my $worker2 = $minion->worker->register;
 isnt $worker2->id, $worker->id, 'new id';
-$id = $minion->enqueue('test');
-my $job = $worker2->dequeue(0);
+$id  = $minion->enqueue('test');
+$job = $worker2->dequeue(0);
 is $job->id, $id, 'right id';
 is $worker2->info->{jobs}[0], $job->id, 'right id';
 $id = $worker2->id;
@@ -82,8 +114,8 @@ is $job->info->{result}, 'Worker went away', 'right result';
 
 # Repair old jobs
 $worker->register;
-$id = $minion->enqueue('test');
-my $id2 = $minion->enqueue('test');
+$id  = $minion->enqueue('test');
+$id2 = $minion->enqueue('test');
 my $id3 = $minion->enqueue('test');
 $worker->dequeue(0)->perform for 1 .. 3;
 my $finished = $minion->backend->pg->db->query(

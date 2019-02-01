@@ -6,7 +6,9 @@ use Config;
 use Minion::Job;
 use Minion::Worker;
 use Mojo::Date;
+use Mojo::IOLoop;
 use Mojo::Loader 'load_class';
+use Mojo::Promise;
 use Mojo::Server;
 use Mojo::Util 'steady_time';
 
@@ -98,6 +100,19 @@ sub perform_jobs {
 sub repair { shift->_delegate('repair') }
 sub reset  { shift->_delegate('reset') }
 
+sub result_for_p {
+  my ($self, $id, $options) = (shift, shift, shift // {});
+
+  my $promise  = Mojo::Promise->new;
+  my $interval = $options->{interval} // 3;
+  my $cb       = sub { $self->_result_for($promise, $id) };
+  my $timer    = Mojo::IOLoop->recurring($interval => $cb);
+  $promise->finally(sub { Mojo::IOLoop->remove($timer) });
+  $cb->();
+
+  return $promise;
+}
+
 sub stats  { shift->backend->stats }
 sub unlock { shift->backend->unlock(@_) }
 
@@ -126,6 +141,14 @@ sub _delegate {
   my ($self, $method) = @_;
   $self->backend->$method;
   return $self;
+}
+
+sub _result_for {
+  my ($self, $promise, $id) = @_;
+  return $promise->resolve(undef) unless my $job = $self->job($id);
+  my $info = $job->info;
+  if    ($info->{state} eq 'finished') { $promise->resolve($info->{result}) }
+  elsif ($info->{state} eq 'failed')   { $promise->reject($info->{result}) }
 }
 
 package Minion::_Guard;
@@ -648,6 +671,29 @@ Repair worker registry and job queue if necessary.
 
 Reset job queue.
 
+=head2 result_for_p
+
+  my $promise = $minion->result_for_p($id);
+  my $promise = $minion->result_for_p($id, {interval => 5});
+
+Return a L<Mojo::Promise> object for the result of a job. The state C<finished>
+will result in the promise being C<fullfilled>, and the state C<failed> in the
+promise being C<rejected>. Note that this method is EXPERIMENTAL and might
+change without warning!
+
+These options are currently available:
+
+=over 2
+
+=item interval
+
+  interval => 5
+
+Polling interval in seconds for checking if the state of the job has changed,
+defaults to C<3>.
+
+=back
+
 =head2 stats
 
   my $stats = $minion->stats;
@@ -880,7 +926,7 @@ Stefan Adams
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2014-2018, Sebastian Riedel and others.
+Copyright (C) 2014-2019, Sebastian Riedel and others.
 
 This program is free software, you can redistribute it and/or modify it under
 the terms of the Artistic License version 2.0.
