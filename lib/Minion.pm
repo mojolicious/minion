@@ -681,6 +681,16 @@ will result in the promise being C<fullfilled>, and the state C<failed> in the
 promise being C<rejected>. Note that this method is EXPERIMENTAL and might
 change without warning!
 
+  # Enqueue job and receive the result at some point in the future
+  my $id = $minion->enqueue('foo');
+  $minion->result_for_p($id)->then(sub{
+    my $result = shift;
+    say "Finished: $result";
+  })->catch(sub {
+    my $reason = shift;
+    say "Failed: $reason";
+  })->wait;
+
 These options are currently available:
 
 =over 2

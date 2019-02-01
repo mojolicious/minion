@@ -45,7 +45,7 @@ is $worker->register->info->{host}, $host, 'right host';
 is $worker->info->{pid}, $$, 'right pid';
 is $worker->unregister->info, undef, 'no information';
 
-# Results
+# Job results
 $minion->add_task(test => sub { });
 $worker = $minion->worker->register;
 $id     = $minion->enqueue('test');
@@ -71,24 +71,30 @@ $job->fail({works => 'too!'});
 $promise->wait;
 is_deeply \@finished, [], 'not finished';
 is_deeply \@failed, [{works => 'too!'}], 'failed';
+$worker->unregister;
+
+# Job results (already finished)
 (@finished, @failed) = ();
 $minion->result_for_p($id)->then(sub { @finished = @_ })
   ->catch(sub                        { @failed   = @_ })->wait;
 is_deeply \@finished, [{just => 'works!'}], 'finished';
 is_deeply \@failed, [], 'not failed';
 $minion->job($id)->retry;
+
+# Job results (timeout)
 (@finished, @failed) = ();
 $minion->result_for_p($id)->timeout(0.25)->then(sub { @finished = @_ })
   ->catch(sub                                       { @failed   = @_ })->wait;
 is_deeply \@finished, [], 'not finished';
 is_deeply \@failed, ['Promise timeout'], 'failed';
 $minion->job($id)->remove;
+
+# Job results (missing job)
 (@finished, @failed) = ();
 $minion->result_for_p($id)->then(sub { @finished = @_ })
   ->catch(sub                        { @failed   = @_ })->wait;
 is_deeply \@finished, [undef], 'job no longer exists';
 is_deeply \@failed, [], 'not failed';
-$worker->unregister;
 
 # Repair missing worker
 my $worker2 = $minion->worker->register;
