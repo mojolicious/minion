@@ -72,9 +72,21 @@ $promise->wait;
 is_deeply \@finished, [], 'not finished';
 is_deeply \@failed, [{works => 'too!'}], 'failed';
 (@finished, @failed) = ();
-$promise = $minion->result_for_p($id)->then(sub { @finished = @_ })
-  ->catch(sub { @failed = @_ })->wait;
+$minion->result_for_p($id)->then(sub { @finished = @_ })
+  ->catch(sub                        { @failed   = @_ })->wait;
 is_deeply \@finished, [{just => 'works!'}], 'finished';
+is_deeply \@failed, [], 'not failed';
+$minion->job($id)->retry;
+(@finished, @failed) = ();
+$minion->result_for_p($id)->timeout(0.25)->then(sub { @finished = @_ })
+  ->catch(sub                                       { @failed   = @_ })->wait;
+is_deeply \@finished, [], 'not finished';
+is_deeply \@failed, ['Promise timeout'], 'failed';
+$minion->job($id)->remove;
+(@finished, @failed) = ();
+$minion->result_for_p($id)->then(sub { @finished = @_ })
+  ->catch(sub                        { @failed   = @_ })->wait;
+is_deeply \@finished, [undef], 'job no longer exists';
 is_deeply \@failed, [], 'not failed';
 $worker->unregister;
 
