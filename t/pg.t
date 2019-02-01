@@ -81,18 +81,19 @@ $minion->result_p($id)->then(sub { @finished = @_ })
   ->catch(sub                    { @failed   = @_ })->wait;
 is_deeply \@finished, [{just => 'works!'}], 'finished';
 is_deeply \@failed, [], 'not failed';
-$minion->job($id)->retry;
 
 # Job results (timeout)
 (@finished, @failed) = ();
+$minion->job($id)->retry;
 $minion->result_p($id)->timeout(0.25)->then(sub { @finished = @_ })
   ->catch(sub                                   { @failed   = @_ })->wait;
 is_deeply \@finished, [], 'not finished';
 is_deeply \@failed, ['Promise timeout'], 'failed';
-$minion->job($id)->remove;
+Mojo::IOLoop->start;
 
 # Job results (missing job)
 (@finished, @failed) = ();
+$minion->job($id)->remove;
 $minion->result_p($id)->then(sub { @finished = @_ })
   ->catch(sub                    { @failed   = @_ })->wait;
 is_deeply \@finished, [undef], 'job no longer exists';
