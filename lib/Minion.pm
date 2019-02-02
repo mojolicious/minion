@@ -67,8 +67,7 @@ sub history { shift->backend->history }
 sub job {
   my ($self, $id) = @_;
 
-  return undef
-    unless my $job = $self->backend->list_jobs(0, 1, {ids => [$id]})->{jobs}[0];
+  return undef unless my $job = $self->_info($id);
   return Minion::Job->new(
     args    => $job->{args},
     id      => $job->{id},
@@ -143,10 +142,11 @@ sub _delegate {
   return $self;
 }
 
+sub _info { shift->backend->list_jobs(0, 1, {ids => [shift]})->{jobs}[0] }
+
 sub _result {
   my ($self, $promise, $id) = @_;
-  return $promise->resolve(undef)
-    unless my $job = $self->backend->list_jobs(0, 1, {ids => [$id]})->{jobs}[0];
+  return $promise->resolve(undef) unless my $job = $self->_info($id);
   if    ($job->{state} eq 'finished') { $promise->resolve($job->{result}) }
   elsif ($job->{state} eq 'failed')   { $promise->reject($job->{result}) }
 }
