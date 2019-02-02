@@ -678,7 +678,8 @@ Reset job queue.
 
 Return a L<Mojo::Promise> object for the result of a job. The state C<finished>
 will result in the promise being C<fullfilled>, and the state C<failed> in the
-promise being C<rejected>. Note that this method is EXPERIMENTAL and might
+promise being C<rejected>. This operation can be cancelled by resolving the
+promise manually at any time. Note that this method is EXPERIMENTAL and might
 change without warning!
 
   # Enqueue job and receive the result at some point in the future
