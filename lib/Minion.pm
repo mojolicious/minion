@@ -683,7 +683,7 @@ change without warning!
 
   # Enqueue job and receive the result at some point in the future
   my $id = $minion->enqueue('foo');
-  $minion->result_p($id)->then(sub{
+  $minion->result_p($id)->then(sub {
     my $result = shift;
     say "Finished: $result";
   })->catch(sub {
