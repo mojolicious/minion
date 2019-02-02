@@ -145,10 +145,10 @@ sub _delegate {
 
 sub _result {
   my ($self, $promise, $id) = @_;
-  return $promise->resolve(undef) unless my $job = $self->job($id);
-  my $info = $job->info;
-  if    ($info->{state} eq 'finished') { $promise->resolve($info->{result}) }
-  elsif ($info->{state} eq 'failed')   { $promise->reject($info->{result}) }
+  return $promise->resolve(undef)
+    unless my $job = $self->backend->list_jobs(0, 1, {ids => [$id]})->{jobs}[0];
+  if    ($job->{state} eq 'finished') { $promise->resolve($job->{result}) }
+  elsif ($job->{state} eq 'failed')   { $promise->reject($job->{result}) }
 }
 
 package Minion::_Guard;
