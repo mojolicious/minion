@@ -51,7 +51,7 @@ $worker = $minion->worker->register;
 $id     = $minion->enqueue('test');
 my (@finished, @failed);
 my $promise
-  = $minion->result_p($id, {interval => 0.25})->then(sub { @finished = @_ })
+  = $minion->result_p($id, {interval => 0})->then(sub { @finished = @_ })
   ->catch(sub { @failed = @_ });
 my $job = $worker->dequeue(0);
 is $job->id, $id, 'same id';
@@ -65,7 +65,7 @@ is_deeply \@failed, [], 'not failed';
 (@finished, @failed) = ();
 my $id2 = $minion->enqueue('test');
 $promise
-  = $minion->result_p($id2, {interval => 0.25})->then(sub { @finished = @_ })
+  = $minion->result_p($id2, {interval => 0})->then(sub { @finished = @_ })
   ->catch(sub { @failed = @_ });
 $job = $worker->dequeue(0);
 is $job->id, $id2, 'same id';

@@ -102,10 +102,9 @@ sub reset  { shift->_delegate('reset') }
 sub result_p {
   my ($self, $id, $options) = (shift, shift, shift // {});
 
-  my $promise  = Mojo::Promise->new;
-  my $interval = $options->{interval} // 3;
-  my $cb       = sub { $self->_result($promise, $id) };
-  my $timer    = Mojo::IOLoop->recurring($interval => $cb);
+  my $promise = Mojo::Promise->new;
+  my $cb      = sub { $self->_result($promise, $id) };
+  my $timer   = Mojo::IOLoop->recurring($options->{interval} // 3 => $cb);
   $promise->finally(sub { Mojo::IOLoop->remove($timer) });
   $cb->();
 
