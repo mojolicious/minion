@@ -94,9 +94,9 @@ Mojo::IOLoop->start;
 # Job results (missing job)
 (@finished, @failed) = ();
 $minion->job($id)->remove;
-$minion->result_p($id)->then(sub { @finished = @_ })
-  ->catch(sub                    { @failed   = @_ })->wait;
-is_deeply \@finished, [undef], 'job no longer exists';
+$minion->result_p($id)->then(sub { @finished = (@_, 'finished') })
+  ->catch(sub                    { @failed   = (@_, 'failed') })->wait;
+is_deeply \@finished, ['finished'], 'job no longer exists';
 is_deeply \@failed, [], 'not failed';
 
 # Repair missing worker

@@ -146,7 +146,7 @@ sub _info { shift->backend->list_jobs(0, 1, {ids => [shift]})->{jobs}[0] }
 
 sub _result {
   my ($self, $promise, $id) = @_;
-  return $promise->resolve(undef) unless my $job = $self->_info($id);
+  return $promise->resolve unless my $job = $self->_info($id);
   if    ($job->{state} eq 'finished') { $promise->resolve($job->{result}) }
   elsif ($job->{state} eq 'failed')   { $promise->reject($job->{result}) }
 }
