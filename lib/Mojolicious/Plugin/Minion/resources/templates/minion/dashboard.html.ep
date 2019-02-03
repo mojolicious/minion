@@ -9,14 +9,7 @@
       $('.minion-stats-uptime').text(Math.round(data.uptime / 86400));
       $('.minion-stats-delayed-jobs').text(data.delayed_jobs);
       var proc = data.enqueued_jobs - (data.inactive_jobs + data.active_jobs);
-      if (proc >= 1000000) {
-        var short = Math.floor(proc / 1000000) + 'M';
-        $('.minion-stats-processed-jobs').text(short);
-        $('#processed-jobs').tooltip({title: proc});
-      }
-      else {
-        $('.minion-stats-processed-jobs').text(proc);
-      }
+      $('.minion-stats-processed-jobs').text(proc);
       backlog = data.active_jobs + (data.inactive_jobs - data.delayed_jobs);
     }
     function updateBacklogChart() {
@@ -111,8 +104,7 @@
   </div>
 
   <div class="col-md-2">
-    <div class="stats" id="processed-jobs" data-toggle="tooltip"
-      data-placement="bottom">
+    <div class="stats">
       <div class="minion-stats-processed-jobs stats-body">0</div>
       <div class="stats-description">Processed Jobs</div>
     </div>
