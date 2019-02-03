@@ -1,4 +1,6 @@
 
+9.10  2019-02-04
+
 9.09  2019-02-03
   - Changed result_p method in Minion to pass along the whole job info hash
     instead of just the job result.
