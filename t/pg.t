@@ -59,8 +59,11 @@ Mojo::IOLoop->one_tick;
 is_deeply \@finished, [], 'not finished';
 is_deeply \@failed,   [], 'not failed';
 $job->finish({just => 'works!'});
+$job->note(foo => 'bar');
 $promise->wait;
-is_deeply \@finished, [{just => 'works!'}], 'finished';
+is_deeply $finished[0]{result}, {just => 'works!'}, 'right result';
+is_deeply $finished[0]{notes},  {foo  => 'bar'},    'right note';
+ok !$finished[1], 'no more results';
 is_deeply \@failed, [], 'not failed';
 (@finished, @failed) = ();
 my $id2 = $minion->enqueue('test');
@@ -72,14 +75,17 @@ is $job->id, $id2, 'same id';
 $job->fail({works => 'too!'});
 $promise->wait;
 is_deeply \@finished, [], 'not finished';
-is_deeply \@failed, [{works => 'too!'}], 'failed';
+is_deeply $failed[0]{result}, {works => 'too!'}, 'right result';
+ok !$failed[1], 'no more results';
 $worker->unregister;
 
 # Job results (already finished)
 (@finished, @failed) = ();
 $minion->result_p($id)->then(sub { @finished = @_ })
   ->catch(sub                    { @failed   = @_ })->wait;
-is_deeply \@finished, [{just => 'works!'}], 'finished';
+is_deeply $finished[0]{result}, {just => 'works!'}, 'right result';
+is_deeply $finished[0]{notes},  {foo  => 'bar'},    'right note';
+ok !$finished[1], 'no more results';
 is_deeply \@failed, [], 'not failed';
 
 # Job results (timeout)

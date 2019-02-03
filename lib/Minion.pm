@@ -146,8 +146,8 @@ sub _info { shift->backend->list_jobs(0, 1, {ids => [shift]})->{jobs}[0] }
 sub _result {
   my ($self, $promise, $id) = @_;
   return $promise->resolve unless my $job = $self->_info($id);
-  if    ($job->{state} eq 'finished') { $promise->resolve($job->{result}) }
-  elsif ($job->{state} eq 'failed')   { $promise->reject($job->{result}) }
+  if    ($job->{state} eq 'finished') { $promise->resolve($job) }
+  elsif ($job->{state} eq 'failed')   { $promise->reject($job) }
 }
 
 package Minion::_Guard;
@@ -684,11 +684,12 @@ change without warning!
   # Enqueue job and receive the result at some point in the future
   my $id = $minion->enqueue('foo');
   $minion->result_p($id)->then(sub {
-    my $result = shift;
+    my $info   = shift;
+    my $result = ref $info ? $info->{result} : 'Job already removed';
     say "Finished: $result";
   })->catch(sub {
-    my $reason = shift;
-    say "Failed: $reason";
+    my $info = shift;
+    say "Failed: $info->{result}";
   })->wait;
 
 These options are currently available:
