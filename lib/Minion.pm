@@ -250,9 +250,9 @@ an application loads L<Mojolicious::Plugin::Minion>.
   $ ./myapp.pl minion worker
 
 The worker process will fork a new process for every job that is being
-processed. This allows for resources such as memory to be returned to the system
-once a job is finished. Perl fork is very fast, so don't worry about the
-overhead.
+processed. This allows for resources such as memory to be returned to the
+operating system once a job is finished. Perl fork is very fast, so don't worry
+about the overhead.
 
   Minion::Worker
   |- Minion::Job [1]
