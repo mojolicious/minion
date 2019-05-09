@@ -51,7 +51,7 @@
         <tbody>
           <tr>
             <td>
-              <a href="<%= url_for->query([id => $worker->{id}]) %>">
+              <a href="<%= url_for->query({id => $worker->{id}}) %>">
                 <%= $worker->{id} %>
               </a>
             </td>

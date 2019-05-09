@@ -940,6 +940,8 @@ Andrey Khozov
 
 Brian Medley
 
+Franz Skale
+
 Hubert "depesz" Lubaczewski
 
 Joel Berger
