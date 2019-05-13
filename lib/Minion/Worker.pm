@@ -382,7 +382,7 @@ Register worker or send heartbeat to show that this worker is still alive.
 
   $worker->run;
 
-Run worker and wait for L</"SIGNALS">.
+Run worker and wait for L</"JOB SIGNALS">.
 
 These L</"status"> options are currently available:
 
