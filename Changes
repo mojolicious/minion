@@ -1,5 +1,7 @@
 
-9.11  2019-05-14
+9.11  2019-05-31
+  - Improved Minion::Backend::Pg to ignore missing workers for jobs in the
+    minion_foreground named queue and make debugging very slow jobs easier.
 
 9.10  2019-05-09
   - Fixed a few query parameter bugs in the admin ui. (fskale, sri)
