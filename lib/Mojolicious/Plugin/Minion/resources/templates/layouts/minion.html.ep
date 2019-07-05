@@ -16,7 +16,7 @@
     <script>
       $(function () {
         checkAll();
-        fromNow();
+        humanTime();
         pollStats('<%= url_for "minion_stats" %>');
       });
     </script>

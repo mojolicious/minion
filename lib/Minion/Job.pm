@@ -401,6 +401,12 @@ Current job state, usually C<active>, C<failed>, C<finished> or C<inactive>.
 
 Task name.
 
+=item time
+
+  time => 784111777
+
+Server time.
+
 =item worker
 
   worker => '154'

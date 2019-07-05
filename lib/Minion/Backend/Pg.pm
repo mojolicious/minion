@@ -86,7 +86,7 @@ sub list_jobs {
        extract(epoch from finished) as finished, notes, parents, priority,
        queue, result, extract(epoch from retried) as retried, retries,
        extract(epoch from started) as started, state, task,
-       count(*) over() as total, worker
+       extract(epoch from now()) as time, count(*) over() as total, worker
      from minion_jobs as j
      where (id = any ($1) or $1 is null) and (queue = any ($2) or $2 is null)
        and (state = any ($3) or $3 is null) and (task = any ($4) or $4 is null)
@@ -94,6 +94,7 @@ sub list_jobs {
      limit $5 offset $6', @$options{qw(ids queues states tasks)}, $limit,
     $offset
   )->expand->hashes->to_array;
+
   return _total('jobs', $jobs);
 }
 
@@ -661,6 +662,12 @@ Current job state, usually C<active>, C<failed>, C<finished> or C<inactive>.
   task => 'foo'
 
 Task name.
+
+=item time
+
+  time => 78411177
+
+Server time.
 
 =item worker
 

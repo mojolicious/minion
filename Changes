@@ -1,5 +1,9 @@
 
-9.11  2019-05-31
+9.11  2019-07-08
+  - Added time field to list_jobs method in Minion::Backend::Pg.
+  - Added time field to info method in Minion::Job.
+  - Improved admin ui to show the current runtime for every job, as well as the
+    current delay for delayed jobs.
   - Improved Minion::Backend::Pg to ignore missing workers for jobs in the
     minion_foreground named queue and make debugging very slow jobs easier.
 

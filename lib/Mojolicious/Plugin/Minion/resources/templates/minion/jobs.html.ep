@@ -88,6 +88,7 @@
             <th>Created</th>
             <th></th>
             <th></th>
+            <th>Runtime</th>
             <th></th>
           </tr>
         </thead>
@@ -132,13 +133,34 @@
                   <span class="badge badge-secondary">inactive</span>
                 % }
               </td>
+              % if (grep { $job->{state} eq $_ } qw(active finished failed)) {
+                % my $end = $job->{state} eq 'active' ? 'time' : 'finished';
+                % my $runtime = $job->{$end} - $job->{started};
+                <td class="accordion-toggle collapsed duration"
+                  data-toggle="collapse" data-target="#job<%= $i %>">
+                  <%= $runtime %>
+                </td>
+              % }
+              % elsif ($job->{delayed} > $job->{time}) {
+                <td class="accordion-toggle collapsed" data-toggle="collapse"
+                  data-target="#job<%= $i %>">
+                  <div class="d-inline duration">
+                    <%= $job->{delayed} - $job->{time} %>
+                  </div>
+                  delay
+                </td>
+              % }
+              % else {
+                <td class="accordion-toggle collapsed" data-toggle="collapse"
+                  data-target="#job<%= $i %>">waiting</td>
+              % }
               <td class="accordion-toggle collapsed expand"
                 data-toggle="collapse" data-target="#job<%= $i %>">
                 <span class="fas fa-lg expand-icon"></span>
               </td>
             </tr>
             <tr>
-              <td colspan="8" class="hiddenRow">
+              <td colspan="9" class="hiddenRow">
                 <div class="collapse" id="job<%= $i %>">
                   <pre class="border rounded"><%= dumper Minion::_datetime $job %></pre>
                 </div>

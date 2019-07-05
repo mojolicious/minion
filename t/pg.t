@@ -452,6 +452,7 @@ $job = $worker->register->dequeue(0);
 is $worker->info->{jobs}[0], $job->id, 'right job';
 like $job->info->{created}, qr/^[\d.]+$/, 'has created timestamp';
 like $job->info->{started}, qr/^[\d.]+$/, 'has started timestamp';
+like $job->info->{time},    qr/^[\d.]+$/, 'has server time';
 is_deeply $job->args, [2, 2], 'right arguments';
 is $job->info->{state}, 'active', 'right state';
 is $job->task,    'add', 'right task';
