@@ -1,4 +1,6 @@
 
+9.12  2019-07-09
+
 9.11  2019-07-08
   - Added time field to list_jobs method in Minion::Backend::Pg.
   - Added time field to info method in Minion::Job.
