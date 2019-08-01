@@ -24,11 +24,11 @@ my $worker = $minion->repair->worker;
 isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
 # Migrate up and down
-is $minion->backend->pg->migrations->active, 18, 'active version is 18';
+is $minion->backend->pg->migrations->active, 19, 'active version is 19';
 is $minion->backend->pg->migrations->migrate(0)->active, 0,
   'active version is 0';
-is $minion->backend->pg->migrations->migrate->active, 18,
-  'active version is 18';
+is $minion->backend->pg->migrations->migrate->active, 19,
+  'active version is 19';
 
 # Register and unregister
 $worker->register;
@@ -422,6 +422,11 @@ is $batch->[1]{queue}, 'default', 'right queue';
 is $batch->[2]{queue}, 'default', 'right queue';
 is $batch->[3]{queue}, 'default', 'right queue';
 ok !$batch->[4], 'no more results';
+$id2   = $minion->enqueue('test' => [] => {notes => {is_test => 1}});
+$batch = $minion->backend->list_jobs(0, 10, {notes => ['is_test']})->{jobs};
+is $batch->[0]{task}, 'test', 'right task';
+ok !$batch->[4], 'no more results';
+ok $minion->job($id2)->remove, 'job removed';
 $batch
   = $minion->backend->list_jobs(0, 10, {queues => ['does_not_exist']})->{jobs};
 is_deeply $batch, [], 'no results';
