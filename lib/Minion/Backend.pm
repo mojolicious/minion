@@ -278,6 +278,13 @@ These options are currently available:
 
 List only jobs with these ids.
 
+=item notes
+
+  notes => ['foo', 'bar']
+
+List only jobs with one of these notes. Note that this option is EXPERIMENTAL
+and might change without warning!
+
 =item queues
 
   queues => ['important', 'unimportant']
