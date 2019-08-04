@@ -21,6 +21,7 @@ sub run {
     'H|history'     => \my $history,
     'L|locks'       => \my $locks,
     'l|limit=i'     => \(my $limit = 100),
+    'n|notes=s'     => sub { $opts->{notes} = decode_json($_[1]) },
     'o|offset=i'    => \(my $offset = 0),
     'P|parent=s'    => sub { push @{$opts->{parents}}, $_[1] },
     'p|priority=i'  => \$opts->{priority},
@@ -120,8 +121,10 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -q important -t foo -t bar -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
+    ./myapp.pl minion job -e 'foo' -n '{"test":123}'
     ./myapp.pl minion job -R -d 10 10023
     ./myapp.pl minion job --remove 10023
+    ./myapp.pl minion job -n '["test"]'
     ./myapp.pl minion job -L
     ./myapp.pl minion job -L some_lock some_other_lock
     ./myapp.pl minion job -b jobs -a '[12]'
@@ -150,6 +153,8 @@ Minion::Command::minion::job - Minion job command
     -m, --mode <name>           Operating mode for your application, defaults to
                                 the value of MOJO_MODE/PLACK_ENV or
                                 "development"
+    --n, notes <JSON>           Notes in JSON format for new job or list only
+                                jobs with one of these notes
     -o, --offset <number>       Number of jobs/workers to skip when listing
                                 them, defaults to 0
     -P, --parent <id>           One or more jobs the new job depends on

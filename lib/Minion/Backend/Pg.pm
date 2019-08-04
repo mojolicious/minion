@@ -88,10 +88,11 @@ sub list_jobs {
        extract(epoch from started) as started, state, task,
        extract(epoch from now()) as time, count(*) over() as total, worker
      from minion_jobs as j
-     where (id = any ($1) or $1 is null) and (queue = any ($2) or $2 is null)
-       and (state = any ($3) or $3 is null) and (task = any ($4) or $4 is null)
+     where (id = any ($1) or $1 is null) and (notes \? any ($2) or $2 is null)
+       and (queue = any ($3) or $3 is null) and (state = any ($4) or $4 is null)
+       and (task = any ($5) or $5 is null)
      order by id desc
-     limit $5 offset $6', @$options{qw(ids queues states tasks)}, $limit,
+     limit $6 offset $7', @$options{qw(ids notes queues states tasks)}, $limit,
     $offset
   )->expand->hashes->to_array;
 
@@ -536,6 +537,13 @@ These options are currently available:
   ids => ['23', '24']
 
 List only jobs with these ids.
+
+=item notes
+
+  notes => ['foo', 'bar']
+
+List only jobs with one of these notes. Note that this option is EXPERIMENTAL
+and might change without warning!
 
 =item queues
 
@@ -1143,3 +1151,6 @@ $$ language plpgsql;
 
 -- 18 down
 drop function if exists minion_lock(text, int, int);
+
+-- 19 up
+create index on minion_jobs using gin (notes);
