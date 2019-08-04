@@ -262,7 +262,8 @@ Get application from L<Minion/"app">.
   my $err = $job->execute;
 
 Perform job in this process and return C<undef> if the task was successful or an
-exception otherwise.
+exception otherwise.  Note that this method should only be used to implement
+custom workers.
 
   # Perform job in foreground
   if (my $err = $job->execute) { $job->fail($err) }
@@ -419,13 +420,15 @@ Id of worker that is processing the job.
 
   my $bool = $job->is_finished;
 
-Check if job performed with L</"start"> is finished.
+Check if job performed with L</"start"> is finished. Note that this method
+should only be used to implement custom workers.
 
 =head2 kill
 
   $job->kill('INT');
 
-Send a signal to job performed with L</"start">.
+Send a signal to job performed with L</"start">. Note that this method should
+only be used to implement custom workers.
 
 =head2 note
 
@@ -446,13 +449,15 @@ and array references are fine though.
 
   $job->perform;
 
-Perform job in new process and wait for it to finish.
+Perform job in new process and wait for it to finish. Note that this method
+should only be used to implement custom workers.
 
 =head2 pid
 
   my $pid = $job->pid;
 
-Process id of the process spawned by L</"start"> if available.
+Process id of the process spawned by L</"start"> if available. Note that this
+method should only be used to implement custom workers.
 
 =head2 remove
 
@@ -508,7 +513,8 @@ Queue to put job in.
 
   $job = $job->start;
 
-Perform job in new process, but do not wait for it to finish.
+Perform job in new process, but do not wait for it to finish. Note that this
+method should only be used to implement custom workers.
 
   # Perform two jobs concurrently
   $job1->start;
@@ -521,7 +527,8 @@ Perform job in new process, but do not wait for it to finish.
 
   $job->stop;
 
-Stop job performed with L</"start"> immediately.
+Stop job performed with L</"start"> immediately. Note that this method should
+only be used to implement custom workers.
 
 =head1 SEE ALSO
 

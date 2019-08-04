@@ -808,7 +808,8 @@ Release a named lock that has been previously acquired with L</"lock">.
 
   my $worker = $minion->worker;
 
-Build L<Minion::Worker> object.
+Build L<Minion::Worker> object. Note that this method should only be used to
+implement custom workers.
 
   # Use the standard worker with all its features
   my $worker = $minion->worker;
