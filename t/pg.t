@@ -716,6 +716,9 @@ my $notes = {
 };
 is_deeply $job->info->{notes}, $notes, 'right metadata';
 is_deeply $job->info->{result}, [{23 => 'testtesttest'}], 'right structure';
+ok $job->note(yada => undef, bar => undef), 'removed metadata';
+$notes = {foo => [4, 5, 6], baz => 'yada'};
+is_deeply $job->info->{notes}, $notes, 'right metadata';
 $worker->unregister;
 
 # Perform job in a running event loop

@@ -3,6 +3,8 @@
   - Added EXPERIMENTAL notes option to list_jobs method in Minion::Backend and
     Minion::Backend::Pg.
   - Added -n option to job command.
+  - Improved note methods in Minion::Job, Minion::Backend and
+    Minion::Backend::Pg to allow for fields to be removed.
 
 9.11  2019-07-08
   - Added time field to list_jobs method in Minion::Backend::Pg.

@@ -149,8 +149,10 @@ sub new {
 sub note {
   my ($self, $id, $merge) = @_;
   return !!$self->pg->db->query(
-    'update minion_jobs set notes = notes || ? where id = ?',
-    {json => $merge}, $id)->rows;
+    'update minion_jobs set notes = jsonb_strip_nulls(notes || ?) where id = ?',
+    {json => $merge},
+    $id
+  )->rows;
 }
 
 sub receive {
@@ -836,7 +838,8 @@ Construct a new L<Minion::Backend::Pg> object.
 
   my $bool = $backend->note($job_id, {mojo => 'rocks', minion => 'too'});
 
-Change one or more metadata fields for a job.
+Change one or more metadata fields for a job. Setting a value to C<undef> will
+remove the field.
 
 =head2 receive
 

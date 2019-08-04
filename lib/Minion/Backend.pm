@@ -572,8 +572,8 @@ defaults to C<1>.
 
   my $bool = $backend->note($job_id, {mojo => 'rocks', minion => 'too'});
 
-Change one or more metadata fields for a job. Meant to be overloaded in a
-subclass.
+Change one or more metadata fields for a job. Setting a value to C<undef>
+will remove the field. Meant to be overloaded in a subclass.
 
 =head2 receive
 

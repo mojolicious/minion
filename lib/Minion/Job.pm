@@ -434,10 +434,11 @@ only be used to implement custom workers.
 
   my $bool = $job->note(mojo => 'rocks', minion => 'too');
 
-Change one or more metadata fields for this job. The new values will get
-serialized by L<Minion/"backend"> (often with L<Mojo::JSON>), so you shouldn't
-send objects and be careful with binary data, nested data structures with hash
-and array references are fine though.
+Change one or more metadata fields for this job. Setting a value to C<undef>
+will remove the field. The new values will get serialized by L<Minion/"backend">
+(often with L<Mojo::JSON>), so you shouldn't send objects and be careful with
+binary data, nested data structures with hash and array references are fine
+though.
 
   # Share progress information
   $job->note(progress => 95);
