@@ -1,4 +1,6 @@
 
+9.13  2019-08-05
+
 9.12  2019-08-04
   - Added EXPERIMENTAL notes option to list_jobs method in Minion::Backend and
     Minion::Backend::Pg.
