@@ -3,7 +3,6 @@ use Mojo::Base 'Mojolicious::Plugin';
 
 use Minion;
 use Mojo::IOLoop;
-use Scalar::Util 'weaken';
 
 sub register {
   my ($self, $app, $conf) = @_;
@@ -21,7 +20,27 @@ sub _dev_server {
       my ($server, $app) = @_;
       return unless $server->isa('Mojo::Server::Daemon');
       $app->minion->missing_after(0)->repair;
-      Mojo::IOLoop->recurring(1 => sub { $app->minion->perform_jobs(@args) });
+
+      # without server event finish, use worker pid going away to finish
+      my $morbo_worker_pid = $$;
+      Mojo::IOLoop->subprocess(
+        sub {
+          my $subprocess = shift;
+          # rename process
+          $0 = 'dev-minion-worker';
+          $subprocess->ioloop->recurring(
+            1 => sub { $app->minion->perform_jobs(@args); });
+          $subprocess->ioloop->recurring(
+            1 => sub { shift->stop unless kill 0, $morbo_worker_pid });
+          $subprocess->ioloop->start unless $subprocess->ioloop->is_running;
+          $app->log->debug("$0 $$ finished.");
+          return 0;
+        },
+        sub {
+          my ($subprocess, $err, @results) = @_;
+          $app->log->debug("Subprocess error: $err") and return if $err;
+        }
+      );
     }
   ) if $c->app->mode eq 'development';
 }
