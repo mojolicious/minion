@@ -25,7 +25,14 @@ sub _dev_server {
       my $server_pid = $$;
       Mojo::IOLoop->subprocess(
         sub {
-          _run_worker($app->minion->worker, $app->log, $server_pid, @args);
+          $app->minion->on(worker => sub {
+            my ($minion, $worker) = @_;
+            $minion->missing_after(180);
+            $worker->status(@args);
+            $worker->on(dequeue => sub { pop->once(spawn => \&_job_spawned) });
+            $worker->on(wait => sub { shift->{finished} = !kill 0, $server_pid});
+          });
+          $app->minion->worker->run;
         },
         sub {
           $app->log->warn("Subprocess error: $_[1]") and return if $_[1];
@@ -40,46 +47,6 @@ sub _job_spawned {
   my ($id, $task) = ($job->id, $job->task);
   $job->app->log->debug(
     qq{Process $pid is performing job "$id" with task "$task"});
-}
-
-sub _run_worker {
-  my ($worker, $log, $parent_pid, $args) = (shift, shift, shift, shift || {});
-
-  # remarkably similar to Minion::Worker->run, but some important differences
-  my $status = $worker->status($args)->status;
-  $status->{command_interval}   //= 10;
-  $status->{dequeue_timeout}    //= 5;
-  $status->{heartbeat_interval} //= 300;
-  $status->{jobs}               //= 4;
-  $status->{queues} ||= ['default'];
-  $status->{performed}       //= 0;
-  $status->{repair_interval} //= 21600;
-  $status->{repair_interval} -= int rand $status->{repair_interval} / 2;
-  $worker->on(dequeue => sub { pop->once(spawn => \&_job_spawned) });
-
-  local $SIG{CHLD} = sub { };
-  my $commands = $worker->commands;
-  my $kill     = sub {
-    return unless grep { ($_[1] // '') eq $_ } qw(INT KILL USR1 USR2);
-    $worker->{jobs}{$_[2]}->kill($_[1]) if $worker->{jobs}{$_[2] // ''};
-  };
-  local $commands->{jobs}
-    = sub { $status->{jobs} = $_[1] if ($_[1] // '') =~ /^\d+$/ };
-  local $commands->{kill} = $kill;
-  local $commands->{stop} = sub { $kill->('KILL', $_[1]) };
-  eval {
-    $log->info("Worker $$ started");
-
-    # $self->{last_repair} ||= 0 in _work() deletes the worker otherwise
-    $worker->minion->missing_after(180);
-    $worker->_work
-      until ($worker->{finished} = !kill 0, $parent_pid)
-      && !keys %{$worker->{jobs}};
-  };
-  $log->info("Worker $$ stopped");
-  my $err = $@;
-  $worker->unregister;
-  $log->fatal($err) if $err;
 }
 
 1;
