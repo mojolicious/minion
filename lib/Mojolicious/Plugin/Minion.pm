@@ -149,7 +149,7 @@ Get L<Minion> object for application.
 
 In C<development> mode when started with a development web server perform all
 jobs from the web server without starting a separate worker process, takes the
-same arguments as L<Minion/"perform_jobs">.
+same arguments as L<Minion::Worker/"status">.
 
 =head1 METHODS
 
