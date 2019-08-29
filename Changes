@@ -1,5 +1,6 @@
 
-9.13  2019-08-05
+9.13  2019-08-29
+  - Added EXPERIMENTAL cleanup event to Minion::Job.
 
 9.12  2019-08-04
   - Added EXPERIMENTAL notes option to list_jobs method in Minion::Backend and

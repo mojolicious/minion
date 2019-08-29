@@ -602,7 +602,14 @@ $minion->once(
           finish => sub {
             my $job = shift;
             return unless defined(my $old = $job->info->{notes}{finish_count});
-            $job->note(finish_count => $old + 1, pid => $$);
+            $job->note(finish_count => $old + 1, finish_pid => $$);
+          }
+        );
+        $job->on(
+          cleanup => sub {
+            my $job = shift;
+            return unless defined(my $old = $job->info->{notes}{finish_count});
+            $job->note(cleanup_count => $old + 1, cleanup_pid => $$);
           }
         );
       }
@@ -641,9 +648,12 @@ $job = $worker->dequeue(0);
 $job->perform;
 is_deeply $job->info->{result}, {added => 9}, 'right result';
 is $job->info->{notes}{finish_count}, 1, 'finish event has been emitted once';
-ok $job->info->{notes}{pid},    'has a process id';
-isnt $job->info->{notes}{pid},  $$, 'different process id';
-is $job->info->{notes}{before}, 23, 'value still exists';
+ok $job->info->{notes}{finish_pid},    'has a process id';
+isnt $job->info->{notes}{finish_pid},  $$, 'different process id';
+is $job->info->{notes}{before},        23, 'value still exists';
+is $job->info->{notes}{cleanup_count}, 2, 'cleanup event has been emitted once';
+ok $job->info->{notes}{cleanup_pid},   'has a process id';
+isnt $job->info->{notes}{cleanup_pid}, $$, 'different process id';
 $worker->unregister;
 
 # Queues

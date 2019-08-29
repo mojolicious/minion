@@ -76,6 +76,7 @@ sub start {
 
   # Child
   if (defined(my $err = $self->execute)) { $self->fail($err) }
+  $self->emit('cleanup');
   POSIX::_exit(0);
 }
 
@@ -109,6 +110,21 @@ L<Minion::Job> is a container for L<Minion> jobs.
 
 L<Minion::Job> inherits all events from L<Mojo::EventEmitter> and can emit the
 following new ones.
+
+=head2 cleanup
+
+  $job->on(cleanup => sub {
+    my $job = shift;
+    ...
+  });
+
+Emitted in the process performing this job right before the process will exit.
+Note that this event is EXPERIMENTAL and might change without warning!
+
+  $job->on(cleanup => sub {
+    my $job  = shift;
+    $job->app->log->debug("Process $$ is about to exit");
+  });
 
 =head2 failed
 
