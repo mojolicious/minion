@@ -122,7 +122,7 @@ Emitted in the process performing this job right before the process will exit.
 Note that this event is EXPERIMENTAL and might change without warning!
 
   $job->on(cleanup => sub {
-    my $job  = shift;
+    my $job = shift;
     $job->app->log->debug("Process $$ is about to exit");
   });
 
