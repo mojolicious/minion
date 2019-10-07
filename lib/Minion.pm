@@ -363,8 +363,7 @@ Emitted in the worker process after it has been created.
 
   $minion->on(worker => sub {
     my ($minion, $worker) = @_;
-    my $id = $worker->id;
-    say "Worker $$:$id started.";
+    say "Worker $$ started.";
   });
 
 =head1 ATTRIBUTES
