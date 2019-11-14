@@ -134,3 +134,6 @@ drop function if exists minion_lock(text, int, int);
 
 -- 19 up
 create index on minion_jobs using gin (notes);
+
+-- 20 up
+alter table minion_workers set unlogged;

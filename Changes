@@ -1,5 +1,6 @@
 
-9.14  2019-08-30
+9.14  2019-11-14
+  - Improve performance by making the minion_workers table unlogged.
 
 9.13  2019-08-29
   - Added EXPERIMENTAL cleanup event to Minion::Job.
