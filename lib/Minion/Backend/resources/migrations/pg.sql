@@ -3,7 +3,7 @@
 -- used for upgrades to the latest version. Downgrades may be used to clean up
 -- the database, but they do not have to work with old versions of Minion.
 --
--- 1 up
+-- 18 up
 create type minion_state as enum ('inactive', 'active', 'failed', 'finished');
 create table if not exists minion_jobs (
   id       bigserial not null primary key,
@@ -70,7 +70,7 @@ begin
 end;
 $$ language plpgsql;
 
--- 1 down
+-- 18 down
 drop table if exists minion_jobs;
 drop table if exists minion_workers;
 drop table if exists minion_locks;
