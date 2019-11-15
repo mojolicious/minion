@@ -5,15 +5,12 @@ use Carp 'croak';
 
 has minion => undef, weak => 1;
 
-sub broadcast  { croak 'Method "broadcast" not implemented by subclass' }
-sub dequeue    { croak 'Method "dequeue" not implemented by subclass' }
-sub enqueue    { croak 'Method "enqueue" not implemented by subclass' }
-sub fail_job   { croak 'Method "fail_job" not implemented by subclass' }
-sub finish_job { croak 'Method "finish_job" not implemented by subclass' }
-
-# TODO: This method will croak after the experimentation period
-sub history { {daily => []} }
-
+sub broadcast    { croak 'Method "broadcast" not implemented by subclass' }
+sub dequeue      { croak 'Method "dequeue" not implemented by subclass' }
+sub enqueue      { croak 'Method "enqueue" not implemented by subclass' }
+sub fail_job     { croak 'Method "fail_job" not implemented by subclass' }
+sub finish_job   { croak 'Method "finish_job" not implemented by subclass' }
+sub history      { croak 'Method "history" not implemented by subclass' }
 sub list_jobs    { croak 'Method "list_jobs" not implemented by subclass' }
 sub list_locks   { croak 'Method "list_locks" not implemented by subclass' }
 sub list_workers { croak 'Method "list_workers" not implemented by subclass' }
@@ -235,7 +232,6 @@ to be overloaded in a subclass.
   my $history = $backend->history;
 
 Get history information for job queue. Meant to be overloaded in a subclass.
-Note that this method is EXPERIMENTAL and might change without warning!
 
 These fields are currently available:
 
@@ -719,8 +715,13 @@ Number of workers that are currently processing a job.
   delayed_jobs => 100
 
 Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future or have unresolved dependencies. Note that this field is
-EXPERIMENTAL and might change without warning!
+in the future or have unresolved dependencies.
+
+=item enqueued_jobs
+
+  enqueued_jobs => 100000
+
+Rough estimate of how many jobs have ever been enqueued.
 
 =item failed_jobs
 

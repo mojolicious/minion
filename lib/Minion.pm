@@ -556,8 +556,7 @@ failed.
 
   my $history = $minion->history;
 
-Get history information for job queue. Note that this method is EXPERIMENTAL and
-might change without warning!
+Get history information for job queue.
 
 These fields are currently available:
 
@@ -711,8 +710,7 @@ Reset only locks.
 Return a L<Mojo::Promise> object for the result of a job. The state C<finished>
 will result in the promise being C<fullfilled>, and the state C<failed> in the
 promise being C<rejected>. This operation can be cancelled by resolving the
-promise manually at any time. Note that this method is EXPERIMENTAL and might
-change without warning!
+promise manually at any time.
 
   # Enqueue job and receive the result at some point in the future
   my $id = $minion->enqueue('foo');
@@ -774,8 +772,7 @@ Number of workers that are currently processing a job.
   delayed_jobs => 100
 
 Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future or have unresolved dependencies. Note that this field is
-EXPERIMENTAL and might change without warning!
+in the future or have unresolved dependencies.
 
 =item enqueued_jobs
 

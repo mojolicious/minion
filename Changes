@@ -3,6 +3,12 @@
   - Removed PostgreSQL migrations older than 2 years, that means you need to
     have Minion version 7.01 or newer installed before you can upgrade to
     version 10.0.
+  - Removed experimental status from result_p method in Minion.
+  - Removed experimental status from history method in Minion and
+    Minion::Backend::Pg.
+  - Removed experimental status from delayed_jobs and enqueued_jobs fields from
+    stats methods in Minion and Minion::Backend::Pg.
+  - Removed experimental status from cleanup and finish events in Minion::Job.
   - Changed reset method in Minion and Minion::Backend::Pg to require options
     for what to reset.
   - Improved reset method in Minion and Minion::Backend::Pg to allow for locks

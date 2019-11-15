@@ -505,8 +505,7 @@ Transition from C<active> to C<finished> state with or without a result.
 
   my $history = $backend->history;
 
-Get history information for job queue. Note that this method is EXPERIMENTAL and
-might change without warning!
+Get history information for job queue.
 
 These fields are currently available:
 
@@ -989,15 +988,13 @@ Number of workers that are currently processing a job.
   delayed_jobs => 100
 
 Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future. Note that this field is EXPERIMENTAL and might change without
-warning!
+in the future.
 
 =item enqueued_jobs
 
   enqueued_jobs => 100000
 
-Rough estimate of how many jobs have ever been enqueued. Note that this field is
-EXPERIMENTAL and might change without warning!
+Rough estimate of how many jobs have ever been enqueued.
 
 =item failed_jobs
 

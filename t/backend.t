@@ -14,6 +14,8 @@ eval { Minion::Backend->fail_job };
 like $@, qr/Method "fail_job" not implemented by subclass/, 'right error';
 eval { Minion::Backend->finish_job };
 like $@, qr/Method "finish_job" not implemented by subclass/, 'right error';
+eval { Minion::Backend->history };
+like $@, qr/Method "history" not implemented by subclass/, 'right error';
 eval { Minion::Backend->list_jobs };
 like $@, qr/Method "list_jobs" not implemented by subclass/, 'right error';
 eval { Minion::Backend->list_locks };
