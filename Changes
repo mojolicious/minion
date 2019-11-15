@@ -1,4 +1,6 @@
 
+10.01  2019-11-16
+
 10.0  2019-11-15
   - Removed PostgreSQL migrations older than 2 years, that means you need to
     have Minion version 7.01 or newer installed before you can upgrade to
