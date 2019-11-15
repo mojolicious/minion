@@ -218,8 +218,13 @@ sub repair {
 }
 
 sub reset {
-  shift->pg->db->query(
-    'truncate minion_jobs, minion_locks, minion_workers restart identity');
+  my ($self, $options) = (shift, shift // {});
+
+  if ($options->{all}) {
+    $self->pg->db->query(
+      'truncate minion_jobs, minion_locks, minion_workers restart identity');
+  }
+  elsif ($options->{locks}) { $self->pg->db->query('truncate minion_locks') }
 }
 
 sub retry_job {
@@ -885,9 +890,27 @@ Repair worker registry and job queue if necessary.
 
 =head2 reset
 
-  $backend->reset;
+  $backend->reset({all => 1});
 
 Reset job queue.
+
+These options are currently available:
+
+=over 2
+
+=item all
+
+  all => 1
+
+Reset everything.
+
+=item locks
+
+  locks => 1
+
+Reset only locks.
+
+=back
 
 =head2 retry_job
 

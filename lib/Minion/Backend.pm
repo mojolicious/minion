@@ -620,9 +620,27 @@ subclass.
 
 =head2 reset
 
-  $backend->reset;
+  $backend->reset({all => 1});
 
 Reset job queue. Meant to be overloaded in a subclass.
+
+These options are currently available:
+
+=over 2
+
+=item all
+
+  all => 1
+
+Reset everything.
+
+=item locks
+
+  locks => 1
+
+Reset only locks.
+
+=back
 
 =head2 retry_job
 

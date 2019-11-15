@@ -286,14 +286,26 @@ ok !$minion->guard('bar', 3600, {limit => 2}), 'not locked again';
 undef $guard;
 undef $guard3;
 
-# Reset
-$minion->reset->repair;
-ok !$minion->backend->pg->db->query(
-  'select count(id) as count from minion_jobs')->hash->{count}, 'no jobs';
-ok !$minion->backend->pg->db->query(
-  'select count(id) as count from minion_locks')->hash->{count}, 'no locks';
-ok !$minion->backend->pg->db->query(
-  'select count(id) as count from minion_workers')->hash->{count}, 'no workers';
+# Reset (locks)
+$minion->lock('test', 3600);
+$minion->worker->register;
+ok $minion->backend->list_jobs(0, 1)->{total},    'jobs';
+ok $minion->backend->list_locks(0, 1)->{total},   'locks';
+ok $minion->backend->list_workers(0, 1)->{total}, 'workers';
+$minion->reset({locks => 1});
+ok $minion->backend->list_jobs(0, 1)->{total}, 'jobs';
+ok !$minion->backend->list_locks(0, 1)->{total}, 'no locks';
+ok $minion->backend->list_workers(0, 1)->{total}, 'workers';
+
+# Reset (all)
+$minion->lock('test', 3600);
+ok $minion->backend->list_jobs(0, 1)->{total},    'jobs';
+ok $minion->backend->list_locks(0, 1)->{total},   'locks';
+ok $minion->backend->list_workers(0, 1)->{total}, 'workers';
+$minion->reset({all => 1})->repair;
+ok !$minion->backend->list_jobs(0, 1)->{total},    'no jobs';
+ok !$minion->backend->list_locks(0, 1)->{total},   'no locks';
+ok !$minion->backend->list_workers(0, 1)->{total}, 'no workers';
 
 # Stats
 $minion->add_task(

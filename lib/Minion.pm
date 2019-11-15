@@ -97,7 +97,8 @@ sub perform_jobs {
 }
 
 sub repair { shift->_delegate('repair') }
-sub reset  { shift->_delegate('reset') }
+
+sub reset { shift->_delegate('reset', @_) }
 
 sub result_p {
   my ($self, $id, $options) = (shift, shift, shift // {});
@@ -136,8 +137,8 @@ sub _datetime {
 }
 
 sub _delegate {
-  my ($self, $method) = @_;
-  $self->backend->$method;
+  my ($self, $method) = (shift, shift);
+  $self->backend->$method(@_);
   return $self;
 }
 
@@ -680,9 +681,27 @@ Repair worker registry and job queue if necessary.
 
 =head2 reset
 
-  $minion = $minion->reset;
+  $minion = $minion->reset({all => 1});
 
 Reset job queue.
+
+These options are currently available:
+
+=over 2
+
+=item all
+
+  all => 1
+
+Reset everything.
+
+=item locks
+
+  locks => 1
+
+Reset only locks.
+
+=back
 
 =head2 result_p
 
