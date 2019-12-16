@@ -271,7 +271,7 @@ sub unlock {
   !!shift->pg->db->query(
     'delete from minion_locks where id = (
        select id from minion_locks
-       where expires > now() and name = ? order by expires limit 1
+       where expires > now() and name = ? order by expires limit 1 for update
      ) returning 1', shift
   )->rows;
 }
