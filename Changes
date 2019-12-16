@@ -1,4 +1,6 @@
 
+10.02  2019-12-17
+
 10.01  2019-12-16
   - Fixed an unlock concurrency issue in Minion::Backend::Pg.
 
