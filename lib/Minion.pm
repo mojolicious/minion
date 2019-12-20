@@ -954,6 +954,8 @@ In alphabetical order:
 
 Andrey Khozov
 
+Andrii Nikitin
+
 Brian Medley
 
 Franz Skale
