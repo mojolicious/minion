@@ -1,4 +1,6 @@
 
+10.03  2019-12-21
+
 10.02  2019-12-20
   - Fixed QUIT signal in Minion::Worker.
   - Fixed stop remote control command.
