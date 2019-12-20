@@ -1,5 +1,9 @@
 
-10.02  2019-12-17
+10.02  2019-12-20
+  - Fixed QUIT signal in Minion::Worker.
+  - Fixed stop remote control command.
+  - Fixed a problem where Minion::Worker was unable to deal with immediately
+    restarted jobs.
 
 10.01  2019-12-16
   - Fixed an unlock concurrency issue in Minion::Backend::Pg. (andrii-suse)

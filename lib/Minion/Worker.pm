@@ -69,23 +69,20 @@ sub run {
   $status->{repair_interval} //= 21600;
   $status->{repair_interval} -= int rand $status->{repair_interval} / 2;
 
-  local $SIG{CHLD} = sub { };
-  local $SIG{INT} = local $SIG{TERM} = sub { $self->{finished}++ };
-  local $SIG{QUIT}
-    = sub { ++$self->{finished} and kill 'KILL', keys %{$self->{jobs}} };
+  local $SIG{CHLD} = sub                    { };
+  local $SIG{INT}  = local $SIG{TERM} = sub { $self->{finished}++ };
+  local $SIG{QUIT} = sub {
+    ++$self->{finished} and kill 'KILL', map { $_->pid } @{$self->{jobs}};
+  };
 
   # Remote control commands need to validate arguments carefully
   my $commands = $self->commands;
-  my $kill     = sub {
-    return unless grep { ($_[1] // '') eq $_ } qw(INT KILL USR1 USR2);
-    $self->{jobs}{$_[2]}->kill($_[1]) if $self->{jobs}{$_[2] // ''};
-  };
   local $commands->{jobs}
     = sub { $status->{jobs} = $_[1] if ($_[1] // '') =~ /^\d+$/ };
-  local $commands->{kill} = $kill;
-  local $commands->{stop} = sub { $kill->('KILL', $_[1]) };
+  local $commands->{kill} = \&_kill;
+  local $commands->{stop} = sub { $self->_kill('KILL', $_[1]) };
 
-  eval { $self->_work until $self->{finished} && !keys %{$self->{jobs}} };
+  eval { $self->_work until $self->{finished} && !@{$self->{jobs}} };
   my $err = $@;
   $self->unregister;
   croak $err if $err;
@@ -95,6 +92,12 @@ sub unregister {
   my $self = shift;
   $self->minion->backend->unregister_worker(delete $self->{id});
   return $self;
+}
+
+sub _kill {
+  my ($self, $signal, $id) = (shift, shift // '', shift // '');
+  return unless grep         { $signal eq $_ } qw(INT KILL USR1 USR2);
+  $_->kill($signal) for grep { $_->id eq $id } @{$self->{jobs}};
 }
 
 sub _work {
@@ -119,18 +122,16 @@ sub _work {
   }
 
   # Check if jobs are finished
-  my $jobs = $self->{jobs} ||= {};
-  $jobs->{$_}->is_finished and ++$status->{performed} and delete $jobs->{$_}
-    for keys %$jobs;
+  my $jobs = $self->{jobs} ||= [];
+  @$jobs = map { $_->is_finished && ++$status->{performed} ? () : $_ } @$jobs;
 
   # Job limit has been reached or worker is stopping
-  return $self->emit('busy')
-    if ($status->{jobs} <= keys %$jobs) || $self->{finished};
+  return $self->emit('busy') if $status->{jobs} <= @$jobs || $self->{finished};
 
   # Try to get more jobs
   my ($max, $queues) = @{$status}{qw(dequeue_timeout queues)};
   my $job = $self->emit('wait')->dequeue($max => {queues => $queues});
-  $jobs->{$job->id} = $job->start if $job;
+  push @$jobs, $job->start if $job;
 }
 
 1;
