@@ -10,7 +10,7 @@ use Mojo::IOLoop;
 use Mojo::Loader 'load_class';
 use Mojo::Promise;
 use Mojo::Server;
-use Mojo::Util 'steady_time';
+use Mojo::Util qw(scope_guard steady_time);
 
 has
   app =>
@@ -59,7 +59,7 @@ sub guard {
   my ($self, $name, $duration, $options) = @_;
   my $time = steady_time + $duration;
   return undef unless $self->lock($name, $duration, $options);
-  return Minion::_Guard->new(minion => $self, name => $name, time => $time);
+  return scope_guard sub { $self->unlock($name) if steady_time < $time };
 }
 
 sub history { shift->backend->history }
@@ -150,13 +150,6 @@ sub _result {
   if    ($job->{state} eq 'finished') { $promise->resolve($job) }
   elsif ($job->{state} eq 'failed')   { $promise->reject($job) }
 }
-
-package Minion::_Guard;
-use Mojo::Base -base;
-
-use Mojo::Util 'steady_time';
-
-sub DESTROY { $_[0]{minion}->unlock($_[0]{name}) if steady_time < $_[0]{time} }
 
 1;
 
@@ -972,7 +965,7 @@ Stefan Adams
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2014-2019, Sebastian Riedel and others.
+Copyright (C) 2014-2020, Sebastian Riedel and others.
 
 This program is free software, you can redistribute it and/or modify it under
 the terms of the Artistic License version 2.0.
