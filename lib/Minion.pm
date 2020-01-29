@@ -604,6 +604,12 @@ Note that this method is EXPERIMENTAL and might change without warning!
     say "$info->{id}: $info->{state}";
   }
 
+  # Remove all failed jobs from a named queue
+  my $jobs = $minion->jobs({states => ['failed'], queues => ['unimportant']});
+  while (my $info = $jobs->next) {
+    $minion->job($info->{id})->remove;
+  }
+
 These options are currently available:
 
 =over 2
