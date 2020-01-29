@@ -82,7 +82,7 @@ $worker->unregister;
 # Job results (already finished)
 (@finished, @failed) = ();
 $minion->result_p($id)->then(sub { @finished = @_ })
-  ->catch(sub                    { @failed   = @_ })->wait;
+  ->catch(sub { @failed = @_ })->wait;
 is_deeply $finished[0]{result}, {just => 'works!'}, 'right result';
 is_deeply $finished[0]{notes},  {foo  => 'bar'},    'right note';
 ok !$finished[1], 'no more results';
@@ -92,7 +92,7 @@ is_deeply \@failed, [], 'not failed';
 (@finished, @failed) = ();
 $minion->job($id)->retry;
 $minion->result_p($id)->timeout(0.25)->then(sub { @finished = @_ })
-  ->catch(sub                                   { @failed   = @_ })->wait;
+  ->catch(sub { @failed = @_ })->wait;
 is_deeply \@finished, [], 'not finished';
 is_deeply \@failed, ['Promise timeout'], 'failed';
 Mojo::IOLoop->start;
@@ -101,7 +101,7 @@ Mojo::IOLoop->start;
 (@finished, @failed) = ();
 $minion->job($id)->remove;
 $minion->result_p($id)->then(sub { @finished = (@_, 'finished') })
-  ->catch(sub                    { @failed   = (@_, 'failed') })->wait;
+  ->catch(sub { @failed = (@_, 'failed') })->wait;
 is_deeply \@finished, ['finished'], 'job no longer exists';
 is_deeply \@failed, [], 'not failed';
 
@@ -141,8 +141,8 @@ is $job->info->{result}, 'Worker went away', 'right result';
 
 # Repair abandoned job in minion_foreground queue (have to be handled manually)
 $worker->register;
-$id  = $minion->enqueue('test', [], {queue  => 'minion_foreground'});
-$job = $worker->dequeue(0,          {queues => ['minion_foreground']});
+$id  = $minion->enqueue('test', [], {queue => 'minion_foreground'});
+$job = $worker->dequeue(0, {queues => ['minion_foreground']});
 is $job->id, $id, 'right id';
 $worker->unregister;
 $minion->repair;
@@ -205,6 +205,37 @@ ok !$batch->[1], 'no more results';
 $worker->unregister;
 $worker2->unregister;
 
+# Iterate workers
+$minion->reset({all => 1});
+$worker  = $minion->worker->status({test => 'one'})->register;
+$worker2 = $minion->worker->status({test => 'two'})->register;
+my $worker3 = $minion->worker->status({test => 'three'})->register;
+my $worker4 = $minion->worker->status({test => 'four'})->register;
+my $worker5 = $minion->worker->status({test => 'five'})->register;
+my $workers = $minion->workers->fetch(2);
+is $workers->options->{before}, undef, 'no before';
+is $workers->next->{status}{test}, 'five', 'right status';
+is $workers->options->{before}, 4, 'before 4';
+is $workers->next->{status}{test}, 'four',  'right status';
+is $workers->next->{status}{test}, 'three', 'right status';
+is $workers->options->{before}, 2, 'before 2';
+is $workers->next->{status}{test}, 'two', 'right status';
+is $workers->next->{status}{test}, 'one', 'right status';
+is $workers->options->{before}, 1, 'before 1';
+is $workers->next, undef, 'no more results';
+$workers = $minion->workers({ids => [2, 4, 1]});
+is $workers->options->{before}, undef, 'no before';
+is $workers->next->{status}{test}, 'four', 'right status';
+is $workers->options->{before}, 1, 'before 1';
+is $workers->next->{status}{test}, 'two', 'right status';
+is $workers->next->{status}{test}, 'one', 'right status';
+is $workers->next, undef, 'no more results';
+$worker->unregister;
+$worker2->unregister;
+$worker3->unregister;
+$worker4->unregister;
+$worker5->unregister;
+
 # Exclusive lock
 ok $minion->lock('foo', 3600), 'locked';
 ok !$minion->lock('foo', 3600), 'not locked again';
@@ -217,7 +248,7 @@ ok !$minion->lock('foo', -3600), 'not locked again';
 ok !$minion->lock('foo', 3600),  'not locked again';
 ok $minion->unlock('foo'), 'unlocked';
 ok !$minion->unlock('foo'), 'not unlocked again';
-ok $minion->lock('yada', 3600,  {limit => 1}), 'locked';
+ok $minion->lock('yada', 3600, {limit => 1}), 'locked';
 ok !$minion->lock('yada', 3600, {limit => 1}), 'not locked again';
 
 # Shared lock
@@ -226,7 +257,7 @@ ok $minion->lock('bar', 3600,  {limit => 3}), 'locked again';
 ok $minion->lock('bar', -3600, {limit => 3}), 'locked again';
 ok $minion->lock('bar', 3600,  {limit => 3}), 'locked again';
 ok !$minion->lock('bar', 3600, {limit => 2}), 'not locked again';
-ok $minion->lock('baz', 3600,  {limit => 3}), 'locked';
+ok $minion->lock('baz', 3600, {limit => 3}), 'locked';
 ok $minion->unlock('bar'), 'unlocked';
 ok $minion->lock('bar', 3600, {limit => 3}), 'locked again';
 ok $minion->unlock('bar'), 'unlocked again';
@@ -287,6 +318,7 @@ undef $guard;
 undef $guard3;
 
 # Reset (locks)
+$minion->enqueue('test');
 $minion->lock('test', 3600);
 $minion->worker->register;
 ok $minion->backend->list_jobs(0, 1)->{total},    'jobs';
@@ -394,7 +426,7 @@ is $batch->[0]{state},     'inactive', 'right state';
 is $batch->[0]{retries},   0, 'job has not been retried';
 like $batch->[0]{created}, qr/^[\d.]+$/, 'has created timestamp';
 is $batch->[1]{task},      'fail', 'right task';
-is_deeply $batch->[1]{args}, [],  'right arguments';
+is_deeply $batch->[1]{args}, [], 'right arguments';
 is_deeply $batch->[1]{notes}, {}, 'right metadata';
 is_deeply $batch->[1]{result}, ['works'], 'right result';
 is $batch->[1]{state},    'finished', 'right state';
@@ -434,7 +466,7 @@ is $batch->[1]{queue}, 'default', 'right queue';
 is $batch->[2]{queue}, 'default', 'right queue';
 is $batch->[3]{queue}, 'default', 'right queue';
 ok !$batch->[4], 'no more results';
-$id2 = $minion->enqueue('test' => [] => {notes => {is_test => 1}});
+$id2   = $minion->enqueue('test' => [] => {notes => {is_test => 1}});
 $batch = $minion->backend->list_jobs(0, 10, {notes => ['is_test']})->{jobs};
 is $batch->[0]{task}, 'test', 'right task';
 ok !$batch->[4], 'no more results';
@@ -452,6 +484,31 @@ $batch = $minion->backend->list_jobs(1, 1)->{jobs};
 is $batch->[0]{state},   'finished', 'right state';
 is $batch->[0]{retries}, 1,          'job has been retried';
 ok !$batch->[1], 'no more results';
+
+# Iterate jobs
+my $jobs = $minion->jobs;
+is $jobs->next->{task},      'add',  'right task';
+is $jobs->options->{before}, 1,      'before 1';
+is $jobs->next->{task},      'fail', 'right task';
+is $jobs->next->{task},      'fail', 'right task';
+is $jobs->next->{task},      'fail', 'right task';
+is $jobs->next, undef, 'no more results';
+$jobs = $minion->jobs->fetch(2);
+is $jobs->options->{before}, undef,  'no before';
+is $jobs->next->{task},      'add',  'right task';
+is $jobs->options->{before}, 3,      'before 3';
+is $jobs->next->{task},      'fail', 'right task';
+is $jobs->options->{before}, 3,      'before 3';
+is $jobs->next->{task},      'fail', 'right task';
+is $jobs->options->{before}, 1,      'before 1';
+is $jobs->next->{task},      'fail', 'right task';
+is $jobs->options->{before}, 1,      'before 1';
+is $jobs->next, undef, 'no more results';
+$jobs = $minion->jobs({states => ['inactive']});
+is $jobs->next->{task}, 'add', 'right task';
+is $jobs->next, undef, 'no more results';
+$jobs = $minion->jobs({states => ['active']});
+is $jobs->next, undef, 'no more results';
 ok $minion->job($id)->remove, 'job removed';
 
 # Enqueue, dequeue and perform
@@ -701,13 +758,13 @@ $id  = $minion->enqueue(add => [6, 7]);
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 ok $job->fail('Something bad happened!'), 'job failed';
-is $job->info->{state}, 'failed', 'right state';
+is $job->info->{state},  'failed',                  'right state';
 is $job->info->{result}, 'Something bad happened!', 'right result';
 $id  = $minion->enqueue('fail');
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 $job->perform;
-is $job->info->{state}, 'failed', 'right state';
+is $job->info->{state},  'failed',                 'right state';
 is $job->info->{result}, "Intentional failure!\n", 'right result';
 $worker->unregister;
 
@@ -755,7 +812,7 @@ $id  = $minion->enqueue('exit');
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 $job->perform;
-is $job->info->{state}, 'failed', 'right state';
+is $job->info->{state},  'failed',                   'right state';
 is $job->info->{result}, 'Non-zero exit status (1)', 'right result';
 $worker->unregister;
 
@@ -883,7 +940,7 @@ ok $job->start->pid, 'has a process id';
 ok !$job->is_finished, 'job is not finished';
 $job->stop;
 usleep 5000 until $job->is_finished;
-is $job->info->{state}, 'failed', 'right state';
+is $job->info->{state},    'failed',                 'right state';
 like $job->info->{result}, qr/Non-zero exit status/, 'right result';
 $minion->enqueue('long_running');
 $job = $worker->dequeue(0);
@@ -895,7 +952,7 @@ $job->kill('USR2');
 is $job->info->{state}, 'active', 'right state';
 $job->kill('INT');
 usleep 5000 until $job->is_finished;
-is $job->info->{state}, 'failed', 'right state';
+is $job->info->{state},    'failed',                 'right state';
 like $job->info->{result}, qr/Non-zero exit status/, 'right result';
 $worker->unregister;
 

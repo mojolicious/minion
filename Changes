@@ -1,5 +1,9 @@
 
 10.03  2020-01-29
+  - Added EXPERIMENTAL Minion::Iterator module.
+  - Added EXPERIMENTAL jobs and workers methods to Minion.
+  - Added EXPERIMENTAL before options to list_jobs and list_workers methods in
+    Minion::Backend and Minion::Backend::Pg.
 
 10.02  2019-12-20
   - Fixed QUIT signal in Minion::Worker.

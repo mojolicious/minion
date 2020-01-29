@@ -3,6 +3,7 @@ use Mojo::Base 'Mojo::EventEmitter';
 
 use Carp 'croak';
 use Config;
+use Minion::Iterator;
 use Minion::Job;
 use Minion::Worker;
 use Mojo::Date;
@@ -77,6 +78,8 @@ sub job {
   );
 }
 
+sub jobs { shift->_iterator('jobs', @_) }
+
 sub lock { shift->backend->lock(@_) }
 
 sub new {
@@ -126,6 +129,8 @@ sub worker {
   return $worker;
 }
 
+sub workers { shift->_iterator('workers', @_) }
+
 sub _backoff { (shift()**4) + 15 }
 
 # Used by the job command and admin plugin
@@ -140,6 +145,12 @@ sub _delegate {
   my ($self, $method) = (shift, shift);
   $self->backend->$method(@_);
   return $self;
+}
+
+sub _iterator {
+  my ($self, $what, $options) = (shift, shift, shift // {});
+  return Minion::Iterator->new(minion => $self, options => $options,
+    what => $what);
 }
 
 sub _info { shift->backend->list_jobs(0, 1, {ids => [shift]})->{jobs}[0] }
@@ -579,6 +590,176 @@ return C<undef> if job does not exist.
   # Get job result
   my $result = $minion->job($id)->info->{result};
 
+=head2 jobs
+
+  my $jobs = $minion->jobs({states => ['inactive']});
+
+Return L<Minion::Iterator> object to safely iterate through job information.
+Note that this method is EXPERIMENTAL and might change without warning!
+
+  # Iterate through jobs for two tasks
+  my $jobs = $minion->jobs({tasks => ['foo', 'bar']});
+  while (my $info = $jobs->next) {
+    say "$info->{id}: $info->{state}";
+  }
+
+These options are currently available:
+
+=over 2
+
+=item ids
+
+  ids => ['23', '24']
+
+List only jobs with these ids.
+
+=item notes
+
+  notes => ['foo', 'bar']
+
+List only jobs with one of these notes. Note that this option is EXPERIMENTAL
+and might change without warning!
+
+=item queues
+
+  queues => ['important', 'unimportant']
+
+List only jobs in these queues.
+
+=item states
+
+  states => ['inactive', 'active']
+
+List only jobs in these states.
+
+=item tasks
+
+  tasks => ['foo', 'bar']
+
+List only jobs for these tasks.
+
+=back
+
+These fields are currently available:
+
+=over 2
+
+=item args
+
+  args => ['foo', 'bar']
+
+Job arguments.
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing this job will be attempted.
+
+=item children
+
+  children => ['10026', '10027', '10028']
+
+Jobs depending on this job.
+
+=item created
+
+  created => 784111777
+
+Epoch time job was created.
+
+=item delayed
+
+  delayed => 784111777
+
+Epoch time job was delayed to.
+
+=item finished
+
+  finished => 784111777
+
+Epoch time job was finished.
+
+=item id
+
+  id => 10025
+
+Job id.
+
+=item notes
+
+  notes => {foo => 'bar', baz => [1, 2, 3]}
+
+Hash reference with arbitrary metadata for this job.
+
+=item parents
+
+  parents => ['10023', '10024', '10025']
+
+Jobs this job depends on.
+
+=item priority
+
+  priority => 3
+
+Job priority.
+
+=item queue
+
+  queue => 'important'
+
+Queue name.
+
+=item result
+
+  result => 'All went well!'
+
+Job result.
+
+=item retried
+
+  retried => 784111777
+
+Epoch time job has been retried.
+
+=item retries
+
+  retries => 3
+
+Number of times job has been retried.
+
+=item started
+
+  started => 784111777
+
+Epoch time job was started.
+
+=item state
+
+  state => 'inactive'
+
+Current job state, usually C<active>, C<failed>, C<finished> or C<inactive>.
+
+=item task
+
+  task => 'foo'
+
+Task name.
+
+=item time
+
+  time => 78411177
+
+Server time.
+
+=item worker
+
+  worker => '154'
+
+Id of worker that is processing the job.
+
+=back
+
 =head2 lock
 
   my $bool = $minion->lock('foo', 3600);
@@ -852,6 +1033,79 @@ implement custom workers.
     }
   } while keys %jobs;
   $worker->unregister;
+
+=head2 workers
+
+  my $workers = $minion->jobs({ids => [2, 3]});
+
+Return L<Minion::Iterator> object to safely iterate through worker information.
+Note that this method is EXPERIMENTAL and might change without warning!
+
+  # Iterate through workers
+  my $workers = $minion->workers;
+  while (my $info = $workers->next) {
+    say "$info->{id}: $info->{host}";
+  }
+
+These options are currently available:
+
+=over 2
+
+=item ids
+
+  ids => ['23', '24']
+
+List only workers with these ids.
+
+=back
+
+These fields are currently available:
+
+=over 2
+
+=item id
+
+  id => 22
+
+Worker id.
+
+=item host
+
+  host => 'localhost'
+
+Worker host.
+
+=item jobs
+
+  jobs => ['10023', '10024', '10025', '10029']
+
+Ids of jobs the worker is currently processing.
+
+=item notified
+
+  notified => 784111777
+
+Epoch time worker sent the last heartbeat.
+
+=item pid
+
+  pid => 12345
+
+Process id of worker.
+
+=item started
+
+  started => 784111777
+
+Epoch time worker was started.
+
+=item status
+
+  status => {queues => ['default', 'important']}
+
+Hash reference with whatever status information the worker would like to share.
+
+=back
 
 =head1 REFERENCE
 

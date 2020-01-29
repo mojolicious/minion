@@ -89,12 +89,13 @@ sub list_jobs {
        extract(epoch from started) as started, state, task,
        extract(epoch from now()) as time, count(*) over() as total, worker
      from minion_jobs as j
-     where (id = any ($1) or $1 is null) and (notes \? any ($2) or $2 is null)
-       and (queue = any ($3) or $3 is null) and (state = any ($4) or $4 is null)
-       and (task = any ($5) or $5 is null)
+     where (id < $1 or $1 is null) and (id = any ($2) or $2 is null)
+       and (notes \? any ($3) or $3 is null)
+       and (queue = any ($4) or $4 is null) and (state = any ($5) or $5 is null)
+       and (task = any ($6) or $6 is null)
      order by id desc
-     limit $6 offset $7', @$options{qw(ids notes queues states tasks)}, $limit,
-    $offset
+     limit $7 offset $8', @$options{qw(before ids notes queues states tasks)},
+    $limit, $offset
   )->expand->hashes->to_array;
 
   return _total('jobs', $jobs);
@@ -122,8 +123,9 @@ sub list_workers {
       ) as jobs, host, pid, status, extract(epoch from started) as started,
       count(*) over() as total
      from minion_workers
-     where (id = any (\$1) or \$1 is null)
-     order by id desc limit \$2 offset \$3", $options->{ids}, $limit, $offset
+     where (id < \$1 or \$1 is null)  and (id = any (\$2) or \$2 is null)
+     order by id desc limit \$3 offset \$4", @$options{qw(before ids)}, $limit,
+    $offset
   )->expand->hashes->to_array;
   return _total('workers', $workers);
 }
@@ -541,6 +543,13 @@ These options are currently available:
 
 =over 2
 
+=item before
+
+  before => 23
+
+List only jobs before this id. Note that this option is EXPERIMENTAL and might
+change without warning!
+
 =item ids
 
   ids => ['23', '24']
@@ -755,6 +764,13 @@ Returns information about workers in batches.
 These options are currently available:
 
 =over 2
+
+=item before
+
+  before => 23
+
+List only workers before this id. Note that this option is EXPERIMENTAL and
+might change without warning!
 
 =item ids
 

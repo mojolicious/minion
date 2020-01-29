@@ -268,6 +268,13 @@ These options are currently available:
 
 =over 2
 
+=item before
+
+  before => 23
+
+List only jobs before this id. Note that this option is EXPERIMENTAL and might
+change without warning!
+
 =item ids
 
   ids => ['23', '24']
@@ -484,6 +491,13 @@ subclass.
 These options are currently available:
 
 =over 2
+
+=item before
+
+  before => 23
+
+List only workers before this id. Note that this option is EXPERIMENTAL and
+might change without warning!
 
 =item ids
 
