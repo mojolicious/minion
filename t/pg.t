@@ -230,11 +230,17 @@ is $workers->options->{before}, 1, 'before 1';
 is $workers->next->{status}{test}, 'two', 'right status';
 is $workers->next->{status}{test}, 'one', 'right status';
 is $workers->next, undef, 'no more results';
+$workers = $minion->workers->fetch(2);
+is $workers->next->{status}{test}, 'five', 'right status';
+is $workers->next->{status}{test}, 'four', 'right status';
+$worker5->unregister;
+$worker4->unregister;
+$worker3->unregister;
+is $workers->next->{status}{test}, 'two', 'right status';
+is $workers->next->{status}{test}, 'one', 'right status';
+is $workers->next, undef, 'no more results';
 $worker->unregister;
 $worker2->unregister;
-$worker3->unregister;
-$worker4->unregister;
-$worker5->unregister;
 
 # Exclusive lock
 ok $minion->lock('foo', 3600), 'locked';
@@ -509,7 +515,16 @@ is $jobs->next->{task}, 'add', 'right task';
 is $jobs->next, undef, 'no more results';
 $jobs = $minion->jobs({states => ['active']});
 is $jobs->next, undef, 'no more results';
-ok $minion->job($id)->remove, 'job removed';
+$jobs = $minion->jobs->fetch(1);
+is $jobs->next->{task}, 'add', 'right task';
+$id2 = $minion->enqueue('add');
+my $next = $jobs->next;
+is $next->{task}, 'fail', 'right task';
+ok $minion->job($next->{id} - 1)->remove, 'job removed';
+is $jobs->next->{task}, 'fail', 'right task';
+is $jobs->next, undef, 'no more results';
+ok $minion->job($id)->remove,  'job removed';
+ok $minion->job($id2)->remove, 'job removed';
 
 # Enqueue, dequeue and perform
 is $minion->job(12345), undef, 'job does not exist';
