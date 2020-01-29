@@ -592,6 +592,7 @@ return C<undef> if job does not exist.
 
 =head2 jobs
 
+  my $jobs = $minion->jobs;
   my $jobs = $minion->jobs({states => ['inactive']});
 
 Return L<Minion::Iterator> object to safely iterate through job information.
@@ -1036,7 +1037,8 @@ implement custom workers.
 
 =head2 workers
 
-  my $workers = $minion->jobs({ids => [2, 3]});
+  my $workers = $minion->workers;
+  my $workers = $minion->workers({ids => [2, 3]});
 
 Return L<Minion::Iterator> object to safely iterate through worker information.
 Note that this method is EXPERIMENTAL and might change without warning!
