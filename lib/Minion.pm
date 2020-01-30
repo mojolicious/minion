@@ -78,7 +78,7 @@ sub job {
   );
 }
 
-sub jobs { shift->_iterator('jobs', @_) }
+sub jobs { shift->_iterator(1, @_) }
 
 sub lock { shift->backend->lock(@_) }
 
@@ -129,7 +129,7 @@ sub worker {
   return $worker;
 }
 
-sub workers { shift->_iterator('workers', @_) }
+sub workers { shift->_iterator(0, @_) }
 
 sub _backoff { (shift()**4) + 15 }
 
@@ -148,9 +148,9 @@ sub _delegate {
 }
 
 sub _iterator {
-  my ($self, $what, $options) = (shift, shift, shift // {});
+  my ($self, $jobs, $options) = (shift, shift, shift // {});
   return Minion::Iterator->new(minion => $self, options => $options,
-    what => $what);
+    jobs => $jobs);
 }
 
 sub _info { shift->backend->list_jobs(0, 1, {ids => [shift]})->{jobs}[0] }

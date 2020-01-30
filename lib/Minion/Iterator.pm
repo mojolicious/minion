@@ -13,12 +13,12 @@ sub _fetch {
 
   return $self if ($lazy && exists $self->{total}) || @{$self->{results} // []};
 
-  my $what    = $self->what;
+  my $what    = $self->{jobs} ? 'jobs' : 'workers';
   my $method  = "list_$what";
   my $options = $self->options;
   my $results = $self->minion->backend->$method(0, $self->fetch, $options);
 
-  $self->{total} = ($self->{count} // 0) + $results->{total};
+  $self->{total} = $results->{total} + ($self->{count} // 0);
   $self->{count} += my @results = @{$results->{$what}};
   push @{$self->{results}}, @results;
   $options->{before} = $results[-1]{id} if @results;
@@ -39,13 +39,7 @@ Minion::Iterator - Minion iterator
   use Minion::Iterator;
 
   my $iter = Minion::Iterator->new(
-    minion  => $minion,
-    options => {states => ['inactive']},
-    what    => 'jobs'
-  );
-  while (my $info = $iter->next) {
-    say $info->{id};
-  }
+    minion  => $minion, options => {states => ['inactive']});
 
 =head1 DESCRIPTION
 
@@ -78,13 +72,6 @@ L<Minion> object this job belongs to.
 Options to be passed to L<Minion::Backend/"list_jobs"> or
 L<Minion::Backend/"list_workers">.
 
-=head2 what
-
-  my $what = $iter->what;
-  $iter    = $iter->what('jobs');
-
-What to L</"fetch">.
-
 =head1 METHODS
 
 L<Minion::Iterator> inherits all methods from L<Mojo::Base> and implements the
@@ -100,8 +87,9 @@ Get next value.
 
   my $num = $iter->total;
 
-Total number of results. If results are removed in the backend while iterating
-this number will be an estimate.
+Total number of results. If results are removed in the backend while iterating,
+this number will become an estimate that gets updated every time new results are
+fetched.
 
 =head1 SEE ALSO
 
