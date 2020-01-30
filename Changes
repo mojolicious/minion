@@ -1,4 +1,6 @@
 
+10.04  2020-01-30
+
 10.03  2020-01-29
   - Added EXPERIMENTAL Minion::Iterator module.
   - Added EXPERIMENTAL jobs and workers methods to Minion.
