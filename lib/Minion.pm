@@ -23,7 +23,7 @@ has missing_after => 1800;
 has remove_after  => 172800;
 has tasks         => sub { {} };
 
-our $VERSION = '10.04';
+our $VERSION = '10.05';
 
 sub add_task { ($_[0]->tasks->{$_[1]} = $_[2]) and return $_[0] }
 
