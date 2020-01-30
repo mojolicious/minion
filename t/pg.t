@@ -422,7 +422,9 @@ ok defined $history->{daily}[-1]{epoch}, 'has epoch value';
 $job->remove;
 
 # List jobs
-$id      = $minion->enqueue('add');
+$id = $minion->enqueue('add');
+is $minion->backend->list_jobs(1, 1)->{total}, 4,
+  'four total with offset and limit';
 $results = $minion->backend->list_jobs(0, 10);
 $batch   = $results->{jobs};
 is $results->{total}, 4, 'four jobs total';
