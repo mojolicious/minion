@@ -100,8 +100,8 @@ Get next value.
 
   my $num = $iter->total;
 
-Total number of results. If results are removed while iterating this number will
-be an estimate.
+Total number of results. If results are removed in the backend while iterating
+this number will be an estimate.
 
 =head1 SEE ALSO
 

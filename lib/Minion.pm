@@ -610,6 +610,9 @@ Note that this method is EXPERIMENTAL and might change without warning!
     $minion->job($info->{id})->remove;
   }
 
+  # Count failed jobs for a task
+  say $minion->jobs({states => ['failed'], tasks => ['foo']})->total;
+
 These options are currently available:
 
 =over 2
