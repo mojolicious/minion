@@ -4,19 +4,23 @@ use Mojo::Base -base;
 has fetch => 10;
 has [qw(minion options what)];
 
-sub next { shift @{shift->_fetch->{results}} }
+sub next { shift @{shift->_fetch(0)->{results}} }
+
+sub total { shift->_fetch(1)->{total} }
 
 sub _fetch {
-  my $self = shift;
+  my ($self, $lazy) = @_;
 
-  return $self if @{$self->{results} // []};
+  return $self if ($lazy && exists $self->{total}) || @{$self->{results} // []};
 
   my $what    = $self->what;
   my $method  = "list_$what";
   my $options = $self->options;
   my $results = $self->minion->backend->$method(0, $self->fetch, $options);
 
-  push @{$self->{results}}, my @results = @{$results->{$what}};
+  $self->{total} = ($self->{count} // 0) + $results->{total};
+  $self->{count} += my @results = @{$results->{$what}};
+  push @{$self->{results}}, @results;
   $options->{before} = $results[-1]{id} if @results;
 
   return $self;
@@ -91,6 +95,13 @@ following new ones.
   my $value = $iter->next;
 
 Get next value.
+
+=head2 total
+
+  my $num = $iter->total;
+
+Total number of results. If results are removed while iterating this number will
+be an estimate.
 
 =head1 SEE ALSO
 
