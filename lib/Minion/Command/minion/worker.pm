@@ -53,7 +53,7 @@ Minion::Command::minion::worker - Minion worker command
   Options:
     -C, --command-interval <seconds>     Worker remote control command interval,
                                          defaults to 10
-    -D, dequeue-timeout <seconds>        Maximum amount of time to wait for
+    -D, --dequeue-timeout <seconds>      Maximum amount of time to wait for
                                          jobs, defaults to 5
     -h, --help                           Show this summary of available options
         --home <path>                    Path to home directory of your
