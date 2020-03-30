@@ -1,7 +1,7 @@
 package Mojolicious::Plugin::Minion::Admin;
 use Mojo::Base 'Mojolicious::Plugin';
 
-use Mojo::File 'path';
+use Mojo::File qw(path);
 
 sub register {
   my ($self, $app, $config) = @_;

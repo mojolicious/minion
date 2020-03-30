@@ -1,14 +1,14 @@
 package Minion;
 use Mojo::Base 'Mojo::EventEmitter';
 
-use Carp 'croak';
+use Carp qw(croak);
 use Config;
 use Minion::Iterator;
 use Minion::Job;
 use Minion::Worker;
 use Mojo::Date;
 use Mojo::IOLoop;
-use Mojo::Loader 'load_class';
+use Mojo::Loader qw(load_class);
 use Mojo::Promise;
 use Mojo::Server;
 use Mojo::Util qw(scope_guard steady_time);

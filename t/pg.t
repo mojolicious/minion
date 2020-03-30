@@ -8,8 +8,8 @@ plan skip_all => 'set TEST_ONLINE to enable this test' unless $ENV{TEST_ONLINE};
 
 use Minion;
 use Mojo::IOLoop;
-use Sys::Hostname 'hostname';
-use Time::HiRes 'usleep';
+use Sys::Hostname qw(hostname);
+use Time::HiRes qw(usleep);
 
 # Isolate tests
 require Mojo::Pg;

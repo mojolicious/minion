@@ -1,7 +1,7 @@
 package Minion::Command::minion::job;
 use Mojo::Base 'Mojolicious::Command';
 
-use Mojo::JSON 'decode_json';
+use Mojo::JSON qw(decode_json);
 use Mojo::Util qw(dumper getopt tablify);
 
 has description => 'Manage Minion jobs';

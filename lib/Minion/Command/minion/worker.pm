@@ -1,7 +1,7 @@
 package Minion::Command::minion::worker;
 use Mojo::Base 'Mojolicious::Command';
 
-use Mojo::Util 'getopt';
+use Mojo::Util qw(getopt);
 
 has description => 'Start Minion worker';
 has usage       => sub { shift->extract_usage };
@@ -28,8 +28,8 @@ sub run {
 }
 
 sub _spawn {
-  my ($job, $pid) = @_;
-  my ($id, $task) = ($job->id, $job->task);
+  my ($job, $pid)  = @_;
+  my ($id,  $task) = ($job->id, $job->task);
   $job->app->log->debug(
     qq{Process $pid is performing job "$id" with task "$task"});
 }

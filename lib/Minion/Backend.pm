@@ -1,7 +1,7 @@
 package Minion::Backend;
 use Mojo::Base -base;
 
-use Carp 'croak';
+use Carp qw(croak);
 
 has minion => undef, weak => 1;
 

@@ -1,8 +1,8 @@
 package Minion::Worker;
 use Mojo::Base 'Mojo::EventEmitter';
 
-use Carp 'croak';
-use Mojo::Util 'steady_time';
+use Carp qw(croak);
+use Mojo::Util qw(steady_time);
 
 has [qw(commands status)] => sub { {} };
 has [qw(id minion)];

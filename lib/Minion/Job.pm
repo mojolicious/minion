@@ -2,7 +2,7 @@ package Minion::Job;
 use Mojo::Base 'Mojo::EventEmitter';
 
 use Mojo::IOLoop;
-use POSIX 'WNOHANG';
+use POSIX qw(WNOHANG);
 
 has [qw(args id minion retries task)];
 
