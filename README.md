@@ -1,5 +1,5 @@
 
-# Minion ![](https://github.com/mojolicious/mojo/workflows/linux/badge.svg)](https://github.com/mojolicious/mojo/actions)
+# Minion [![](https://github.com/mojolicious/minion/workflows/linux/badge.svg)](https://github.com/mojolicious/minion/actions)
 
 ![Screenshot](https://raw.github.com/mojolicious/minion/master/examples/admin.png?raw=true)
 
