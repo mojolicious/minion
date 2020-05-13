@@ -1,5 +1,5 @@
 
-# Minion [![Build Status](https://travis-ci.com/mojolicious/minion.svg?branch=master)](https://travis-ci.com/mojolicious/minion)
+# Minion ![](https://github.com/mojolicious/mojo/workflows/linux/badge.svg)](https://github.com/mojolicious/mojo/actions)
 
 ![Screenshot](https://raw.github.com/mojolicious/minion/master/examples/admin.png?raw=true)
 

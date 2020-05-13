@@ -30,8 +30,8 @@ jobs:
         run: perl -V
       - name: Install Dependencies
         run: |
-          cpanm --installdeps .
-          cpanm install Mojo::Pg
+          cpanm -n --installdeps .
+          cpanm -n Mojo::Pg
       - name: Run Tests
         env:
           TEST_ONLINE: postgresql://postgres:postgres@postgres:5432/postgres
