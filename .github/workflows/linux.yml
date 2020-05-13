@@ -32,7 +32,6 @@ jobs:
         run:
           - cpanm --installdeps .
           - cpanm install Mojo::Pg
-      - name: 
       - name: Run Tests
         env:
           TEST_ONLINE: postgresql://postgres:postgres@postgres:5432/postgres
