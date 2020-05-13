@@ -1,0 +1,39 @@
+name: linux
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+jobs:
+  perl:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        perl-version:
+          - '5.10'
+          - '5.12'
+          - '5.14'
+          - '5.20'
+          - '5.30'
+    container:
+      image: perl:${{ matrix.perl-version }}
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v2
+      - name: perl -V
+        run: perl -V
+      - name: Install Dependencies
+        run:
+          - cpanm --installdeps .
+          - cpanm install Mojo::Pg
+      - name: 
+      - name: Run Tests
+        env:
+          TEST_ONLINE: postgresql://postgres:postgres@postgres:5432/postgres
+        run: prove -l t
