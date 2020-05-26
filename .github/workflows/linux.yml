@@ -28,12 +28,13 @@ jobs:
       - uses: actions/checkout@v2
       - name: perl -V
         run: perl -V
-      - name: Install Dependencies
+      - name: Fix ExtUtils::MakeMaker (for Perl 5.16 and 5.18)
+        run: cpanm -n App::cpanminus ExtUtils::MakeMaker
+      - name: Install dependencies
         run: |
-          cpanm -n App::cpanminus ExtUtils::MakeMaker
           cpanm -n --installdeps .
           cpanm -n Mojo::Pg
-      - name: Run Tests
+      - name: Run tests
         env:
           TEST_ONLINE: postgresql://postgres:postgres@postgres:5432/postgres
         run: prove -l t
