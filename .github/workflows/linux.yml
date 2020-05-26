@@ -12,10 +12,10 @@ jobs:
     strategy:
       matrix:
         perl-version:
-          - '5.10'
-          - '5.12'
-          - '5.14'
+          - '5.16'
+          - '5.18'
           - '5.20'
+          - '5.22'
           - '5.30'
     container:
       image: perl:${{ matrix.perl-version }}
@@ -30,6 +30,7 @@ jobs:
         run: perl -V
       - name: Install Dependencies
         run: |
+          cpanm -n App::cpanminus ExtUtils::MakeMaker
           cpanm -n --installdeps .
           cpanm -n Mojo::Pg
       - name: Run Tests
