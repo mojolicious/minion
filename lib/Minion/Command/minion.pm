@@ -30,8 +30,7 @@ L<Minion::Command::minion> lists available L<Minion> commands.
 
 =head1 ATTRIBUTES
 
-L<Minion::Command::minion> inherits all attributes from
-L<Mojolicious::Commands> and implements the following new ones.
+L<Minion::Command::minion> inherits all attributes from L<Mojolicious::Commands> and implements the following new ones.
 
 =head2 description
 
@@ -59,13 +58,11 @@ Short usage message shown before listing available L<Minion> commands.
   my $namespaces = $minion->namespaces;
   $minion        = $minion->namespaces(['MyApp::Command::minion']);
 
-Namespaces to search for available L<Minion> commands, defaults to
-L<Minion::Command::minion>.
+Namespaces to search for available L<Minion> commands, defaults to L<Minion::Command::minion>.
 
 =head1 METHODS
 
-L<Minion::Command::minion> inherits all methods from L<Mojolicious::Commands>
-and implements the following new ones.
+L<Minion::Command::minion> inherits all methods from L<Mojolicious::Commands> and implements the following new ones.
 
 =head2 help
 

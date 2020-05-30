@@ -1,7 +1,6 @@
 --
--- These are the migrations for the PostgreSQL Minion backend. They are only
--- used for upgrades to the latest version. Downgrades may be used to clean up
--- the database, but they do not have to work with old versions of Minion.
+-- These are the migrations for the PostgreSQL Minion backend. They are only used for upgrades to the latest version.
+-- Downgrades may be used to clean up the database, but they do not have to work with old versions of Minion.
 --
 -- 18 up
 create type minion_state as enum ('inactive', 'active', 'failed', 'finished');

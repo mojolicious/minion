@@ -17,8 +17,7 @@ sub index { }
 sub result {
   my $self = shift;
 
-  return $self->reply->not_found
-    unless my $job = $self->minion->job($self->param('id'));
+  return $self->reply->not_found unless my $job = $self->minion->job($self->param('id'));
 
   $self->render(result => $job->info->{result});
 }

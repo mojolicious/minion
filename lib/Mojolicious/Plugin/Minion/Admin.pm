@@ -48,19 +48,12 @@ sub _list_jobs {
   $v->optional('offset')->num;
   $v->optional('state')->in(qw(active failed finished inactive));
   my $options = {};
-  $v->is_valid($_) && ($options->{"${_}s"} = $v->every_param($_))
-    for qw(id note queue state task);
+  $v->is_valid($_) && ($options->{"${_}s"} = $v->every_param($_)) for qw(id note queue state task);
   my $limit  = $v->param('limit')  || 10;
   my $offset = $v->param('offset') || 0;
 
   my $results = $c->minion->backend->list_jobs($offset, $limit, $options);
-  $c->render(
-    'minion/jobs',
-    jobs   => $results->{jobs},
-    total  => $results->{total},
-    limit  => $limit,
-    offset => $offset
-  );
+  $c->render('minion/jobs', jobs => $results->{jobs}, total => $results->{total}, limit => $limit, offset => $offset);
 }
 
 sub _list_locks {
@@ -112,8 +105,7 @@ sub _manage_jobs {
 
   my $v = $c->validation;
   $v->required('id');
-  $v->required('do')
-    ->in('remove', 'retry', 'sig_int', 'sig_usr1', 'sig_usr2', 'stop');
+  $v->required('do')->in('remove', 'retry', 'sig_int', 'sig_usr1', 'sig_usr2', 'stop');
 
   $c->redirect_to('minion_jobs') if $v->has_error;
 
@@ -192,8 +184,7 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Plugin::Minion::Admin> is a L<Mojolicious> plugin providing an
-admin ui for the L<Minion> job queue.
+L<Mojolicious::Plugin::Minion::Admin> is a L<Mojolicious> plugin providing an admin ui for the L<Minion> job queue.
 
 =head1 OPTIONS
 
@@ -211,13 +202,13 @@ Name of route or path to return to when leaving the admin ui, defaults to C</>.
   # Mojolicious::Lite
   plugin 'Minion::Admin' => {route => app->routes->any('/admin')};
 
-L<Mojolicious::Routes::Route> object to attach the admin ui to, defaults to
-generating a new one with the prefix C</minion>.
+L<Mojolicious::Routes::Route> object to attach the admin ui to, defaults to generating a new one with the prefix
+C</minion>.
 
 =head1 METHODS
 
-L<Mojolicious::Plugin::Minion::Admin> inherits all methods from
-L<Mojolicious::Plugin> and implements the following new ones.
+L<Mojolicious::Plugin::Minion::Admin> inherits all methods from L<Mojolicious::Plugin> and implements the following new
+ones.
 
 =head2 register
 

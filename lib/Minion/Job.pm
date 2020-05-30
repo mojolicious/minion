@@ -24,8 +24,7 @@ sub fail {
 
 sub finish {
   my ($self, $result) = @_;
-  my $ok
-    = $self->minion->backend->finish_job($self->id, $self->retries, $result);
+  my $ok = $self->minion->backend->finish_job($self->id, $self->retries, $result);
   return $ok ? !!$self->emit(finished => $result) : undef;
 }
 
@@ -108,8 +107,7 @@ L<Minion::Job> is a container for L<Minion> jobs.
 
 =head1 EVENTS
 
-L<Minion::Job> inherits all events from L<Mojo::EventEmitter> and can emit the
-following new ones.
+L<Minion::Job> inherits all events from L<Mojo::EventEmitter> and can emit the following new ones.
 
 =head2 cleanup
 
@@ -132,8 +130,8 @@ Emitted in the process performing this job right before the process will exit.
     ...
   });
 
-Emitted in the worker process managing this job or the process performing it,
-after it has transitioned to the C<failed> state.
+Emitted in the worker process managing this job or the process performing it, after it has transitioned to the
+C<failed> state.
 
   $job->on(failed => sub {
     my ($job, $err) = @_;
@@ -163,8 +161,8 @@ Emitted in the process performing this job if the task was successful.
     ...
   });
 
-Emitted in the worker process managing this job or the process performing it,
-after it has transitioned to the C<finished> state.
+Emitted in the worker process managing this job or the process performing it, after it has transitioned to the
+C<finished> state.
 
   $job->on(finished => sub {
     my ($job, $result) = @_;
@@ -179,8 +177,7 @@ after it has transitioned to the C<finished> state.
     ...
   });
 
-Emitted in the worker process managing this job, after the process performing it
-has exited.
+Emitted in the worker process managing this job, after the process performing it has exited.
 
   $job->on(reap => sub {
     my ($job, $pid) = @_;
@@ -195,8 +192,7 @@ has exited.
     ...
   });
 
-Emitted in the worker process managing this job, after a new process has been
-spawned for processing.
+Emitted in the worker process managing this job, after a new process has been spawned for processing.
 
   $job->on(spawn => sub {
     my ($job, $pid) = @_;
@@ -259,8 +255,7 @@ Task name.
 
 =head1 METHODS
 
-L<Minion::Job> inherits all methods from L<Mojo::EventEmitter> and implements
-the following new ones.
+L<Minion::Job> inherits all methods from L<Mojo::EventEmitter> and implements the following new ones.
 
 =head2 app
 
@@ -275,9 +270,8 @@ Get application from L<Minion/"app">.
 
   my $err = $job->execute;
 
-Perform job in this process and return C<undef> if the task was successful or an
-exception otherwise.  Note that this method should only be used to implement
-custom workers.
+Perform job in this process and return C<undef> if the task was successful or an exception otherwise.  Note that this
+method should only be used to implement custom workers.
 
   # Perform job in foreground
   if (my $err = $job->execute) { $job->fail($err) }
@@ -289,9 +283,8 @@ custom workers.
   my $bool = $job->fail('Something went wrong!');
   my $bool = $job->fail({whatever => 'Something went wrong!'});
 
-Transition from C<active> to C<failed> state with or without a result, and if
-there are attempts remaining, transition back to C<inactive> with a delay based
-on L<Minion/"backoff">.
+Transition from C<active> to C<failed> state with or without a result, and if there are attempts remaining, transition
+back to C<inactive> with a delay based on L<Minion/"backoff">.
 
 =head2 finish
 
@@ -434,25 +427,22 @@ Id of worker that is processing the job.
 
   my $bool = $job->is_finished;
 
-Check if job performed with L</"start"> is finished. Note that this method
-should only be used to implement custom workers.
+Check if job performed with L</"start"> is finished. Note that this method should only be used to implement custom
+workers.
 
 =head2 kill
 
   $job->kill('INT');
 
-Send a signal to job performed with L</"start">. Note that this method should
-only be used to implement custom workers.
+Send a signal to job performed with L</"start">. Note that this method should only be used to implement custom workers.
 
 =head2 note
 
   my $bool = $job->note(mojo => 'rocks', minion => 'too');
 
-Change one or more metadata fields for this job. Setting a value to C<undef>
-will remove the field. The new values will get serialized by L<Minion/"backend">
-(often with L<Mojo::JSON>), so you shouldn't send objects and be careful with
-binary data, nested data structures with hash and array references are fine
-though.
+Change one or more metadata fields for this job. Setting a value to C<undef> will remove the field. The new values will
+get serialized by L<Minion/"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects and be careful with
+binary data, nested data structures with hash and array references are fine though.
 
   # Share progress information
   $job->note(progress => 95);
@@ -464,15 +454,15 @@ though.
 
   $job->perform;
 
-Perform job in new process and wait for it to finish. Note that this method
-should only be used to implement custom workers.
+Perform job in new process and wait for it to finish. Note that this method should only be used to implement custom
+workers.
 
 =head2 pid
 
   my $pid = $job->pid;
 
-Process id of the process spawned by L</"start"> if available. Note that this
-method should only be used to implement custom workers.
+Process id of the process spawned by L</"start"> if available. Note that this method should only be used to implement
+custom workers.
 
 =head2 remove
 
@@ -485,8 +475,7 @@ Remove C<failed>, C<finished> or C<inactive> job from queue.
   my $bool = $job->retry;
   my $bool = $job->retry({delay => 10});
 
-Transition job back to C<inactive> state, already C<inactive> jobs may also be
-retried to change options.
+Transition job back to C<inactive> state, already C<inactive> jobs may also be retried to change options.
 
 These options are currently available:
 
@@ -528,8 +517,8 @@ Queue to put job in.
 
   $job = $job->start;
 
-Perform job in new process, but do not wait for it to finish. Note that this
-method should only be used to implement custom workers.
+Perform job in new process, but do not wait for it to finish. Note that this method should only be used to implement
+custom workers.
 
   # Perform two jobs concurrently
   $job1->start;
@@ -542,8 +531,7 @@ method should only be used to implement custom workers.
 
   $job->stop;
 
-Stop job performed with L</"start"> immediately. Note that this method should
-only be used to implement custom workers.
+Stop job performed with L</"start"> immediately. Note that this method should only be used to implement custom workers.
 
 =head1 SEE ALSO
 

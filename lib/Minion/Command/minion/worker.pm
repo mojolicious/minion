@@ -30,8 +30,7 @@ sub run {
 sub _spawn {
   my ($job, $pid)  = @_;
   my ($id,  $task) = ($job->id, $job->task);
-  $job->app->log->debug(
-    qq{Process $pid is performing job "$id" with task "$task"});
+  $job->app->log->debug(qq{Process $pid is performing job "$id" with task "$task"});
 }
 
 1;
@@ -75,13 +74,11 @@ Minion::Command::minion::worker - Minion worker command
 
 =head1 DESCRIPTION
 
-L<Minion::Command::minion::worker> starts a L<Minion> worker. You can have as
-many workers as you like.
+L<Minion::Command::minion::worker> starts a L<Minion> worker. You can have as many workers as you like.
 
 =head1 WORKER SIGNALS
 
-The L<Minion::Command::minion::worker> process can be controlled at runtime
-with the following signals.
+The L<Minion::Command::minion::worker> process can be controlled at runtime with the following signals.
 
 =head2 INT, TERM
 
@@ -93,57 +90,52 @@ Stop immediately without finishing the current jobs.
 
 =head1 JOB SIGNALS
 
-The job processes spawned by the L<Minion::Command::minion::worker> process can
-be controlled at runtime with the following signals.
+The job processes spawned by the L<Minion::Command::minion::worker> process can be controlled at runtime with the
+following signals.
 
 =head2 INT
 
-This signal starts out with the operating system default and allows for jobs to
-install a custom signal handler to stop gracefully.
+This signal starts out with the operating system default and allows for jobs to install a custom signal handler to stop
+gracefully.
 
 =head2 USR1, USR2
 
-These signals start out being ignored and allow for jobs to install custom
-signal handlers.
+These signals start out being ignored and allow for jobs to install custom signal handlers.
 
 =head1 REMOTE CONTROL COMMANDS
 
-The L<Minion::Command::minion::worker> process can be controlled at runtime
-through L<Minion::Command::minion::job>, from anywhere in the network, by
-broadcasting the following remote control commands.
+The L<Minion::Command::minion::worker> process can be controlled at runtime through L<Minion::Command::minion::job>,
+from anywhere in the network, by broadcasting the following remote control commands.
 
 =head2 jobs
 
   $ ./myapp.pl minion job -b jobs -a '[10]'
   $ ./myapp.pl minion job -b jobs -a '[10]' 23
 
-Instruct one or more workers to change the number of jobs to perform
-concurrently. Setting this value to C<0> will effectively pause the worker. That
-means all current jobs will be finished, but no new ones accepted, until the
-number is increased again.
+Instruct one or more workers to change the number of jobs to perform concurrently. Setting this value to C<0> will
+effectively pause the worker. That means all current jobs will be finished, but no new ones accepted, until the number
+is increased again.
 
 =head2 kill
 
   $ ./myapp.pl minion job -b kill -a '["INT", 10025]'
   $ ./myapp.pl minion job -b kill -a '["INT", 10025]' 23
 
-Instruct one or more workers to send a signal to a job that is currently being
-performed. This command will be ignored by workers that do not have a job
-matching the id. That means it is safe to broadcast this command to all workers.
+Instruct one or more workers to send a signal to a job that is currently being performed. This command will be ignored
+by workers that do not have a job matching the id. That means it is safe to broadcast this command to all workers.
 
 =head2 stop
 
   $ ./myapp.pl minion job -b stop -a '[10025]'
   $ ./myapp.pl minion job -b stop -a '[10025]' 23
 
-Instruct one or more workers to stop a job that is currently being performed
-immediately. This command will be ignored by workers that do not have a job
-matching the id. That means it is safe to broadcast this command to all workers.
+Instruct one or more workers to stop a job that is currently being performed immediately. This command will be ignored
+by workers that do not have a job matching the id. That means it is safe to broadcast this command to all workers.
 
 =head1 ATTRIBUTES
 
-L<Minion::Command::minion::worker> inherits all attributes from
-L<Mojolicious::Command> and implements the following new ones.
+L<Minion::Command::minion::worker> inherits all attributes from L<Mojolicious::Command> and implements the following
+new ones.
 
 =head2 description
 
@@ -161,8 +153,8 @@ Usage information for this command, used for the help screen.
 
 =head1 METHODS
 
-L<Minion::Command::minion::worker> inherits all methods from
-L<Mojolicious::Command> and implements the following new ones.
+L<Minion::Command::minion::worker> inherits all methods from L<Mojolicious::Command> and implements the following new
+ones.
 
 =head2 run
 

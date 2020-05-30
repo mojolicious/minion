@@ -1,5 +1,6 @@
 
-10.05  2020-03-30
+10.05  2020-05-30
+  - Fixed result_p promise leak in Minion.
 
 10.04  2020-01-30
   - Added EXPERIMENTAL total method to Minion::Iterator.
@@ -7,69 +8,58 @@
 10.03  2020-01-29
   - Added EXPERIMENTAL Minion::Iterator module.
   - Added EXPERIMENTAL jobs and workers methods to Minion.
-  - Added EXPERIMENTAL before options to list_jobs and list_workers methods in
-    Minion::Backend and Minion::Backend::Pg.
+  - Added EXPERIMENTAL before options to list_jobs and list_workers methods in Minion::Backend and Minion::Backend::Pg.
 
 10.02  2019-12-20
   - Fixed QUIT signal in Minion::Worker.
   - Fixed stop remote control command.
-  - Fixed a problem where Minion::Worker was unable to deal with immediately
-    restarted jobs.
+  - Fixed a problem where Minion::Worker was unable to deal with immediately restarted jobs.
 
 10.01  2019-12-16
   - Fixed an unlock concurrency issue in Minion::Backend::Pg. (andrii-suse)
 
 10.0  2019-11-15
-  - Removed PostgreSQL migrations older than 2 years, that means you need to
-    have Minion version 7.01 or newer installed before you can upgrade to
-    version 10.0.
+  - Removed PostgreSQL migrations older than 2 years, that means you need to have Minion version 7.01 or newer installed
+    before you can upgrade to version 10.0.
   - Removed experimental status from result_p method in Minion.
-  - Removed experimental status from history method in Minion and
+  - Removed experimental status from history method in Minion and Minion::Backend::Pg.
+  - Removed experimental status from delayed_jobs and enqueued_jobs fields from stats methods in Minion and
     Minion::Backend::Pg.
-  - Removed experimental status from delayed_jobs and enqueued_jobs fields from
-    stats methods in Minion and Minion::Backend::Pg.
   - Removed experimental status from cleanup and finish events in Minion::Job.
-  - Changed reset method in Minion and Minion::Backend::Pg to require options
-    for what to reset.
-  - Improved reset method in Minion and Minion::Backend::Pg to allow for locks
-    to be reset without resetting the whole queue.
+  - Changed reset method in Minion and Minion::Backend::Pg to require options for what to reset.
+  - Improved reset method in Minion and Minion::Backend::Pg to allow for locks to be reset without resetting the whole
+    queue.
   - Improved performance by making the minion_workers table unlogged.
 
 9.13  2019-08-29
   - Added EXPERIMENTAL cleanup event to Minion::Job.
 
 9.12  2019-08-04
-  - Added EXPERIMENTAL notes option to list_jobs method in Minion::Backend and
-    Minion::Backend::Pg.
+  - Added EXPERIMENTAL notes option to list_jobs method in Minion::Backend and Minion::Backend::Pg.
   - Added -n option to job command.
-  - Improved note methods in Minion::Job, Minion::Backend and
-    Minion::Backend::Pg to allow for fields to be removed.
+  - Improved note methods in Minion::Job, Minion::Backend and Minion::Backend::Pg to allow for fields to be removed.
 
 9.11  2019-07-08
   - Added time field to list_jobs method in Minion::Backend::Pg.
   - Added time field to info method in Minion::Job.
-  - Improved admin ui to show the current runtime for every job, as well as the
-    current delay for delayed jobs.
-  - Improved Minion::Backend::Pg to ignore missing workers for jobs in the
-    minion_foreground named queue and make debugging very slow jobs easier.
+  - Improved admin ui to show the current runtime for every job, as well as the current delay for delayed jobs.
+  - Improved Minion::Backend::Pg to ignore missing workers for jobs in the minion_foreground named queue and make
+    debugging very slow jobs easier.
 
 9.10  2019-05-09
   - Fixed a few query parameter bugs in the admin ui. (fskale, sri)
 
 9.09  2019-02-03
-  - Changed result_p method in Minion to pass along the whole job info hash
-    instead of just the job result.
+  - Changed result_p method in Minion to pass along the whole job info hash instead of just the job result.
 
 9.08  2019-02-01
   - Added EXPERIMENTAL result_p method to Minion.
 
 9.07  2018-10-18
-  - Improved various attributes to use new Mojolicious 8.03 features to avoid
-    memory leaks.
+  - Improved various attributes to use new Mojolicious 8.03 features to avoid memory leaks.
 
 9.06  2018-09-22
-  - Added support for controlling job processes by installing signal handlers
-    for INT, USR1 and USR2 in tasks.
+  - Added support for controlling job processes by installing signal handlers for INT, USR1 and USR2 in tasks.
   - Added kill method to Minion::Job.
   - Improved worker command with support for kill remote control command.
   - Improved admin ui with a new menu to send signals to job processes.
@@ -82,50 +72,43 @@
 
 9.03  2018-04-19
   - Removed hour value from daily history data.
-  - Improved 24 hour history graph on Mojolicious::Plugin::Minion::Admin
-    dashboard to use the local time, consistent with the real-time graph.
+  - Improved 24 hour history graph on Mojolicious::Plugin::Minion::Admin dashboard to use the local time, consistent
+    with the real-time graph.
 
 9.02  2018-04-18
-  - Changed 24 hour history graph on Mojolicious::Plugin::Minion::Admin
-    dashboard to refresh in 10 minute intervals.
+  - Changed 24 hour history graph on Mojolicious::Plugin::Minion::Admin dashboard to refresh in 10 minute intervals.
   - Changed daily history data to include an epoch value instead of a day.
   - Fixed a few ordering bugs in history methods.
 
 9.01  2018-04-17
-  - Improved 24 hour history graph to refresh automatically every 5 minutes in
-    Mojolicious::Plugin::Minion::Admin. (s1037989)
+  - Improved 24 hour history graph to refresh automatically every 5 minutes in Mojolicious::Plugin::Minion::Admin.
+    (s1037989)
 
 9.0  2018-04-15
-  - Replaced queue, state and task options of list_jobs method in
-    Minion::Backend::Pg with queues, states and tasks options.
-  - Replaced name option of list_locks method in Minion::Backend::Pg with names
-    option.
-  - Replaced key/value argument of note method in Minion::Backend::Pg with a
-    hash reference.
-  - Added EXPERIMENTAL support for displaying a 24 hour history graph on the
-    Mojolicious::Plugin::Minion::Admin dashboard.
+  - Replaced queue, state and task options of list_jobs method in Minion::Backend::Pg with queues, states and tasks
+    options.
+  - Replaced name option of list_locks method in Minion::Backend::Pg with names option.
+  - Replaced key/value argument of note method in Minion::Backend::Pg with a hash reference.
+  - Added EXPERIMENTAL support for displaying a 24 hour history graph on the Mojolicious::Plugin::Minion::Admin
+    dashboard.
   - Added EXPERIMENTAL finish event to Minion::Job.
   - Added EXPERIMENTAL history methods to Minion and Minion::Backend::Pg.
   - Added execute method to Minion::Job.
   - Added -H option to job command.
-  - Improved note method in Minion::Job to allow for multiple metadata fields to
-    be changed at once.
-  - Fixed a bug where the job command could remove all parents from retried
-    jobs.
-  - Fixed filtering of jobs by queue and state in
-    Mojolicious::Plugin::Minion::Admin.
+  - Improved note method in Minion::Job to allow for multiple metadata fields to be changed at once.
+  - Fixed a bug where the job command could remove all parents from retried jobs.
+  - Fixed filtering of jobs by queue and state in Mojolicious::Plugin::Minion::Admin.
 
 8.12  2018-03-07
-  - Added parents option to retry and retry_job methods in Minion::Job and
-    Minion::Backend::Pg. (CandyAngel)
+  - Added parents option to retry and retry_job methods in Minion::Job and Minion::Backend::Pg. (CandyAngel)
 
 8.11  2018-02-28
   - Fixed worker page links in Mojolicious::Plugin::Minion::Admin.
 
 8.10  2018-02-18
   - Improved Mojolicious::Plugin::Minion::Admin to use less distracting colors.
-  - Fixed a bug in Mojolicious::Plugin::Minion::Admin where job results
-    containing very long strings could not be displayed properly.
+  - Fixed a bug in Mojolicious::Plugin::Minion::Admin where job results containing very long strings could not be
+    displayed properly.
 
 8.09  2018-01-25
   - Converted Mojolicious::Plugin::Minion::Admin to Bootstrap 4.
@@ -139,25 +122,21 @@
   - Fixed guard method in Minion not to release already expired locks.
 
 8.06  2017-12-11
-  - Added active_locks field to stats methods in Minion, Minion::Backend and
-    Minion::Backend::Pg again.
+  - Added active_locks field to stats methods in Minion, Minion::Backend and Minion::Backend::Pg again.
   - Improved Mojolicious::Plugin::Minion::Admin with support for locks.
 
 8.05  2017-12-10
-  - Removed active_locks field from stats methods again since it did not work
-    correctly and there is no efficient way to fix it.
-  - Fixed list_locks method in Minion::Backend::Pg to exclude already expired
-    locks.
+  - Removed active_locks field from stats methods again since it did not work correctly and there is no efficient way to
+    fix it.
+  - Fixed list_locks method in Minion::Backend::Pg to exclude already expired locks.
 
 8.04  2017-12-08
   - Added list_locks method to Minion::Backend and Minion::Backend::Pg.
   - Added -L and -U options to job command.
-  - Added active_locks field to stats methods in Minion, Minion::Backend and
-    Minion::Backend::Pg.
+  - Added active_locks field to stats methods in Minion, Minion::Backend and Minion::Backend::Pg.
   - Updated Font Awesome to version 5.
   - Improved Minion::Job to clear signal handlers in job processes.
-  - Fixed a bug in Mojolicious::Plugin::Minion::Admin where filtering jobs by
-    task or queue would not reset the offset.
+  - Fixed a bug in Mojolicious::Plugin::Minion::Admin where filtering jobs by task or queue would not reset the offset.
 
 8.03  2017-11-21
   - Removed -f option from worker command.
@@ -171,23 +150,19 @@
   - Fixed installation problems with some versions of Perl on Windows.
 
 8.0  2017-11-16
-  - Removed job_info and worker_info methods from Minion::Backend and
-    Minion::Backend::Pg.
-  - Changed return value of list_jobs and list_workers methods in
-    Minion::Backend and Minion::Backend::Pg.
+  - Removed job_info and worker_info methods from Minion::Backend and Minion::Backend::Pg.
+  - Changed return value of list_jobs and list_workers methods in Minion::Backend and Minion::Backend::Pg.
   - Added new module Mojolicious::Plugin::Minion::Admin.
-  - Added ids option to list_jobs and list_workers methods in Minion::Backend
-    and Minion::Backend::Pg.
-  - Added uptime field to stats methods in Minion, Minion::Backend and
-    Minion::Backend::Pg.
+  - Added ids option to list_jobs and list_workers methods in Minion::Backend and Minion::Backend::Pg.
+  - Added uptime field to stats methods in Minion, Minion::Backend and Minion::Backend::Pg.
 
 7.09  2017-10-20
-  - Fixed a deadlock problem in Minion::Backend::Pg where jobs could fail if two
-    processes tried to acquire the same lock at the same time.
+  - Fixed a deadlock problem in Minion::Backend::Pg where jobs could fail if two processes tried to acquire the same
+    lock at the same time.
 
 7.08  2017-10-18
-  - Fixed a bug in the worker command where processing jobs could be
-    delayed significantly after a system restart. (rgci)
+  - Fixed a bug in the worker command where processing jobs could be delayed significantly after a system restart.
+    (rgci)
 
 7.07  2017-10-11
   - Added reap event to Minion::Job.
@@ -200,50 +175,43 @@
 
 7.04  2017-08-01
   - Added foreground method to Minion.
-  - Added id option to dequeue methods in Minion::Worker and
-    Minion::Backend::Pg.
-  - Added attempts option to retry and retry_job methods in Minion::Job and
-    Minion::Backend::Pg.
+  - Added id option to dequeue methods in Minion::Worker and Minion::Backend::Pg.
+  - Added attempts option to retry and retry_job methods in Minion::Job and Minion::Backend::Pg.
   - Added -f option to job command.
 
 7.03  2017-07-06
   - Updated Mojo::Pg requirement to 4.0.
-  - Improved Minion::Backend::Pg to support sharing the database connection
-    cache with existing Mojo::Pg objects.
+  - Improved Minion::Backend::Pg to support sharing the database connection cache with existing Mojo::Pg objects.
 
 7.02  2017-07-05
-  - Improved performance of worker command when processing jobs that are
-    finished very quickly.
+  - Improved performance of worker command when processing jobs that are finished very quickly.
 
 7.01  2017-06-25
   - Added note methods to Minion::Job and Minion::Backend::Pg.
   - Added notes option to enqueue methods in Minion and Minion::Backend::Pg.
-  - Added notes field to info method in Minion::Job and job_info method in
-    Minion::Backend::Pg.
-  - Improved performance of stats and lock methods in Minion::Backend::Pg with a
-    new index and other optimizations. (depesz)
+  - Added notes field to info method in Minion::Job and job_info method in Minion::Backend::Pg.
+  - Improved performance of stats and lock methods in Minion::Backend::Pg with a new index and other optimizations.
+    (depesz)
   - Improved benchmark script to be more consistent. (depesz)
 
 7.0  2017-06-18
   - Added support for rate limiting and unique jobs.
   - Added lock and unlock methods to Minion and Minion::Backend::Pg.
-  - Improved performance of Minion::Backend::Pg significantly with a new index
-    and other optimizations.
+  - Improved performance of Minion::Backend::Pg significantly with a new index and other optimizations.
 
 6.06  2017-06-03
-  - Added an example application to demonstrate how to integrate background jobs
-    into well-structured Mojolicious applications.
+  - Added an example application to demonstrate how to integrate background jobs into well-structured Mojolicious
+    applications.
 
 6.05  2017-04-03
   - Added support for sharing worker status information.
   - Improved retry methods to allow for active jobs to be retried as well.
-  - Improved job command to show timestamps in RFC 3339 (1994-11-06T08:49:37Z)
-    format.
+  - Improved job command to show timestamps in RFC 3339 (1994-11-06T08:49:37Z) format.
 
 6.04  2017-03-18
   - Added -f option to worker command.
-  - Removed -r option from job command, so you have to write --remove from now
-    on, which should prevent accidental mixups with the -R option in the future.
+  - Removed -r option from job command, so you have to write --remove from now on, which should prevent accidental
+    mixups with the -R option in the future.
 
 6.03  2017-03-14
   - Fixed serious performance problems in Minion::Backend::Pg.
@@ -264,40 +232,32 @@
   - Added pid and stop methods to Minion::Job.
   - Added broadcast and receive methods to Minion::Backend::Pg.
   - Added -b option to job command.
-  - Improved worker command with support for jobs and stop remote control
-    commands.
+  - Improved worker command with support for jobs and stop remote control commands.
 
 5.09  2016-08-31
-  - Added EXPERIMENTAL enqueued_jobs field to stats methods in Minion and
-    Minion::Backend::Pg.
+  - Added EXPERIMENTAL enqueued_jobs field to stats methods in Minion and Minion::Backend::Pg.
   - Improved Minion::Backend::Pg performance slightly with a new index.
 
 5.08  2016-05-20
-  - Improved repair methods not to remove finished jobs with unresolved
-    dependencies.
+  - Improved repair methods not to remove finished jobs with unresolved dependencies.
 
 5.07  2016-05-17
   - Added support for job dependencies. (jberger, sri)
-  - Added parents option to enqueue methods in Minion and Minion::Backend::Pg.
-    (jberger, sri)
-  - Added children and parents fields to info method in Minion::Job and job_info
-    method in Minion::Backend::Pg.
+  - Added parents option to enqueue methods in Minion and Minion::Backend::Pg. (jberger, sri)
+  - Added children and parents fields to info method in Minion::Job and job_info method in Minion::Backend::Pg.
   - Added -P option to job command.
-  - Improved stats methods to include jobs with unresolved dependencies in
-    delayed_jobs count.
+  - Improved stats methods to include jobs with unresolved dependencies in delayed_jobs count.
 
 5.06  2016-05-05
   - Improved worker command to support the TTIN, TTOU and USR1 signals.
-  - Improved Minion::Backend::Pg to handle delayed and retried jobs more
-    efficiently.
+  - Improved Minion::Backend::Pg to handle delayed and retried jobs more efficiently.
 
 5.05  2016-04-20
   - Added queue option to list_jobs method in Minion::Backend::Pg.
   - Improved performance of stats method in Minion::Backend::Pg slightly.
 
 5.04  2016-04-19
-  - Added EXPERIMENTAL delayed_jobs field to stats methods in Minion and
-    Minion::Backend::Pg.
+  - Added EXPERIMENTAL delayed_jobs field to stats methods in Minion and Minion::Backend::Pg.
   - Updated Mojo::Pg requirement to 2.18.
   - Improved job command to show more detailed information for jobs and workers.
 
@@ -316,8 +276,7 @@
   - Added -R option to worker command.
   - Reduced default missing_after value to 30 minutes.
   - Reduced default remove_after value to 2 days.
-  - Improved Minion::Backend::Pg performance significantly with a new index and
-    PostgreSQL 9.5 features.
+  - Improved Minion::Backend::Pg performance significantly with a new index and PostgreSQL 9.5 features.
   - Improved Minion::Job to capture more exceptions.
   - Improved worker command to support the QUIT signal.
   - Improved worker command to repair in less regular intervals.
@@ -333,22 +292,18 @@
 
 4.03  2016-01-17
   - Removed an unused index from Minion::Backend::Pg.
-  - Fixed a bug where the worker command would always watch the default queue.
-    (avkhozov)
+  - Fixed a bug where the worker command would always watch the default queue. (avkhozov)
 
 4.02  2016-01-03
   - Updated links to Mojolicious website.
 
 4.01  2015-11-12
-  - Improved retry methods to allow options to be changed for already inactive
-    jobs.
+  - Improved retry methods to allow options to be changed for already inactive jobs.
 
 4.0  2015-11-09
   - Removed attempts attribute from Minion::Job.
-  - Improved Minion::Backend::Pg to preserve more information across retries for
-    debugging.
-  - Fixed bug where jobs could not be retried automatically if a worker went
-    away.
+  - Improved Minion::Backend::Pg to preserve more information across retries for debugging.
+  - Fixed bug where jobs could not be retried automatically if a worker went away.
 
 3.03  2015-11-08
   - Added queues option to perform_jobs method in Minion.
@@ -364,12 +319,11 @@
   - Added -A option to job command.
 
 3.0  2015-10-30
-  - Removed Minion::Backend::File, because DBM::Deep quickly becomes unusably
-    slow, you can use the CPAN module Minion::Backend::SQLite instead.
+  - Removed Minion::Backend::File, because DBM::Deep quickly becomes unusably slow, you can use the CPAN module
+    Minion::Backend::SQLite instead.
 
 2.05  2015-10-15
-  - Fixed bug where jobs could sometimes not be finished correctly by the worker
-    command.
+  - Fixed bug where jobs could sometimes not be finished correctly by the worker command.
 
 2.04  2015-10-14
   - Fixed portability issue in worker command.
@@ -387,32 +341,26 @@
   - Removed -t option from worker command.
   - Added support for multiple named queues.
   - Added retries attribute to Minion::Job.
-  - Added retries argument to fail_job, finish_job and retry_job methods in
-    Minion::Backend::File and Minion::Backend::Pg.
+  - Added retries argument to fail_job, finish_job and retry_job methods in Minion::Backend::File and
+    Minion::Backend::Pg.
   - Added queue option to enqueue method in Minion.
-  - Added queue option to enqueue and retry_job methods in Minion::Backend::File
-    and Minion::Backend::Pg.
-  - Added queues option to dequeue methods in Minion::Worker,
-    Minion::Backend::File and Minion::Backend::Pg.
+  - Added queue option to enqueue and retry_job methods in Minion::Backend::File and Minion::Backend::Pg.
+  - Added queues option to dequeue methods in Minion::Worker, Minion::Backend::File and Minion::Backend::Pg.
   - Added -q option to job and worker commands.
   - Improved worker command to be more resilient to time jumps.
-  - Fixed a race condition in Minion::Backend::File and Minion::Backend::Pg
-    where a retried job did not have to be dequeued again before it could be
-    finished.
+  - Fixed a race condition in Minion::Backend::File and Minion::Backend::Pg where a retried job did not have to be
+    dequeued again before it could be finished.
 
 1.19  2015-09-28
   - Added support for retrying jobs with a new priority.
   - Added priority option to retry method in Minion::Job.
-  - Added priority option to retry_job methods in Minion::Backend::File and
-    Minion::Backend::Pg.
+  - Added priority option to retry_job methods in Minion::Backend::File and Minion::Backend::Pg.
 
 1.18  2015-08-30
-  - Fixed Makefile.PL to be compliant with version 2 of the CPAN distribution
-    metadata specification.
+  - Fixed Makefile.PL to be compliant with version 2 of the CPAN distribution metadata specification.
 
 1.17  2015-08-29
-  - Fixed bug in worker command where new jobs would still be dequeued after
-    receiving an INT/TERM signal.
+  - Fixed bug in worker command where new jobs would still be dequeued after receiving an INT/TERM signal.
 
 1.16  2015-08-28
   - Improved worker command to detect workers without heartbeat a little faster.
@@ -420,8 +368,7 @@
 1.15  2015-05-15
   - Added support for retrying jobs with a delay. (kwa)
   - Added delay option to retry method in Minion::Job. (kwa)
-  - Added delay option to retry_job methods in Minion::Backend::File and
-    Minion::Backend::Pg. (kwa)
+  - Added delay option to retry_job methods in Minion::Backend::File and Minion::Backend::Pg. (kwa)
 
 1.14  2015-04-21
   - Improved performance of Minion::Backend::Pg with a new index. (avkhozov)
@@ -436,20 +383,17 @@
   - Fixed tests to work without Mojo::Pg.
 
 1.10  2015-03-09
-  - Added support for performing multiple jobs concurrently with a single
-    worker. (bpmedley, sri)
+  - Added support for performing multiple jobs concurrently with a single worker. (bpmedley, sri)
   - Added is_finished and start methods to Minion::Job. (bpmedley, sri)
   - Added -j option to worker command. (bpmedley, sri)
   - Fixed concurrency bugs in Minion::Backend::File.
-  - Fixed bug in job command where timing information was not displayed
-    correctly.
+  - Fixed bug in job command where timing information was not displayed correctly.
 
 1.09  2015-03-02
   - Added support for monitoring workers with heartbeats instead of signals.
   - Added missing_after attribute to Minion.
   - Added -I option to worker command.
-  - Fixed bug where workers were considered active even if they had no active
-    jobs assigned.
+  - Fixed bug where workers were considered active even if they had no active jobs assigned.
 
 1.08  2015-02-20
   - Updated for Mojolicious 5.81.
@@ -461,8 +405,8 @@
   - Improved commands to use less punctuation.
 
 1.05  2015-01-05
-  - Improved repair methods in Minion::Backend::File and Minion::Backend::Pg to
-    mention the current process in results of failed jobs.
+  - Improved repair methods in Minion::Backend::File and Minion::Backend::Pg to mention the current process in results
+    of failed jobs.
 
 1.04  2015-01-03
   - Improved Minion::Backend::Pg to use new JSON features of Mojo::Pg.
@@ -481,8 +425,7 @@
   - Removed experimental status from distribution.
 
 0.45  2014-11-18
-  - Improved dequeue performance in Minion::Backend::Pg significantly.
-    (bpmedley)
+  - Improved dequeue performance in Minion::Backend::Pg significantly. (bpmedley)
 
 0.44  2014-11-17
   - Fixed bug where jobs could not be dequeued inside a running event loop.
@@ -491,8 +434,7 @@
   - Fixed bug where advisory locks would run out of shared memory.
 
 0.42  2014-11-16
-  - Improved Minion::Backend::Pg performance with advisory locks and
-    notifications. (bpmedley, sri)
+  - Improved Minion::Backend::Pg performance with advisory locks and notifications. (bpmedley, sri)
 
 0.41  2014-11-15
   - Improved Minion::Backend::Pg performance.
@@ -514,8 +456,7 @@
   - Fixed packaging bug.
 
 0.36  2014-09-21
-  - Updated Makefile.PL for version 2 of the CPAN distribution metadata
-    specification.
+  - Updated Makefile.PL for version 2 of the CPAN distribution metadata specification.
 
 0.35  2014-09-06
   - Improved Minion::Backend::File to write less often.
@@ -524,25 +465,22 @@
   - Improved job command to show higher precision times.
 
 0.33  2014-07-10
-  - Replaced state argument of list_jobs methods in Minion::Backend::File and
-    Minion::Backend::Mango with more versatile options argument.
+  - Replaced state argument of list_jobs methods in Minion::Backend::File and Minion::Backend::Mango with more versatile
+    options argument.
   - Added -t option to job command.
 
 0.32  2014-07-10
-  - Added state argument to list_jobs methods in Minion::Backend::File and
-    Minion::Backend::Mango.
+  - Added state argument to list_jobs methods in Minion::Backend::File and Minion::Backend::Mango.
   - Added -T option to job command.
 
 0.31  2014-07-09
   - Reduced CPU usage of Minion::Backend::Mango when waiting for new jobs.
 
 0.30  2014-07-08
-  - Added timeout argument to dequeue methods in Minion::Backend::File,
-    Minion::Backend::Mango and Minion::Worker.
+  - Added timeout argument to dequeue methods in Minion::Backend::File, Minion::Backend::Mango and Minion::Worker.
 
 0.29  2014-07-07
-  - Renamed restart_job method to retry_job in Minion::Backend,
-    Minion::Backend::File and Minion::Backend::Mango.
+  - Renamed restart_job method to retry_job in Minion::Backend, Minion::Backend::File and Minion::Backend::Mango.
   - Renamed restart method to retry in Minion::Job.
   - Improved worker command to repair in regular intervals.
 
@@ -582,8 +520,7 @@
   - Fixed a few small bugs in Minion::Backend::Mango.
 
 0.14  2014-06-04
-  - Fixed Minion::Backend::Mango to work with strings in addition to object
-    ids.
+  - Fixed Minion::Backend::Mango to work with strings in addition to object ids.
 
 0.13  2014-06-03
   - Added list_workers methods to Minion::Backend and Minion::Backend::Mango.
@@ -595,8 +532,8 @@
   - Changed a few return values in Minion::Backend::Mango.
 
 0.10  2014-06-02
-  - Removed created, delayed, error, finished, priority, restarted, restarts,
-    started and state methods from Minion::Job.
+  - Removed created, delayed, error, finished, priority, restarted, restarts, started and state methods from
+    Minion::Job.
   - Removed started method from Minion::Worker.
   - Added support for pluggable backends.
   - Added modules Minion::Backend and Minion::Backend::Mango.
@@ -621,8 +558,7 @@
 0.06  2014-04-03
   - Added delayed and priority methods to Minion::Job.
   - Renamed after option to delayed.
-  - Improved job command to use a human readable time format and allow new
-    jobs to be enqueued.
+  - Improved job command to use a human readable time format and allow new jobs to be enqueued.
 
 0.05  2014-04-03
   - Improved job command to stream job lists and show more information.
@@ -633,8 +569,7 @@
   - Added module Minion::Command::minion::job.
   - Added auto_perform attribute to Minion.
   - Added repair method to Minion.
-  - Added created, error, finished, remove, restart, restarts and started
-    methods to Minion::Job.
+  - Added created, error, finished, remove, restart, restarts and started methods to Minion::Job.
   - Added started method to Minion::Worker.
 
 0.03  2014-03-30

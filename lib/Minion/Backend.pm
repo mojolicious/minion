@@ -69,8 +69,7 @@ Minion::Backend - Backend base class
 
 =head1 DESCRIPTION
 
-L<Minion::Backend> is an abstract base class for L<Minion> backends, like
-L<Minion::Backend::Pg>.
+L<Minion::Backend> is an abstract base class for L<Minion> backends, like L<Minion::Backend::Pg>.
 
 =head1 ATTRIBUTES
 
@@ -85,8 +84,7 @@ L<Minion> object this backend belongs to. Note that this attribute is weakened.
 
 =head1 METHODS
 
-L<Minion::Backend> inherits all methods from L<Mojo::Base> and implements the
-following new ones.
+L<Minion::Backend> inherits all methods from L<Mojo::Base> and implements the following new ones.
 
 =head2 broadcast
 
@@ -94,17 +92,15 @@ following new ones.
   my $bool = $backend->broadcast('some_command', [@args]);
   my $bool = $backend->broadcast('some_command', [@args], [$id1, $id2, $id3]);
 
-Broadcast remote control command to one or more workers. Meant to be overloaded
-in a subclass.
+Broadcast remote control command to one or more workers. Meant to be overloaded in a subclass.
 
 =head2 dequeue
 
   my $job_info = $backend->dequeue($worker_id, 0.5);
   my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['important']});
 
-Wait a given amount of time in seconds for a job, dequeue it and transition from
-C<inactive> to C<active> state, or return C<undef> if queues were empty. Meant
-to be overloaded in a subclass.
+Wait a given amount of time in seconds for a job, dequeue it and transition from C<inactive> to C<active> state, or
+return C<undef> if queues were empty. Meant to be overloaded in a subclass.
 
 These options are currently available:
 
@@ -170,8 +166,8 @@ These options are currently available:
 
   attempts => 25
 
-Number of times performing this job will be attempted, with a delay based on
-L<Minion/"backoff"> after the first attempt, defaults to C<1>.
+Number of times performing this job will be attempted, with a delay based on L<Minion/"backoff"> after the first
+attempt, defaults to C<1>.
 
 =item delay
 
@@ -189,8 +185,8 @@ Hash reference with arbitrary metadata for this job.
 
   parents => [$id1, $id2, $id3]
 
-One or more existing jobs this job depends on, and that need to have
-transitioned to the state C<finished> before it can be processed.
+One or more existing jobs this job depends on, and that need to have transitioned to the state C<finished> before it
+can be processed.
 
 =item priority
 
@@ -213,9 +209,8 @@ Queue to put job in, defaults to C<default>.
   my $bool = $backend->fail_job(
     $job_id, $retries, {whatever => 'Something went wrong!'});
 
-Transition from C<active> to C<failed> state with or without a result, and if
-there are attempts remaining, transition back to C<inactive> with a delay based
-on L<Minion/"backoff">. Meant to be overloaded in a subclass.
+Transition from C<active> to C<failed> state with or without a result, and if there are attempts remaining, transition
+back to C<inactive> with a delay based on L<Minion/"backoff">. Meant to be overloaded in a subclass.
 
 =head2 finish_job
 
@@ -224,8 +219,7 @@ on L<Minion/"backoff">. Meant to be overloaded in a subclass.
   my $bool = $backend->finish_job(
     $job_id, $retries, {whatever => 'All went well!'});
 
-Transition from C<active> to C<finished> state with or without a result. Meant
-to be overloaded in a subclass.
+Transition from C<active> to C<finished> state with or without a result. Meant to be overloaded in a subclass.
 
 =head2 history
 
@@ -250,8 +244,7 @@ Hourly counts for processed jobs from the past day.
   my $results = $backend->list_jobs($offset, $limit);
   my $results = $backend->list_jobs($offset, $limit, {states => ['inactive']});
 
-Returns the information about jobs in batches. Meant to be overloaded in a
-subclass.
+Returns the information about jobs in batches. Meant to be overloaded in a subclass.
 
   # Get the total number of results (without limit)
   my $num = $backend->list_jobs(0, 100, {queues => ['important']})->{total};
@@ -272,8 +265,7 @@ These options are currently available:
 
   before => 23
 
-List only jobs before this id. Note that this option is EXPERIMENTAL and might
-change without warning!
+List only jobs before this id. Note that this option is EXPERIMENTAL and might change without warning!
 
 =item ids
 
@@ -285,8 +277,7 @@ List only jobs with these ids.
 
   notes => ['foo', 'bar']
 
-List only jobs with one of these notes. Note that this option is EXPERIMENTAL
-and might change without warning!
+List only jobs with one of these notes. Note that this option is EXPERIMENTAL and might change without warning!
 
 =item queues
 
@@ -433,8 +424,7 @@ Id of worker that is processing the job.
   my $results = $backend->list_locks($offset, $limit);
   my $results = $backend->list_locks($offset, $limit, {names => ['foo']});
 
-Returns information about locks in batches. Meant to be overloaded in a
-subclass.
+Returns information about locks in batches. Meant to be overloaded in a subclass.
 
   # Get the total number of results (without limit)
   my $num = $backend->list_locks(0, 100, {names => ['bar']})->{total};
@@ -478,8 +468,7 @@ Lock name.
   my $results = $backend->list_workers($offset, $limit);
   my $results = $backend->list_workers($offset, $limit, {ids => [23]});
 
-Returns information about workers in batches. Meant to be overloaded in a
-subclass.
+Returns information about workers in batches. Meant to be overloaded in a subclass.
 
   # Get the total number of results (without limit)
   my $num = $backend->list_workers(0, 100)->{total};
@@ -496,8 +485,7 @@ These options are currently available:
 
   before => 23
 
-List only workers before this id. Note that this option is EXPERIMENTAL and
-might change without warning!
+List only workers before this id. Note that this option is EXPERIMENTAL and might change without warning!
 
 =item ids
 
@@ -560,9 +548,8 @@ Hash reference with whatever status information the worker would like to share.
   my $bool = $backend->lock('foo', 3600);
   my $bool = $backend->lock('foo', 3600, {limit => 20});
 
-Try to acquire a named lock that will expire automatically after the given
-amount of time in seconds. An expiration time of C<0> can be used to check if a
-named lock already exists without creating one. Meant to be overloaded in a
+Try to acquire a named lock that will expire automatically after the given amount of time in seconds. An expiration
+time of C<0> can be used to check if a named lock already exists without creating one. Meant to be overloaded in a
 subclass.
 
 These options are currently available:
@@ -573,8 +560,7 @@ These options are currently available:
 
   limit => 20
 
-Number of shared locks with the same name that can be active at the same time,
-defaults to C<1>.
+Number of shared locks with the same name that can be active at the same time, defaults to C<1>.
 
 =back
 
@@ -582,15 +568,14 @@ defaults to C<1>.
 
   my $bool = $backend->note($job_id, {mojo => 'rocks', minion => 'too'});
 
-Change one or more metadata fields for a job. Setting a value to C<undef>
-will remove the field. Meant to be overloaded in a subclass.
+Change one or more metadata fields for a job. Setting a value to C<undef> will remove the field. Meant to be overloaded
+in a subclass.
 
 =head2 receive
 
   my $commands = $backend->receive($worker_id);
 
-Receive remote control commands for worker. Meant to be overloaded in a
-subclass.
+Receive remote control commands for worker. Meant to be overloaded in a subclass.
 
 =head2 register_worker
 
@@ -599,8 +584,7 @@ subclass.
   my $worker_id = $backend->register_worker(
     $worker_id, {status => {queues => ['default', 'important']}});
 
-Register worker or send heartbeat to show that this worker is still alive.
-Meant to be overloaded in a subclass.
+Register worker or send heartbeat to show that this worker is still alive. Meant to be overloaded in a subclass.
 
 These options are currently available:
 
@@ -618,15 +602,13 @@ Hash reference with whatever status information the worker would like to share.
 
   my $bool = $backend->remove_job($job_id);
 
-Remove C<failed>, C<finished> or C<inactive> job from queue. Meant to be
-overloaded in a subclass.
+Remove C<failed>, C<finished> or C<inactive> job from queue. Meant to be overloaded in a subclass.
 
 =head2 repair
 
   $backend->repair;
 
-Repair worker registry and job queue if necessary. Meant to be overloaded in a
-subclass.
+Repair worker registry and job queue if necessary. Meant to be overloaded in a subclass.
 
 =head2 reset
 
@@ -657,8 +639,8 @@ Reset only locks.
   my $bool = $backend->retry_job($job_id, $retries);
   my $bool = $backend->retry_job($job_id, $retries, {delay => 10});
 
-Transition job back to C<inactive> state, already C<inactive> jobs may also be
-retried to change options. Meant to be overloaded in a subclass.
+Transition job back to C<inactive> state, already C<inactive> jobs may also be retried to change options. Meant to be
+overloaded in a subclass.
 
 These options are currently available:
 
@@ -728,8 +710,8 @@ Number of workers that are currently processing a job.
 
   delayed_jobs => 100
 
-Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future or have unresolved dependencies.
+Number of jobs in C<inactive> state that are scheduled to run at specific time in the future or have unresolved
+dependencies.
 
 =item enqueued_jobs
 

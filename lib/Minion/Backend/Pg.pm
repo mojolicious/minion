@@ -12,9 +12,8 @@ has 'pg';
 sub broadcast {
   my ($self, $command, $args, $ids) = (shift, shift, shift || [], shift || []);
   return !!$self->pg->db->query(
-    q{update minion_workers set inbox = inbox || $1::jsonb
-      where (id = any ($2) or $2 = '{}')}, {json => [[$command, @$args]]}, $ids
-  )->rows;
+    q{update minion_workers set inbox = inbox || $1::jsonb where (id = any ($2) or $2 = '{}')},
+    {json => [[$command, @$args]]}, $ids)->rows;
 }
 
 sub dequeue {
@@ -38,12 +37,10 @@ sub enqueue {
 
   my $db = $self->pg->db;
   return $db->query(
-    "insert into minion_jobs
-       (args, attempts, delayed, notes, parents, priority, queue, task)
+    "insert into minion_jobs (args, attempts, delayed, notes, parents, priority, queue, task)
      values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?, ?)
-     returning id", {json => $args}, $options->{attempts} // 1,
-    $options->{delay} // 0, {json => $options->{notes} || {}},
-    $options->{parents} || [], $options->{priority} // 0,
+     returning id", {json => $args}, $options->{attempts} // 1, $options->{delay} // 0,
+    {json => $options->{notes} || {}}, $options->{parents} || [], $options->{priority} // 0,
     $options->{queue} // 'default', $task
   )->hash->{id};
 }
@@ -55,12 +52,10 @@ sub history {
   my $self = shift;
 
   my $daily = $self->pg->db->query(
-    "select extract(epoch from ts) as epoch,
-       coalesce(failed_jobs, 0) as failed_jobs,
+    "select extract(epoch from ts) as epoch, coalesce(failed_jobs, 0) as failed_jobs,
        coalesce(finished_jobs, 0) as finished_jobs
      from (
-       select extract (day from finished) as day,
-         extract(hour from finished) as hour,
+       select extract (day from finished) as day, extract(hour from finished) as hour,
          count(*) filter (where state = 'failed') as failed_jobs,
          count(*) filter (where state = 'finished') as finished_jobs
        from minion_jobs
@@ -81,21 +76,16 @@ sub list_jobs {
 
   my $jobs = $self->pg->db->query(
     'select id, args, attempts,
-       array(select id from minion_jobs where parents @> ARRAY[j.id])
-         as children, extract(epoch from created) as created,
-       extract(epoch from delayed) as delayed,
-       extract(epoch from finished) as finished, notes, parents, priority,
-       queue, result, extract(epoch from retried) as retried, retries,
-       extract(epoch from started) as started, state, task,
+       array(select id from minion_jobs where parents @> ARRAY[j.id]) as children,
+       extract(epoch from created) as created, extract(epoch from delayed) as delayed,
+       extract(epoch from finished) as finished, notes, parents, priority, queue, result,
+       extract(epoch from retried) as retried, retries, extract(epoch from started) as started, state, task,
        extract(epoch from now()) as time, count(*) over() as total, worker
      from minion_jobs as j
-     where (id < $1 or $1 is null) and (id = any ($2) or $2 is null)
-       and (notes \? any ($3) or $3 is null)
-       and (queue = any ($4) or $4 is null) and (state = any ($5) or $5 is null)
-       and (task = any ($6) or $6 is null)
+     where (id < $1 or $1 is null) and (id = any ($2) or $2 is null) and (notes \? any ($3) or $3 is null)
+       and (queue = any ($4) or $4 is null) and (state = any ($5) or $5 is null) and (task = any ($6) or $6 is null)
      order by id desc
-     limit $7 offset $8', @$options{qw(before ids notes queues states tasks)},
-    $limit, $offset
+     limit $7 offset $8', @$options{qw(before ids notes queues states tasks)}, $limit, $offset
   )->expand->hashes->to_array;
 
   return _total('jobs', $jobs);
@@ -105,8 +95,7 @@ sub list_locks {
   my ($self, $offset, $limit, $options) = @_;
 
   my $locks = $self->pg->db->query(
-    'select name, extract(epoch from expires) as expires,
-       count(*) over() as total from minion_locks
+    'select name, extract(epoch from expires) as expires, count(*) over() as total from minion_locks
      where expires > now() and (name = any ($1) or $1 is null)
      order by id desc limit $2 offset $3', $options->{names}, $limit, $offset
   )->hashes->to_array;
@@ -118,34 +107,30 @@ sub list_workers {
 
   my $workers = $self->pg->db->query(
     "select id, extract(epoch from notified) as notified, array(
-        select id from minion_jobs
-        where state = 'active' and worker = minion_workers.id
+        select id from minion_jobs where state = 'active' and worker = minion_workers.id
       ) as jobs, host, pid, status, extract(epoch from started) as started,
       count(*) over() as total
      from minion_workers
      where (id < \$1 or \$1 is null)  and (id = any (\$2) or \$2 is null)
-     order by id desc limit \$3 offset \$4", @$options{qw(before ids)}, $limit,
-    $offset
+     order by id desc limit \$3 offset \$4", @$options{qw(before ids)}, $limit, $offset
   )->expand->hashes->to_array;
   return _total('workers', $workers);
 }
 
 sub lock {
   my ($self, $name, $duration, $options) = (shift, shift, shift, shift // {});
-  return !!$self->pg->db->query('select * from minion_lock(?, ?, ?)',
-    $name, $duration, $options->{limit} || 1)->array->[0];
+  return !!$self->pg->db->query('select * from minion_lock(?, ?, ?)', $name, $duration, $options->{limit} || 1)
+    ->array->[0];
 }
 
 sub new {
   my $self = shift->SUPER::new(pg => Mojo::Pg->new(@_));
 
   my $db = Mojo::Pg->new(@_)->db;
-  croak 'PostgreSQL 9.5 or later is required'
-    if $db->dbh->{pg_server_version} < 90500;
+  croak 'PostgreSQL 9.5 or later is required' if $db->dbh->{pg_server_version} < 90500;
   $db->disconnect;
 
-  my $schema
-    = path(__FILE__)->dirname->child('resources', 'migrations', 'pg.sql');
+  my $schema = path(__FILE__)->dirname->child('resources', 'migrations', 'pg.sql');
   $self->pg->auto_migrate(1)->migrations->name('minion')->from_file($schema);
 
   return $self;
@@ -153,11 +138,8 @@ sub new {
 
 sub note {
   my ($self, $id, $merge) = @_;
-  return !!$self->pg->db->query(
-    'update minion_jobs set notes = jsonb_strip_nulls(notes || ?) where id = ?',
-    {json => $merge},
-    $id
-  )->rows;
+  return !!$self->pg->db->query('update minion_jobs set notes = jsonb_strip_nulls(notes || ?) where id = ?',
+    {json => $merge}, $id)->rows;
 }
 
 sub receive {
@@ -177,17 +159,14 @@ sub register_worker {
     q{insert into minion_workers (id, host, pid, status)
       values (coalesce($1, nextval('minion_workers_id_seq')), $2, $3, $4)
       on conflict(id) do update set notified = now(), status = $4
-      returning id}, $id, $self->{host} //= hostname, $$,
-    {json => $options->{status} // {}}
+      returning id}, $id, $self->{host} //= hostname, $$, {json => $options->{status} // {}}
   )->hash->{id};
 }
 
 sub remove_job {
-  !!shift->pg->db->query(
-    "delete from minion_jobs
-     where id = ? and state in ('inactive', 'failed', 'finished')
-     returning 1", shift
-  )->rows;
+  my ($self, $id) = @_;
+  return !!$self->pg->db->query(
+    "delete from minion_jobs where id = ? and state in ('inactive', 'failed', 'finished') returning 1", $id)->rows;
 }
 
 sub repair {
@@ -196,10 +175,7 @@ sub repair {
   # Workers without heartbeat
   my $db     = $self->pg->db;
   my $minion = $self->minion;
-  $db->query(
-    "delete from minion_workers
-     where notified < now() - interval '1 second' * ?", $minion->missing_after
-  );
+  $db->query("delete from minion_workers where notified < now() - interval '1 second' * ?", $minion->missing_after);
 
   # Jobs with missing worker (can be retried)
   my $fail = $db->query(
@@ -213,8 +189,7 @@ sub repair {
   $db->query(
     "delete from minion_jobs as j
      where finished <= now() - interval '1 second' * ? and not exists (
-       select 1 from minion_jobs
-       where parents @> ARRAY[j.id] and state != 'finished'
+       select 1 from minion_jobs where parents @> ARRAY[j.id] and state != 'finished'
      ) and state = 'finished'", $minion->remove_after
   );
 }
@@ -222,10 +197,7 @@ sub repair {
 sub reset {
   my ($self, $options) = (shift, shift // {});
 
-  if ($options->{all}) {
-    $self->pg->db->query(
-      'truncate minion_jobs, minion_locks, minion_workers restart identity');
-  }
+  if ($options->{all}) { $self->pg->db->query('truncate minion_jobs, minion_locks, minion_workers restart identity') }
   elsif ($options->{locks}) { $self->pg->db->query('truncate minion_locks') }
 }
 
@@ -234,14 +206,11 @@ sub retry_job {
 
   return !!$self->pg->db->query(
     "update minion_jobs
-     set attempts = coalesce(?, attempts),
-       delayed = (now() + (interval '1 second' * ?)),
-       parents = coalesce(?, parents), priority = coalesce(?, priority),
-       queue = coalesce(?, queue), retried = now(), retries = retries + 1,
-       state = 'inactive'
+     set attempts = coalesce(?, attempts), delayed = (now() + (interval '1 second' * ?)),
+       parents = coalesce(?, parents), priority = coalesce(?, priority), queue = coalesce(?, queue), retried = now(),
+       retries = retries + 1, state = 'inactive'
      where id = ? and retries = ?
-     returning 1", $options->{attempts}, $options->{delay} // 0,
-    @$options{qw(parents priority queue)}, $id, $retries
+     returning 1", $options->{attempts}, $options->{delay} // 0, @$options{qw(parents priority queue)}, $id, $retries
   )->rows;
 }
 
@@ -250,16 +219,12 @@ sub stats {
 
   my $stats = $self->pg->db->query(
     "select count(*) filter (where state = 'inactive') as inactive_jobs,
-       count(*) filter (where state = 'active') as active_jobs,
-       count(*) filter (where state = 'failed') as failed_jobs,
+       count(*) filter (where state = 'active') as active_jobs, count(*) filter (where state = 'failed') as failed_jobs,
        count(*) filter (where state = 'finished') as finished_jobs,
-       count(*) filter (where state = 'inactive'
-         and delayed > now()) as delayed_jobs,
-       (select count(*) from minion_locks where expires > now())
-         as active_locks,
+       count(*) filter (where state = 'inactive' and delayed > now()) as delayed_jobs,
+       (select count(*) from minion_locks where expires > now()) as active_locks,
        count(distinct worker) filter (where state = 'active') as active_workers,
-       (select case when is_called then last_value else 0 end
-         from minion_jobs_id_seq) as enqueued_jobs,
+       (select case when is_called then last_value else 0 end from minion_jobs_id_seq) as enqueued_jobs,
        (select count(*) from minion_workers) as inactive_workers,
        extract(epoch from now() - pg_postmaster_start_time()) as uptime
      from minion_jobs"
@@ -272,15 +237,12 @@ sub stats {
 sub unlock {
   !!shift->pg->db->query(
     'delete from minion_locks where id = (
-       select id from minion_locks
-       where expires > now() and name = ? order by expires limit 1 for update
+       select id from minion_locks where expires > now() and name = ? order by expires limit 1 for update
      ) returning 1', shift
   )->rows;
 }
 
-sub unregister_worker {
-  shift->pg->db->query('delete from minion_workers where id = ?', shift);
-}
+sub unregister_worker { shift->pg->db->query('delete from minion_workers where id = ?', shift) }
 
 sub _total {
   my ($name, $results) = @_;
@@ -297,18 +259,15 @@ sub _try {
      set started = now(), state = 'active', worker = ?
      where id = (
        select id from minion_jobs as j
-       where delayed <= now() and id = coalesce(?, id)
-         and (parents = '{}' or not exists (
-           select 1 from minion_jobs
-           where id = any (j.parents)
-             and state in ('inactive', 'active', 'failed')
-         )) and queue = any (?) and state = 'inactive' and task = any (?)
+       where delayed <= now() and id = coalesce(?, id) and (parents = '{}' or not exists (
+         select 1 from minion_jobs where id = any (j.parents) and state in ('inactive', 'active', 'failed')
+       )) and queue = any (?) and state = 'inactive' and task = any (?)
        order by priority desc, id
        limit 1
        for update skip locked
      )
-     returning id, args, retries, task", $id, $options->{id},
-    $options->{queues} || ['default'], [keys %{$self->minion->tasks}]
+     returning id, args, retries, task", $id, $options->{id}, $options->{queues} || ['default'],
+    [keys %{$self->minion->tasks}]
   )->expand->hash;
 }
 
@@ -319,8 +278,7 @@ sub _update {
     "update minion_jobs
      set finished = now(), result = ?, state = ?
      where id = ? and retries = ? and state = 'active'
-     returning attempts", {json => $result}, $fail ? 'failed' : 'finished',
-    $id, $retries
+     returning attempts", {json => $result}, $fail ? 'failed' : 'finished', $id, $retries
   )->array;
 
   return 1 if !$fail || (my $attempts = $row->[0]) == 1;
@@ -345,15 +303,13 @@ Minion::Backend::Pg - PostgreSQL backend
 
 =head1 DESCRIPTION
 
-L<Minion::Backend::Pg> is a backend for L<Minion> based on L<Mojo::Pg>. All
-necessary tables will be created automatically with a set of migrations named
-C<minion>. Note that this backend uses many bleeding edge features, so only the
-latest, stable version of PostgreSQL is fully supported.
+L<Minion::Backend::Pg> is a backend for L<Minion> based on L<Mojo::Pg>. All necessary tables will be created
+automatically with a set of migrations named C<minion>. Note that this backend uses many bleeding edge features, so
+only the latest, stable version of PostgreSQL is fully supported.
 
 =head1 ATTRIBUTES
 
-L<Minion::Backend::Pg> inherits all attributes from L<Minion::Backend> and
-implements the following new ones.
+L<Minion::Backend::Pg> inherits all attributes from L<Minion::Backend> and implements the following new ones.
 
 =head2 pg
 
@@ -364,8 +320,7 @@ L<Mojo::Pg> object used to store all data.
 
 =head1 METHODS
 
-L<Minion::Backend::Pg> inherits all methods from L<Minion::Backend> and
-implements the following new ones.
+L<Minion::Backend::Pg> inherits all methods from L<Minion::Backend> and implements the following new ones.
 
 =head2 broadcast
 
@@ -380,8 +335,8 @@ Broadcast remote control command to one or more workers.
   my $job_info = $backend->dequeue($worker_id, 0.5);
   my $job_info = $backend->dequeue($worker_id, 0.5, {queues => ['important']});
 
-Wait a given amount of time in seconds for a job, dequeue it and transition from
-C<inactive> to C<active> state, or return C<undef> if queues were empty.
+Wait a given amount of time in seconds for a job, dequeue it and transition from C<inactive> to C<active> state, or
+return C<undef> if queues were empty.
 
 These options are currently available:
 
@@ -447,8 +402,8 @@ These options are currently available:
 
   attempts => 25
 
-Number of times performing this job will be attempted, with a delay based on
-L<Minion/"backoff"> after the first attempt, defaults to C<1>.
+Number of times performing this job will be attempted, with a delay based on L<Minion/"backoff"> after the first
+attempt, defaults to C<1>.
 
 =item delay
 
@@ -466,8 +421,8 @@ Hash reference with arbitrary metadata for this job.
 
   parents => [$id1, $id2, $id3]
 
-One or more existing jobs this job depends on, and that need to have
-transitioned to the state C<finished> before it can be processed.
+One or more existing jobs this job depends on, and that need to have transitioned to the state C<finished> before it
+can be processed.
 
 =item priority
 
@@ -490,9 +445,8 @@ Queue to put job in, defaults to C<default>.
   my $bool = $backend->fail_job(
     $job_id, $retries, {whatever => 'Something went wrong!'});
 
-Transition from C<active> to C<failed> state with or without a result, and if
-there are attempts remaining, transition back to C<inactive> with a delay based
-on L<Minion/"backoff">.
+Transition from C<active> to C<failed> state with or without a result, and if there are attempts remaining, transition
+back to C<inactive> with a delay based on L<Minion/"backoff">.
 
 =head2 finish_job
 
@@ -547,8 +501,7 @@ These options are currently available:
 
   before => 23
 
-List only jobs before this id. Note that this option is EXPERIMENTAL and might
-change without warning!
+List only jobs before this id. Note that this option is EXPERIMENTAL and might change without warning!
 
 =item ids
 
@@ -560,8 +513,7 @@ List only jobs with these ids.
 
   notes => ['foo', 'bar']
 
-List only jobs with one of these notes. Note that this option is EXPERIMENTAL
-and might change without warning!
+List only jobs with one of these notes. Note that this option is EXPERIMENTAL and might change without warning!
 
 =item queues
 
@@ -769,8 +721,7 @@ These options are currently available:
 
   before => 23
 
-List only workers before this id. Note that this option is EXPERIMENTAL and
-might change without warning!
+List only workers before this id. Note that this option is EXPERIMENTAL and might change without warning!
 
 =item ids
 
@@ -833,9 +784,8 @@ Hash reference with whatever status information the worker would like to share.
   my $bool = $backend->lock('foo', 3600);
   my $bool = $backend->lock('foo', 3600, {limit => 20});
 
-Try to acquire a named lock that will expire automatically after the given
-amount of time in seconds. An expiration time of C<0> can be used to check if a
-named lock already exists without creating one.
+Try to acquire a named lock that will expire automatically after the given amount of time in seconds. An expiration
+time of C<0> can be used to check if a named lock already exists without creating one.
 
 These options are currently available:
 
@@ -845,8 +795,7 @@ These options are currently available:
 
   limit => 20
 
-Number of shared locks with the same name that can be active at the same time,
-defaults to C<1>.
+Number of shared locks with the same name that can be active at the same time, defaults to C<1>.
 
 =back
 
@@ -861,8 +810,7 @@ Construct a new L<Minion::Backend::Pg> object.
 
   my $bool = $backend->note($job_id, {mojo => 'rocks', minion => 'too'});
 
-Change one or more metadata fields for a job. Setting a value to C<undef> will
-remove the field.
+Change one or more metadata fields for a job. Setting a value to C<undef> will remove the field.
 
 =head2 receive
 
@@ -932,8 +880,7 @@ Reset only locks.
   my $bool = $backend->retry_job($job_id, $retries);
   my $bool = $backend->retry_job($job_id, $retries, {delay => 10});
 
-Transition job back to C<inactive> state, already C<inactive> jobs may also be
-retried to change options.
+Transition job back to C<inactive> state, already C<inactive> jobs may also be retried to change options.
 
 These options are currently available:
 
@@ -1003,8 +950,7 @@ Number of workers that are currently processing a job.
 
   delayed_jobs => 100
 
-Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future.
+Number of jobs in C<inactive> state that are scheduled to run at specific time in the future.
 
 =item enqueued_jobs
 

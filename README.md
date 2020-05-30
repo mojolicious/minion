@@ -3,19 +3,15 @@
 
 ![Screenshot](https://raw.github.com/mojolicious/minion/master/examples/admin.png?raw=true)
 
-  A high performance job queue for the Perl programming language, with support
-  for multiple named queues, priorities, delayed jobs, job dependencies, job
-  progress, job results, retries with backoff, rate limiting, unique jobs,
-  statistics, distributed workers, parallel processing, autoscaling, remote
-  control, [Mojolicious](https://mojolicious.org) admin ui, resource leak
-  protection and multiple backends (such as
+  A high performance job queue for the Perl programming language, with support for multiple named queues, priorities,
+  delayed jobs, job dependencies, job progress, job results, retries with backoff, rate limiting, unique jobs,
+  statistics, distributed workers, parallel processing, autoscaling, remote control,
+  [Mojolicious](https://mojolicious.org) admin ui, resource leak protection and multiple backends (such as
   [PostgreSQL](https://www.postgresql.org)).
 
-  Job queues allow you to process time and/or computationally intensive tasks in
-  background processes, outside of the request/response lifecycle of web
-  applications. Among those tasks you'll commonly find image resizing, spam
-  filtering, HTTP downloads, building tarballs, warming caches and basically
-  everything else you can imagine that's not super fast.
+  Job queues allow you to process time and/or computationally intensive tasks in background processes, outside of the
+  request/response lifecycle of web applications. Among those tasks you'll commonly find image resizing, spam filtering,
+  HTTP downloads, building tarballs, warming caches and basically everything else you can imagine that's not super fast.
 
 ```perl
 use Mojolicious::Lite -signatures;
@@ -37,8 +33,7 @@ get '/log' => sub ($c) {
 app->start;
 ```
 
-  Just start one or more background worker processes in addition to your web
-  server.
+  Just start one or more background worker processes in addition to your web server.
 
     $ ./myapp.pl minion worker
 

@@ -48,14 +48,12 @@ sub run {
   return print dumper $minion->history if $history;
 
   # Locks
-  return $minion->unlock($unlock) if $unlock;
-  return $self->_list_locks($offset, $limit, @args ? {names => \@args} : ())
-    if $locks;
+  return $minion->unlock($unlock)                                            if $unlock;
+  return $self->_list_locks($offset, $limit, @args ? {names => \@args} : ()) if $locks;
 
   # Workers
   my $id = @args ? shift @args : undef;
-  return $id ? $self->_worker($id) : $self->_list_workers($offset, $limit)
-    if $workers;
+  return $id ? $self->_worker($id) : $self->_list_workers($offset, $limit) if $workers;
 
   # List jobs
   return $self->_list_jobs($offset, $limit, $opts) unless defined $id;
@@ -94,8 +92,7 @@ sub _list_workers {
 sub _stats { print dumper shift->app->minion->stats }
 
 sub _worker {
-  my $worker = shift->app->minion->backend->list_workers(0, 1, {ids => [shift]})
-    ->{workers}[0];
+  my $worker = shift->app->minion->backend->list_workers(0, 1, {ids => [shift]})->{workers}[0];
   die "Worker does not exist.\n" unless $worker;
   print dumper Minion::_datetime($worker);
 }
@@ -176,8 +173,8 @@ L<Minion::Command::minion::job> manages the L<Minion> job queue.
 
 =head1 ATTRIBUTES
 
-L<Minion::Command::minion::job> inherits all attributes from
-L<Mojolicious::Command> and implements the following new ones.
+L<Minion::Command::minion::job> inherits all attributes from L<Mojolicious::Command> and implements the following new
+ones.
 
 =head2 description
 
@@ -195,8 +192,8 @@ Usage information for this command, used for the help screen.
 
 =head1 METHODS
 
-L<Minion::Command::minion::job> inherits all methods from
-L<Mojolicious::Command> and implements the following new ones.
+L<Minion::Command::minion::job> inherits all methods from L<Mojolicious::Command> and implements the following new
+ones.
 
 =head2 run
 

@@ -24,8 +24,7 @@ $minion->reset({all => 1});
 say "Clean start with $ENQUEUE jobs";
 my @parents = map { $minion->enqueue('foo') } 1 .. 5;
 my $before  = time;
-$minion->enqueue($_ % 2 ? 'foo' : 'bar' => [] => {parents => \@parents})
-  for 1 .. $ENQUEUE;
+$minion->enqueue($_ % 2 ? 'foo' : 'bar' => [] => {parents => \@parents}) for 1 .. $ENQUEUE;
 my $elapsed = time - $before;
 my $avg     = sprintf '%.3f', $ENQUEUE / $elapsed;
 say "Enqueued $ENQUEUE jobs in $elapsed seconds ($avg/s)";
@@ -55,8 +54,7 @@ sub dequeue {
   waitpid $_, 0 for @pids;
   my $elapsed = time - $before;
   my $avg     = sprintf '%.3f', ($DEQUEUE * $WORKERS) / $elapsed;
-  say
-    "$WORKERS workers finished $DEQUEUE jobs each in $elapsed seconds ($avg/s)";
+  say "$WORKERS workers finished $DEQUEUE jobs each in $elapsed seconds ($avg/s)";
 }
 dequeue() for 1 .. $REPETITIONS;
 
@@ -88,8 +86,7 @@ say "Repaired $REPAIR times in $elapsed seconds ($avg/s)";
 # Lock
 say "Acquiring locks $LOCK times";
 $before = time;
-$minion->lock($_ % 2 ? 'foo' : 'bar', 3600, {limit => int($LOCK / 2)})
-  for 1 .. $LOCK;
+$minion->lock($_ % 2 ? 'foo' : 'bar', 3600, {limit => int($LOCK / 2)}) for 1 .. $LOCK;
 $elapsed = time - $before;
 $avg     = sprintf '%.3f', $LOCK / $elapsed;
 say "Acquired locks $LOCK times in $elapsed seconds ($avg/s)";

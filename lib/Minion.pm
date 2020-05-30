@@ -14,8 +14,7 @@ use Mojo::Server;
 use Mojo::Util qw(scope_guard steady_time);
 
 has
-  app =>
-  sub { $_[0]{app_ref} = Mojo::Server->new->build_app('Mojo::HelloWorld') },
+  app  => sub { $_[0]{app_ref} = Mojo::Server->new->build_app('Mojo::HelloWorld') },
   weak => 1;
 has 'backend';
 has backoff       => sub { \&_backoff };
@@ -40,8 +39,7 @@ sub foreground {
   my ($self, $id) = @_;
 
   return undef unless my $job = $self->job($id);
-  return undef
-    unless $job->retry({attempts => 1, queue => 'minion_foreground'});
+  return undef unless $job->retry({attempts => 1, queue => 'minion_foreground'});
 
   # Reset event loop
   Mojo::IOLoop->reset;
@@ -109,7 +107,7 @@ sub result_p {
   my $promise = Mojo::Promise->new;
   my $cb      = sub { $self->_result($promise, $id) };
   my $timer   = Mojo::IOLoop->recurring($options->{interval} // 3 => $cb);
-  $promise->finally(sub { Mojo::IOLoop->remove($timer) });
+  $promise->finally(sub { Mojo::IOLoop->remove($timer) })->catch(sub { });
   $cb->();
 
   return $promise;
@@ -149,8 +147,7 @@ sub _delegate {
 
 sub _iterator {
   my ($self, $jobs, $options) = (shift, shift, shift // {});
-  return Minion::Iterator->new(minion => $self, options => $options,
-    jobs => $jobs);
+  return Minion::Iterator->new(minion => $self, options => $options, jobs => $jobs);
 }
 
 sub _info { shift->backend->list_jobs(0, 1, {ids => [shift]})->{jobs}[0] }
@@ -201,32 +198,25 @@ Minion - Job queue
 
 =begin html
 
-<p>
-  <img alt="Screenshot"
-    src="https://raw.github.com/mojolicious/minion/master/examples/admin.png?raw=true"
-    width="600px">
-</p>
+<p>   <img alt="Screenshot"     src="https://raw.github.com/mojolicious/minion/master/examples/admin.png?raw=true"    
+width="600px"> </p>
 
 =end html
 
-L<Minion> is a high performance job queue for the Perl programming language,
-with support for multiple named queues, priorities, delayed jobs, job
-dependencies, job progress, job results, retries with backoff, rate limiting,
-unique jobs, statistics, distributed workers, parallel processing, autoscaling,
-remote control, L<Mojolicious|https://mojolicious.org> admin ui, resource leak
-protection and multiple backends (such as
+L<Minion> is a high performance job queue for the Perl programming language, with support for multiple named queues,
+priorities, delayed jobs, job dependencies, job progress, job results, retries with backoff, rate limiting, unique
+jobs, statistics, distributed workers, parallel processing, autoscaling, remote control,
+L<Mojolicious|https://mojolicious.org> admin ui, resource leak protection and multiple backends (such as
 L<PostgreSQL|https://www.postgresql.org>).
 
-Job queues allow you to process time and/or computationally intensive tasks in
-background processes, outside of the request/response lifecycle of web
-applications. Among those tasks you'll commonly find image resizing, spam
-filtering, HTTP downloads, building tarballs, warming caches and basically
-everything else you can imagine that's not super fast.
+Job queues allow you to process time and/or computationally intensive tasks in background processes, outside of the
+request/response lifecycle of web applications. Among those tasks you'll commonly find image resizing, spam filtering,
+HTTP downloads, building tarballs, warming caches and basically everything else you can imagine that's not super fast.
 
 =head1 BASICS
 
-You can use L<Minion> as a standalone job queue or integrate it into
-L<Mojolicious> applications with the plugin L<Mojolicious::Plugin::Minion>.
+You can use L<Minion> as a standalone job queue or integrate it into L<Mojolicious> applications with the plugin
+L<Mojolicious::Plugin::Minion>.
 
   use Mojolicious::Lite;
 
@@ -248,41 +238,36 @@ L<Mojolicious> applications with the plugin L<Mojolicious::Plugin::Minion>.
 
   app->start;
 
-Background worker processes are usually started with the command
-L<Minion::Command::minion::worker>, which becomes automatically available when
-an application loads L<Mojolicious::Plugin::Minion>.
+Background worker processes are usually started with the command L<Minion::Command::minion::worker>, which becomes
+automatically available when an application loads L<Mojolicious::Plugin::Minion>.
 
   $ ./myapp.pl minion worker
 
-The worker process will fork a new process for every job that is being
-processed. This allows for resources such as memory to be returned to the
-operating system once a job is finished. Perl fork is very fast, so don't worry
-about the overhead.
+The worker process will fork a new process for every job that is being processed. This allows for resources such as
+memory to be returned to the operating system once a job is finished. Perl fork is very fast, so don't worry about the
+overhead.
 
   Minion::Worker
   |- Minion::Job [1]
   |- Minion::Job [2]
   +- ...
 
-By default up to four jobs will be processed in parallel, but that can be
-changed with configuration options or on demand with signals.
+By default up to four jobs will be processed in parallel, but that can be changed with configuration options or on
+demand with signals.
 
   $ ./myapp.pl minion worker -j 12
 
-Jobs can be managed right from the command line with
-L<Minion::Command::minion::job>.
+Jobs can be managed right from the command line with L<Minion::Command::minion::job>.
 
   $ ./myapp.pl minion job
 
-You can also add an admin ui to your application by loading the plugin
-L<Mojolicious::Plugin::Minion::Admin>. Just make sure to secure access before
-making your application publically accessible.
+You can also add an admin ui to your application by loading the plugin L<Mojolicious::Plugin::Minion::Admin>. Just make
+sure to secure access before making your application publically accessible.
 
   # Make admin ui available under "/minion"
   plugin 'Minion::Admin';
 
-To manage background worker processes with systemd, you can use a unit
-configuration file like this.
+To manage background worker processes with systemd, you can use a unit configuration file like this.
 
   [Unit]
   Description=My Mojolicious application workers
@@ -296,16 +281,14 @@ configuration file like this.
   [Install]
   WantedBy=multi-user.target
 
-Every job can fail or succeed, but not get lost, the system is eventually
-consistent and will preserve job results for as long as you like, depending on
-L</"remove_after">. While individual workers can fail in the middle of
-processing a job, the system will detect this and ensure that no job is left in
-an uncertain state, depending on L</"missing_after">.
+Every job can fail or succeed, but not get lost, the system is eventually consistent and will preserve job results for
+as long as you like, depending on L</"remove_after">. While individual workers can fail in the middle of processing a
+job, the system will detect this and ensure that no job is left in an uncertain state, depending on
+L</"missing_after">.
 
 =head1 GROWING
 
-And as your application grows, you can move tasks into application specific
-plugins.
+And as your application grows, you can move tasks into application specific plugins.
 
   package MyApp::Task::PokeMojo;
   use Mojo::Base 'Mojolicious::Plugin';
@@ -331,17 +314,13 @@ Which are loaded like any other plugin from your application.
 
 =head1 EXAMPLES
 
-This distribution also contains a great example application you can use for
-inspiration. The
-L<link
-checker|https://github.com/mojolicious/minion/tree/master/examples/linkcheck>
-will show you how to integrate background jobs into well-structured
-L<Mojolicious> applications.
+This distribution also contains a great example application you can use for inspiration. The L<link
+checker|https://github.com/mojolicious/minion/tree/master/examples/linkcheck> will show you how to integrate background
+jobs into well-structured L<Mojolicious> applications.
 
 =head1 EVENTS
 
-L<Minion> inherits all events from L<Mojo::EventEmitter> and can emit the
-following new ones.
+L<Minion> inherits all events from L<Mojo::EventEmitter> and can emit the following new ones.
 
 =head2 enqueue
 
@@ -380,8 +359,7 @@ L<Minion> implements the following attributes.
   my $app = $minion->app;
   $minion = $minion->app(MyApp->new);
 
-Application for job queue, defaults to a L<Mojo::HelloWorld> object. Note that
-this attribute is weakened.
+Application for job queue, defaults to a L<Mojo::HelloWorld> object. Note that this attribute is weakened.
 
 =head2 backend
 
@@ -395,9 +373,8 @@ Backend, usually a L<Minion::Backend::Pg> object.
   my $cb  = $minion->backoff;
   $minion = $minion->backoff(sub {...});
 
-A callback used to calculate the delay for automatically retried jobs, defaults
-to C<(retries ** 4) + 15> (15, 16, 31, 96, 271, 640...), which means that
-roughly C<25> attempts can be made in C<21> days.
+A callback used to calculate the delay for automatically retried jobs, defaults to C<(retries ** 4) + 15> (15, 16, 31,
+96, 271, 640...), which means that roughly C<25> attempts can be made in C<21> days.
 
   $minion->backoff(sub {
     my $retries = shift;
@@ -409,19 +386,17 @@ roughly C<25> attempts can be made in C<21> days.
   my $after = $minion->missing_after;
   $minion   = $minion->missing_after(172800);
 
-Amount of time in seconds after which workers without a heartbeat will be
-considered missing and removed from the registry by L</"repair">, defaults to
-C<1800> (30 minutes).
+Amount of time in seconds after which workers without a heartbeat will be considered missing and removed from the
+registry by L</"repair">, defaults to C<1800> (30 minutes).
 
 =head2 remove_after
 
   my $after = $minion->remove_after;
   $minion   = $minion->remove_after(86400);
 
-Amount of time in seconds after which jobs that have reached the state
-C<finished> and have no unresolved dependencies will be removed automatically by
-L</"repair">, defaults to C<172800> (2 days). It is not recommended to set this
-value below 2 days.
+Amount of time in seconds after which jobs that have reached the state C<finished> and have no unresolved dependencies
+will be removed automatically by L</"repair">, defaults to C<172800> (2 days). It is not recommended to set this value
+below 2 days.
 
 =head2 tasks
 
@@ -432,8 +407,7 @@ Registered tasks.
 
 =head1 METHODS
 
-L<Minion> inherits all methods from L<Mojo::EventEmitter> and implements the
-following new ones.
+L<Minion> inherits all methods from L<Mojo::EventEmitter> and implements the following new ones.
 
 =head2 add_task
 
@@ -472,10 +446,9 @@ Broadcast remote control command to one or more workers.
   my $id = $minion->enqueue(foo => [@args]);
   my $id = $minion->enqueue(foo => [@args] => {priority => 1});
 
-Enqueue a new job with C<inactive> state. Arguments get serialized by the
-L</"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects and be
-careful with binary data, nested data structures with hash and array references
-are fine though.
+Enqueue a new job with C<inactive> state. Arguments get serialized by the L</"backend"> (often with L<Mojo::JSON>), so
+you shouldn't send objects and be careful with binary data, nested data structures with hash and array references are
+fine though.
 
 These options are currently available:
 
@@ -485,8 +458,8 @@ These options are currently available:
 
   attempts => 25
 
-Number of times performing this job will be attempted, with a delay based on
-L</"backoff"> after the first attempt, defaults to C<1>.
+Number of times performing this job will be attempted, with a delay based on L</"backoff"> after the first attempt,
+defaults to C<1>.
 
 =item delay
 
@@ -498,17 +471,16 @@ Delay job for this many seconds (from now), defaults to C<0>.
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
 
-Hash reference with arbitrary metadata for this job that gets serialized by the
-L</"backend"> (often with L<Mojo::JSON>), so you shouldn't send objects and be
-careful with binary data, nested data structures with hash and array references
-are fine though.
+Hash reference with arbitrary metadata for this job that gets serialized by the L</"backend"> (often with
+L<Mojo::JSON>), so you shouldn't send objects and be careful with binary data, nested data structures with hash and
+array references are fine though.
 
 =item parents
 
   parents => [$id1, $id2, $id3]
 
-One or more existing jobs this job depends on, and that need to have
-transitioned to the state C<finished> before it can be processed.
+One or more existing jobs this job depends on, and that need to have transitioned to the state C<finished> before it
+can be processed.
 
 =item priority
 
@@ -528,17 +500,16 @@ Queue to put job in, defaults to C<default>.
 
   my $bool = $minion->foreground($id);
 
-Retry job in C<minion_foreground> queue, then perform it right away with a
-temporary worker in this process, very useful for debugging.
+Retry job in C<minion_foreground> queue, then perform it right away with a temporary worker in this process, very
+useful for debugging.
 
 =head2 guard
 
   my $guard = $minion->guard('foo', 3600);
   my $guard = $minion->guard('foo', 3600, {limit => 20});
 
-Same as L</"lock">, but returns a scope guard object that automatically releases
-the lock as soon as the object is destroyed, or C<undef> if aquiring the lock
-failed.
+Same as L</"lock">, but returns a scope guard object that automatically releases the lock as soon as the object is
+destroyed, or C<undef> if aquiring the lock failed.
 
   # Only one job should run at a time (unique job)
   $minion->add_task(do_unique_stuff => sub {
@@ -578,8 +549,7 @@ Hourly counts for processed jobs from the past day.
 
   my $job = $minion->job($id);
 
-Get L<Minion::Job> object without making any changes to the actual job or
-return C<undef> if job does not exist.
+Get L<Minion::Job> object without making any changes to the actual job or return C<undef> if job does not exist.
 
   # Check job state
   my $state = $minion->job($id)->info->{state};
@@ -595,8 +565,8 @@ return C<undef> if job does not exist.
   my $jobs = $minion->jobs;
   my $jobs = $minion->jobs({states => ['inactive']});
 
-Return L<Minion::Iterator> object to safely iterate through job information.
-Note that this method is EXPERIMENTAL and might change without warning!
+Return L<Minion::Iterator> object to safely iterate through job information. Note that this method is EXPERIMENTAL and
+might change without warning!
 
   # Iterate through jobs for two tasks
   my $jobs = $minion->jobs({tasks => ['foo', 'bar']});
@@ -627,8 +597,7 @@ List only jobs with these ids.
 
   notes => ['foo', 'bar']
 
-List only jobs with one of these notes. Note that this option is EXPERIMENTAL
-and might change without warning!
+List only jobs with one of these notes. Note that this option is EXPERIMENTAL and might change without warning!
 
 =item queues
 
@@ -775,11 +744,9 @@ Id of worker that is processing the job.
   my $bool = $minion->lock('foo', 3600);
   my $bool = $minion->lock('foo', 3600, {limit => 20});
 
-Try to acquire a named lock that will expire automatically after the given
-amount of time in seconds. You can release the lock manually with L</"unlock">
-to limit concurrency, or let it expire for rate limiting. For convenience you
-can also use L</"guard"> to release the lock automatically, even if the job
-failed.
+Try to acquire a named lock that will expire automatically after the given amount of time in seconds. You can release
+the lock manually with L</"unlock"> to limit concurrency, or let it expire for rate limiting. For convenience you can
+also use L</"guard"> to release the lock automatically, even if the job failed.
 
   # Only one job should run at a time (unique job)
   $minion->add_task(do_unique_stuff => sub {
@@ -806,8 +773,7 @@ failed.
     ...
   });
 
-An expiration time of C<0> can be used to check if a named lock already exists
-without creating one.
+An expiration time of C<0> can be used to check if a named lock already exists without creating one.
 
   # Check if the lock "foo" already exists
   say 'Lock exists' unless $minion->lock('foo', 0);
@@ -820,8 +786,7 @@ These options are currently available:
 
   limit => 20
 
-Number of shared locks with the same name that can be active at the same time,
-defaults to C<1>.
+Number of shared locks with the same name that can be active at the same time, defaults to C<1>.
 
 =back
 
@@ -891,10 +856,9 @@ Reset only locks.
   my $promise = $minion->result_p($id);
   my $promise = $minion->result_p($id, {interval => 5});
 
-Return a L<Mojo::Promise> object for the result of a job. The state C<finished>
-will result in the promise being C<fullfilled>, and the state C<failed> in the
-promise being C<rejected>. This operation can be cancelled by resolving the
-promise manually at any time.
+Return a L<Mojo::Promise> object for the result of a job. The state C<finished> will result in the promise being
+C<fullfilled>, and the state C<failed> in the promise being C<rejected>. This operation can be cancelled by resolving
+the promise manually at any time.
 
   # Enqueue job and receive the result at some point in the future
   my $id = $minion->enqueue('foo');
@@ -915,8 +879,7 @@ These options are currently available:
 
   interval => 5
 
-Polling interval in seconds for checking if the state of the job has changed,
-defaults to C<3>.
+Polling interval in seconds for checking if the state of the job has changed, defaults to C<3>.
 
 =back
 
@@ -955,15 +918,15 @@ Number of workers that are currently processing a job.
 
   delayed_jobs => 100
 
-Number of jobs in C<inactive> state that are scheduled to run at specific time
-in the future or have unresolved dependencies.
+Number of jobs in C<inactive> state that are scheduled to run at specific time in the future or have unresolved
+dependencies.
 
 =item enqueued_jobs
 
   enqueued_jobs => 100000
 
-Rough estimate of how many jobs have ever been enqueued. Note that this field is
-EXPERIMENTAL and might change without warning!
+Rough estimate of how many jobs have ever been enqueued. Note that this field is EXPERIMENTAL and might change without
+warning!
 
 =item failed_jobs
 
@@ -1007,8 +970,7 @@ Release a named lock that has been previously acquired with L</"lock">.
 
   my $worker = $minion->worker;
 
-Build L<Minion::Worker> object. Note that this method should only be used to
-implement custom workers.
+Build L<Minion::Worker> object. Note that this method should only be used to implement custom workers.
 
   # Use the standard worker with all its features
   my $worker = $minion->worker;
@@ -1049,8 +1011,8 @@ implement custom workers.
   my $workers = $minion->workers;
   my $workers = $minion->workers({ids => [2, 3]});
 
-Return L<Minion::Iterator> object to safely iterate through worker information.
-Note that this method is EXPERIMENTAL and might change without warning!
+Return L<Minion::Iterator> object to safely iterate through worker information. Note that this method is EXPERIMENTAL
+and might change without warning!
 
   # Iterate through workers
   my $workers = $minion->workers;
@@ -1152,15 +1114,13 @@ This is the class hierarchy of the L<Minion> distribution.
 
 =head1 BUNDLED FILES
 
-The L<Minion> distribution includes a few files with different licenses that
-have been bundled for internal use.
+The L<Minion> distribution includes a few files with different licenses that have been bundled for internal use.
 
 =head2 Minion Artwork
 
   Copyright (C) 2017, Sebastian Riedel.
 
-Licensed under the CC-SA License, Version 4.0
-L<http://creativecommons.org/licenses/by-sa/4.0>.
+Licensed under the CC-SA License, Version 4.0 L<http://creativecommons.org/licenses/by-sa/4.0>.
 
 =head2 Bootstrap
 
@@ -1172,8 +1132,7 @@ Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
 
   Copyright (C) 2010-2016, Michael Bostock.
 
-Licensed under the 3-Clause BSD License,
-L<https://opensource.org/licenses/BSD-3-Clause>.
+Licensed under the 3-Clause BSD License, L<https://opensource.org/licenses/BSD-3-Clause>.
 
 =head2 epoch.js
 
@@ -1185,8 +1144,8 @@ Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
 
   Copyright (C) Dave Gandy.
 
-Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>, and
-the SIL OFL 1.1, L<http://scripts.sil.org/OFL>.
+Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>, and the SIL OFL 1.1,
+L<http://scripts.sil.org/OFL>.
 
 =head2 moment.js
 
@@ -1232,12 +1191,11 @@ Stefan Adams
 
 Copyright (C) 2014-2020, Sebastian Riedel and others.
 
-This program is free software, you can redistribute it and/or modify it under
-the terms of the Artistic License version 2.0.
+This program is free software, you can redistribute it and/or modify it under the terms of the Artistic License version
+2.0.
 
 =head1 SEE ALSO
 
-L<https://github.com/mojolicious/minion>, L<Mojolicious::Guides>,
-L<https://mojolicious.org>.
+L<https://github.com/mojolicious/minion>, L<Mojolicious::Guides>, L<https://mojolicious.org>.
 
 =cut

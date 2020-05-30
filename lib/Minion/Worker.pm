@@ -29,8 +29,7 @@ sub dequeue {
 }
 
 sub info {
-  $_[0]->minion->backend->list_workers(0, 1, {ids => [$_[0]->id]})
-    ->{workers}[0];
+  $_[0]->minion->backend->list_workers(0, 1, {ids => [$_[0]->id]})->{workers}[0];
 }
 
 sub new {
@@ -77,8 +76,7 @@ sub run {
 
   # Remote control commands need to validate arguments carefully
   my $commands = $self->commands;
-  local $commands->{jobs}
-    = sub { $status->{jobs} = $_[1] if ($_[1] // '') =~ /^\d+$/ };
+  local $commands->{jobs} = sub { $status->{jobs} = $_[1] if ($_[1] // '') =~ /^\d+$/ };
   local $commands->{kill} = \&_kill;
   local $commands->{stop} = sub { $self->_kill('KILL', $_[1]) };
 
@@ -154,8 +152,7 @@ L<Minion::Worker> performs jobs for L<Minion>.
 
 =head1 WORKER SIGNALS
 
-The L<Minion::Worker> process can be controlled at runtime with the following
-signals.
+The L<Minion::Worker> process can be controlled at runtime with the following signals.
 
 =head2 INT, TERM
 
@@ -167,23 +164,20 @@ Stop immediately without finishing the current jobs.
 
 =head1 JOB SIGNALS
 
-The job processes spawned by the L<Minion::Worker> process can be controlled at
-runtime with the following signals.
+The job processes spawned by the L<Minion::Worker> process can be controlled at runtime with the following signals.
 
 =head2 INT
 
-This signal starts out with the operating system default and allows for jobs to
-install a custom signal handler to stop gracefully.
+This signal starts out with the operating system default and allows for jobs to install a custom signal handler to stop
+gracefully.
 
 =head2 USR1, USR2
 
-These signals start out being ignored and allow for jobs to install custom
-signal handlers.
+These signals start out being ignored and allow for jobs to install custom signal handlers.
 
 =head1 EVENTS
 
-L<Minion::Worker> inherits all events from L<Mojo::EventEmitter> and can emit
-the following new ones.
+L<Minion::Worker> inherits all events from L<Mojo::EventEmitter> and can emit the following new ones.
 
 =head2 busy
 
@@ -192,8 +186,7 @@ the following new ones.
     ...
   });
 
-Emitted in the worker process when it is performing the maximum number of jobs
-in parallel.
+Emitted in the worker process when it is performing the maximum number of jobs in parallel.
 
   $worker->on(busy => sub {
     my $worker = shift;
@@ -261,13 +254,11 @@ L<Minion> object this worker belongs to.
   my $status = $worker->status;
   $worker    = $worker->status({queues => ['default', 'important']);
 
-Status information to configure workers started with L</"run"> and to share
-every time L</"register"> is called.
+Status information to configure workers started with L</"run"> and to share every time L</"register"> is called.
 
 =head1 METHODS
 
-L<Minion::Worker> inherits all methods from L<Mojo::EventEmitter> and
-implements the following new ones.
+L<Minion::Worker> inherits all methods from L<Mojo::EventEmitter> and implements the following new ones.
 
 =head2 add_command
 
@@ -285,9 +276,8 @@ Register a worker remote control command.
   my $job = $worker->dequeue(0.5);
   my $job = $worker->dequeue(0.5 => {queues => ['important']});
 
-Wait a given amount of time in seconds for a job, dequeue L<Minion::Job> object
-and transition from C<inactive> to C<active> state, or return C<undef> if queues
-were empty.
+Wait a given amount of time in seconds for a job, dequeue L<Minion::Job> object and transition from C<inactive> to
+C<active> state, or return C<undef> if queues were empty.
 
 These options are currently available:
 
@@ -364,8 +354,8 @@ Hash reference with whatever status information the worker would like to share.
   my $worker = Minion::Worker->new(status => {foo => 'bar'});
   my $worker = Minion::Worker->new({status => {foo => 'bar'}});
 
-Construct a new L<Minion::Worker> object and subscribe to L</"busy"> event with
-default handler that sleeps for one second.
+Construct a new L<Minion::Worker> object and subscribe to L</"busy"> event with default handler that sleeps for one
+second.
 
 =head2 process_commands
 
@@ -411,8 +401,7 @@ Heartbeat interval, defaults to C<300>.
 
   jobs => 12
 
-Maximum number of jobs to perform parallel in forked worker processes, defaults
-to C<4>.
+Maximum number of jobs to perform parallel in forked worker processes, defaults to C<4>.
 
 =item queues
 
@@ -424,8 +413,8 @@ One or more queues to get jobs from, defaults to C<default>.
 
   repair_interval => 3600
 
-Repair interval, up to half of this value can be subtracted randomly to make
-sure not all workers repair at the same time, defaults to C<21600> (6 hours).
+Repair interval, up to half of this value can be subtracted randomly to make sure not all workers repair at the same
+time, defaults to C<21600> (6 hours).
 
 =back
 
@@ -438,28 +427,25 @@ These remote control L</"commands"> are currently available:
   $minion->broadcast('jobs', [10]);
   $minion->broadcast('jobs', [10], [$worker_id]);
 
-Instruct one or more workers to change the number of jobs to perform
-concurrently. Setting this value to C<0> will effectively pause the worker. That
-means all current jobs will be finished, but no new ones accepted, until the
-number is increased again.
+Instruct one or more workers to change the number of jobs to perform concurrently. Setting this value to C<0> will
+effectively pause the worker. That means all current jobs will be finished, but no new ones accepted, until the number
+is increased again.
 
 =item kill
 
   $minion->broadcast('kill', ['INT', 10025]);
   $minion->broadcast('kill', ['INT', 10025], [$worker_id]);
 
-Instruct one or more workers to send a signal to a job that is currently being
-performed. This command will be ignored by workers that do not have a job
-matching the id. That means it is safe to broadcast this command to all workers.
+Instruct one or more workers to send a signal to a job that is currently being performed. This command will be ignored
+by workers that do not have a job matching the id. That means it is safe to broadcast this command to all workers.
 
 =item stop
 
   $minion->broadcast('stop', [10025]);
   $minion->broadcast('stop', [10025], [$worker_id]);
 
-Instruct one or more workers to stop a job that is currently being performed
-immediately. This command will be ignored by workers that do not have a job
-matching the id. That means it is safe to broadcast this command to all workers.
+Instruct one or more workers to stop a job that is currently being performed immediately. This command will be ignored
+by workers that do not have a job matching the id. That means it is safe to broadcast this command to all workers.
 
 =back
 

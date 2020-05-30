@@ -43,8 +43,8 @@ Minion::Iterator - Minion iterator
 
 =head1 DESCRIPTION
 
-L<Minion::Iterator> is an iterator for L<Minion> listing methods. Note that this
-module is EXPERIMENTAL and might change without warning!
+L<Minion::Iterator> is an iterator for L<Minion> listing methods. Note that this module is EXPERIMENTAL and might
+change without warning!
 
 =head1 ATTRIBUTES
 
@@ -69,13 +69,11 @@ L<Minion> object this job belongs to.
   my $options = $iter->options;
   $iter       = $iter->options({states => ['inactive']});
 
-Options to be passed to L<Minion::Backend/"list_jobs"> or
-L<Minion::Backend/"list_workers">.
+Options to be passed to L<Minion::Backend/"list_jobs"> or L<Minion::Backend/"list_workers">.
 
 =head1 METHODS
 
-L<Minion::Iterator> inherits all methods from L<Mojo::Base> and implements the
-following new ones.
+L<Minion::Iterator> inherits all methods from L<Mojo::Base> and implements the following new ones.
 
 =head2 next
 
@@ -87,9 +85,8 @@ Get next value.
 
   my $num = $iter->total;
 
-Total number of results. If results are removed in the backend while iterating,
-this number will become an estimate that gets updated every time new results are
-fetched.
+Total number of results. If results are removed in the backend while iterating, this number will become an estimate
+that gets updated every time new results are fetched.
 
 =head1 SEE ALSO
 

@@ -25,10 +25,8 @@ isa_ok $worker->minion->app, 'Mojolicious', 'has default application';
 
 # Migrate up and down
 is $minion->backend->pg->migrations->active, 20, 'active version is 20';
-is $minion->backend->pg->migrations->migrate(0)->active, 0,
-  'active version is 0';
-is $minion->backend->pg->migrations->migrate->active, 20,
-  'active version is 20';
+is $minion->backend->pg->migrations->migrate(0)->active, 0, 'active version is 0';
+is $minion->backend->pg->migrations->migrate->active, 20, 'active version is 20';
 
 # Register and unregister
 $worker->register;
@@ -50,10 +48,8 @@ $minion->add_task(test => sub { });
 $worker = $minion->worker->register;
 $id     = $minion->enqueue('test');
 my (@finished, @failed);
-my $promise
-  = $minion->result_p($id, {interval => 0})->then(sub { @finished = @_ })
-  ->catch(sub { @failed = @_ });
-my $job = $worker->dequeue(0);
+my $promise = $minion->result_p($id, {interval => 0})->then(sub { @finished = @_ })->catch(sub { @failed = @_ });
+my $job     = $worker->dequeue(0);
 is $job->id, $id, 'same id';
 Mojo::IOLoop->one_tick;
 is_deeply \@finished, [], 'not finished';
@@ -67,10 +63,8 @@ ok !$finished[1], 'no more results';
 is_deeply \@failed, [], 'not failed';
 (@finished, @failed) = ();
 my $id2 = $minion->enqueue('test');
-$promise
-  = $minion->result_p($id2, {interval => 0})->then(sub { @finished = @_ })
-  ->catch(sub { @failed = @_ });
-$job = $worker->dequeue(0);
+$promise = $minion->result_p($id2, {interval => 0})->then(sub { @finished = @_ })->catch(sub { @failed = @_ });
+$job     = $worker->dequeue(0);
 is $job->id, $id2, 'same id';
 $job->fail({works => 'too!'});
 $promise->wait;
@@ -81,8 +75,7 @@ $worker->unregister;
 
 # Job results (already finished)
 (@finished, @failed) = ();
-$minion->result_p($id)->then(sub { @finished = @_ })
-  ->catch(sub { @failed = @_ })->wait;
+$minion->result_p($id)->then(sub { @finished = @_ })->catch(sub { @failed = @_ })->wait;
 is_deeply $finished[0]{result}, {just => 'works!'}, 'right result';
 is_deeply $finished[0]{notes},  {foo  => 'bar'},    'right note';
 ok !$finished[1], 'no more results';
@@ -91,8 +84,7 @@ is_deeply \@failed, [], 'not failed';
 # Job results (timeout)
 (@finished, @failed) = ();
 $minion->job($id)->retry;
-$minion->result_p($id)->timeout(0.25)->then(sub { @finished = @_ })
-  ->catch(sub { @failed = @_ })->wait;
+$minion->result_p($id)->timeout(0.25)->then(sub { @finished = @_ })->catch(sub { @failed = @_ })->wait;
 is_deeply \@finished, [], 'not finished';
 is_deeply \@failed, ['Promise timeout'], 'failed';
 Mojo::IOLoop->start;
@@ -100,8 +92,7 @@ Mojo::IOLoop->start;
 # Job results (missing job)
 (@finished, @failed) = ();
 $minion->job($id)->remove;
-$minion->result_p($id)->then(sub { @finished = (@_, 'finished') })
-  ->catch(sub { @failed = (@_, 'failed') })->wait;
+$minion->result_p($id)->then(sub { @finished = (@_, 'finished') })->catch(sub { @failed = (@_, 'failed') })->wait;
 is_deeply \@finished, ['finished'], 'job no longer exists';
 is_deeply \@failed, [], 'not failed';
 
@@ -115,16 +106,13 @@ is $worker2->info->{jobs}[0], $job->id, 'right id';
 $id = $worker2->id;
 undef $worker2;
 is $job->info->{state}, 'active', 'job is still active';
-ok !!$minion->backend->list_workers(0, 1, {ids => [$id]})->{workers}[0],
-  'is registered';
+ok !!$minion->backend->list_workers(0, 1, {ids => [$id]})->{workers}[0], 'is registered';
 $minion->backend->pg->db->query(
   "update minion_workers
-   set notified = now() - interval '1 second' * ? where id = ?",
-  $minion->missing_after + 1, $id
+   set notified = now() - interval '1 second' * ? where id = ?", $minion->missing_after + 1, $id
 );
 $minion->repair;
-ok !$minion->backend->list_workers(0, 1, {ids => [$id]})->{workers}[0],
-  'not registered';
+ok !$minion->backend->list_workers(0, 1, {ids => [$id]})->{workers}[0], 'not registered';
 like $job->info->{finished}, qr/^[\d.]+$/,       'has finished timestamp';
 is $job->info->{state},      'failed',           'job is no longer active';
 is $job->info->{result},     'Worker went away', 'right result';
@@ -160,16 +148,14 @@ my $finished = $minion->backend->pg->db->query(
    from minion_jobs
    where id = ?', $id2
 )->hash->{finished};
-$minion->backend->pg->db->query(
-  'update minion_jobs set finished = to_timestamp(?) where id = ?',
+$minion->backend->pg->db->query('update minion_jobs set finished = to_timestamp(?) where id = ?',
   $finished - ($minion->remove_after + 1), $id2);
 $finished = $minion->backend->pg->db->query(
   'select extract(epoch from finished) as finished
    from minion_jobs
    where id = ?', $id3
 )->hash->{finished};
-$minion->backend->pg->db->query(
-  'update minion_jobs set finished = to_timestamp(?) where id = ?',
+$minion->backend->pg->db->query('update minion_jobs set finished = to_timestamp(?) where id = ?',
   $finished - ($minion->remove_after + 1), $id3);
 $worker->unregister;
 $minion->repair;
@@ -304,8 +290,7 @@ $minion->backend->pg->db->query(
   "update minion_locks set expires = now() - interval '1 second' * 1
    where name = 'yada'",
 );
-is $minion->backend->list_locks(0, 10, {names => ['yada']})->{total}, 0,
-  'no results';
+is $minion->backend->list_locks(0, 10, {names => ['yada']})->{total}, 0, 'no results';
 $minion->unlock('test');
 is $minion->backend->list_locks(0, 10)->{total}, 0, 'no results';
 
@@ -412,10 +397,8 @@ ok $job->fail, 'job failed';
 $worker->unregister;
 my $history = $minion->history;
 is $#{$history->{daily}}, 23, 'data for 24 hours';
-is $history->{daily}[-1]{finished_jobs} + $history->{daily}[-2]{finished_jobs},
-  3, 'one failed job in the last hour';
-is $history->{daily}[-1]{failed_jobs} + $history->{daily}[-2]{failed_jobs}, 1,
-  'three finished jobs in the last hour';
+is $history->{daily}[-1]{finished_jobs} + $history->{daily}[-2]{finished_jobs}, 3, 'one failed job in the last hour';
+is $history->{daily}[-1]{failed_jobs} + $history->{daily}[-2]{failed_jobs}, 1, 'three finished jobs in the last hour';
 is $history->{daily}[0]{finished_jobs}, 0, 'no finished jobs 24 hours ago';
 is $history->{daily}[0]{failed_jobs},   0, 'no failed jobs 24 hours ago';
 ok defined $history->{daily}[0]{epoch},  'has epoch value';
@@ -426,8 +409,7 @@ $job->remove;
 
 # List jobs
 $id = $minion->enqueue('add');
-is $minion->backend->list_jobs(1, 1)->{total}, 4,
-  'four total with offset and limit';
+is $minion->backend->list_jobs(1, 1)->{total}, 4, 'four total with offset and limit';
 $results = $minion->backend->list_jobs(0, 10);
 $batch   = $results->{jobs};
 is $results->{total}, 4, 'four jobs total';
@@ -482,8 +464,7 @@ $batch = $minion->backend->list_jobs(0, 10, {notes => ['is_test']})->{jobs};
 is $batch->[0]{task}, 'test', 'right task';
 ok !$batch->[4], 'no more results';
 ok $minion->job($id2)->remove, 'job removed';
-$batch
-  = $minion->backend->list_jobs(0, 10, {queues => ['does_not_exist']})->{jobs};
+$batch = $minion->backend->list_jobs(0, 10, {queues => ['does_not_exist']})->{jobs};
 is_deeply $batch, [], 'no results';
 $results = $minion->backend->list_jobs(0, 1);
 $batch   = $results->{jobs};
@@ -558,8 +539,7 @@ is $job->info->{state}, 'active', 'right state';
 is $job->task,    'add', 'right task';
 is $job->retries, 0,     'job has not been retried';
 $id = $job->info->{worker};
-is $minion->backend->list_workers(0, 1, {ids => [$id]})->{workers}[0]{pid}, $$,
-  'right worker';
+is $minion->backend->list_workers(0, 1, {ids => [$id]})->{workers}[0]{pid}, $$, 'right worker';
 ok !$job->info->{finished}, 'no finished timestamp';
 $job->perform;
 is $worker->info->{jobs}[0], undef, 'no jobs';
@@ -648,9 +628,7 @@ is $minion->stats->{delayed_jobs}, 1, 'one delayed job';
 is $worker->register->dequeue(0), undef, 'too early for job';
 $job = $minion->job($id);
 ok $job->info->{delayed} > $job->info->{created}, 'delayed timestamp';
-$minion->backend->pg->db->query(
-  "update minion_jobs set delayed = now() - interval '1 day' where id = ?",
-  $id);
+$minion->backend->pg->db->query("update minion_jobs set delayed = now() - interval '1 day' where id = ?", $id);
 $job = $worker->dequeue(0);
 is $job->id, $id, 'right id';
 like $job->info->{delayed}, qr/^[\d.]+$/, 'has delayed timestamp';
@@ -737,16 +715,15 @@ is $err,      "test\n", 'right error';
 is $failed,   1,        'failed event has been emitted once';
 is $finished, 1,        'finished event has been emitted once';
 $minion->add_task(switcheroo => sub { });
-$minion->enqueue(
-  switcheroo => [5, 3] => {notes => {finish_count => 0, before => 23}});
+$minion->enqueue(switcheroo => [5, 3] => {notes => {finish_count => 0, before => 23}});
 $job = $worker->dequeue(0);
 $job->perform;
 is_deeply $job->info->{result}, {added => 9}, 'right result';
 is $job->info->{notes}{finish_count}, 1, 'finish event has been emitted once';
-ok $job->info->{notes}{finish_pid},    'has a process id';
-isnt $job->info->{notes}{finish_pid},  $$, 'different process id';
+ok $job->info->{notes}{finish_pid}, 'has a process id';
+isnt $job->info->{notes}{finish_pid}, $$, 'different process id';
 is $job->info->{notes}{before},        23, 'value still exists';
-is $job->info->{notes}{cleanup_count}, 2, 'cleanup event has been emitted once';
+is $job->info->{notes}{cleanup_count}, 2,  'cleanup event has been emitted once';
 ok $job->info->{notes}{cleanup_pid},   'has a process id';
 isnt $job->info->{notes}{cleanup_pid}, $$, 'different process id';
 $worker->unregister;
@@ -803,22 +780,13 @@ $minion->add_task(
     $job->finish([{23 => $hash->{first}[0]{second} x $array->[0][0]}]);
   }
 );
-$minion->enqueue(
-  'nested',
-  [{first => [{second => 'test'}]}, [[3]]],
-  {notes => {foo => [4, 5, 6]}}
-);
+$minion->enqueue('nested', [{first => [{second => 'test'}]}, [[3]]], {notes => {foo => [4, 5, 6]}});
 $job = $worker->register->dequeue(0);
 $job->perform;
 is $job->info->{state}, 'finished', 'right state';
 ok $job->note(yada => ['works']), 'added metadata';
 ok !$minion->backend->note(-1, {yada => ['failed']}), 'not added metadata';
-my $notes = {
-  foo  => [4, 5, 6],
-  bar  => {baz => [1, 2, 3]},
-  baz  => 'yada',
-  yada => ['works']
-};
+my $notes = {foo => [4, 5, 6], bar => {baz => [1, 2, 3]}, baz => 'yada', yada => ['works']};
 is_deeply $job->info->{notes}, $notes, 'right metadata';
 is_deeply $job->info->{result}, [{23 => 'testtesttest'}], 'right structure';
 ok $job->note(yada => undef, bar => undef), 'removed metadata';
@@ -860,8 +828,7 @@ is $info->{attempts}, 2,                          'job will be attempted twice';
 is $info->{state},    'inactive',                 'right state';
 is $info->{result},   'Non-zero exit status (1)', 'right result';
 ok $info->{retried} < $job->info->{delayed}, 'delayed timestamp';
-$minion->backend->pg->db->query(
-  'update minion_jobs set delayed = now() where id = ?', $id);
+$minion->backend->pg->db->query('update minion_jobs set delayed = now() where id = ?', $id);
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 is $job->retries, 1, 'job has been retried once';
@@ -875,9 +842,9 @@ $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 $job->perform;
 $info = $job->info;
-is $info->{attempts}, 3,        'job will be attempted three times';
-is $info->{state},    'failed', 'right state';
-is $info->{result}, 'Non-zero exit status (1)', 'right result';
+is $info->{attempts}, 3,                          'job will be attempted three times';
+is $info->{state},    'failed',                   'right state';
+is $info->{result},   'Non-zero exit status (1)', 'right result';
 $worker->unregister;
 
 # Multiple attempts during maintenance
@@ -892,8 +859,7 @@ $minion->repair;
 is $job->info->{state},  'inactive',         'right state';
 is $job->info->{result}, 'Worker went away', 'right result';
 ok $job->info->{retried} < $job->info->{delayed}, 'delayed timestamp';
-$minion->backend->pg->db->query(
-  'update minion_jobs set delayed = now() where id = ?', $id);
+$minion->backend->pg->db->query('update minion_jobs set delayed = now() where id = ?', $id);
 $job = $worker->register->dequeue(0);
 is $job->id, $id, 'right id';
 is $job->retries, 1, 'job has been retried once';
@@ -945,11 +911,10 @@ is $minion->job($id)->info->{state}, 'finished', 'right state';
 is_deeply $minion->job($id)->info->{result}, {added => 21}, 'right result';
 is $minion->job($id2)->info->{state}, 'finished', 'right state';
 is_deeply $minion->job($id2)->info->{result}, {added => 25}, 'right result';
-is $minion->job($id3)->info->{state},  'finished', 'right state';
-is $minion->job($id3)->info->{result}, undef,      'no result';
-is $minion->job($id4)->info->{state},  'failed',   'right state';
-is $minion->job($id4)->info->{result}, 'Non-zero exit status (1)',
-  'right result';
+is $minion->job($id3)->info->{state},  'finished',                 'right state';
+is $minion->job($id3)->info->{result}, undef,                      'no result';
+is $minion->job($id4)->info->{state},  'failed',                   'right state';
+is $minion->job($id4)->info->{result}, 'Non-zero exit status (1)', 'right result';
 $worker->unregister;
 
 # Stopping jobs
@@ -1060,8 +1025,7 @@ eval { $minion->foreground($id) };
 like $@, qr/Intentional failure!/, 'right error';
 $info = $minion->job($id)->info;
 ok $info->{worker}, 'has worker';
-ok !$minion->backend->list_workers(0, 1, {ids => [$info->{worker}]})
-  ->{workers}[0], 'not registered';
+ok !$minion->backend->list_workers(0, 1, {ids => [$info->{worker}]})->{workers}[0], 'not registered';
 is $info->{retries}, 1,                        'job has been retried';
 is $info->{state},   'failed',                 'right state';
 is $info->{queue},   'minion_foreground',      'right queue';
@@ -1071,27 +1035,20 @@ is $info->{result},  "Intentional failure!\n", 'right result';
 $worker  = $minion->worker->register->process_commands;
 $worker2 = $minion->worker->register;
 my @commands;
-$_->add_command(test_id => sub { push @commands, shift->id })
-  for $worker, $worker2;
-$worker->add_command(test_args => sub { shift and push @commands, [@_] })
-  ->register;
+$_->add_command(test_id => sub { push @commands, shift->id }) for $worker, $worker2;
+$worker->add_command(test_args => sub { shift and push @commands, [@_] })->register;
 ok $minion->broadcast('test_id', [], [$worker->id]), 'sent command';
-ok $minion->broadcast('test_id', [], [$worker->id, $worker2->id]),
-  'sent command';
+ok $minion->broadcast('test_id', [], [$worker->id, $worker2->id]), 'sent command';
 $worker->process_commands->register;
 $worker2->process_commands;
-is_deeply \@commands, [$worker->id, $worker->id, $worker2->id],
-  'right structure';
+is_deeply \@commands, [$worker->id, $worker->id, $worker2->id], 'right structure';
 @commands = ();
 ok $minion->broadcast('test_id'),       'sent command';
 ok $minion->broadcast('test_whatever'), 'sent command';
 ok $minion->broadcast('test_args', [23], []), 'sent command';
-ok $minion->broadcast('test_args', [1, [2], {3 => 'three'}], [$worker->id]),
-  'sent command';
+ok $minion->broadcast('test_args', [1, [2], {3 => 'three'}], [$worker->id]), 'sent command';
 $_->process_commands for $worker, $worker2;
-is_deeply \@commands,
-  [$worker->id, [23], [1, [2], {3 => 'three'}], $worker2->id],
-  'right structure';
+is_deeply \@commands, [$worker->id, [23], [1, [2], {3 => 'three'}], $worker2->id], 'right structure';
 $_->unregister for $worker, $worker2;
 ok !$minion->broadcast('test_id', []), 'command not sent';
 

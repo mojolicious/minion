@@ -61,8 +61,7 @@ $worker->on(
 );
 $id = $minion->enqueue('int');
 $worker->run;
-is_deeply $minion->job($id)->info->{result}, {msg => 'signals: usr1 usr2'},
-  'right result';
+is_deeply $minion->job($id)->info->{result}, {msg => 'signals: usr1 usr2'}, 'right result';
 
 # Status
 my $status = $worker->status;
