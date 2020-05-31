@@ -1,5 +1,6 @@
 
 10.05  2020-05-30
+  - Improved .perltidyrc with more modern settings.
   - Fixed result_p promise leak in Minion.
 
 10.04  2020-01-30
