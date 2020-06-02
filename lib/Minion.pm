@@ -24,9 +24,26 @@ has tasks         => sub { {} };
 
 our $VERSION = '10.06';
 
-sub add_task { ($_[0]->tasks->{$_[1]} = $_[2]) and return $_[0] }
+sub add_task {
+  my ($self, $name, $task) = @_;
+
+  unless (ref $task) {
+    my $e = load_class $task;
+    croak ref $e ? $e : qq{Task "$task" missing} if $e;
+    croak qq{Task "$task" is not a Minion::Job subclass} unless $task->isa('Minion::Job');
+  }
+  $self->tasks->{$name} = $task;
+
+  return $self;
+}
 
 sub broadcast { shift->backend->broadcast(@_) }
+
+sub class_for_task {
+  my ($self, $task) = @_;
+  my $class = $self->tasks->{$task};
+  return !$class || ref $class ? 'Minion::Job' : $class;
+}
 
 sub enqueue {
   my $self = shift;
@@ -67,13 +84,8 @@ sub job {
   my ($self, $id) = @_;
 
   return undef unless my $job = $self->_info($id);
-  return Minion::Job->new(
-    args    => $job->{args},
-    id      => $job->{id},
-    minion  => $self,
-    retries => $job->{retries},
-    task    => $job->{task}
-  );
+  return $self->class_for_task($job->{task})
+    ->new(args => $job->{args}, id => $job->{id}, minion => $self, retries => $job->{retries}, task => $job->{task});
 }
 
 sub jobs { shift->_iterator(1, @_) }
@@ -414,8 +426,10 @@ L<Minion> inherits all methods from L<Mojo::EventEmitter> and implements the fol
 =head2 add_task
 
   $minion = $minion->add_task(foo => sub {...});
+  $minion = $minion->add_task(foo => 'MyApp::Task::Foo');
 
-Register a task.
+Register a task, which can be a closure or a custom L<Minion::Job> subclass. Note that support for custom task classes
+is B<EXPERIMENTAL> and might change without warning!
 
   # Job with result
   $minion->add_task(add => sub {
@@ -441,6 +455,12 @@ Broadcast remote control command to one or more workers.
 
   # Broadcast "jobs" command to pause worker 23
   $minion->broadcast('jobs', [0], [23]);
+
+=head2 class_for_task
+
+  my $class = $minion->class_for_task('foo');
+
+Return job class for task. Note that this method is B<EXPERIMENTAL> and might change without warning!
 
 =head2 enqueue
 
@@ -567,8 +587,8 @@ Get L<Minion::Job> object without making any changes to the actual job or return
   my $jobs = $minion->jobs;
   my $jobs = $minion->jobs({states => ['inactive']});
 
-Return L<Minion::Iterator> object to safely iterate through job information. Note that this method is EXPERIMENTAL and
-might change without warning!
+Return L<Minion::Iterator> object to safely iterate through job information. Note that this method is B<EXPERIMENTAL>
+and might change without warning!
 
   # Iterate through jobs for two tasks
   my $jobs = $minion->jobs({tasks => ['foo', 'bar']});
@@ -599,7 +619,7 @@ List only jobs with these ids.
 
   notes => ['foo', 'bar']
 
-List only jobs with one of these notes. Note that this option is EXPERIMENTAL and might change without warning!
+List only jobs with one of these notes. Note that this option is B<EXPERIMENTAL> and might change without warning!
 
 =item queues
 
@@ -927,8 +947,8 @@ dependencies.
 
   enqueued_jobs => 100000
 
-Rough estimate of how many jobs have ever been enqueued. Note that this field is EXPERIMENTAL and might change without
-warning!
+Rough estimate of how many jobs have ever been enqueued. Note that this field is B<EXPERIMENTAL> and might change
+without warning!
 
 =item failed_jobs
 
@@ -1013,7 +1033,7 @@ Build L<Minion::Worker> object. Note that this method should only be used to imp
   my $workers = $minion->workers;
   my $workers = $minion->workers({ids => [2, 3]});
 
-Return L<Minion::Iterator> object to safely iterate through worker information. Note that this method is EXPERIMENTAL
+Return L<Minion::Iterator> object to safely iterate through worker information. Note that this method is B<EXPERIMENTAL>
 and might change without warning!
 
   # Iterate through workers

@@ -17,20 +17,13 @@ sub dequeue {
 
   my $minion = $self->minion;
   return undef unless my $job = $minion->backend->dequeue($id, $wait, $options);
-  $job = Minion::Job->new(
-    args    => $job->{args},
-    id      => $job->{id},
-    minion  => $minion,
-    retries => $job->{retries},
-    task    => $job->{task}
-  );
+  $job = $minion->class_for_task($job->{task})
+    ->new(args => $job->{args}, id => $job->{id}, minion => $minion, retries => $job->{retries}, task => $job->{task});
   $self->emit(dequeue => $job);
   return $job;
 }
 
-sub info {
-  $_[0]->minion->backend->list_workers(0, 1, {ids => [$_[0]->id]})->{workers}[0];
-}
+sub info { $_[0]->minion->backend->list_workers(0, 1, {ids => [$_[0]->id]})->{workers}[0] }
 
 sub new {
   my $self = shift->SUPER::new(@_);

@@ -43,7 +43,7 @@ Minion::Iterator - Minion iterator
 
 =head1 DESCRIPTION
 
-L<Minion::Iterator> is an iterator for L<Minion> listing methods. Note that this module is EXPERIMENTAL and might
+L<Minion::Iterator> is an iterator for L<Minion> listing methods. Note that this module is B<EXPERIMENTAL> and might
 change without warning!
 
 =head1 ATTRIBUTES

@@ -501,7 +501,7 @@ These options are currently available:
 
   before => 23
 
-List only jobs before this id. Note that this option is EXPERIMENTAL and might change without warning!
+List only jobs before this id. Note that this option is B<EXPERIMENTAL> and might change without warning!
 
 =item ids
 
@@ -513,7 +513,7 @@ List only jobs with these ids.
 
   notes => ['foo', 'bar']
 
-List only jobs with one of these notes. Note that this option is EXPERIMENTAL and might change without warning!
+List only jobs with one of these notes. Note that this option is B<EXPERIMENTAL> and might change without warning!
 
 =item queues
 
@@ -721,7 +721,7 @@ These options are currently available:
 
   before => 23
 
-List only workers before this id. Note that this option is EXPERIMENTAL and might change without warning!
+List only workers before this id. Note that this option is B<EXPERIMENTAL> and might change without warning!
 
 =item ids
 

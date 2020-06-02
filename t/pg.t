@@ -6,6 +6,9 @@ use Test::More;
 
 plan skip_all => 'set TEST_ONLINE to enable this test' unless $ENV{TEST_ONLINE};
 
+use Mojo::File qw(curfile);
+use lib curfile->sibling('lib')->to_string;
+
 use Minion;
 use Mojo::IOLoop;
 use Sys::Hostname qw(hostname);
@@ -1052,6 +1055,60 @@ subtest 'Job dependencies' => sub {
   is $job->id, $id, 'right id';
   is_deeply $job->info->{parents}, [-1, -2], 'right parents';
   ok $job->finish, 'job finished';
+  $worker->unregister;
+};
+
+subtest 'Custom task classes' => sub {
+  $minion->add_task(my_add       => 'MinionTest::AddTestTask');
+  $minion->add_task(my_empty     => 'MinionTest::EmptyTestTask');
+  $minion->add_task(my_no_result => 'MinionTest::NoResultTestTask');
+  $minion->add_task(my_fail      => 'MinionTest::FailTestTask');
+  is $minion->class_for_task('my_add'),       'MinionTest::AddTestTask',   'right class';
+  is $minion->class_for_task('my_empty'),     'MinionTest::EmptyTestTask', 'right class';
+  is $minion->class_for_task('long_running'), 'Minion::Job',               'right class';
+  is $minion->class_for_task('unknown'),      'Minion::Job',               'right class';
+
+  eval { $minion->add_task(my_missing => 'MinionTest::MissingTestTask') };
+  like $@, qr/Task "MinionTest::MissingTestTask" missing/, 'right error';
+  eval { $minion->add_task(my_syntax_error => 'MinionTest::SyntaxErrorTestTask') };
+  like $@, qr/Missing right curly or square bracket/, 'right error';
+  eval { $minion->add_task(my_bad => 'MinionTest::BadTestTask') };
+  like $@, qr/Task "MinionTest::BadTestTask" is not a Minion::Job subclass/, 'right error';
+
+  $minion->enqueue(my_add => [3, 5]);
+  my $worker = $minion->worker->register;
+  my $job    = $worker->dequeue(0);
+  isa_ok $job, 'MinionTest::AddTestTask', 'right class';
+  is $job->task, 'my_add', 'right task';
+  $job->perform;
+  is $job->info->{state},  'finished',       'right state';
+  is $job->info->{result}, 'My result is 8', 'right result';
+
+  my $id = $minion->enqueue('my_no_result');
+  $minion->perform_jobs;
+  $job = $minion->job($id);
+  isa_ok $job, 'MinionTest::NoResultTestTask', 'right class';
+  isa_ok $job, 'MinionTest::AddTestTask',      'right class';
+  isa_ok $job, 'Minion::Job',                  'right class';
+  is $job->task, 'my_no_result', 'right task';
+  is $job->info->{state},  'finished', 'right state';
+  is $job->info->{result}, undef,      'right result';
+
+  $id = $minion->enqueue('my_fail');
+  $minion->perform_jobs;
+  $job = $minion->job($id);
+  isa_ok $job, 'MinionTest::FailTestTask', 'right class';
+  is $job->task, 'my_fail', 'right task';
+  is $job->info->{state},  'failed',         'right state';
+  is $job->info->{result}, "my_fail failed", 'right result';
+
+  $id = $minion->enqueue('my_empty');
+  $minion->perform_jobs;
+  $job = $minion->job($id);
+  isa_ok $job, 'MinionTest::EmptyTestTask', 'right class';
+  is $job->task, 'my_empty', 'right task';
+  is $job->info->{state},    'failed',                                     'right state';
+  like $job->info->{result}, qr/Method "run" not implemented by subclass/, 'right result';
   $worker->unregister;
 };
 

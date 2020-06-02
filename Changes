@@ -1,5 +1,8 @@
 
 10.06  2020-06-01
+  - Added EXPERIMENTAL support for custom task classes.
+  - Added EXPERIMENTAL class_for_task method to Minion.
+  - Added EXPERIMENTAL run method to Minion::Job.
 
 10.05  2020-05-30
   - Improved .perltidyrc with more modern settings.

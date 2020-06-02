@@ -1,6 +1,7 @@
 package Minion::Job;
 use Mojo::Base 'Mojo::EventEmitter';
 
+use Carp 'croak';
 use Mojo::IOLoop;
 use POSIX qw(WNOHANG);
 
@@ -11,7 +12,8 @@ sub app { shift->minion->app }
 sub execute {
   my $self = shift;
   return eval {
-    $self->minion->tasks->{$self->emit('start')->task}->($self, @{$self->args});
+    my $task = $self->minion->tasks->{$self->emit('start')->task};
+    ref $task ? $self->$task(@{$self->args}) : $self->run(@{$self->args});
     !!$self->emit('finish');
   } ? undef : $@;
 }
@@ -28,9 +30,7 @@ sub finish {
   return $ok ? !!$self->emit(finished => $result) : undef;
 }
 
-sub info {
-  $_[0]->minion->backend->list_jobs(0, 1, {ids => [$_[0]->id]})->{jobs}[0];
-}
+sub info { $_[0]->minion->backend->list_jobs(0, 1, {ids => [$_[0]->id]})->{jobs}[0]; }
 
 sub is_finished {
   my $self = shift;
@@ -60,6 +60,8 @@ sub retry {
   my $self = shift;
   return $self->minion->backend->retry_job($self->id, $self->retries, @_);
 }
+
+sub run { croak 'Method "run" not implemented by subclass' }
 
 sub start {
   my $self = shift;
@@ -512,6 +514,13 @@ Job priority.
 Queue to put job in.
 
 =back
+
+=head2 run
+
+  $job->run(@args);
+
+Task to perform by this job. Meant to be overloaded in a subclass. Note that this method is B<EXPERIMENTAL> and might
+change without warning!
 
 =head2 start
 
