@@ -99,9 +99,14 @@ Minion::Job - Minion job
 
 =head1 SYNOPSIS
 
-  use Minion::Job;
+  package MyApp::Task::Foo;
+  use Mojo::Base 'Minion::Job';
 
-  my $job = Minion::Job->new(id => $id, minion => $minion, task => 'foo');
+  sub run {
+    my ($self, @args) = @_;
+
+    # Magic here! :)
+  }
 
 =head1 DESCRIPTION
 
