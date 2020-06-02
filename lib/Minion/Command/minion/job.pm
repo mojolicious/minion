@@ -166,7 +166,7 @@ Minion::Command::minion::job - Minion job command
         --remove                Remove job
     -S, --state <name>          List only jobs in these states
     -s, --stats                 Show queue statistics
-    -T, --tasks                 List tasks
+    -T, --tasks                 List available tasks
     -t, --task <name>           List only jobs for these tasks
     -U, --unlock <name>         Release named lock
     -w, --workers               List workers instead of jobs, or show

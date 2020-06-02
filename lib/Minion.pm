@@ -13,9 +13,7 @@ use Mojo::Promise;
 use Mojo::Server;
 use Mojo::Util qw(scope_guard steady_time);
 
-has
-  app  => sub { $_[0]{app_ref} = Mojo::Server->new->build_app('Mojo::HelloWorld') },
-  weak => 1;
+has app => sub { $_[0]{app_ref} = Mojo::Server->new->build_app('Mojo::HelloWorld') }, weak => 1;
 has 'backend';
 has backoff       => sub { \&_backoff };
 has missing_after => 1800;

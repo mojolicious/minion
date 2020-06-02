@@ -38,8 +38,7 @@ Minion::Iterator - Minion iterator
 
   use Minion::Iterator;
 
-  my $iter = Minion::Iterator->new(
-    minion  => $minion, options => {states => ['inactive']});
+  my $iter = Minion::Iterator->new(minion  => $minion, options => {states => ['inactive']});
 
 =head1 DESCRIPTION
 
