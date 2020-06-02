@@ -30,6 +30,7 @@ sub run {
     'remove'        => \my $remove,
     'S|state=s'     => sub { push @{$opts->{states}}, $_[1] },
     's|stats'       => \my $stats,
+    'T|tasks'       => \my $tasks,
     't|task=s'      => sub { push @{$opts->{tasks}}, $_[1] },
     'U|unlock=s'    => \my $unlock,
     'w|workers'     => \my $workers;
@@ -46,6 +47,9 @@ sub run {
 
   # Show history
   return print dumper $minion->history if $history;
+
+  # List tasks
+  return print tablify [map { [$_, $minion->class_for_task($_)] } keys %{$minion->tasks}] if $tasks;
 
   # Locks
   return $minion->unlock($unlock)                                            if $unlock;
@@ -162,6 +166,7 @@ Minion::Command::minion::job - Minion job command
         --remove                Remove job
     -S, --state <name>          List only jobs in these states
     -s, --stats                 Show queue statistics
+    -T, --tasks                 List tasks
     -t, --task <name>           List only jobs for these tasks
     -U, --unlock <name>         Release named lock
     -w, --workers               List workers instead of jobs, or show
