@@ -1,7 +1,7 @@
 package Minion::Job;
 use Mojo::Base 'Mojo::EventEmitter';
 
-use Carp 'croak';
+use Carp qw(croak);
 use Mojo::IOLoop;
 use POSIX qw(WNOHANG);
 
@@ -35,7 +35,7 @@ sub info { $_[0]->minion->backend->list_jobs(0, 1, {ids => [$_[0]->id]})->{jobs}
 sub is_finished {
   my $self = shift;
   return undef unless waitpid($self->{pid}, WNOHANG) == $self->{pid};
-  $self->_handle;
+  $self->_reap;
   return 1;
 }
 
@@ -49,7 +49,7 @@ sub note {
 sub perform {
   my $self = shift;
   waitpid $self->start->pid, 0;
-  $self->_handle;
+  $self->_reap;
 }
 
 sub pid { shift->{pid} }
@@ -83,7 +83,7 @@ sub start {
 
 sub stop { shift->kill('KILL') }
 
-sub _handle {
+sub _reap {
   my $self = shift;
   $self->emit(reap => $self->{pid});
   $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
@@ -519,8 +519,8 @@ Queue to put job in.
 
   $job->run(@args);
 
-Task to perform by this job. Meant to be overloaded in a subclass. Note that this method is B<EXPERIMENTAL> and might
-change without warning!
+Task to perform by this job. Meant to be overloaded in a subclass to create a custom task class. Note that this method
+is B<EXPERIMENTAL> and might change without warning!
 
 =head2 start
 
