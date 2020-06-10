@@ -1060,6 +1060,7 @@ subtest 'Job dependencies' => sub {
 
 subtest 'Custom task classes' => sub {
   $minion->add_task(my_add       => 'MinionTest::AddTestTask');
+  $minion->add_task(my_other_add => 'MinionTest::AddTestTask');
   $minion->add_task(my_empty     => 'MinionTest::EmptyTestTask');
   $minion->add_task(my_no_result => 'MinionTest::NoResultTestTask');
   $minion->add_task(my_fail      => 'MinionTest::FailTestTask');
@@ -1083,6 +1084,14 @@ subtest 'Custom task classes' => sub {
   $job->perform;
   is $job->info->{state},  'finished',       'right state';
   is $job->info->{result}, 'My result is 8', 'right result';
+
+  $minion->enqueue(my_other_add => [5, 4]);
+  $job = $worker->dequeue(0);
+  isa_ok $job, 'MinionTest::AddTestTask', 'right class';
+  is $job->task, 'my_other_add', 'right task';
+  $job->perform;
+  is $job->info->{state},  'finished',       'right state';
+  is $job->info->{result}, 'My result is 9', 'right result';
 
   my $id = $minion->enqueue('my_no_result');
   $minion->perform_jobs;

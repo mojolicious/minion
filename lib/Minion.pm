@@ -324,6 +324,28 @@ Which are loaded like any other plugin from your application.
   # Mojolicious::Lite
   plugin 'MyApp::Task::PokeMojo';
 
+=head1 TASK CLASSES
+
+For even more flexibility you can also move tasks into dedicated classes. Allowing the use of Perl features such as
+inheritance and roles. But be aware that support for task classes is still B<EXPERIMENTAL> and might change without
+warning!
+
+  package MyApp::Task::PokeMojo;
+  use Mojo::Base 'Minion::Job';
+
+  sub run {
+    my $self = shift;
+    $self->app->ua->get('mojolicious.org');
+    $self->app->log->debug('We have poked mojolicious.org for a visitor');
+  }
+
+  1;
+
+Task classes are registered just like any other task with L</"add_task"> and you can even register the same class with
+multiple names.
+
+  $minion->add_task(poke_mojo => 'MyApp::Task::PokeMojo');
+
 =head1 EXAMPLES
 
 This distribution also contains a great example application you can use for inspiration. The L<link
