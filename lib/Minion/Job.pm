@@ -72,8 +72,8 @@ sub start {
 
   # Reset event loop
   Mojo::IOLoop->reset;
-  local @{$SIG}{qw(CHLD INT TERM QUIT)} = ('default') x 4;
-  local @{$SIG}{qw(USR1 USR2)}          = ('ignore') x 2;
+  local $SIG{CHLD} = local $SIG{INT}  = local $SIG{TERM} = local $SIG{QUIT} = 'DEFAULT';
+  local $SIG{USR1} = local $SIG{USR2} = 'IGNORE';
 
   # Child
   if (defined(my $err = $self->execute)) { $self->fail($err) }
