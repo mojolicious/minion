@@ -105,7 +105,7 @@ sub _manage_jobs {
 
   my $v = $c->validation;
   $v->required('id');
-  $v->required('do')->in('remove', 'retry', 'sig_int', 'sig_usr1', 'sig_usr2', 'stop');
+  $v->required('do')->in('remove', 'retry', 'sig_int', 'sig_term', 'sig_usr1', 'sig_usr2', 'stop');
 
   $c->redirect_to('minion_jobs') if $v->has_error;
 

@@ -87,7 +87,7 @@ sub unregister {
 
 sub _kill {
   my ($self, $signal, $id) = (shift, shift // '', shift // '');
-  return unless grep         { $signal eq $_ } qw(INT KILL USR1 USR2);
+  return unless grep         { $signal eq $_ } qw(INT TERM KILL USR1 USR2);
   $_->kill($signal) for grep { $_->id eq $id } @{$self->{jobs}};
 }
 
@@ -159,7 +159,7 @@ Stop immediately without finishing the current jobs.
 
 The job processes spawned by the L<Minion::Worker> process can be controlled at runtime with the following signals.
 
-=head2 INT
+=head2 INT, TERM
 
 This signal starts out with the operating system default and allows for jobs to install a custom signal handler to stop
 gracefully.

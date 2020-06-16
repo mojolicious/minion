@@ -57,6 +57,9 @@
           <button class="dropdown-item" name="do" value="sig_int" type="submit">
             INT
           </button>
+          <button class="dropdown-item" name="do" value="sig_term" type="submit">
+            TERM
+          </button>
           <button class="dropdown-item" name="do" value="sig_usr1"
             type="submit">
             USR1

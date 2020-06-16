@@ -58,7 +58,7 @@ sub foreground {
 
   # Reset event loop
   Mojo::IOLoop->reset;
-  local @{$SIG}{qw(CHLD INT TERM QUIT)} = ('default') x 4;
+  local $SIG{CHLD} = local $SIG{INT} = local $SIG{TERM} = local $SIG{QUIT} = 'DEFAULT';
 
   my $worker = $self->worker->register;
   $job = $worker->dequeue(0 => {id => $id, queues => ['minion_foreground']});

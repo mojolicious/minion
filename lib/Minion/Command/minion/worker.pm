@@ -93,7 +93,7 @@ Stop immediately without finishing the current jobs.
 The job processes spawned by the L<Minion::Command::minion::worker> process can be controlled at runtime with the
 following signals.
 
-=head2 INT
+=head2 INT, TERM
 
 This signal starts out with the operating system default and allows for jobs to install a custom signal handler to stop
 gracefully.
