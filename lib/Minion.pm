@@ -20,7 +20,7 @@ has missing_after => 1800;
 has remove_after  => 172800;
 has tasks         => sub { {} };
 
-our $VERSION = '10.07';
+our $VERSION = '10.08';
 
 sub add_task {
   my ($self, $name, $task) = @_;
