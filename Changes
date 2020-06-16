@@ -1,5 +1,9 @@
 
 10.07  2020-06-16
+  - Removed experimental status from Minion::Iterator module.
+  - Removed experimental status from jobs and workers methods in Minion.
+  - Removed experimental status from before options of list_jobs and list_workers methods in Minion::Backend and
+    Minion::Backend::Pg.
   - Updated project metadata.
   - Improved admin ui to allow sending TERM signals.
   - Fixed a bug in Minion::Job where CHLD, INT, TERM and QUIT signals would be ignored by job processes.

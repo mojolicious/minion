@@ -258,7 +258,7 @@ These options are currently available:
 
   before => 23
 
-List only jobs before this id. Note that this option is B<EXPERIMENTAL> and might change without warning!
+List only jobs before this id.
 
 =item ids
 
@@ -478,7 +478,7 @@ These options are currently available:
 
   before => 23
 
-List only workers before this id. Note that this option is B<EXPERIMENTAL> and might change without warning!
+List only workers before this id.
 
 =item ids
 

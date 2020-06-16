@@ -607,8 +607,7 @@ Get L<Minion::Job> object without making any changes to the actual job or return
   my $jobs = $minion->jobs;
   my $jobs = $minion->jobs({states => ['inactive']});
 
-Return L<Minion::Iterator> object to safely iterate through job information. Note that this method is B<EXPERIMENTAL>
-and might change without warning!
+Return L<Minion::Iterator> object to safely iterate through job information.
 
   # Iterate through jobs for two tasks
   my $jobs = $minion->jobs({tasks => ['foo', 'bar']});
@@ -967,8 +966,7 @@ dependencies.
 
   enqueued_jobs => 100000
 
-Rough estimate of how many jobs have ever been enqueued. Note that this field is B<EXPERIMENTAL> and might change
-without warning!
+Rough estimate of how many jobs have ever been enqueued.
 
 =item failed_jobs
 
@@ -1053,8 +1051,7 @@ Build L<Minion::Worker> object. Note that this method should only be used to imp
   my $workers = $minion->workers;
   my $workers = $minion->workers({ids => [2, 3]});
 
-Return L<Minion::Iterator> object to safely iterate through worker information. Note that this method is B<EXPERIMENTAL>
-and might change without warning!
+Return L<Minion::Iterator> object to safely iterate through worker information.
 
   # Iterate through workers
   my $workers = $minion->workers;

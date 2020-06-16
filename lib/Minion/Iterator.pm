@@ -2,7 +2,7 @@ package Minion::Iterator;
 use Mojo::Base -base;
 
 has fetch => 10;
-has [qw(minion options what)];
+has [qw(minion options)];
 
 sub next { shift @{shift->_fetch(0)->{results}} }
 
@@ -42,8 +42,7 @@ Minion::Iterator - Minion iterator
 
 =head1 DESCRIPTION
 
-L<Minion::Iterator> is an iterator for L<Minion> listing methods. Note that this module is B<EXPERIMENTAL> and might
-change without warning!
+L<Minion::Iterator> is an iterator for L<Minion> listing methods.
 
 =head1 ATTRIBUTES
 
