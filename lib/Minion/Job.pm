@@ -35,7 +35,7 @@ sub info { $_[0]->minion->backend->list_jobs(0, 1, {ids => [$_[0]->id]})->{jobs}
 sub is_finished {
   my $self = shift;
   return undef unless waitpid($self->{pid}, WNOHANG) == $self->{pid};
-  $self->_reap;
+  $self->_reap($? ? (1, $? >> 8, $? & 127) : ());
   return 1;
 }
 
@@ -49,7 +49,7 @@ sub note {
 sub perform {
   my $self = shift;
   waitpid $self->start->pid, 0;
-  $self->_reap;
+  $self->_reap($? ? (1, $? >> 8, $? & 127) : ());
 }
 
 sub pid { shift->{pid} }
@@ -84,9 +84,9 @@ sub start {
 sub stop { shift->kill('KILL') }
 
 sub _reap {
-  my $self = shift;
+  my ($self, $term, $exit, $sig) = @_;
   $self->emit(reap => $self->{pid});
-  $? ? $self->fail("Job terminated unexpectedly (exit code: @{[$? >> 8]}, signal: @{[$? & 127]})") : $self->finish;
+  $term ? $self->fail("Job terminated unexpectedly (exit code: $exit, signal: $sig)") : $self->finish;
 }
 
 1;
