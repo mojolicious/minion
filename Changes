@@ -1,4 +1,6 @@
 
+10.09  2020-06-18
+
 10.08  2020-06-17
   - Improved Minion::Job to record exit code and the signal a job died from, if it was terminated unexpectedly.
 
