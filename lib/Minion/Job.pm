@@ -86,7 +86,7 @@ sub stop { shift->kill('KILL') }
 sub _reap {
   my $self = shift;
   $self->emit(reap => $self->{pid});
-  $? ? $self->fail("Non-zero exit status (@{[$? >> 8]})") : $self->finish;
+  $? ? $self->fail("Job terminated unexpectedly (exit code: @{[$? >> 8]}, signal: @{[$? & 127]})") : $self->finish;
 }
 
 1;

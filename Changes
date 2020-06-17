@@ -1,5 +1,6 @@
 
 10.08  2020-06-17
+  - Improved Minion::Job to record exit code and the signal a job died from, if it was terminated unexpectedly.
 
 10.07  2020-06-16
   - Removed experimental status from Minion::Iterator module.

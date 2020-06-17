@@ -853,15 +853,15 @@ subtest 'Perform job in a running event loop' => sub {
   is_deeply $minion->job($id)->info->{result}, {added => 17}, 'right result';
 };
 
-subtest 'Non-zero exit status' => sub {
+subtest 'Job terminated unexpectedly' => sub {
   $minion->add_task(exit => sub { exit 1 });
   my $id     = $minion->enqueue('exit');
   my $worker = $minion->worker->register;
   my $job    = $worker->register->dequeue(0);
   is $job->id, $id, 'right id';
   $job->perform;
-  is $job->info->{state},  'failed',                   'right state';
-  is $job->info->{result}, 'Non-zero exit status (1)', 'right result';
+  is $job->info->{state},  'failed',                                                'right state';
+  is $job->info->{result}, 'Job terminated unexpectedly (exit code: 1, signal: 0)', 'right result';
   $worker->unregister;
 };
 
@@ -880,9 +880,9 @@ subtest 'Multiple attempts while processing' => sub {
   is $job->retries, 0, 'job has not been retried';
   $job->perform;
   my $info = $job->info;
-  is $info->{attempts}, 2,                          'job will be attempted twice';
-  is $info->{state},    'inactive',                 'right state';
-  is $info->{result},   'Non-zero exit status (1)', 'right result';
+  is $info->{attempts}, 2,                                                       'job will be attempted twice';
+  is $info->{state},    'inactive',                                              'right state';
+  is $info->{result},   'Job terminated unexpectedly (exit code: 1, signal: 0)', 'right result';
   ok $info->{retried} < $job->info->{delayed}, 'delayed timestamp';
   $minion->backend->pg->db->query('update minion_jobs set delayed = now() where id = ?', $id);
   $job = $worker->register->dequeue(0);
@@ -890,17 +890,17 @@ subtest 'Multiple attempts while processing' => sub {
   is $job->retries, 1, 'job has been retried once';
   $job->perform;
   $info = $job->info;
-  is $info->{attempts}, 2,                          'job will be attempted twice';
-  is $info->{state},    'failed',                   'right state';
-  is $info->{result},   'Non-zero exit status (1)', 'right result';
+  is $info->{attempts}, 2,                                                       'job will be attempted twice';
+  is $info->{state},    'failed',                                                'right state';
+  is $info->{result},   'Job terminated unexpectedly (exit code: 1, signal: 0)', 'right result';
   ok $job->retry({attempts => 3}), 'job retried';
   $job = $worker->register->dequeue(0);
   is $job->id, $id, 'right id';
   $job->perform;
   $info = $job->info;
-  is $info->{attempts}, 3,                          'job will be attempted three times';
-  is $info->{state},    'failed',                   'right state';
-  is $info->{result},   'Non-zero exit status (1)', 'right result';
+  is $info->{attempts}, 3,                                                       'job will be attempted three times';
+  is $info->{state},    'failed',                                                'right state';
+  is $info->{result},   'Job terminated unexpectedly (exit code: 1, signal: 0)', 'right result';
   $worker->unregister;
 };
 
@@ -972,10 +972,10 @@ subtest 'Perform jobs concurrently' => sub {
   is_deeply $minion->job($id)->info->{result}, {added => 21}, 'right result';
   is $minion->job($id2)->info->{state}, 'finished', 'right state';
   is_deeply $minion->job($id2)->info->{result}, {added => 25}, 'right result';
-  is $minion->job($id3)->info->{state},  'finished',                 'right state';
-  is $minion->job($id3)->info->{result}, undef,                      'no result';
-  is $minion->job($id4)->info->{state},  'failed',                   'right state';
-  is $minion->job($id4)->info->{result}, 'Non-zero exit status (1)', 'right result';
+  is $minion->job($id3)->info->{state},  'finished',                                              'right state';
+  is $minion->job($id3)->info->{result}, undef,                                                   'no result';
+  is $minion->job($id4)->info->{state},  'failed',                                                'right state';
+  is $minion->job($id4)->info->{result}, 'Job terminated unexpectedly (exit code: 1, signal: 0)', 'right result';
   $worker->unregister;
 };
 
@@ -993,8 +993,8 @@ subtest 'Stopping jobs' => sub {
   ok !$job->is_finished, 'job is not finished';
   $job->stop;
   usleep 5000 until $job->is_finished;
-  is $job->info->{state},    'failed',                 'right state';
-  like $job->info->{result}, qr/Non-zero exit status/, 'right result';
+  is $job->info->{state},    'failed',                        'right state';
+  like $job->info->{result}, qr/Job terminated unexpectedly/, 'right result';
   $minion->enqueue('long_running');
   $job = $worker->dequeue(0);
   ok $job->start->pid, 'has a process id';
@@ -1005,8 +1005,8 @@ subtest 'Stopping jobs' => sub {
   is $job->info->{state}, 'active', 'right state';
   $job->kill('INT');
   usleep 5000 until $job->is_finished;
-  is $job->info->{state},    'failed',                 'right state';
-  like $job->info->{result}, qr/Non-zero exit status/, 'right result';
+  is $job->info->{state},    'failed',                        'right state';
+  like $job->info->{result}, qr/Job terminated unexpectedly/, 'right result';
   $worker->unregister;
 };
 
