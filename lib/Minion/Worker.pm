@@ -61,7 +61,7 @@ sub run {
   $status->{repair_interval} //= 21600;
   $status->{repair_interval} -= int rand $status->{repair_interval} / 2;
 
-  local $SIG{CHLD} = sub                    { };
+  local $SIG{CHLD} = sub { };
   local $SIG{INT}  = local $SIG{TERM} = sub { $self->{finished}++ };
   local $SIG{QUIT} = sub {
     ++$self->{finished} and kill 'KILL', map { $_->pid } @{$self->{jobs}};
