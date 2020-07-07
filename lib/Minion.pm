@@ -536,6 +536,13 @@ Job priority, defaults to C<0>. Jobs with a higher priority get performed first.
 
 Queue to put job in, defaults to C<default>.
 
+=item sequence
+
+  sequence => 'host:mojolicious.org'
+
+Sequence this job belongs to. The previous job from the sequence will be automatically added as a parent to continue the
+sequence. Note that this option is B<EXPERIMENTAL> and might change without warning!
+
 =back
 
 =head2 foreground
@@ -646,6 +653,12 @@ List only jobs with one of these notes. Note that this option is B<EXPERIMENTAL>
 
 List only jobs in these queues.
 
+=item sequences
+
+  sequences => ['host:localhost', 'host:mojolicious.org']
+
+List only jobs from these sequences. Note that this option is B<EXPERIMENTAL> and might change without warning!
+
 =item states
 
   states => ['inactive', 'active']
@@ -747,6 +760,12 @@ Epoch time job has been retried.
   retries => 3
 
 Number of times job has been retried.
+
+=item sequence
+
+  sequence => 'host:mojolicious.org'
+
+Sequence name.
 
 =item started
 

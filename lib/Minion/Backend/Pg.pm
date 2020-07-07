@@ -36,13 +36,25 @@ sub enqueue {
   my ($self, $task, $args, $options) = (shift, shift, shift || [], shift || {});
 
   my $db = $self->pg->db;
-  return $db->query(
-    "insert into minion_jobs (args, attempts, delayed, notes, parents, priority, queue, task)
-     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?, ?)
+  my $tx = $db->begin;
+
+  my @parents = @{$options->{parents} || []};
+  if (my $seq = $options->{sequence}) {
+    my $prev
+      = $db->query('select id from minion_jobs where sequence = ? order by id desc limit 1 for update', $seq)->hash;
+    unshift @parents, $prev->{id} if $prev;
+  }
+
+  my $id = $db->query(
+    "insert into minion_jobs (args, attempts, delayed, notes, parents, priority, queue, sequence, task)
+     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?, ?, ?)
      returning id", {json => $args}, $options->{attempts} // 1, $options->{delay} // 0,
-    {json => $options->{notes} || {}}, $options->{parents} || [], $options->{priority} // 0,
-    $options->{queue} // 'default', $task
+    {json => $options->{notes} || {}}, \@parents, $options->{priority} // 0, $options->{queue} // 'default',
+    $options->{sequence}, $task
   )->hash->{id};
+  $tx->commit;
+
+  return $id;
 }
 
 sub fail_job   { shift->_update(1, @_) }
@@ -79,13 +91,14 @@ sub list_jobs {
        array(select id from minion_jobs where parents @> ARRAY[j.id]) as children,
        extract(epoch from created) as created, extract(epoch from delayed) as delayed,
        extract(epoch from finished) as finished, notes, parents, priority, queue, result,
-       extract(epoch from retried) as retried, retries, extract(epoch from started) as started, state, task,
+       extract(epoch from retried) as retried, retries, sequence, extract(epoch from started) as started, state, task,
        extract(epoch from now()) as time, count(*) over() as total, worker
      from minion_jobs as j
      where (id < $1 or $1 is null) and (id = any ($2) or $2 is null) and (notes \? any ($3) or $3 is null)
-       and (queue = any ($4) or $4 is null) and (state = any ($5) or $5 is null) and (task = any ($6) or $6 is null)
+       and (queue = any ($4) or $4 is null) and (sequence = any ($5) or $5 is null) and (state = any ($6) or $6 is null)
+       and (task = any ($7) or $7 is null)
      order by id desc
-     limit $7 offset $8', @$options{qw(before ids notes queues states tasks)}, $limit, $offset
+     limit $8 offset $9', @$options{qw(before ids notes queues sequences states tasks)}, $limit, $offset
   )->expand->hashes->to_array;
 
   return _total('jobs', $jobs);
@@ -436,6 +449,13 @@ Job priority, defaults to C<0>. Jobs with a higher priority get performed first.
 
 Queue to put job in, defaults to C<default>.
 
+=item sequence
+
+  sequence => 'host:mojolicious.org'
+
+Sequence this job belongs to. The previous job from the sequence will be automatically added as a parent to continue the
+sequence. Note that this option is B<EXPERIMENTAL> and might change without warning!
+
 =back
 
 =head2 fail_job
@@ -520,6 +540,12 @@ List only jobs with one of these notes. Note that this option is B<EXPERIMENTAL>
   queues => ['important', 'unimportant']
 
 List only jobs in these queues.
+
+=item sequences
+
+  sequences => ['host:localhost', 'host:mojolicious.org']
+
+List only jobs from these sequences. Note that this option is B<EXPERIMENTAL> and might change without warning!
 
 =item states
 
@@ -622,6 +648,12 @@ Epoch time job has been retried.
   retries => 3
 
 Number of times job has been retried.
+
+=item sequence
+
+  sequence => 'host:mojolicious.org'
+
+Sequence name.
 
 =item started
 

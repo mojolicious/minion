@@ -25,6 +25,7 @@ sub run {
     'o|offset=i'    => \(my $offset = 0),
     'P|parent=s'    => sub { push @{$opts->{parents}}, $_[1] },
     'p|priority=i'  => \$opts->{priority},
+    'Q|sequence=s'  => sub { push @{$opts->{sequences}}, $opts->{sequence} = $_[1] },
     'q|queue=s'     => sub { push @{$opts->{queues}}, $opts->{queue} = $_[1] },
     'R|retry'       => \my $retry,
     'remove'        => \my $remove,
@@ -120,6 +121,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -s
     ./myapp.pl minion job -f 10023
     ./myapp.pl minion job -q important -t foo -t bar -S inactive
+    ./myapp.pl minion job -Q 'host:localhost' -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
     ./myapp.pl minion job -e 'foo' -n '{"test":123}'
@@ -160,6 +162,8 @@ Minion::Command::minion::job - Minion job command
                                 them, defaults to 0
     -P, --parent <id>           One or more jobs the new job depends on
     -p, --priority <number>     Priority of new job, defaults to 0
+    -Q, --sequence <name>       Sequence new job belongs to, or list only jobs
+                                in these sequences
     -q, --queue <name>          Queue to put new job in, defaults to "default",
                                 or list only jobs in these queues
     -R, --retry                 Retry job
