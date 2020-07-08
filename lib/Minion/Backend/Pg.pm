@@ -38,9 +38,11 @@ sub enqueue {
   my $db = $self->pg->db;
   return _enqueue($db, $task, $args, $options) unless my $seq = $options->{sequence};
 
-  my $tx = $db->begin;
-  my $prev
-    = $db->query('select id from minion_jobs where sequence = ? order by id desc limit 1 for update', $seq)->hash;
+  my $tx   = $db->begin;
+  my $prev = $db->query(
+    'select id, pg_advisory_xact_lock(id)
+     from minion_jobs where sequence = ? order by id desc limit 1', $seq
+  )->hash;
   unshift @{$options->{parents}}, $prev->{id} if $prev;
   my $id = _enqueue($db, $task, $args, $options);
   $tx->commit;
