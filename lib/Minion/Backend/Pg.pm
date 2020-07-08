@@ -36,24 +36,14 @@ sub enqueue {
   my ($self, $task, $args, $options) = (shift, shift, shift || [], shift || {});
 
   my $db = $self->pg->db;
+  return _enqueue($db, $task, $args, $options) unless my $seq = $options->{sequence};
+
   my $tx = $db->begin;
-
-  my @parents = @{$options->{parents} || []};
-  if (my $seq = $options->{sequence}) {
-    my $prev
-      = $db->query('select id from minion_jobs where sequence = ? order by id desc limit 1 for update', $seq)->hash;
-    unshift @parents, $prev->{id} if $prev;
-  }
-
-  my $id = $db->query(
-    "insert into minion_jobs (args, attempts, delayed, notes, parents, priority, queue, sequence, task)
-     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?, ?, ?)
-     returning id", {json => $args}, $options->{attempts} // 1, $options->{delay} // 0,
-    {json => $options->{notes} || {}}, \@parents, $options->{priority} // 0, $options->{queue} // 'default',
-    $options->{sequence}, $task
-  )->hash->{id};
+  my $prev
+    = $db->query('select id from minion_jobs where sequence = ? order by id desc limit 1 for update', $seq)->hash;
+  unshift @{$options->{parents}}, $prev->{id} if $prev;
+  my $id = _enqueue($db, $task, $args, $options);
   $tx->commit;
-
   return $id;
 }
 
@@ -256,6 +246,18 @@ sub unlock {
 }
 
 sub unregister_worker { shift->pg->db->query('delete from minion_workers where id = ?', shift) }
+
+sub _enqueue {
+  my ($db, $task, $args, $options) = @_;
+
+  return $db->query(
+    "insert into minion_jobs (args, attempts, delayed, notes, parents, priority, queue, sequence, task)
+     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?, ?, ?)
+     returning id", {json => $args}, $options->{attempts} // 1, $options->{delay} // 0,
+    {json => $options->{notes} || {}}, $options->{parents} || [], $options->{priority} // 0,
+    $options->{queue} // 'default', $options->{sequence}, $task
+  )->hash->{id};
+}
 
 sub _total {
   my ($name, $results) = @_;
