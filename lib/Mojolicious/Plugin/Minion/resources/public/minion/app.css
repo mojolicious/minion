@@ -49,6 +49,10 @@ pre {
 .table td {
   border: 0 !important;
 }
+.wrappable {
+  word-break: break-all;
+  word-wrap: break-word;
+}
 #backlog-chart {
   height: 200px;
 }

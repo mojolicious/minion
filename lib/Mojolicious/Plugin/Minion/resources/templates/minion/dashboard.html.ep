@@ -105,14 +105,14 @@
 
   <div class="col-md-2">
     <div class="stats">
-      <div class="minion-stats-processed-jobs stats-body">0</div>
+      <div class="minion-stats-processed-jobs stats-body wrappable">0</div>
       <div class="stats-description">Processed Jobs</div>
     </div>
   </div>
 
   <div class="col-md-2">
     <div class="stats">
-      <div class="minion-stats-delayed-jobs stats-body">0</div>
+      <div class="minion-stats-delayed-jobs stats-body wrappable">0</div>
       <div class="stats-description">Delayed Jobs</div>
     </div>
   </div>
