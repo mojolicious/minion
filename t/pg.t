@@ -1094,6 +1094,14 @@ subtest 'Sequences' => sub {
   is_deeply $job4->info->{parents}, [$id3], 'right parents';
   ok $job4->finish, 'job finished';
 
+  my $id5  = $minion->enqueue('test' => [] => {sequence => 'host:localhost', parents => [$id, $id2]});
+  my $job5 = $worker->dequeue(0);
+  is $job5->id, $id5, 'right id';
+  is $job5->info->{sequence}, 'host:localhost', 'right sequence';
+  is_deeply $job5->info->{children}, [], 'no children';
+  is_deeply $job5->info->{parents}, [$id4, $id, $id2], 'right parents';
+  ok $job5->finish, 'job finished';
+
   $id  = $minion->enqueue('test' => [] => {sequence => 'host:mojolicious.org'});
   $job = $worker->dequeue(0);
   is $job->id, $id, 'right id';
@@ -1105,8 +1113,8 @@ subtest 'Sequences' => sub {
   is $minion->jobs({sequences => ['host:mojolicious.org']})->total, 1, 'one job';
   is $minion->jobs({sequences => ['host:mojolicious.org']})->next->{id}, $id, 'same id';
   is $minion->jobs({sequences => ['host:metacpan.org']})->total, 0, 'no jobs';
-  is $minion->jobs({sequences => ['host:localhost']})->total,    4, 'four jobs';
-  is $minion->jobs({sequences => ['host:localhost', 'host:mojolicious.org']})->total, 5, 'five jobs';
+  is $minion->jobs({sequences => ['host:localhost']})->total,    5, 'five jobs';
+  is $minion->jobs({sequences => ['host:localhost', 'host:mojolicious.org']})->total, 6, 'six jobs';
   $worker->unregister;
 };
 
