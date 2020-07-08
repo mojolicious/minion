@@ -1106,6 +1106,16 @@ subtest 'Sequences' => sub {
   is_deeply $job5->info->{children}, [], 'no children';
   is_deeply $job5->info->{parents}, [$id4, $id, $id2], 'right parents';
   ok $job5->finish, 'job finished';
+  ok $minion->job($id5)->remove, 'job removed';
+
+  my $id6  = $minion->enqueue('test' => [] => {sequence => 'host:localhost'});
+  my $job6 = $worker->dequeue(0);
+  is $job6->id, $id6, 'right id';
+  is $job6->info->{sequence}, 'host:localhost', 'right sequence';
+  is $job4->info->{next}, $id5, 'sequence restarted';
+  is_deeply $job6->info->{children}, [], 'no children';
+  is_deeply $job6->info->{parents},  [], 'no parents';
+  ok $job6->finish, 'job finished';
 
   $id  = $minion->enqueue('test' => [] => {sequence => 'host:mojolicious.org'});
   $job = $worker->dequeue(0);
