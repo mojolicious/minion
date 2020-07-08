@@ -719,11 +719,11 @@ Epoch time job was finished.
 
 Job id.
 
-=item linked
+=item next
 
-  linked => 10024
+  next => 10024
 
-Previous job in sequence.
+Next job in sequence.
 
 =item notes
 

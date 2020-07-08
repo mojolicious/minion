@@ -86,5 +86,5 @@ alter table minion_workers set unlogged;
 
 -- 21 up
 alter table minion_jobs add column sequence text;
-alter table minion_jobs add column linked bigint;
-create index on minion_jobs (sequence, linked);
+alter table minion_jobs add column next bigint;
+create index on minion_jobs (sequence, next);

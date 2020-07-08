@@ -1061,9 +1061,12 @@ subtest 'Job dependencies' => sub {
 subtest 'Sequences' => sub {
   my $worker = $minion->worker->register;
   my $id     = $minion->enqueue('test' => [] => {sequence => 'host:localhost'});
-  my $id2    = $minion->enqueue('test' => [] => {sequence => 'host:localhost'});
-  my $id3    = $minion->enqueue('test' => [] => {sequence => 'host:localhost', priority => 5});
-  my $job    = $worker->dequeue(0);
+  is $minion->job($id)->info->{next}, undef, 'new sequence';
+  my $id2 = $minion->enqueue('test' => [] => {sequence => 'host:localhost'});
+  is $minion->job($id)->info->{next}, $id2, 'sequence in progress';
+  my $id3 = $minion->enqueue('test' => [] => {sequence => 'host:localhost', priority => 5});
+  is $minion->job($id)->info->{next}, $id2, 'sequence in progress';
+  my $job = $worker->dequeue(0);
   is $job->id, $id, 'right id';
   is $job->info->{sequence}, 'host:localhost', 'right sequence';
   is $job->info->{priority}, 0,                'right priority';
@@ -1073,13 +1076,15 @@ subtest 'Sequences' => sub {
   my $job2 = $worker->dequeue(0);
   is $job2->id, $id2, 'right id';
   is $job2->info->{sequence}, 'host:localhost', 'right sequence';
-  is $job2->info->{priority}, 0,                'right priority';
+  is $job2->info->{next}, $id3, 'sequence in progress';
+  is $job2->info->{priority}, 0, 'right priority';
   is_deeply $job2->info->{children}, [$id3], 'right children';
   is_deeply $job2->info->{parents},  [$id],  'right parents';
   ok $job2->finish, 'job finished';
   my $job3 = $worker->dequeue(0);
   is $job3->id, $id3, 'right id';
   is $job3->info->{sequence}, 'host:localhost', 'right sequence';
+  is $job3->info->{next},     undef,            'sequence is ending for now';
   is $job3->info->{priority}, 5,                'right priority';
   is_deeply $job3->info->{children}, [], 'no children';
   is_deeply $job3->info->{parents}, [$id2], 'right parents';
