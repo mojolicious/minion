@@ -40,9 +40,10 @@ sub enqueue {
 
   my $tx = $db->begin;
   my $prev
-    = $db->query('select id from minion_jobs where sequence = ? order by id desc limit 1 for update', $seq)->hash;
+    = $db->query('select id from minion_jobs where sequence = ? and linked is null limit 1 for update', $seq)->hash;
   unshift @{$options->{parents}}, $prev->{id} if $prev;
   my $id = _enqueue($db, $task, $args, $options);
+  $db->query('update minion_jobs set linked = ? where id = ?', $id, $prev->{id});
   $tx->commit;
   return $id;
 }
@@ -80,7 +81,7 @@ sub list_jobs {
     'select id, args, attempts,
        array(select id from minion_jobs where parents @> ARRAY[j.id]) as children,
        extract(epoch from created) as created, extract(epoch from delayed) as delayed,
-       extract(epoch from finished) as finished, notes, parents, priority, queue, result,
+       extract(epoch from finished) as finished, linked, notes, parents, priority, queue, result,
        extract(epoch from retried) as retried, retries, sequence, extract(epoch from started) as started, state, task,
        extract(epoch from now()) as time, count(*) over() as total, worker
      from minion_jobs as j
@@ -608,6 +609,12 @@ Epoch time job was finished.
   id => 10025
 
 Job id.
+
+=item linked
+
+  linked => 10024
+
+Previous job in sequence.
 
 =item notes
 

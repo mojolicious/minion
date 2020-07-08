@@ -719,6 +719,12 @@ Epoch time job was finished.
 
 Job id.
 
+=item linked
+
+  linked => 10024
+
+Previous job in sequence.
+
 =item notes
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
