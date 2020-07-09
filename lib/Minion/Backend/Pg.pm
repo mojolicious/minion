@@ -82,7 +82,7 @@ sub list_jobs {
        array(select id from minion_jobs where parents @> ARRAY[j.id]) as children,
        extract(epoch from created) as created, extract(epoch from delayed) as delayed,
        extract(epoch from finished) as finished, next, notes, parents,
-       (select id from minion_jobs where next = j.id) as previous, priority, queue, result,
+       (select id from minion_jobs where sequence = j.sequence and next = j.id) as previous, priority, queue, result,
        extract(epoch from retried) as retried, retries, sequence, extract(epoch from started) as started, state, task,
        extract(epoch from now()) as time, count(*) over() as total, worker
      from minion_jobs as j
