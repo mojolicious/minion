@@ -81,7 +81,8 @@ sub list_jobs {
     'select id, args, attempts,
        array(select id from minion_jobs where parents @> ARRAY[j.id]) as children,
        extract(epoch from created) as created, extract(epoch from delayed) as delayed,
-       extract(epoch from finished) as finished, next, notes, parents, priority, queue, result,
+       extract(epoch from finished) as finished, next, notes, parents,
+       (select id from minion_jobs where next = j.id) as previous, priority, queue, result,
        extract(epoch from retried) as retried, retries, sequence, extract(epoch from started) as started, state, task,
        extract(epoch from now()) as time, count(*) over() as total, worker
      from minion_jobs as j
@@ -627,6 +628,12 @@ Hash reference with arbitrary metadata for this job.
   parents => ['10023', '10024', '10025']
 
 Jobs this job depends on.
+
+=item previous
+
+  previous => 10022
+
+Previous job in sequence.
 
 =item priority
 

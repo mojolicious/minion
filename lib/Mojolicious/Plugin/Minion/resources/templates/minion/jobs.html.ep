@@ -3,7 +3,7 @@
 % my $related = begin
   % my $job = shift;
 
-  % my ($parents, $children, $id) = @{$job}{qw(parents children worker)};
+  % my ($previous, $next, $parents, $children, $id) = @{$job}{qw(previous next parents children worker)};
   % if (@$parents || @$children || $id) {
     <div class="dropdown">
       <button type="button"
@@ -13,6 +13,14 @@
         Related
       </button>
       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        % if ($previous) {
+          % my $url = url_for('minion_jobs')->query(id => $previous);
+          <a class="dropdown-item" href="<%= $url %>">Previous</a>
+        % }
+        % if ($next) {
+          % my $url = url_for('minion_jobs')->query(id => $next);
+          <a class="dropdown-item" href="<%= $url %>">Next</a>
+        % }
         % if (@$parents) {
           % my $url = url_for('minion_jobs')->query(id => $parents);
           <a class="dropdown-item" href="<%= $url %>">Parents</a>

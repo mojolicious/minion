@@ -369,6 +369,12 @@ Hash reference with arbitrary metadata for this job.
 
 Jobs this job depends on.
 
+=item previous
+
+  previous => 10022
+
+Previous job in sequence.
+
 =item priority
 
   priority => 3
