@@ -1,4 +1,6 @@
 
+10.10  2020-07-10
+
 10.09  2020-07-09
   - Added EXPERIMENTAL support for job sequences.
   - Added EXPERIMENTAL sequence option to enqueue method in Minion, Minion::Backend and Minion::Backend::Pg.
