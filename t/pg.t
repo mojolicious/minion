@@ -149,6 +149,7 @@ subtest 'Repair abandoned job in minion_foreground queue (have to be handled man
 };
 
 subtest 'Repair old jobs' => sub {
+  is $minion->remove_after, 172800, 'right default';
   my $worker = $minion->worker->register;
   my $id     = $minion->enqueue('test');
   my $id2    = $minion->enqueue('test');
@@ -173,6 +174,17 @@ subtest 'Repair old jobs' => sub {
   ok $minion->job($id), 'job has not been cleaned up';
   ok !$minion->job($id2), 'job has been cleaned up';
   ok !$minion->job($id3), 'job has been cleaned up';
+};
+
+subtest 'Repair stuck jobs' => sub {
+  is $minion->stuck_after, 172800, 'right default';
+  my $id = $minion->enqueue('test');
+  $minion->backend->pg->db->query("update minion_jobs set delayed = now() - ? * interval '1 second' where id = ?",
+    $minion->stuck_after + 1, $id);
+  $minion->repair;
+  my $job = $minion->job($id);
+  is $job->info->{state},  'failed',                     'job is no longer active';
+  is $job->info->{result}, 'Job appears stuck in queue', 'right result';
 };
 
 subtest 'List workers' => sub {

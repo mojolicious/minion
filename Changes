@@ -1,5 +1,8 @@
 
-10.10  2020-07-10
+10.10  2020-07-11
+  - Added stuck_after attribute to Minion.
+  - Improved repair method in Minion::Backend::Pg to detect stuck jobs and transtion them to the failed state after 2
+    days of inactivity.
 
 10.09  2020-07-09
   - Added EXPERIMENTAL support for job sequences.

@@ -15,10 +15,10 @@ use Mojo::Util qw(scope_guard steady_time);
 
 has app => sub { $_[0]{app_ref} = Mojo::Server->new->build_app('Mojo::HelloWorld') }, weak => 1;
 has 'backend';
-has backoff       => sub { \&_backoff };
-has missing_after => 1800;
-has remove_after  => 172800;
-has tasks         => sub { {} };
+has backoff                        => sub { \&_backoff };
+has missing_after                  => 1800;
+has [qw(remove_after stuck_after)] => 172800;
+has tasks                          => sub { {} };
 
 our $VERSION = '10.10';
 
@@ -431,6 +431,14 @@ registry by L</"repair">, defaults to C<1800> (30 minutes).
 Amount of time in seconds after which jobs that have reached the state C<finished> and have no unresolved dependencies
 will be removed automatically by L</"repair">, defaults to C<172800> (2 days). It is not recommended to set this value
 below 2 days.
+
+=head2 stuck_after
+
+  my $after = $minion->stuck_after;
+  $minion   = $minion->stuck_after(86400);
+
+Amount of time in seconds after which jobs that have not been processed will be considered stuck by L</"repair"> and
+transition to the C<failed> state, defaults to C<172800> (2 days).
 
 =head2 tasks
 

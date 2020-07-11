@@ -183,12 +183,17 @@ sub repair {
   $db->query("delete from minion_workers where notified < now() - interval '1 second' * ?", $minion->missing_after);
 
   # Jobs with missing worker (can be retried)
-  my $fail = $db->query(
+  $db->query(
     "select id, retries from minion_jobs as j
      where state = 'active' and queue != 'minion_foreground'
        and not exists (select 1 from minion_workers where id = j.worker)"
-  )->hashes;
-  $fail->each(sub { $self->fail_job(@$_{qw(id retries)}, 'Worker went away') });
+  )->hashes->each(sub { $self->fail_job(@$_{qw(id retries)}, 'Worker went away') });
+
+  # Jobs in queue without workers or not enough workers (cannot be retried and requires admin attention)
+  $db->query(
+    q{update minion_jobs set state = 'failed', result = '"Job appears stuck in queue"'
+      where state = 'inactive' and delayed + ? * interval '1 second' < now()}, $minion->stuck_after
+  );
 
   # Old jobs with no unresolved dependencies
   $db->query(
@@ -210,8 +215,7 @@ sub retry_job {
   my ($self, $id, $retries, $options) = (shift, shift, shift, shift || {});
 
   return !!$self->pg->db->query(
-    "update minion_jobs
-     set attempts = coalesce(?, attempts), delayed = (now() + (interval '1 second' * ?)),
+    "update minion_jobs set attempts = coalesce(?, attempts), delayed = (now() + (interval '1 second' * ?)),
        parents = coalesce(?, parents), priority = coalesce(?, priority), queue = coalesce(?, queue), retried = now(),
        retries = retries + 1, state = 'inactive'
      where id = ? and retries = ?
@@ -272,8 +276,7 @@ sub _try {
   my ($self, $id, $options) = @_;
 
   return $self->pg->db->query(
-    "update minion_jobs
-     set started = now(), state = 'active', worker = ?
+    "update minion_jobs set started = now(), state = 'active', worker = ?
      where id = (
        select id from minion_jobs as j
        where delayed <= now() and id = coalesce(?, id) and (parents = '{}' or not exists (
@@ -292,8 +295,7 @@ sub _update {
   my ($self, $fail, $id, $retries, $result) = @_;
 
   return undef unless my $row = $self->pg->db->query(
-    "update minion_jobs
-     set finished = now(), result = ?, state = ?
+    "update minion_jobs set finished = now(), result = ?, state = ?
      where id = ? and retries = ? and state = 'active'
      returning attempts", {json => $result}, $fail ? 'failed' : 'finished', $id, $retries
   )->array;
