@@ -178,13 +178,29 @@ subtest 'Repair old jobs' => sub {
 
 subtest 'Repair stuck jobs' => sub {
   is $minion->stuck_after, 172800, 'right default';
-  my $id = $minion->enqueue('test');
+  my $worker = $minion->worker->register;
+  my $id     = $minion->enqueue('test');
+  my $id2    = $minion->enqueue('test');
+  my $id3    = $minion->enqueue('test');
+  my $id4    = $minion->enqueue('test');
   $minion->backend->pg->db->query("update minion_jobs set delayed = now() - ? * interval '1 second' where id = ?",
-    $minion->stuck_after + 1, $id);
+    $minion->stuck_after + 1, $_)
+    for $id, $id2, $id3, $id4;
+  ok $worker->dequeue(0, {id => $id4})->finish('Works!'), 'job finished';
+  my $job2 = $worker->dequeue(0, {id => $id2});
   $minion->repair;
+  is $job2->info->{state}, 'active', 'job is still active';
+  ok $job2->finish, 'job finished';
   my $job = $minion->job($id);
   is $job->info->{state},  'failed',                     'job is no longer active';
   is $job->info->{result}, 'Job appears stuck in queue', 'right result';
+  my $job3 = $minion->job($id3);
+  is $job3->info->{state},  'failed',                     'job is no longer active';
+  is $job3->info->{result}, 'Job appears stuck in queue', 'right result';
+  my $job4 = $minion->job($id4);
+  is $job4->info->{state},  'finished', 'job is still finished';
+  is $job4->info->{result}, 'Works!',   'right result';
+  $worker->unregister;
 };
 
 subtest 'List workers' => sub {
