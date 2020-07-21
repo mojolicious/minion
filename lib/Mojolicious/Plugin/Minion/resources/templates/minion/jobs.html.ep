@@ -31,7 +31,7 @@
         % }
         % if ($id) {
           % my $url = url_for('minion_workers')->query(id => $id);
-          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-flushed"></i> Worker</a>
+          <a class="dropdown-item" href="<%= $url %>"><i class="fas fa-hard-hat"></i> Worker</a>
         % }
       </div>
     </div>
