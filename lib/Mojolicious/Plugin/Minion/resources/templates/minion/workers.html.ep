@@ -13,7 +13,7 @@
       </button>
       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
         % my $url = url_for('minion_jobs')->query(id => $jobs);
-        <a class="dropdown-item" href="<%= $url %>">Jobs</a>
+        <a class="dropdown-item" href="<%= $url %>"><i class="fas fa-cubes"></i> Jobs</a>
       </div>
     </div
   % }
