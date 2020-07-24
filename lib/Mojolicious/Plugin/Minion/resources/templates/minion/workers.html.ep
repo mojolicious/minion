@@ -5,10 +5,8 @@
   % my $jobs = $worker->{jobs};
   % if (@$jobs) {
     <div class="dropdown">
-      <button type="button"
-        class="btn btn-sm btn-outline-secondary dropdown-toggle"
-        id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
-        aria-expanded="false">
+      <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" id="dropdownMenuButton"
+        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         Related
       </button>
       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
@@ -60,8 +58,7 @@
               <td><%= $worker->{pid} %></td>
               <td class="from-now"><%= $worker->{started} %></td>
               <td><%= $related->($worker) %></td>
-              <td class="accordion-toggle collapsed"
-                data-toggle="collapse" data-target="#worker<%= $i %>">
+              <td class="accordion-toggle collapsed" data-toggle="collapse" data-target="#worker<%= $i %>">
                 % if (@{$worker->{jobs}}) {
                   <span class="badge badge-primary">busy</span>
                 % }
@@ -69,8 +66,7 @@
                   <span class="badge badge-secondary">idle</span>
                 % }
               </td>
-              <td class="accordion-toggle collapsed expand" data-toggle="collapse"
-                data-target="#worker<%= $i %>">
+              <td class="accordion-toggle collapsed expand" data-toggle="collapse" data-target="#worker<%= $i %>">
                 <span class="fas fa-lg expand-icon"></span>
               </td>
             </tr>
