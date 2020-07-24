@@ -156,7 +156,7 @@ Minion::Command::minion::job - Minion job command
     -m, --mode <name>           Operating mode for your application, defaults to
                                 the value of MOJO_MODE/PLACK_ENV or
                                 "development"
-    --n, notes <JSON>           Notes in JSON format for new job or list only
+    -n, --notes <JSON>          Notes in JSON format for new job or list only
                                 jobs with one of these notes
     -o, --offset <number>       Number of jobs/workers to skip when listing
                                 them, defaults to 0

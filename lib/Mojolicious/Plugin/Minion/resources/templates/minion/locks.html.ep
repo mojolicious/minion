@@ -27,23 +27,28 @@
             <th>Expires</th>
           </tr>
         </thead>
-        % my $i = 0;
-        % for my $lock (@$locks) {
-          % $i++;
-          % my $base = url_with->query(offset => 0);
-          <tbody>
-            <tr>
-              <td>
-                <input type="checkbox" name="name" value="<%= $lock->{name} %>">
-              </td>
-              <td>
-                <a href="<%= url_for->query({name => $lock->{name}}) %>">
-                  <%= $lock->{name} %>
-                </a>
-              </td>
-              <td class="from-now"><%= $lock->{expires} %></td>
-            </tr>
-          </tbody>
+        % if (@$locks) {
+          % my $i = 0;
+          % for my $lock (@$locks) {
+            % $i++;
+            % my $base = url_with->query(offset => 0);
+            <tbody>
+              <tr>
+                <td>
+                  <input type="checkbox" name="name" value="<%= $lock->{name} %>">
+                </td>
+                <td>
+                  <a href="<%= url_for->query({name => $lock->{name}}) %>">
+                    <%= $lock->{name} %>
+                  </a>
+                </td>
+                <td class="from-now"><%= $lock->{expires} %></td>
+              </tr>
+            </tbody>
+          % }
+        % }
+        % else {
+          <tr><td colspan="3"><p class="text-center"><i class="fas fa-info-circle"></i> No locks found</p></td></tr>
         % }
       </table>
     </div>

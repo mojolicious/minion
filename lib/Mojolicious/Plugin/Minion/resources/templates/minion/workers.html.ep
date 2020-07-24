@@ -45,42 +45,47 @@
           <th></th>
         </tr>
       </thead>
-      % my $i = 0;
-      % for my $worker (@$workers) {
-        % $i++;
-        <tbody>
-          <tr>
-            <td>
-              <a href="<%= url_for->query({id => $worker->{id}}) %>">
-                <%= $worker->{id} %>
-              </a>
-            </td>
-            <td><%= $worker->{host} %></td>
-            <td><%= $worker->{pid} %></td>
-            <td class="from-now"><%= $worker->{started} %></td>
-            <td><%= $related->($worker) %></td>
-            <td class="accordion-toggle collapsed"
-              data-toggle="collapse" data-target="#worker<%= $i %>">
-              % if (@{$worker->{jobs}}) {
-                <span class="badge badge-primary">busy</span>
-              % }
-              % else {
-                <span class="badge badge-secondary">idle</span>
-              % }
-            </td>
-            <td class="accordion-toggle collapsed expand" data-toggle="collapse"
-              data-target="#worker<%= $i %>">
-              <span class="fas fa-lg expand-icon"></span>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="7" class="hiddenRow">
-              <div class="collapse" id="worker<%= $i %>">
-                <pre class="border rounded"><%= dumper Minion::_datetime $worker %></pre>
-              </div>
-            </td>
-          </tr>
-        </tbody>
+      % if (@$workers) {
+        % my $i = 0;
+        % for my $worker (@$workers) {
+          % $i++;
+          <tbody>
+            <tr>
+              <td>
+                <a href="<%= url_for->query({id => $worker->{id}}) %>">
+                  <%= $worker->{id} %>
+                </a>
+              </td>
+              <td><%= $worker->{host} %></td>
+              <td><%= $worker->{pid} %></td>
+              <td class="from-now"><%= $worker->{started} %></td>
+              <td><%= $related->($worker) %></td>
+              <td class="accordion-toggle collapsed"
+                data-toggle="collapse" data-target="#worker<%= $i %>">
+                % if (@{$worker->{jobs}}) {
+                  <span class="badge badge-primary">busy</span>
+                % }
+                % else {
+                  <span class="badge badge-secondary">idle</span>
+                % }
+              </td>
+              <td class="accordion-toggle collapsed expand" data-toggle="collapse"
+                data-target="#worker<%= $i %>">
+                <span class="fas fa-lg expand-icon"></span>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="7" class="hiddenRow">
+                <div class="collapse" id="worker<%= $i %>">
+                  <pre class="border rounded"><%= dumper Minion::_datetime $worker %></pre>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        % }
+      % }
+      % else {
+        <tr><td colspan="4"><p class="text-center"><i class="fas fa-info-circle"></i> No workers found</p></td></tr>
       % }
     </table>
   </div>

@@ -103,81 +103,86 @@
             <th></th>
           </tr>
         </thead>
-        % my $i = 0;
-        % for my $job (@$jobs) {
-          % $i++;
-          % my $base = url_with->query({offset => 0});
-          <tbody>
-            <tr>
-              <td>
-                <input type="checkbox" name="id" value="<%= $job->{id} %>">
-              </td>
-              <td>
-                <a href="<%= url_for->query({id => $job->{id}}) %>">
-                  <%= $job->{id} %>
-                </a>
-              </td>
-              <td>
-                <a href="<%= $base->clone->query({task => $job->{task}}) %>">
-                  <%= $job->{task} %>
-                </a>
-              </td>
-              <td>
-                <a href="<%= $base->clone->query({queue => $job->{queue}}) %>">
-                  <%= $job->{queue} %>
-                </a>
-              </td>
-              <td class="from-now"><%= $job->{created} %></td>
-              <td><%= $related->($job) %></td>
-              <td class="accordion-toggle collapsed" data-toggle="collapse"
-                data-target="#job<%= $i %>">
-                % if ($job->{state} eq 'active') {
-                  <span class="badge badge-primary">active</span>
-                % }
-                % elsif ($job->{state} eq 'failed') {
-                  <span class="badge badge-danger">failed</span>
-                % }
-                % elsif ($job->{state} eq 'finished') {
-                  <span class="badge badge-success">finished</span>
-                % }
-                % else {
-                  <span class="badge badge-secondary">inactive</span>
-                % }
-              </td>
-              % if (grep { $job->{state} eq $_ } qw(active finished failed)) {
-                % my $end = $job->{state} eq 'active' ? 'time' : 'finished';
-                % my $runtime = $job->{$end} - $job->{started};
-                <td class="accordion-toggle collapsed duration"
-                  data-toggle="collapse" data-target="#job<%= $i %>">
-                  <%= $runtime %>
+        % if (@$jobs) {
+          % my $i = 0;
+          % for my $job (@$jobs) {
+            % $i++;
+            % my $base = url_with->query({offset => 0});
+            <tbody>
+              <tr>
+                <td>
+                  <input type="checkbox" name="id" value="<%= $job->{id} %>">
                 </td>
-              % }
-              % elsif ($job->{delayed} > $job->{time}) {
+                <td>
+                  <a href="<%= url_for->query({id => $job->{id}}) %>">
+                    <%= $job->{id} %>
+                  </a>
+                </td>
+                <td>
+                  <a href="<%= $base->clone->query({task => $job->{task}}) %>">
+                    <%= $job->{task} %>
+                  </a>
+                </td>
+                <td>
+                  <a href="<%= $base->clone->query({queue => $job->{queue}}) %>">
+                    <%= $job->{queue} %>
+                  </a>
+                </td>
+                <td class="from-now"><%= $job->{created} %></td>
+                <td><%= $related->($job) %></td>
                 <td class="accordion-toggle collapsed" data-toggle="collapse"
                   data-target="#job<%= $i %>">
-                  <div class="d-inline duration">
-                    <%= $job->{delayed} - $job->{time} %>
-                  </div>
-                  delay
+                  % if ($job->{state} eq 'active') {
+                    <span class="badge badge-primary">active</span>
+                  % }
+                  % elsif ($job->{state} eq 'failed') {
+                    <span class="badge badge-danger">failed</span>
+                  % }
+                  % elsif ($job->{state} eq 'finished') {
+                    <span class="badge badge-success">finished</span>
+                  % }
+                  % else {
+                    <span class="badge badge-secondary">inactive</span>
+                  % }
                 </td>
-              % }
-              % else {
-                <td class="accordion-toggle collapsed" data-toggle="collapse"
-                  data-target="#job<%= $i %>">waiting</td>
-              % }
-              <td class="accordion-toggle collapsed expand"
-                data-toggle="collapse" data-target="#job<%= $i %>">
-                <span class="fas fa-lg expand-icon"></span>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="9" class="hiddenRow">
-                <div class="collapse" id="job<%= $i %>">
-                  <pre class="border rounded"><%= dumper Minion::_datetime $job %></pre>
-                </div>
-              </td>
-            </tr>
-          </tbody>
+                % if (grep { $job->{state} eq $_ } qw(active finished failed)) {
+                  % my $end = $job->{state} eq 'active' ? 'time' : 'finished';
+                  % my $runtime = $job->{$end} - $job->{started};
+                  <td class="accordion-toggle collapsed duration"
+                    data-toggle="collapse" data-target="#job<%= $i %>">
+                    <%= $runtime %>
+                  </td>
+                % }
+                % elsif ($job->{delayed} > $job->{time}) {
+                  <td class="accordion-toggle collapsed" data-toggle="collapse"
+                    data-target="#job<%= $i %>">
+                    <div class="d-inline duration">
+                      <%= $job->{delayed} - $job->{time} %>
+                    </div>
+                    delay
+                  </td>
+                % }
+                % else {
+                  <td class="accordion-toggle collapsed" data-toggle="collapse"
+                    data-target="#job<%= $i %>">waiting</td>
+                % }
+                <td class="accordion-toggle collapsed expand"
+                  data-toggle="collapse" data-target="#job<%= $i %>">
+                  <span class="fas fa-lg expand-icon"></span>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="9" class="hiddenRow">
+                  <div class="collapse" id="job<%= $i %>">
+                    <pre class="border rounded"><%= dumper Minion::_datetime $job %></pre>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          % }
+        % }
+        % else {
+          <tr><td colspan="9"><p class="text-center"><i class="fas fa-info-circle"></i> No jobs found</p></td></tr>
         % }
       </table>
     </div>
