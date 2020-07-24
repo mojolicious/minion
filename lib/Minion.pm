@@ -217,7 +217,7 @@ Minion - Job queue
 
 L<Minion> is a high performance job queue for the Perl programming language, with support for multiple named queues,
 priorities, delayed jobs, job dependencies, job progress, job results, retries with backoff, rate limiting, unique
-jobs, job sequences, statistics, distributed workers, parallel processing, autoscaling, remote control,
+jobs, job sequences, expiring jobs, statistics, distributed workers, parallel processing, autoscaling, remote control,
 L<Mojolicious|https://mojolicious.org> admin ui, resource leak protection and multiple backends (such as
 L<PostgreSQL|https://www.postgresql.org>).
 
@@ -517,6 +517,13 @@ defaults to C<1>.
 
 Delay job for this many seconds (from now), defaults to C<0>.
 
+=item expire
+
+  expire => 300
+
+Job is valid for this many seconds (from now) before it expires. Note that this option is B<EXPERIMENTAL> and might
+change without warning!
+
 =item notes
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
@@ -714,6 +721,12 @@ Epoch time job was created.
   delayed => 784111777
 
 Epoch time job was delayed to.
+
+=item expires
+
+  expires => 784111777
+
+Epoch time job is valid until before it expires.
 
 =item finished
 

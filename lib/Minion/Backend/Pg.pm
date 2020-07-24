@@ -78,19 +78,20 @@ sub list_jobs {
   my ($self, $offset, $limit, $options) = @_;
 
   my $jobs = $self->pg->db->query(
-    'select id, args, attempts,
-       array(select id from minion_jobs where parents @> ARRAY[j.id]) as children,
-       extract(epoch from created) as created, extract(epoch from delayed) as delayed,
-       extract(epoch from finished) as finished, next, notes, parents,
-       (select id from minion_jobs where sequence = j.sequence and next = j.id) as previous, priority, queue, result,
-       extract(epoch from retried) as retried, retries, sequence, extract(epoch from started) as started, state, task,
-       extract(epoch from now()) as time, count(*) over() as total, worker
-     from minion_jobs as j
-     where (id < $1 or $1 is null) and (id = any ($2) or $2 is null) and (notes \? any ($3) or $3 is null)
-       and (queue = any ($4) or $4 is null) and (sequence = any ($5) or $5 is null) and (state = any ($6) or $6 is null)
-       and (task = any ($7) or $7 is null)
-     order by id desc
-     limit $8 offset $9', @$options{qw(before ids notes queues sequences states tasks)}, $limit, $offset
+    q{select id, args, attempts,
+        array(select id from minion_jobs where parents @> ARRAY[j.id]) as children,
+        extract(epoch from created) as created, extract(epoch from delayed) as delayed,
+        extract(epoch from finished) as finished, next, notes, parents,
+        (select id from minion_jobs where sequence = j.sequence and next = j.id) as previous, priority, queue, result,
+        extract(epoch from retried) as retried, retries, sequence, extract(epoch from started) as started, state, task,
+        extract(epoch from now()) as time, count(*) over() as total, extract(epoch from expires) as expires, worker
+      from minion_jobs as j
+      where (id < $1 or $1 is null) and (id = any ($2) or $2 is null) and (notes \? any ($3) or $3 is null)
+        and (queue = any ($4) or $4 is null) and (sequence = any ($5) or $5 is null)
+        and (state = any ($6) or $6 is null) and (task = any ($7) or $7 is null)
+        and (state != 'inactive' or expires is null or expires > now())
+      order by id desc
+      limit $8 offset $9}, @$options{qw(before ids notes queues sequences states tasks)}, $limit, $offset
   )->expand->hashes->to_array;
 
   return _total('jobs', $jobs);
@@ -182,6 +183,14 @@ sub repair {
   my $minion = $self->minion;
   $db->query("delete from minion_workers where notified < now() - interval '1 second' * ?", $minion->missing_after);
 
+  # Old jobs with no unresolved dependencies and expired jobs
+  $db->query(
+    "delete from minion_jobs as j
+     where (finished <= now() - interval '1 second' * ? and not exists (
+       select 1 from minion_jobs where parents @> ARRAY[j.id] and state != 'finished'
+     ) and state = 'finished') or (expires <= now() and state = 'inactive')", $minion->remove_after
+  );
+
   # Jobs with missing worker (can be retried)
   $db->query(
     "select id, retries from minion_jobs as j
@@ -193,14 +202,6 @@ sub repair {
   $db->query(
     q{update minion_jobs set state = 'failed', result = '"Job appears stuck in queue"'
       where state = 'inactive' and delayed + ? * interval '1 second' < now()}, $minion->stuck_after
-  );
-
-  # Old jobs with no unresolved dependencies
-  $db->query(
-    "delete from minion_jobs as j
-     where finished <= now() - interval '1 second' * ? and not exists (
-       select 1 from minion_jobs where parents @> ARRAY[j.id] and state != 'finished'
-     ) and state = 'finished'", $minion->remove_after
   );
 }
 
@@ -215,11 +216,13 @@ sub retry_job {
   my ($self, $id, $retries, $options) = (shift, shift, shift, shift || {});
 
   return !!$self->pg->db->query(
-    "update minion_jobs set attempts = coalesce(?, attempts), delayed = (now() + (interval '1 second' * ?)),
-       parents = coalesce(?, parents), priority = coalesce(?, priority), queue = coalesce(?, queue), retried = now(),
-       retries = retries + 1, state = 'inactive'
-     where id = ? and retries = ?
-     returning 1", $options->{attempts}, $options->{delay} // 0, @$options{qw(parents priority queue)}, $id, $retries
+    q{update minion_jobs set attempts = coalesce($1, attempts), delayed = (now() + (interval '1 second' * $2)),
+        expires = case when $3::bigint is not null then now() + (interval '1 second' * $3::bigint) else expires end,
+        parents = coalesce($4, parents), priority = coalesce($5, priority), queue = coalesce($6, queue),
+        retried = now(), retries = retries + 1, state = 'inactive'
+      where id = $7 and retries = $8
+      returning 1}, $options->{attempts}, $options->{delay} // 0, @$options{qw(expire parents priority queue)}, $id,
+    $retries
   )->rows;
 }
 
@@ -227,7 +230,7 @@ sub stats {
   my $self = shift;
 
   my $stats = $self->pg->db->query(
-    "select count(*) filter (where state = 'inactive') as inactive_jobs,
+    "select count(*) filter (where state = 'inactive' and (expires is null or expires > now())) as inactive_jobs,
        count(*) filter (where state = 'active') as active_jobs, count(*) filter (where state = 'failed') as failed_jobs,
        count(*) filter (where state = 'finished') as finished_jobs,
        count(*) filter (where state = 'inactive' and delayed > now()) as delayed_jobs,
@@ -257,9 +260,10 @@ sub _enqueue {
   my ($db, $task, $args, $options) = @_;
 
   return $db->query(
-    "insert into minion_jobs (args, attempts, delayed, notes, parents, priority, queue, sequence, task)
-     values (?, ?, (now() + (interval '1 second' * ?)), ?, ?, ?, ?, ?, ?)
-     returning id", {json => $args}, $options->{attempts} // 1, $options->{delay} // 0,
+    q{insert into minion_jobs (args, attempts, delayed, expires, notes, parents, priority, queue, sequence, task)
+      values ($1, $2, (now() + (interval '1 second' * $3)),
+      case when $4::bigint is not null then now() + (interval '1 second' * $4::bigint) end, $5, $6, $7, $8, $9, $10)
+      returning id}, {json => $args}, $options->{attempts} // 1, $options->{delay} // 0, $options->{expire},
     {json => $options->{notes} || {}}, $options->{parents} || [], $options->{priority} // 0,
     $options->{queue} // 'default', $options->{sequence}, $task
   )->hash->{id};
@@ -280,8 +284,9 @@ sub _try {
      where id = (
        select id from minion_jobs as j
        where delayed <= now() and id = coalesce(?, id) and (parents = '{}' or not exists (
-         select 1 from minion_jobs where id = any (j.parents) and state in ('inactive', 'active', 'failed')
-       )) and queue = any (?) and state = 'inactive' and task = any (?)
+         select 1 from minion_jobs where id = any (j.parents)
+           and (state in ('active', 'failed') or (state = 'inactive' and (expires is null or expires > now())))
+       )) and queue = any (?) and state = 'inactive' and task = any (?) and (expires is null or expires > now())
        order by priority desc, id
        limit 1
        for update skip locked
@@ -429,6 +434,13 @@ attempt, defaults to C<1>.
   delay => 10
 
 Delay job for this many seconds (from now), defaults to C<0>.
+
+=item expire
+
+  expire => 300
+
+Job is valid for this many seconds (from now) before it expires. Note that this option is B<EXPERIMENTAL> and might
+change without warning!
 
 =item notes
 
@@ -600,6 +612,12 @@ Epoch time job was created.
   delayed => 784111777
 
 Epoch time job was delayed to.
+
+=item expires
+
+  expires => 784111777
+
+Epoch time job is valid until before it expires.
 
 =item finished
 
@@ -947,6 +965,13 @@ Number of times performing this job will be attempted.
   delay => 10
 
 Delay job for this many seconds (from now), defaults to C<0>.
+
+=item expire
+
+  expire => 300
+
+Job is valid for this many seconds (from now) before it expires. Note that this option is B<EXPERIMENTAL> and might
+change without warning!
 
 =item parents
 

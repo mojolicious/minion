@@ -168,6 +168,13 @@ attempt, defaults to C<1>.
 
 Delay job for this many seconds (from now), defaults to C<0>.
 
+=item expire
+
+  expire => 300
+
+Job is valid for this many seconds (from now) before it expires. Note that this option is B<EXPERIMENTAL> and might
+change without warning!
+
 =item notes
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
@@ -338,6 +345,12 @@ Epoch time job was created.
   delayed => 784111777
 
 Epoch time job was delayed to.
+
+=item expires
+
+  expires => 784111777
+
+Epoch time job is valid until before it expires.
 
 =item finished
 
@@ -681,6 +694,13 @@ Number of times performing this job will be attempted.
   delay => 10
 
 Delay job for this many seconds (from now), defaults to C<0>.
+
+=item expire
+
+  expire => 300
+
+Job is valid for this many seconds (from now) before it expires. Note that this option is B<EXPERIMENTAL> and might
+change without warning!
 
 =item parents
 

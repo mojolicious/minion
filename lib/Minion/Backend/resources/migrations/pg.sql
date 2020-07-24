@@ -88,3 +88,7 @@ alter table minion_workers set unlogged;
 alter table minion_jobs add column sequence text;
 alter table minion_jobs add column next bigint unique;
 create index on minion_jobs (sequence, next);
+
+-- 22 up
+alter table minion_jobs add column expires timestamp with time zone;
+create index on minion_jobs (expires);

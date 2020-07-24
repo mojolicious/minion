@@ -10,29 +10,30 @@ has usage       => sub { shift->extract_usage };
 sub run {
   my ($self, @args) = @_;
 
-  my ($args, $opts) = ([], {});
+  my ($args, $options) = ([], {});
   getopt \@args,
-    'A|attempts=i'  => \$opts->{attempts},
+    'A|attempts=i'  => \$options->{attempts},
     'a|args=s'      => sub { $args = decode_json($_[1]) },
     'b|broadcast=s' => (\my $command),
-    'd|delay=i'     => \$opts->{delay},
+    'd|delay=i'     => \$options->{delay},
+    'E|expire=i'    => \$options->{expire},
     'e|enqueue=s'   => \my $enqueue,
     'f|foreground'  => \my $foreground,
     'H|history'     => \my $history,
     'L|locks'       => \my $locks,
     'l|limit=i'     => \(my $limit = 100),
-    'n|notes=s'     => sub { $opts->{notes} = decode_json($_[1]) },
+    'n|notes=s'     => sub { $options->{notes} = decode_json($_[1]) },
     'o|offset=i'    => \(my $offset = 0),
-    'P|parent=s'    => sub { push @{$opts->{parents}}, $_[1] },
-    'p|priority=i'  => \$opts->{priority},
-    'Q|sequence=s'  => sub { push @{$opts->{sequences}}, $opts->{sequence} = $_[1] },
-    'q|queue=s'     => sub { push @{$opts->{queues}}, $opts->{queue} = $_[1] },
+    'P|parent=s'    => sub { push @{$options->{parents}}, $_[1] },
+    'p|priority=i'  => \$options->{priority},
+    'Q|sequence=s'  => sub { push @{$options->{sequences}}, $options->{sequence} = $_[1] },
+    'q|queue=s'     => sub { push @{$options->{queues}}, $options->{queue} = $_[1] },
     'R|retry'       => \my $retry,
     'remove'        => \my $remove,
-    'S|state=s'     => sub { push @{$opts->{states}}, $_[1] },
+    'S|state=s'     => sub { push @{$options->{states}}, $_[1] },
     's|stats'       => \my $stats,
     'T|tasks'       => \my $tasks,
-    't|task=s'      => sub { push @{$opts->{tasks}}, $_[1] },
+    't|task=s'      => sub { push @{$options->{tasks}}, $_[1] },
     'U|unlock=s'    => \my $unlock,
     'w|workers'     => \my $workers;
 
@@ -41,7 +42,7 @@ sub run {
   return $minion->backend->broadcast($command, $args, \@args) if $command;
 
   # Enqueue
-  return say $minion->enqueue($enqueue, $args, $opts) if $enqueue;
+  return say $minion->enqueue($enqueue, $args, $options) if $enqueue;
 
   # Show stats
   return $self->_stats if $stats;
@@ -61,14 +62,14 @@ sub run {
   return $id ? $self->_worker($id) : $self->_list_workers($offset, $limit) if $workers;
 
   # List jobs
-  return $self->_list_jobs($offset, $limit, $opts) unless defined $id;
+  return $self->_list_jobs($offset, $limit, $options) unless defined $id;
   die "Job does not exist.\n" unless my $job = $minion->job($id);
 
   # Remove job
   return $job->remove || die "Job is active.\n" if $remove;
 
   # Retry job
-  return $job->retry($opts) || die "Job is active.\n" if $retry;
+  return $job->retry($options) || die "Job is active.\n" if $retry;
 
   # Perform job in foreground
   return $minion->foreground($id) || die "Job is not ready.\n" if $foreground;
@@ -125,7 +126,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
     ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
     ./myapp.pl minion job -e 'foo' -n '{"test":123}'
-    ./myapp.pl minion job -R -d 10 10023
+    ./myapp.pl minion job -R -d 10 -E 300 10023
     ./myapp.pl minion job --remove 10023
     ./myapp.pl minion job -n '["test"]'
     ./myapp.pl minion job -L
@@ -141,6 +142,8 @@ Minion::Command::minion::job - Minion job command
     -b, --broadcast <command>   Broadcast remote control command to one or more
                                 workers
     -d, --delay <seconds>       Delay new job for this many seconds
+    -E, --expire <seconds>      New job is valid for this many seconds before
+                                it expires
     -e, --enqueue <task>        New job to be enqueued
     -f, --foreground            Retry job in "minion_foreground" queue and
                                 perform it right away in the foreground (very
