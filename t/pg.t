@@ -1069,7 +1069,7 @@ subtest 'Job dependencies' => sub {
   is $minion->repair->stats->{finished_jobs}, 2, 'two finished jobs';
   ok $job->finish, 'job finished';
   is $minion->stats->{finished_jobs}, 3, 'three finished jobs';
-  is $minion->repair->stats->{finished_jobs}, 0, 'no finished jobs';
+  is $minion->repair->remove_after(172800)->stats->{finished_jobs}, 0, 'no finished jobs';
   $id = $minion->enqueue(test => [] => {parents => [-1]});
   ok $job = $worker->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
@@ -1118,6 +1118,33 @@ subtest 'Expiring jobs' => sub {
   ok $pg->db->select('minion_jobs', '*', {id => $id})->hash, 'job still exists in database';
   $minion->repair;
   ok !$pg->db->select('minion_jobs', '*', {id => $id})->hash, 'job no longer exists in database';
+
+  $id = $minion->enqueue('test' => [] => {expire => 300});
+  ok $job = $worker->dequeue(0), 'job dequeued';
+  is $job->id, $id, 'right id';
+  ok $job->finish, 'job finished';
+  $pg->db->query("update minion_jobs set expires = now() - interval '1 day' where id = ?", $id);
+  $minion->repair;
+  ok $job = $minion->job($id), 'job still exists';
+  is $job->info->{state}, 'finished', 'right state';
+
+  $id = $minion->enqueue('test' => [] => {expire => 300});
+  ok $job = $worker->dequeue(0), 'job dequeued';
+  is $job->id, $id, 'right id';
+  ok $job->fail, 'job failed';
+  $pg->db->query("update minion_jobs set expires = now() - interval '1 day' where id = ?", $id);
+  $minion->repair;
+  ok $job = $minion->job($id), 'job still exists';
+  is $job->info->{state}, 'failed', 'right state';
+
+  $id = $minion->enqueue('test' => [] => {expire => 300});
+  ok $job = $worker->dequeue(0), 'job dequeued';
+  is $job->id, $id, 'right id';
+  $pg->db->query("update minion_jobs set expires = now() - interval '1 day' where id = ?", $id);
+  $minion->repair;
+  ok $job = $minion->job($id), 'job still exists';
+  is $job->info->{state}, 'active', 'right state';
+  ok $job->finish, 'job finished';
 
   $id = $minion->enqueue('test' => [] => {expire => 300});
   my $id2 = $minion->enqueue('test' => [] => {parents => [$id]});
