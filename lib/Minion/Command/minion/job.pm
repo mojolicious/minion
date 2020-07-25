@@ -26,7 +26,6 @@ sub run {
     'o|offset=i'    => \(my $offset = 0),
     'P|parent=s'    => sub { push @{$options->{parents}}, $_[1] },
     'p|priority=i'  => \$options->{priority},
-    'Q|sequence=s'  => sub { push @{$options->{sequences}}, $options->{sequence} = $_[1] },
     'q|queue=s'     => sub { push @{$options->{queues}}, $options->{queue} = $_[1] },
     'R|retry'       => \my $retry,
     'remove'        => \my $remove,
@@ -165,8 +164,6 @@ Minion::Command::minion::job - Minion job command
                                 them, defaults to 0
     -P, --parent <id>           One or more jobs the new job depends on
     -p, --priority <number>     Priority of new job, defaults to 0
-    -Q, --sequence <name>       Sequence new job belongs to, or list only jobs
-                                in these sequences
     -q, --queue <name>          Queue to put new job in, defaults to "default",
                                 or list only jobs in these queues
     -R, --retry                 Retry job

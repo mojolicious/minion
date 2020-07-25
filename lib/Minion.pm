@@ -217,7 +217,7 @@ Minion - Job queue
 
 L<Minion> is a high performance job queue for the Perl programming language, with support for multiple named queues,
 priorities, delayed jobs, job dependencies, job progress, job results, retries with backoff, rate limiting, unique
-jobs, job sequences, expiring jobs, statistics, distributed workers, parallel processing, autoscaling, remote control,
+jobs, expiring jobs, statistics, distributed workers, parallel processing, autoscaling, remote control,
 L<Mojolicious|https://mojolicious.org> admin ui, resource leak protection and multiple backends (such as
 L<PostgreSQL|https://www.postgresql.org>).
 
@@ -551,13 +551,6 @@ Job priority, defaults to C<0>. Jobs with a higher priority get performed first.
 
 Queue to put job in, defaults to C<default>.
 
-=item sequence
-
-  sequence => 'host:mojolicious.org'
-
-Sequence this job belongs to. The previous job from the sequence will be automatically added as a parent to continue the
-sequence. Note that this option is B<EXPERIMENTAL> and might change without warning!
-
 =back
 
 =head2 foreground
@@ -668,12 +661,6 @@ List only jobs with one of these notes. Note that this option is B<EXPERIMENTAL>
 
 List only jobs in these queues.
 
-=item sequences
-
-  sequences => ['host:localhost', 'host:mojolicious.org']
-
-List only jobs from these sequences. Note that this option is B<EXPERIMENTAL> and might change without warning!
-
 =item states
 
   states => ['inactive', 'active']
@@ -740,12 +727,6 @@ Epoch time job was finished.
 
 Job id.
 
-=item next
-
-  next => 10024
-
-Next job in sequence.
-
 =item notes
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
@@ -757,12 +738,6 @@ Hash reference with arbitrary metadata for this job.
   parents => ['10023', '10024', '10025']
 
 Jobs this job depends on.
-
-=item previous
-
-  previous => 10022
-
-Previous job in sequence.
 
 =item priority
 
@@ -793,12 +768,6 @@ Epoch time job has been retried.
   retries => 3
 
 Number of times job has been retried.
-
-=item sequence
-
-  sequence => 'host:mojolicious.org'
-
-Sequence name.
 
 =item started
 

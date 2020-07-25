@@ -3,7 +3,7 @@
 % my $related = begin
   % my $job = shift;
 
-  % my ($previous, $next, $parents, $children, $id) = @{$job}{qw(previous next parents children worker)};
+  % my ($parents, $children, $id) = @{$job}{qw(parents children worker)};
   % if (@$parents || @$children || $id) {
     <div class="dropdown">
       <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" id="dropdownMenuButton"
@@ -11,21 +11,13 @@
         Related
       </button>
       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-        % if ($previous) {
-          % my $url = url_for('minion_jobs')->query(id => $previous);
-          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-arrow-alt-circle-left"></i> Previous</a>
-        % }
-        % if ($next) {
-          % my $url = url_for('minion_jobs')->query(id => $next);
-          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-arrow-alt-circle-right"></i> Next</a>
-        % }
         % if (@$parents) {
           % my $url = url_for('minion_jobs')->query(id => $parents);
-          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-arrow-alt-circle-up"></i> Parents</a>
+          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-arrow-alt-circle-right"></i> Parents</a>
         % }
         % if (@$children) {
           % my $url = url_for('minion_jobs')->query(id => $children);
-          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-arrow-alt-circle-down"></i> Children</a>
+          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-arrow-alt-circle-left"></i> Children</a>
         % }
         % if ($id) {
           % my $url = url_for('minion_workers')->query(id => $id);
