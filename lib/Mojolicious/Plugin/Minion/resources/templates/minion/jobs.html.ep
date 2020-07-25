@@ -13,11 +13,11 @@
       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
         % if (@$parents) {
           % my $url = url_for('minion_jobs')->query(id => $parents);
-          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-arrow-alt-circle-right"></i> Parents</a>
+          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-arrow-alt-circle-left"></i> Parents</a>
         % }
         % if (@$children) {
           % my $url = url_for('minion_jobs')->query(id => $children);
-          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-arrow-alt-circle-left"></i> Children</a>
+          <a class="dropdown-item" href="<%= $url %>"><i class="far fa-arrow-alt-circle-right"></i> Children</a>
         % }
         % if ($id) {
           % my $url = url_for('minion_workers')->query(id => $id);
