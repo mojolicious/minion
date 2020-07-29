@@ -72,6 +72,6 @@ Print usage information for L<Minion> command.
 
 =head1 SEE ALSO
 
-L<Minion>, L<Mojolicious::Guides>, L<https://mojolicious.org>.
+L<Minion>, L<https://minion.pm>, L<Mojolicious::Guides>, L<https://mojolicious.org>.
 
 =cut

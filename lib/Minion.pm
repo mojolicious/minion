@@ -1256,6 +1256,6 @@ This program is free software, you can redistribute it and/or modify it under th
 
 =head1 SEE ALSO
 
-L<https://github.com/mojolicious/minion>, L<Mojolicious::Guides>, L<https://mojolicious.org>.
+L<https://github.com/mojolicious/minion>, L<https://minion.pm>, L<Mojolicious::Guides>, L<https://mojolicious.org>.
 
 =cut
