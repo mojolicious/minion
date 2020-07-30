@@ -1090,7 +1090,7 @@ subtest 'Job dependencies' => sub {
   $worker->unregister;
 };
 
-subtest 'Job depdencies (lax)' => sub {
+subtest 'Job dependencies (lax)' => sub {
   my $worker = $minion->worker->register;
   my $id     = $minion->enqueue('test');
   my $id2    = $minion->enqueue('test');
