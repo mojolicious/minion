@@ -1,7 +1,11 @@
 
 10.13  2020-07-30
+  - Added EXPERIMENTAL support for lax dependencies.
+  - Added EXPERIMENTAL lax option to enqueue method in Minion, Minion::Backend and Minion::Backend::Pg.
   - Removed experimental status from notes option in Minion::Backend and Minion::Backend::Pg.
+  - Added lax field to list_jobs method in Minion::Backend::Pg.
   - Added is_locked method to Minion.
+  - Added -x option to job command.
 
 10.12  2020-07-25
   - Added EXPERIMENTAL support for expiring jobs.

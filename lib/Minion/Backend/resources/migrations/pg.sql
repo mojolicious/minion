@@ -89,3 +89,6 @@ alter table minion_jobs drop column if exists sequence;
 alter table minion_jobs drop column if exists next;
 alter table minion_jobs add column expires timestamp with time zone;
 create index on minion_jobs (expires);
+
+-- 23 up
+alter table minion_jobs add column lax bool not null default false;

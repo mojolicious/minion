@@ -175,6 +175,13 @@ Delay job for this many seconds (from now), defaults to C<0>.
 Job is valid for this many seconds (from now) before it expires. Note that this option is B<EXPERIMENTAL> and might
 change without warning!
 
+=item lax
+
+  lax => 1
+
+Existing jobs this job depends on may also have transitioned to the C<failed> state to allow for it to be processed,
+defaults to C<false>. Note that this option is B<EXPERIMENTAL> and might change without warning!
+
 =item notes
 
   notes => {foo => 'bar', baz => [1, 2, 3]}
@@ -350,6 +357,12 @@ Epoch time job was finished.
   id => 10025
 
 Job id.
+
+=item lax
+
+  lax => 0
+
+Existing jobs this job depends on may also have failed to allow for it to be processed.
 
 =item notes
 
@@ -670,6 +683,13 @@ Delay job for this many seconds (from now), defaults to C<0>.
 
 Job is valid for this many seconds (from now) before it expires. Note that this option is B<EXPERIMENTAL> and might
 change without warning!
+
+=item lax
+
+  lax => 1
+
+Existing jobs this job depends on may also have transitioned to the C<failed> state to allow for it to be processed,
+defaults to C<false>. Note that this option is B<EXPERIMENTAL> and might change without warning!
 
 =item parents
 

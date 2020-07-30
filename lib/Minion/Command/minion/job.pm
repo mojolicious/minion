@@ -34,7 +34,8 @@ sub run {
     'T|tasks'       => \my $tasks,
     't|task=s'      => sub { push @{$options->{tasks}}, $_[1] },
     'U|unlock=s'    => \my $unlock,
-    'w|workers'     => \my $workers;
+    'w|workers'     => \my $workers,
+    'x|lax=s'       => \$options->{lax};
 
   # Worker remote control command
   my $minion = $self->app->minion;
@@ -123,7 +124,7 @@ Minion::Command::minion::job - Minion job command
     ./myapp.pl minion job -q important -t foo -t bar -S inactive
     ./myapp.pl minion job -Q 'host:localhost' -S inactive
     ./myapp.pl minion job -e foo -a '[23, "bar"]'
-    ./myapp.pl minion job -e foo -P 10023 -P 10024 -p 5 -q important
+    ./myapp.pl minion job -e foo -x 1 -P 10023 -P 10024 -p 5 -q important
     ./myapp.pl minion job -e 'foo' -n '{"test":123}'
     ./myapp.pl minion job -R -d 10 -E 300 10023
     ./myapp.pl minion job --remove 10023
@@ -175,6 +176,8 @@ Minion::Command::minion::job - Minion job command
     -U, --unlock <name>         Release named lock
     -w, --workers               List workers instead of jobs, or show
                                 information for a specific worker
+    -x, --lax <bool>            Jobs this job depends on may also have failed
+                                to allow for it to be processed
 
 =head1 DESCRIPTION
 
