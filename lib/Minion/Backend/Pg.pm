@@ -288,10 +288,9 @@ sub _update {
      returning attempts", {json => $result}, $fail ? 'failed' : 'finished', $id, $retries
   )->array;
 
-  return 1 if !$fail || (my $attempts = $row->[0]) == 1;
-  return 1 if $retries >= ($attempts - 1);
+  return 1 if !$fail || (my $attempts = $row->[0]) <= 1;
   my $delay = $self->minion->backoff->($retries);
-  return $self->retry_job($id, $retries, {delay => $delay});
+  return $self->retry_job($id, $retries, {attempts => $attempts > 1 ? $attempts - 1 : 1, delay => $delay});
 }
 
 1;

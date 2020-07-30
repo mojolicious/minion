@@ -905,34 +905,57 @@ subtest 'Multiple attempts while processing' => sub {
   is $minion->backoff->(4),  271,    'right result';
   is $minion->backoff->(5),  640,    'right result';
   is $minion->backoff->(25), 390640, 'right result';
-  my $id     = $minion->enqueue(exit => [] => {attempts => 2});
+
+  my $id     = $minion->enqueue(exit => [] => {attempts => 3});
   my $worker = $minion->worker->register;
   ok my $job = $worker->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
   is $job->retries, 0, 'job has not been retried';
-  $job->perform;
   my $info = $job->info;
-  is $info->{attempts}, 2,                                                       'job will be attempted twice';
+  is $info->{attempts}, 3,        'three attempts';
+  is $info->{state},    'active', 'right state';
+  $job->perform;
+  $info = $job->info;
+  is $info->{attempts}, 2,                                                       'two attempts';
   is $info->{state},    'inactive',                                              'right state';
   is $info->{result},   'Job terminated unexpectedly (exit code: 1, signal: 0)', 'right result';
   ok $info->{retried} < $job->info->{delayed}, 'delayed timestamp';
+
+  $minion->backend->pg->db->query('update minion_jobs set delayed = now() where id = ?', $id);
+  ok $job = $worker->dequeue(0), 'job dequeued';
+  is $job->id, $id, 'right id';
+  is $job->retries, 1, 'job has been retried';
+  $info = $job->info;
+  is $info->{attempts}, 2,        'two attempts';
+  is $info->{state},    'active', 'right state';
+  $job->perform;
+  $info = $job->info;
+  is $info->{attempts}, 1,          'one attempt';
+  is $info->{state},    'inactive', 'right state';
+
   $minion->backend->pg->db->query('update minion_jobs set delayed = now() where id = ?', $id);
   ok $job = $worker->register->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
-  is $job->retries, 1, 'job has been retried once';
+  is $job->retries, 2, 'two retries';
+  $info = $job->info;
+  is $info->{attempts}, 1,        'one attempt';
+  is $info->{state},    'active', 'right state';
   $job->perform;
   $info = $job->info;
-  is $info->{attempts}, 2,                                                       'job will be attempted twice';
+  is $info->{attempts}, 1,                                                       'one attempt';
   is $info->{state},    'failed',                                                'right state';
   is $info->{result},   'Job terminated unexpectedly (exit code: 1, signal: 0)', 'right result';
-  ok $job->retry({attempts => 3}), 'job retried';
+
+  ok $job->retry({attempts => 2}), 'job retried';
   ok $job = $worker->register->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
   $job->perform;
-  $info = $job->info;
-  is $info->{attempts}, 3,                                                       'job will be attempted three times';
-  is $info->{state},    'failed',                                                'right state';
-  is $info->{result},   'Job terminated unexpectedly (exit code: 1, signal: 0)', 'right result';
+  is $job->info->{state}, 'inactive', 'right state';
+  $minion->backend->pg->db->query('update minion_jobs set delayed = now() where id = ?', $id);
+  ok $job = $worker->register->dequeue(0), 'job dequeued';
+  is $job->id, $id, 'right id';
+  $job->perform;
+  is $job->info->{state}, 'failed', 'right state';
   $worker->unregister;
 };
 

@@ -6,6 +6,8 @@
   - Added lax field to list_jobs method in Minion::Backend::Pg.
   - Added is_locked method to Minion.
   - Added -x option to job command.
+  - Fixed a bug in Minion::Backend::Pg where manual retries would count towards the attempts limit for automatic
+    retries.
 
 10.12  2020-07-25
   - Added EXPERIMENTAL support for expiring jobs.
