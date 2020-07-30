@@ -78,6 +78,8 @@ sub guard {
 
 sub history { shift->backend->history }
 
+sub is_locked { !shift->lock(shift, 0) }
+
 sub job {
   my ($self, $id) = @_;
 
@@ -602,6 +604,12 @@ Hourly counts for processed jobs from the past day.
 
 =back
 
+=head2 is_locked
+
+  my $bool = $minion->is_locked('foo');
+
+Check if a lock with that name is currently active.
+
 =head2 job
 
   my $job = $minion->job($id);
@@ -835,10 +843,12 @@ also use L</"guard"> to release the lock automatically, even if the job failed.
     ...
   });
 
-An expiration time of C<0> can be used to check if a named lock already exists without creating one.
+An expiration time of C<0> can be used to check if a named lock could have been acquired without creating one.
 
-  # Check if the lock "foo" already exists
-  say 'Lock exists' unless $minion->lock('foo', 0);
+  # Check if the lock "foo" could have been acquired
+  say 'Lock could have been acquired' unless $minion->lock('foo', 0);
+
+Or to simply check if a named lock already exists you can also use L</"is_locked">.
 
 These options are currently available:
 
