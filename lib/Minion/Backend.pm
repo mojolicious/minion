@@ -5,6 +5,13 @@ use Carp qw(croak);
 
 has minion => undef, weak => 1;
 
+sub auto_retry_job {
+  my ($self, $id, $retries, $attempts) = @_;
+  return 1 if $attempts <= 1;
+  my $delay = $self->minion->backoff->($retries);
+  return $self->retry_job($id, $retries, {attempts => $attempts > 1 ? $attempts - 1 : 1, delay => $delay});
+}
+
 sub broadcast         { croak 'Method "broadcast" not implemented by subclass' }
 sub dequeue           { croak 'Method "dequeue" not implemented by subclass' }
 sub enqueue           { croak 'Method "enqueue" not implemented by subclass' }
@@ -78,6 +85,13 @@ L<Minion> object this backend belongs to. Note that this attribute is weakened.
 =head1 METHODS
 
 L<Minion::Backend> inherits all methods from L<Mojo::Base> and implements the following new ones.
+
+=head2 auto_retry_job
+
+  my $bool = $backend->auto_retry_job($job_id, $retries, $attempts);
+
+Automatically L</"retry"> job with L<Minion/"backoff"> if there are attempts left, used to implement backends like
+L<Minion::Backend::Pg>.
 
 =head2 broadcast
 

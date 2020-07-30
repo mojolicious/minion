@@ -5,6 +5,7 @@
   - Removed experimental status from notes option in Minion::Backend and Minion::Backend::Pg.
   - Added lax field to list_jobs method in Minion::Backend::Pg.
   - Added is_locked method to Minion.
+  - Added auto_retry_job method to Minion::Backend.
   - Added -x option to job command.
   - Fixed a bug in Minion::Backend::Pg where manual retries would count towards the attempts limit for automatic
     retries.
