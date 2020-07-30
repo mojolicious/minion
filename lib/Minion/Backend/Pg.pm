@@ -526,7 +526,7 @@ List only jobs with these ids.
 
   notes => ['foo', 'bar']
 
-List only jobs with one of these notes. Note that this option is B<EXPERIMENTAL> and might change without warning!
+List only jobs with one of these notes.
 
 =item queues
 

@@ -1,5 +1,6 @@
 
 10.13  2020-07-30
+  - Removed experimental status from notes option in Minion::Backend and Minion::Backend::Pg.
   - Added is_locked method to Minion.
 
 10.12  2020-07-25
