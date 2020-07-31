@@ -2,6 +2,7 @@ package Minion::Job;
 use Mojo::Base 'Mojo::EventEmitter';
 
 use Carp qw(croak);
+use Mojo::Collection;
 use Mojo::IOLoop;
 use POSIX qw(WNOHANG);
 
@@ -30,7 +31,7 @@ sub finish {
   return $ok ? !!$self->emit(finished => $result) : undef;
 }
 
-sub info { $_[0]->minion->backend->list_jobs(0, 1, {ids => [$_[0]->id]})->{jobs}[0]; }
+sub info { $_[0]->minion->backend->list_jobs(0, 1, {ids => [$_[0]->id]})->{jobs}[0] }
 
 sub is_finished {
   my $self = shift;
@@ -44,6 +45,12 @@ sub kill { CORE::kill($_[1], $_[0]->{pid}) }
 sub note {
   my $self = shift;
   return $self->minion->backend->note($self->id, {@_});
+}
+
+sub parents {
+  my $self   = shift;
+  my $minion = $self->minion;
+  return Mojo::Collection->new(map { $minion->job($_) // () } @{($self->info || {})->{parents} || []});
 }
 
 sub perform {
@@ -468,6 +475,18 @@ binary data, nested data structures with hash and array references are fine thou
 
   # Share stats
   $job->note(stats => {utime => '0.012628', stime => '0.002429'});
+
+=head2 parents
+
+  my $parents = $job->parents;
+
+Return a L<Mojo::Collection> object containing all jobs this job depends on as L<Minion::Job> objects.
+
+  # Check parent state
+  for my $parent ($job->parents->each) {
+    my $info = $parent->info;
+    say "$info->{id}: $info->{state}";
+  }
 
 =head2 perform
 

@@ -1110,6 +1110,18 @@ subtest 'Job dependencies' => sub {
   is $job->id, $id, 'right id';
   is_deeply $job->info->{parents}, [-1, -2], 'right parents';
   ok $job->finish, 'job finished';
+
+  my $id4     = $minion->enqueue('test');
+  my $id5     = $minion->enqueue('test');
+  my $id6     = $minion->enqueue(test => [] => {parents => [$id4, $id5]});
+  my $child   = $minion->job($id6);
+  my $parents = $child->parents;
+  is $parents->size, 2, 'two parents';
+  is $parents->[0]->id, $id4, 'first parent';
+  is $parents->[1]->id, $id5, 'second parent';
+  $_->remove for $parents->each;
+  is $child->parents->size, 0, 'no parents';
+  ok $child->remove, 'job removed';
   $worker->unregister;
 };
 
