@@ -1,4 +1,6 @@
 
+10.14  2020-07-31
+
 10.13  2020-07-30
   - Added EXPERIMENTAL support for lax dependencies.
   - Added EXPERIMENTAL lax option to enqueue method in Minion, Minion::Backend and Minion::Backend::Pg.
