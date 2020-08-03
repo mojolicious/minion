@@ -1163,7 +1163,7 @@ Hash reference with whatever status information the worker would like to share.
 
 =back
 
-=head1 REFERENCE
+=head1 API
 
 This is the class hierarchy of the L<Minion> distribution.
 
