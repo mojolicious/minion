@@ -78,9 +78,9 @@ sub list_jobs {
     q{select id, args, attempts,
         array(select id from minion_jobs where parents @> ARRAY[j.id]) as children,
         extract(epoch from created) as created, extract(epoch from delayed) as delayed,
-        extract(epoch from finished) as finished, lax, notes, parents, priority, queue, result,
-        extract(epoch from retried) as retried, retries, extract(epoch from started) as started, state, task,
-        extract(epoch from now()) as time, count(*) over() as total, extract(epoch from expires) as expires, worker
+        extract(epoch from expires) as expires, extract(epoch from finished) as finished, lax, notes, parents, priority,
+        queue, result, extract(epoch from retried) as retried, retries, extract(epoch from started) as started, state,
+        task, extract(epoch from now()) as time, count(*) over() as total, worker
       from minion_jobs as j
       where (id < $1 or $1 is null) and (id = any ($2) or $2 is null) and (notes \? any ($3) or $3 is null)
         and (queue = any ($4) or $4 is null) and (state = any ($5) or $5 is null) and (task = any ($6) or $6 is null)

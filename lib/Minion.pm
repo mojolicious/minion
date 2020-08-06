@@ -1185,6 +1185,8 @@ This is the class hierarchy of the L<Minion> distribution.
 
 =item * L<Minion::Command::minion::worker>
 
+=item * L<Minion::Iterator>
+
 =item * L<Minion::Job>
 
 =item * L<Minion::Worker>
