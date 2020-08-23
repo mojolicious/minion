@@ -7,6 +7,7 @@ sub startup {
   # Configuration
   my $config = $self->plugin(Config => {file => 'linkcheck.conf'});
   $self->secrets($config->{secrets});
+  Mojo::IOLoop->next_tick(sub {warn "Ooops a bug!\n"});
 
   # Job queue (requires a background worker process)
   #

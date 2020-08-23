@@ -1,5 +1,6 @@
 
-10.14  2020-07-31
+10.14  2020-08-23
+  - Fixed a bug where Minion::Worker could inherit timers from Mojolicious applications.
 
 10.13  2020-07-30
   - Added EXPERIMENTAL support for lax dependencies.
