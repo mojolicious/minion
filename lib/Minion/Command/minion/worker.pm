@@ -22,9 +22,22 @@ sub run {
 
   my $log = $self->app->log;
   $log->info("Worker $$ started");
-  $worker->on(dequeue => sub { pop->once(spawn => \&_spawn) });
+  $worker->on(dequeue => \&_dequeue);
   $worker->run;
   $log->info("Worker $$ stopped");
+}
+
+sub _dequeue {
+    my($worker,$job) = @_;
+    $job->once(failed => \&_failed);
+    $job->once(spawn => \&_spawn);
+}
+
+sub _failed {
+    my($job, $error) = @_;
+    my($id, $task) = ($job->id, $job->task);
+    $error =~ s/\n//;
+    $job->app->log->debug(qq{Job "$id", task "$task" failed: $error});
 }
 
 sub _spawn {
