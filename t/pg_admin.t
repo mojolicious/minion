@@ -12,8 +12,8 @@ use Test::Mojo;
 # Isolate tests
 require Mojo::Pg;
 my $pg = Mojo::Pg->new($ENV{TEST_ONLINE});
-$pg->db->query('drop schema if exists minion_admin_test cascade');
-$pg->db->query('create schema minion_admin_test');
+$pg->db->query('DROP SCHEMA IF EXISTS minion_admin_test CASCADE');
+$pg->db->query('CREATE SCHEMA minion_admin_test');
 plugin Minion => {Pg => $ENV{TEST_ONLINE}};
 app->minion->backend->pg->search_path(['minion_admin_test']);
 
@@ -33,8 +33,8 @@ subtest 'Dashboard' => sub {
 
 subtest 'Stats' => sub {
   $t->get_ok('/minion/stats')->status_is(200)->json_is('/active_jobs' => 0)->json_is('/active_locks' => 0)
-    ->json_is('/active_workers' => 0)->json_is('/delayed_jobs'  => 0)->json_is('/enqueued_jobs' => 2)
-    ->json_is('/failed_jobs'    => 0)->json_is('/finished_jobs' => 1)->json_is('/inactive_jobs' => 1)
+    ->json_is('/active_workers'   => 0)->json_is('/delayed_jobs'  => 0)->json_is('/enqueued_jobs' => 2)
+    ->json_is('/failed_jobs'      => 0)->json_is('/finished_jobs' => 1)->json_is('/inactive_jobs' => 1)
     ->json_is('/inactive_workers' => 0)->json_has('/uptime');
 };
 
@@ -124,6 +124,6 @@ subtest 'Different prefix and return route' => sub {
 };
 
 # Clean up once we are done
-$pg->db->query('drop schema minion_admin_test cascade');
+$pg->db->query('DROP SCHEMA minion_admin_test CASCADE');
 
 done_testing();

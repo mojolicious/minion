@@ -17,8 +17,8 @@ like $@, qr/^Backend "Minion::Backend::Something" missing/, 'right error';
 # Isolate tests
 require Mojo::Pg;
 my $pg = Mojo::Pg->new($ENV{TEST_ONLINE});
-$pg->db->query('drop schema if exists minion_app_test cascade');
-$pg->db->query('create schema minion_app_test');
+$pg->db->query('DROP SCHEMA IF EXISTS minion_app_test CASCADE');
+$pg->db->query('CREATE SCHEMA minion_app_test');
 plugin Minion => {Pg => $pg->search_path(['minion_app_test'])};
 
 app->minion->add_task(
@@ -59,6 +59,6 @@ subtest 'Perform jobs automatically' => sub {
 };
 
 # Clean up once we are done
-$pg->db->query('drop schema minion_app_test cascade');
+$pg->db->query('DROP SCHEMA minion_app_test CASCADE');
 
 done_testing();

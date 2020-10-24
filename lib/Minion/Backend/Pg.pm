@@ -12,7 +12,7 @@ has 'pg';
 sub broadcast {
   my ($self, $command, $args, $ids) = (shift, shift, shift || [], shift || []);
   return !!$self->pg->db->query(
-    q{update minion_workers set inbox = inbox || $1::jsonb where (id = any ($2) or $2 = '{}')},
+    q{UPDATE minion_workers SET inbox = inbox || $1::JSONB WHERE (id = ANY ($2) OR $2 = '{}')},
     {json => [[$command, @$args]]}, $ids)->rows;
 }
 
@@ -36,10 +36,10 @@ sub enqueue {
   my ($self, $task, $args, $options) = (shift, shift, shift || [], shift || {});
 
   return $self->pg->db->query(
-    q{insert into minion_jobs (args, attempts, delayed, expires, lax, notes, parents, priority, queue, task)
-      values ($1, $2, (now() + (interval '1 second' * $3)),
-      case when $4::bigint is not null then now() + (interval '1 second' * $4::bigint) end, $5, $6, $7, $8, $9, $10)
-      returning id}, {json => $args}, $options->{attempts} // 1, $options->{delay} // 0, $options->{expire},
+    q{INSERT INTO minion_jobs (args, attempts, delayed, expires, lax, notes, parents, priority, queue, task)
+      VALUES ($1, $2, (NOW() + (INTERVAL '1 second' * $3)),
+      CASE WHEN $4::BIGINT IS NOT NULL THEN NOW() + (INTERVAL '1 second' * $4::BIGINT) END, $5, $6, $7, $8, $9, $10)
+      RETURNING id}, {json => $args}, $options->{attempts} // 1, $options->{delay} // 0, $options->{expire},
     $options->{lax} ? 1 : 0, {json => $options->{notes} || {}}, $options->{parents} || [], $options->{priority} // 0,
     $options->{queue} // 'default', $task
   )->hash->{id};
@@ -52,20 +52,20 @@ sub history {
   my $self = shift;
 
   my $daily = $self->pg->db->query(
-    "select extract(epoch from ts) as epoch, coalesce(failed_jobs, 0) as failed_jobs,
-       coalesce(finished_jobs, 0) as finished_jobs
-     from (
-       select extract (day from finished) as day, extract(hour from finished) as hour,
-         count(*) filter (where state = 'failed') as failed_jobs,
-         count(*) filter (where state = 'finished') as finished_jobs
-       from minion_jobs
-       where finished > now() - interval '23 hours'
-       group by day, hour
-     ) as j right outer join (
-       select *
-       from generate_series(now() - interval '23 hour', now(), '1 hour') as ts
-     ) as s on extract(hour from ts) = j.hour and extract(day from ts) = j.day
-     order by epoch asc"
+    "SELECT EXTRACT(EPOCH FROM ts) AS epoch, COALESCE(failed_jobs, 0) AS failed_jobs,
+       COALESCE(finished_jobs, 0) AS finished_jobs
+     FROM (
+       SELECT EXTRACT (DAY FROM finished) AS day, EXTRACT(HOUR FROM finished) AS hour,
+         COUNT(*) FILTER (WHERE state = 'failed') AS failed_jobs,
+         COUNT(*) FILTER (WHERE state = 'finished') AS finished_jobs
+       FROM minion_jobs
+       WHERE finished > NOW() - INTERVAL '23 hours'
+       GROUP BY day, hour
+     ) AS j RIGHT OUTER JOIN (
+       SELECT *
+       FROM GENERATE_SERIES(NOW() - INTERVAL '23 hour', NOW(), '1 hour') AS ts
+     ) AS s ON EXTRACT(HOUR FROM ts) = j.hour AND EXTRACT(DAY FROM ts) = j.day
+     ORDER BY epoch ASC"
   )->hashes->to_array;
 
   return {daily => $daily};
@@ -75,18 +75,18 @@ sub list_jobs {
   my ($self, $offset, $limit, $options) = @_;
 
   my $jobs = $self->pg->db->query(
-    q{select id, args, attempts,
-        array(select id from minion_jobs where parents @> ARRAY[j.id]) as children,
-        extract(epoch from created) as created, extract(epoch from delayed) as delayed,
-        extract(epoch from expires) as expires, extract(epoch from finished) as finished, lax, notes, parents, priority,
-        queue, result, extract(epoch from retried) as retried, retries, extract(epoch from started) as started, state,
-        task, extract(epoch from now()) as time, count(*) over() as total, worker
-      from minion_jobs as j
-      where (id < $1 or $1 is null) and (id = any ($2) or $2 is null) and (notes \? any ($3) or $3 is null)
-        and (queue = any ($4) or $4 is null) and (state = any ($5) or $5 is null) and (task = any ($6) or $6 is null)
-        and (state != 'inactive' or expires is null or expires > now())
-      order by id desc
-      limit $7 offset $8}, @$options{qw(before ids notes queues states tasks)}, $limit, $offset
+    q{SELECT id, args, attempts,
+        ARRAY(SELECT id FROM minion_jobs WHERE parents @> ARRAY[j.id]) AS children,
+        EXTRACT(epoch FROM created) AS created, EXTRACT(EPOCH FROM delayed) AS delayed,
+        EXTRACT(EPOCH FROM expires) AS expires, EXTRACT(EPOCH FROM finished) AS finished, lax, notes, parents, priority,
+        queue, result, EXTRACT(EPOCH FROM retried) AS retried, retries, EXTRACT(EPOCH FROM started) AS started, state,
+        task, EXTRACT(EPOCH FROM now()) AS time, COUNT(*) OVER() AS total, worker
+      FROM minion_jobs AS j
+      WHERE (id < $1 OR $1 IS NULL) AND (id = ANY ($2) OR $2 IS NULL) AND (notes \? ANY ($3) OR $3 IS NULL)
+        AND (queue = ANY ($4) OR $4 IS null) AND (state = ANY ($5) OR $5 IS NULL) AND (task = ANY ($6) OR $6 IS NULL)
+        AND (state != 'inactive' OR expires IS null OR expires > NOW())
+      ORDER BY id DESC
+      LIMIT $7 OFFSET $8}, @$options{qw(before ids notes queues states tasks)}, $limit, $offset
   )->expand->hashes->to_array;
 
   return _total('jobs', $jobs);
@@ -96,9 +96,9 @@ sub list_locks {
   my ($self, $offset, $limit, $options) = @_;
 
   my $locks = $self->pg->db->query(
-    'select name, extract(epoch from expires) as expires, count(*) over() as total from minion_locks
-     where expires > now() and (name = any ($1) or $1 is null)
-     order by id desc limit $2 offset $3', $options->{names}, $limit, $offset
+    'SELECT name, EXTRACT(EPOCH FROM expires) AS expires, COUNT(*) OVER() AS total FROM minion_locks
+     WHERE expires > NOW() AND (name = ANY ($1) OR $1 IS NULL)
+     ORDER BY id DESC LIMIT $2 OFFSET $3', $options->{names}, $limit, $offset
   )->hashes->to_array;
   return _total('locks', $locks);
 }
@@ -107,20 +107,20 @@ sub list_workers {
   my ($self, $offset, $limit, $options) = @_;
 
   my $workers = $self->pg->db->query(
-    "select id, extract(epoch from notified) as notified, array(
-        select id from minion_jobs where state = 'active' and worker = minion_workers.id
-      ) as jobs, host, pid, status, extract(epoch from started) as started,
-      count(*) over() as total
-     from minion_workers
-     where (id < \$1 or \$1 is null)  and (id = any (\$2) or \$2 is null)
-     order by id desc limit \$3 offset \$4", @$options{qw(before ids)}, $limit, $offset
+    "SELECT id, EXTRACT(EPOCH FROM notified) AS notified, ARRAY(
+        SELECT id FROM minion_jobs WHERE state = 'active' AND worker = minion_workers.id
+      ) AS jobs, host, pid, status, EXTRACT(EPOCH FROM started) AS started,
+      COUNT(*) OVER() AS total
+     FROM minion_workers
+     WHERE (id < \$1 OR \$1 IS NULL)  AND (id = ANY (\$2) OR \$2 IS NULL)
+     ORDER BY id DESC LIMIT \$3 OFFSET \$4", @$options{qw(before ids)}, $limit, $offset
   )->expand->hashes->to_array;
   return _total('workers', $workers);
 }
 
 sub lock {
   my ($self, $name, $duration, $options) = (shift, shift, shift, shift // {});
-  return !!$self->pg->db->query('select * from minion_lock(?, ?, ?)', $name, $duration, $options->{limit} || 1)
+  return !!$self->pg->db->query('SELECT * FROM minion_lock(?, ?, ?)', $name, $duration, $options->{limit} || 1)
     ->array->[0];
 }
 
@@ -139,16 +139,16 @@ sub new {
 
 sub note {
   my ($self, $id, $merge) = @_;
-  return !!$self->pg->db->query('update minion_jobs set notes = jsonb_strip_nulls(notes || ?) where id = ?',
+  return !!$self->pg->db->query('UPDATE minion_jobs SET notes = JSONB_STRIP_NULLS(notes || ?) WHERE id = ?',
     {json => $merge}, $id)->rows;
 }
 
 sub receive {
   my $array = shift->pg->db->query(
-    "update minion_workers as new set inbox = '[]'
-     from (select id, inbox from minion_workers where id = ? for update) as old
-     where new.id = old.id and old.inbox != '[]'
-     returning old.inbox", shift
+    "UPDATE minion_workers AS new SET inbox = '[]'
+     FROM (SELECT id, inbox FROM minion_workers WHERE id = ? FOR UPDATE) AS old
+     WHERE new.id = old.id AND old.inbox != '[]'
+     RETURNING old.inbox", shift
   )->expand->array;
   return $array ? $array->[0] : [];
 }
@@ -157,17 +157,17 @@ sub register_worker {
   my ($self, $id, $options) = (shift, shift, shift || {});
 
   return $self->pg->db->query(
-    q{insert into minion_workers (id, host, pid, status)
-      values (coalesce($1, nextval('minion_workers_id_seq')), $2, $3, $4)
-      on conflict(id) do update set notified = now(), status = $4
-      returning id}, $id, $self->{host} //= hostname, $$, {json => $options->{status} // {}}
+    q{INSERT INTO minion_workers (id, host, pid, status)
+      VALUES (COALESCE($1, NEXTVAL('minion_workers_id_seq')), $2, $3, $4)
+      ON CONFLICT(id) DO UPDATE SET notified = now(), status = $4
+      RETURNING id}, $id, $self->{host} //= hostname, $$, {json => $options->{status} // {}}
   )->hash->{id};
 }
 
 sub remove_job {
   my ($self, $id) = @_;
   return !!$self->pg->db->query(
-    "delete from minion_jobs where id = ? and state in ('inactive', 'failed', 'finished') returning 1", $id)->rows;
+    "DELETE FROM minion_jobs WHERE id = ? AND state IN ('inactive', 'failed', 'finished') RETURNING 1", $id)->rows;
 }
 
 sub repair {
@@ -176,47 +176,47 @@ sub repair {
   # Workers without heartbeat
   my $db     = $self->pg->db;
   my $minion = $self->minion;
-  $db->query("delete from minion_workers where notified < now() - interval '1 second' * ?", $minion->missing_after);
+  $db->query("DELETE FROM minion_workers WHERE notified < NOW() - INTERVAL '1 second' * ?", $minion->missing_after);
 
   # Old jobs with no unresolved dependencies and expired jobs
   $db->query(
-    "delete from minion_jobs as j
-     where (finished <= now() - interval '1 second' * ? and not exists (
-       select 1 from minion_jobs where parents @> ARRAY[j.id] and state != 'finished'
-     ) and state = 'finished') or (expires <= now() and state = 'inactive')", $minion->remove_after
+    "DELETE FROM minion_jobs AS j
+     WHERE (finished <= NOW() - INTERVAL '1 second' * ? AND NOT EXISTS (
+       SELECT 1 FROM minion_jobs WHERE parents @> ARRAY[j.id] AND state != 'finished'
+     ) AND state = 'finished') OR (expires <= NOW() AND state = 'inactive')", $minion->remove_after
   );
 
   # Jobs with missing worker (can be retried)
   $db->query(
-    "select id, retries from minion_jobs as j
-     where state = 'active' and queue != 'minion_foreground'
-       and not exists (select 1 from minion_workers where id = j.worker)"
+    "SELECT id, retries FROM minion_jobs AS j
+     WHERE state = 'active' AND queue != 'minion_foreground'
+       AND NOT EXISTS (SELECT 1 FROM minion_workers WHERE id = j.worker)"
   )->hashes->each(sub { $self->fail_job(@$_{qw(id retries)}, 'Worker went away') });
 
   # Jobs in queue without workers or not enough workers (cannot be retried and requires admin attention)
   $db->query(
-    q{update minion_jobs set state = 'failed', result = '"Job appears stuck in queue"'
-      where state = 'inactive' and delayed + ? * interval '1 second' < now()}, $minion->stuck_after
+    q{UPDATE minion_jobs SET state = 'failed', result = '"Job appears stuck in queue"'
+      WHERE state = 'inactive' AND delayed + ? * INTERVAL '1 second' < NOW()}, $minion->stuck_after
   );
 }
 
 sub reset {
   my ($self, $options) = (shift, shift // {});
 
-  if ($options->{all}) { $self->pg->db->query('truncate minion_jobs, minion_locks, minion_workers restart identity') }
-  elsif ($options->{locks}) { $self->pg->db->query('truncate minion_locks') }
+  if ($options->{all}) { $self->pg->db->query('TRUNCATE minion_jobs, minion_locks, minion_workers RESTART IDENTITY') }
+  elsif ($options->{locks}) { $self->pg->db->query('TRUNCATE minion_locks') }
 }
 
 sub retry_job {
   my ($self, $id, $retries, $options) = (shift, shift, shift, shift || {});
 
   return !!$self->pg->db->query(
-    q{update minion_jobs set attempts = coalesce($1, attempts), delayed = (now() + (interval '1 second' * $2)),
-        expires = case when $3::bigint is not null then now() + (interval '1 second' * $3::bigint) else expires end,
-        lax = coalesce($4, lax), parents = coalesce($5, parents), priority = coalesce($6, priority),
-        queue = coalesce($7, queue), retried = now(), retries = retries + 1, state = 'inactive'
-      where id = $8 and retries = $9
-      returning 1}, $options->{attempts}, $options->{delay} // 0, $options->{expire},
+    q{UPDATE minion_jobs SET attempts = COALESCE($1, attempts), delayed = (NOW() + (INTERVAL '1 second' * $2)),
+        expires = CASE WHEN $3::BIGINT IS NOT NULL THEN NOW() + (INTERVAL '1 second' * $3::BIGINT) ELSE expires END,
+        lax = COALESCE($4, lax), parents = COALESCE($5, parents), priority = COALESCE($6, priority),
+        queue = COALESCE($7, queue), retried = NOW(), retries = retries + 1, state = 'inactive'
+      WHERE id = $8 AND retries = $9
+      RETURNING 1}, $options->{attempts}, $options->{delay} // 0, $options->{expire},
     exists $options->{lax} ? $options->{lax} ? 1 : 0 : undef, @$options{qw(parents priority queue)}, $id, $retries
   )->rows;
 }
@@ -225,16 +225,16 @@ sub stats {
   my $self = shift;
 
   my $stats = $self->pg->db->query(
-    "select count(*) filter (where state = 'inactive' and (expires is null or expires > now())) as inactive_jobs,
-       count(*) filter (where state = 'active') as active_jobs, count(*) filter (where state = 'failed') as failed_jobs,
-       count(*) filter (where state = 'finished') as finished_jobs,
-       count(*) filter (where state = 'inactive' and delayed > now()) as delayed_jobs,
-       (select count(*) from minion_locks where expires > now()) as active_locks,
-       count(distinct worker) filter (where state = 'active') as active_workers,
-       (select case when is_called then last_value else 0 end from minion_jobs_id_seq) as enqueued_jobs,
-       (select count(*) from minion_workers) as inactive_workers,
-       extract(epoch from now() - pg_postmaster_start_time()) as uptime
-     from minion_jobs"
+    "SELECT COUNT(*) FILTER (WHERE state = 'inactive' AND (expires IS NULL OR expires > NOW())) AS inactive_jobs,
+       COUNT(*) FILTER (WHERE state = 'active') AS active_jobs, COUNT(*) FILTER (WHERE state = 'failed') AS failed_jobs,
+       COUNT(*) FILTER (WHERE state = 'finished') AS finished_jobs,
+       COUNT(*) FILTER (WHERE state = 'inactive' AND delayed > NOW()) AS delayed_jobs,
+       (SELECT COUNT(*) FROM minion_locks WHERE expires > NOW()) AS active_locks,
+       COUNT(DISTINCT worker) FILTER (WHERE state = 'active') AS active_workers,
+       (SELECT CASE WHEN is_called THEN last_value ELSE 0 END FROM minion_jobs_id_seq) AS enqueued_jobs,
+       (SELECT COUNT(*) FROM minion_workers) AS inactive_workers,
+       EXTRACT(EPOCH FROM NOW() - PG_POSTMASTER_START_TIME()) AS uptime
+     FROM minion_jobs"
   )->hash;
   $stats->{inactive_workers} -= $stats->{active_workers};
 
@@ -243,13 +243,13 @@ sub stats {
 
 sub unlock {
   !!shift->pg->db->query(
-    'delete from minion_locks where id = (
-       select id from minion_locks where expires > now() and name = ? order by expires limit 1 for update
-     ) returning 1', shift
+    'DELETE FROM minion_locks WHERE id = (
+       SELECT id FROM minion_locks WHERE expires > NOW() AND name = ? ORDER BY expires LIMIT 1 FOR UPDATE
+     ) RETURNING 1', shift
   )->rows;
 }
 
-sub unregister_worker { shift->pg->db->query('delete from minion_workers where id = ?', shift) }
+sub unregister_worker { shift->pg->db->query('DELETE FROM minion_workers WHERE id = ?', shift) }
 
 sub _total {
   my ($name, $results) = @_;
@@ -262,19 +262,19 @@ sub _try {
   my ($self, $id, $options) = @_;
 
   return $self->pg->db->query(
-    q{update minion_jobs set started = now(), state = 'active', worker = ?
-      where id = (
-        select id from minion_jobs as j
-        where delayed <= now() and id = coalesce(?, id) and (parents = '{}' or not exists (
-          select 1 from minion_jobs where id = any (j.parents) and (
-            state = 'active' or (state = 'failed' and not j.lax)
-            or (state = 'inactive' and (expires is null or expires > now())))
-        )) and queue = any (?) and state = 'inactive' and task = any (?) and (expires is null or expires > now())
-        order by priority desc, id
-        limit 1
-        for update skip locked
+    q{UPDATE minion_jobs SET started = NOW(), state = 'active', worker = ?
+      WHERE id = (
+        SELECT id FROM minion_jobs AS j
+        WHERE delayed <= NOW() AND id = COALESCE(?, id) AND (parents = '{}' OR NOT EXISTS (
+          SELECT 1 FROM minion_jobs WHERE id = ANY (j.parents) AND (
+            state = 'active' OR (state = 'failed' AND NOT j.lax)
+            OR (state = 'inactive' AND (expires IS NULL OR expires > NOW())))
+        )) AND queue = ANY (?) AND state = 'inactive' AND task = ANY (?) AND (EXPIRES IS NULL OR expires > NOW())
+        ORDER BY priority DESC, id
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
       )
-      returning id, args, retries, task}, $id, $options->{id}, $options->{queues} || ['default'],
+      RETURNING id, args, retries, task}, $id, $options->{id}, $options->{queues} || ['default'],
     [keys %{$self->minion->tasks}]
   )->expand->hash;
 }
@@ -283,9 +283,9 @@ sub _update {
   my ($self, $fail, $id, $retries, $result) = @_;
 
   return undef unless my $row = $self->pg->db->query(
-    "update minion_jobs set finished = now(), result = ?, state = ?
-     where id = ? and retries = ? and state = 'active'
-     returning attempts", {json => $result}, $fail ? 'failed' : 'finished', $id, $retries
+    "UPDATE minion_jobs SET finished = NOW(), result = ?, state = ?
+     WHERE id = ? AND retries = ? AND state = 'active'
+     RETURNING attempts", {json => $result}, $fail ? 'failed' : 'finished', $id, $retries
   )->array;
 
   return $fail ? $self->auto_retry_job($id, $retries, $row->[0]) : 1;

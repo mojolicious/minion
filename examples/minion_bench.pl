@@ -28,7 +28,7 @@ $minion->enqueue($_ % 2 ? 'foo' : 'bar' => [] => {parents => \@parents}) for 1 .
 my $elapsed = time - $before;
 my $avg     = sprintf '%.3f', $ENQUEUE / $elapsed;
 say "Enqueued $ENQUEUE jobs in $elapsed seconds ($avg/s)";
-$minion->backend->pg->db->query('analyze minion_jobs');
+$minion->backend->pg->db->query('ANALYZE minion_jobs');
 
 # Dequeue
 sub dequeue {

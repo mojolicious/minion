@@ -12,8 +12,8 @@ use Mojo::IOLoop;
 # Isolate tests
 require Mojo::Pg;
 my $pg = Mojo::Pg->new($ENV{TEST_ONLINE});
-$pg->db->query('drop schema if exists minion_worker_test cascade');
-$pg->db->query('create schema minion_worker_test');
+$pg->db->query('DROP SCHEMA IF EXISTS minion_worker_test CASCADE');
+$pg->db->query('CREATE SCHEMA minion_worker_test');
 my $minion = Minion->new(Pg => $ENV{TEST_ONLINE});
 $minion->backend->pg->search_path(['minion_worker_test']);
 
@@ -94,6 +94,6 @@ subtest 'Signals' => sub {
 };
 
 # Clean up once we are done
-$pg->db->query('drop schema minion_worker_test cascade');
+$pg->db->query('DROP SCHEMA minion_worker_test CASCADE');
 
 done_testing();

@@ -15,8 +15,8 @@ use Test::Mojo;
 # Isolate tests
 my $url = Mojo::URL->new($ENV{TEST_ONLINE})->query([search_path => 'linkcheck_test']);
 my $pg  = Mojo::Pg->new($url);
-$pg->db->query('drop schema if exists linkcheck_test cascade');
-$pg->db->query('create schema linkcheck_test');
+$pg->db->query('DROP SCHEMA IF EXISTS linkcheck_test CASCADE');
+$pg->db->query('CREATE SCHEMA linkcheck_test');
 
 # Override configuration for testing
 my $t = Test::Mojo->new(LinkCheck => {pg => $url, secrets => ['test_s3cret']});
@@ -34,6 +34,6 @@ $t->app->minion->perform_jobs;
 $t->get_ok('/links/1')->status_is(200)->text_is('title' => 'Result')->element_exists_not('p')->element_exists('table');
 
 # Clean up once we are done
-$pg->db->query('drop schema linkcheck_test cascade');
+$pg->db->query('DROP SCHEMA linkcheck_test CASCADE');
 
 done_testing();

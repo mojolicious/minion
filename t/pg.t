@@ -17,8 +17,8 @@ use Time::HiRes qw(usleep);
 # Isolate tests
 require Mojo::Pg;
 my $pg = Mojo::Pg->new($ENV{TEST_ONLINE});
-$pg->db->query('drop schema if exists minion_test cascade');
-$pg->db->query('create schema minion_test');
+$pg->db->query('DROP SCHEMA IF EXISTS minion_test CASCADE');
+$pg->db->query('CREATE SCHEMA minion_test');
 my $minion = Minion->new(Pg => $ENV{TEST_ONLINE});
 $minion->backend->pg->search_path(['minion_test']);
 
@@ -114,10 +114,8 @@ subtest 'Repair missing worker' => sub {
   undef $worker2;
   is $job->info->{state}, 'active', 'job is still active';
   ok !!$minion->backend->list_workers(0, 1, {ids => [$id]})->{workers}[0], 'is registered';
-  $minion->backend->pg->db->query(
-    "update minion_workers
-   set notified = now() - interval '1 second' * ? where id = ?", $minion->missing_after + 1, $id
-  );
+  $minion->backend->pg->db->query("UPDATE minion_workers SET notified = NOW() - INTERVAL '1 second' * ? WHERE id = ?",
+    $minion->missing_after + 1, $id);
   $minion->repair;
   ok !$minion->backend->list_workers(0, 1, {ids => [$id]})->{workers}[0], 'not registered';
   like $job->info->{finished}, qr/^[\d.]+$/,       'has finished timestamp';
@@ -155,19 +153,15 @@ subtest 'Repair old jobs' => sub {
   my $id2    = $minion->enqueue('test');
   my $id3    = $minion->enqueue('test');
   $worker->dequeue(0)->perform for 1 .. 3;
-  my $finished = $minion->backend->pg->db->query(
-    'select extract(epoch from finished) as finished
-   from minion_jobs
-   where id = ?', $id2
-  )->hash->{finished};
-  $minion->backend->pg->db->query('update minion_jobs set finished = to_timestamp(?) where id = ?',
+  my $finished
+    = $minion->backend->pg->db->query('SELECT EXTRACT(EPOCH FROM finished) AS finished FROM minion_jobs WHERE id = ?',
+    $id2)->hash->{finished};
+  $minion->backend->pg->db->query('UPDATE minion_jobs SET finished = TO_TIMESTAMP(?) WHERE id = ?',
     $finished - ($minion->remove_after + 1), $id2);
-  $finished = $minion->backend->pg->db->query(
-    'select extract(epoch from finished) as finished
-   from minion_jobs
-   where id = ?', $id3
-  )->hash->{finished};
-  $minion->backend->pg->db->query('update minion_jobs set finished = to_timestamp(?) where id = ?',
+  $finished
+    = $minion->backend->pg->db->query('SELECT EXTRACT(EPOCH FROM finished) AS finished FROM minion_jobs WHERE id = ?',
+    $id3)->hash->{finished};
+  $minion->backend->pg->db->query('UPDATE minion_jobs SET finished = TO_TIMESTAMP(?) WHERE id = ?',
     $finished - ($minion->remove_after + 1), $id3);
   $worker->unregister;
   $minion->repair;
@@ -183,7 +177,7 @@ subtest 'Repair stuck jobs' => sub {
   my $id2    = $minion->enqueue('test');
   my $id3    = $minion->enqueue('test');
   my $id4    = $minion->enqueue('test');
-  $minion->backend->pg->db->query("update minion_jobs set delayed = now() - ? * interval '1 second' where id = ?",
+  $minion->backend->pg->db->query("UPDATE minion_jobs SET delayed = NOW() - ? * INTERVAL '1 second' WHERE id = ?",
     $minion->stuck_after + 1, $_)
     for $id, $id2, $id3, $id4;
   ok $worker->dequeue(0, {id => $id4})->finish('Works!'), 'job finished';
@@ -213,10 +207,10 @@ subtest 'List workers' => sub {
   my $batch = $results->{workers};
   ok $batch->[0]{id},        'has id';
   is $batch->[0]{host},      $host, 'right host';
-  is $batch->[0]{pid},       $$, 'right pid';
+  is $batch->[0]{pid},       $$,    'right pid';
   like $batch->[0]{started}, qr/^[\d.]+$/, 'has timestamp';
   is $batch->[1]{host},      $host, 'right host';
-  is $batch->[1]{pid},       $$, 'right pid';
+  is $batch->[1]{pid},       $$,    'right pid';
   ok !$batch->[2], 'no more results';
 
   $results = $minion->backend->list_workers(0, 1);
@@ -299,7 +293,7 @@ subtest 'Shared lock' => sub {
   ok $minion->lock('bar', 3600, {limit => 3}), 'locked again';
   ok $minion->is_locked('bar'), 'lock exists';
   ok $minion->lock('bar', -3600, {limit => 3}), 'locked again';
-  ok $minion->lock('bar', 3600,  {limit => 3}), 'locked again';
+  ok $minion->lock('bar', 3600, {limit => 3}),  'locked again';
   ok !$minion->lock('bar', 3600, {limit => 2}), 'not locked again';
   ok $minion->lock('baz', 3600, {limit => 3}), 'locked';
   ok $minion->unlock('bar'), 'unlocked';
@@ -338,8 +332,7 @@ subtest 'List locks' => sub {
   is $results->{locks}[2], undef, 'no more locks';
   is $results->{total}, 2, 'two results';
   $minion->backend->pg->db->query(
-    "update minion_locks set expires = now() - interval '1 second' * 1
-   where name = 'yada'",
+    "UPDATE minion_locks SET expires = NOW() - INTERVAL '1 second' * 1 WHERE name = 'yada'",
   );
   is $minion->backend->list_locks(0, 10, {names => ['yada']})->{total}, 0, 'no results';
   $minion->unlock('test');
@@ -470,31 +463,31 @@ subtest 'List jobs' => sub {
   my $results = $minion->backend->list_jobs(0, 10);
   my $batch   = $results->{jobs};
   is $results->{total}, 4, 'four jobs total';
-  ok $batch->[0]{id},        'has id';
-  is $batch->[0]{task},      'add', 'right task';
-  is $batch->[0]{state},     'inactive', 'right state';
-  is $batch->[0]{retries},   0, 'job has not been retried';
-  like $batch->[0]{created}, qr/^[\d.]+$/, 'has created timestamp';
-  is $batch->[1]{task},      'fail', 'right task';
+  ok $batch->[0]{id},          'has id';
+  is $batch->[0]{task},        'add',        'right task';
+  is $batch->[0]{state},       'inactive',   'right state';
+  is $batch->[0]{retries},     0,            'job has not been retried';
+  like $batch->[0]{created},   qr/^[\d.]+$/, 'has created timestamp';
+  is $batch->[1]{task},        'fail',       'right task';
   is_deeply $batch->[1]{args}, [], 'right arguments';
   is_deeply $batch->[1]{notes}, {}, 'right metadata';
-  is_deeply $batch->[1]{result}, ['works'], 'right result';
-  is $batch->[1]{state},    'finished', 'right state';
-  is $batch->[1]{priority}, 0,          'right priority';
+  is_deeply $batch->[1]{result},   ['works'], 'right result';
+  is $batch->[1]{state},           'finished', 'right state';
+  is $batch->[1]{priority},        0,          'right priority';
   is_deeply $batch->[1]{parents},  [], 'right parents';
   is_deeply $batch->[1]{children}, [], 'right children';
-  is $batch->[1]{retries},    1,            'job has been retried';
-  like $batch->[1]{created},  qr/^[\d.]+$/, 'has created timestamp';
-  like $batch->[1]{delayed},  qr/^[\d.]+$/, 'has delayed timestamp';
-  like $batch->[1]{finished}, qr/^[\d.]+$/, 'has finished timestamp';
-  like $batch->[1]{retried},  qr/^[\d.]+$/, 'has retried timestamp';
-  like $batch->[1]{started},  qr/^[\d.]+$/, 'has started timestamp';
-  is $batch->[2]{task},       'fail',       'right task';
-  is $batch->[2]{state},      'finished',   'right state';
-  is $batch->[2]{retries},    0,            'job has not been retried';
-  is $batch->[3]{task},       'fail',       'right task';
-  is $batch->[3]{state},      'finished',   'right state';
-  is $batch->[3]{retries},    0,            'job has not been retried';
+  is $batch->[1]{retries},         1,            'job has been retried';
+  like $batch->[1]{created},       qr/^[\d.]+$/, 'has created timestamp';
+  like $batch->[1]{delayed},       qr/^[\d.]+$/, 'has delayed timestamp';
+  like $batch->[1]{finished},      qr/^[\d.]+$/, 'has finished timestamp';
+  like $batch->[1]{retried},       qr/^[\d.]+$/, 'has retried timestamp';
+  like $batch->[1]{started},       qr/^[\d.]+$/, 'has started timestamp';
+  is $batch->[2]{task},            'fail',       'right task';
+  is $batch->[2]{state},           'finished',   'right state';
+  is $batch->[2]{retries},         0,            'job has not been retried';
+  is $batch->[3]{task},            'fail',       'right task';
+  is $batch->[3]{state},           'finished',   'right state';
+  is $batch->[3]{retries},         0,            'job has not been retried';
   ok !$batch->[4], 'no more results';
 
   $batch = $minion->backend->list_jobs(0, 10, {states => ['inactive']})->{jobs};
@@ -593,8 +586,8 @@ subtest 'Enqueue, dequeue and perform' => sub {
   ok $minion->job($id), 'job does exist';
   my $info = $minion->job($id)->info;
   is_deeply $info->{args}, [2, 2], 'right arguments';
-  is $info->{priority}, 0,          'right priority';
-  is $info->{state},    'inactive', 'right state';
+  is $info->{priority},    0,          'right priority';
+  is $info->{state},       'inactive', 'right state';
   my $worker = $minion->worker;
   is $worker->dequeue(0), undef, 'not registered';
   ok !$minion->job($id)->info->{started}, 'no started timestamp';
@@ -641,8 +634,8 @@ subtest 'Retry and remove' => sub {
   is $job->info->{retries},   1,            'job has been retried once';
   ok $job = $worker->dequeue(0), 'job dequeued';
   is $job->retries, 1, 'job has been retried once';
-  ok $job->retry, 'job retried';
-  is $job->id, $id, 'right id';
+  ok $job->retry,   'job retried';
+  is $job->id,      $id, 'right id';
   is $job->info->{retries}, 2, 'job has been retried twice';
   ok $job = $worker->dequeue(0), 'job dequeued';
   is $job->info->{state}, 'active', 'right state';
@@ -658,7 +651,7 @@ subtest 'Retry and remove' => sub {
   is $job->info->{state},   'inactive', 'right state';
   is $job->info->{retries}, 1,          'job has been retried once';
   ok $job = $worker->dequeue(0), 'job dequeued';
-  is $job->id, $id, 'right id';
+  is $job->id,     $id, 'right id';
   ok $job->fail,   'job failed';
   ok $job->remove, 'job has been removed';
   is $job->info,   undef, 'no information';
@@ -704,7 +697,7 @@ subtest 'Delayed jobs' => sub {
   is $worker->dequeue(0), undef, 'too early for job';
   my $job = $minion->job($id);
   ok $job->info->{delayed} > $job->info->{created}, 'delayed timestamp';
-  $minion->backend->pg->db->query("update minion_jobs set delayed = now() - interval '1 day' where id = ?", $id);
+  $minion->backend->pg->db->query("UPDATE minion_jobs SET delayed = NOW() - INTERVAL '1 day' WHERE id = ?", $id);
   ok $job = $worker->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
   like $job->info->{delayed}, qr/^[\d.]+$/, 'has delayed timestamp';
@@ -740,7 +733,7 @@ subtest 'Events' => sub {
           $job->on(failed   => sub { $failed++ });
           $job->on(finished => sub { $finished++ });
           $job->on(spawn    => sub { $pid_start = pop });
-          $job->on(reap     => sub { $pid_stop = pop });
+          $job->on(reap     => sub { $pid_stop  = pop });
           $job->on(
             start => sub {
               my $job = shift;
@@ -777,9 +770,9 @@ subtest 'Events' => sub {
   $job->on(finished => sub { $result = pop });
   ok $job->finish('Everything is fine!'), 'job finished';
   $job->perform;
-  is $result,   'Everything is fine!', 'right result';
-  is $failed,   0,                     'failed event has not been emitted';
-  is $finished, 1,                     'finished event has been emitted once';
+  is $result,      'Everything is fine!', 'right result';
+  is $failed,      0,                     'failed event has not been emitted';
+  is $finished,    1,                     'finished event has been emitted once';
   isnt $pid_start, $$,        'new process id';
   isnt $pid_stop,  $$,        'new process id';
   is $pid_start,   $pid_stop, 'same process id';
@@ -796,9 +789,9 @@ subtest 'Events' => sub {
   ok $job = $worker->dequeue(0), 'job dequeued';
   $job->perform;
   is_deeply $job->info->{result}, {added => 9}, 'right result';
-  is $job->info->{notes}{finish_count}, 1, 'finish event has been emitted once';
-  ok $job->info->{notes}{finish_pid}, 'has a process id';
-  isnt $job->info->{notes}{finish_pid}, $$, 'different process id';
+  is $job->info->{notes}{finish_count},  1, 'finish event has been emitted once';
+  ok $job->info->{notes}{finish_pid},    'has a process id';
+  isnt $job->info->{notes}{finish_pid},  $$, 'different process id';
   is $job->info->{notes}{before},        23, 'value still exists';
   is $job->info->{notes}{cleanup_count}, 2,  'cleanup event has been emitted once';
   ok $job->info->{notes}{cleanup_pid},   'has a process id';
@@ -921,7 +914,7 @@ subtest 'Multiple attempts while processing' => sub {
   is $info->{result},   'Job terminated unexpectedly (exit code: 1, signal: 0)', 'right result';
   ok $info->{retried} < $job->info->{delayed}, 'delayed timestamp';
 
-  $minion->backend->pg->db->query('update minion_jobs set delayed = now() where id = ?', $id);
+  $minion->backend->pg->db->query('UPDATE minion_jobs SET delayed = NOW() WHERE id = ?', $id);
   ok $job = $worker->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
   is $job->retries, 1, 'job has been retried';
@@ -933,7 +926,7 @@ subtest 'Multiple attempts while processing' => sub {
   is $info->{attempts}, 1,          'one attempt';
   is $info->{state},    'inactive', 'right state';
 
-  $minion->backend->pg->db->query('update minion_jobs set delayed = now() where id = ?', $id);
+  $minion->backend->pg->db->query('UPDATE minion_jobs SET delayed = NOW() WHERE id = ?', $id);
   ok $job = $worker->register->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
   is $job->retries, 2, 'two retries';
@@ -951,7 +944,7 @@ subtest 'Multiple attempts while processing' => sub {
   is $job->id, $id, 'right id';
   $job->perform;
   is $job->info->{state}, 'inactive', 'right state';
-  $minion->backend->pg->db->query('update minion_jobs set delayed = now() where id = ?', $id);
+  $minion->backend->pg->db->query('UPDATE minion_jobs SET delayed = NOW() WHERE id = ?', $id);
   ok $job = $worker->register->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
   $job->perform;
@@ -972,7 +965,7 @@ subtest 'Multiple attempts during maintenance' => sub {
   is $job->info->{state},  'inactive',         'right state';
   is $job->info->{result}, 'Worker went away', 'right result';
   ok $job->info->{retried} < $job->info->{delayed}, 'delayed timestamp';
-  $minion->backend->pg->db->query('update minion_jobs set delayed = now() where id = ?', $id);
+  $minion->backend->pg->db->query('UPDATE minion_jobs SET delayed = NOW() WHERE id = ?', $id);
   ok $job = $worker->register->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
   is $job->retries, 1, 'job has been retried once';
@@ -1004,10 +997,10 @@ subtest 'A job needs to be dequeued again after a retry' => sub {
 };
 
 subtest 'Perform jobs concurrently' => sub {
-  my $id  = $minion->enqueue(add => [10, 11]);
-  my $id2 = $minion->enqueue(add => [12, 13]);
-  my $id3 = $minion->enqueue('test');
-  my $id4 = $minion->enqueue('exit');
+  my $id     = $minion->enqueue(add => [10, 11]);
+  my $id2    = $minion->enqueue(add => [12, 13]);
+  my $id3    = $minion->enqueue('test');
+  my $id4    = $minion->enqueue('exit');
   my $worker = $minion->worker->register;
   ok my $job  = $worker->dequeue(0), 'job dequeued';
   ok my $job2 = $worker->dequeue(0), 'job dequeued';
@@ -1090,8 +1083,8 @@ subtest 'Job dependencies' => sub {
   ok $job2->finish, 'job finished';
   ok $job = $worker->dequeue(0), 'job dequeued';
   is $job->id, $id3, 'right id';
-  is_deeply $job->info->{children}, [], 'right children';
-  is_deeply $job->info->{parents}, [$id, $id2], 'right parents';
+  is_deeply $job->info->{children},   [], 'right children';
+  is_deeply $job->info->{parents},    [$id, $id2], 'right parents';
   is $minion->stats->{finished_jobs}, 2, 'two finished jobs';
   is $minion->repair->stats->{finished_jobs}, 2, 'two finished jobs';
   ok $job->finish, 'job finished';
@@ -1200,7 +1193,7 @@ subtest 'Expiring jobs' => sub {
   $id = $minion->enqueue('test' => [] => {expire => 300});
   is $minion->repair->jobs({states => ['inactive']})->total, 1, 'job has not expired yet';
   my $pg = $minion->backend->pg;
-  $pg->db->query("update minion_jobs set expires = now() - interval '1 day' where id = ?", $id);
+  $pg->db->query("UPDATE minion_jobs SET expires = NOW() - INTERVAL '1 day' WHERE id = ?", $id);
   is $minion->jobs({states => ['inactive']})->total, 0, 'job has expired';
   ok !$worker->dequeue(0), 'job has expired';
   ok $pg->db->select('minion_jobs', '*', {id => $id})->hash, 'job still exists in database';
@@ -1211,7 +1204,7 @@ subtest 'Expiring jobs' => sub {
   ok $job = $worker->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
   ok $job->finish, 'job finished';
-  $pg->db->query("update minion_jobs set expires = now() - interval '1 day' where id = ?", $id);
+  $pg->db->query("UPDATE minion_jobs SET expires = NOW() - INTERVAL '1 day' WHERE id = ?", $id);
   $minion->repair;
   ok $job = $minion->job($id), 'job still exists';
   is $job->info->{state}, 'finished', 'right state';
@@ -1220,7 +1213,7 @@ subtest 'Expiring jobs' => sub {
   ok $job = $worker->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
   ok $job->fail, 'job failed';
-  $pg->db->query("update minion_jobs set expires = now() - interval '1 day' where id = ?", $id);
+  $pg->db->query("UPDATE minion_jobs SET expires = NOW() - INTERVAL '1 day' WHERE id = ?", $id);
   $minion->repair;
   ok $job = $minion->job($id), 'job still exists';
   is $job->info->{state}, 'failed', 'right state';
@@ -1228,7 +1221,7 @@ subtest 'Expiring jobs' => sub {
   $id = $minion->enqueue('test' => [] => {expire => 300});
   ok $job = $worker->dequeue(0), 'job dequeued';
   is $job->id, $id, 'right id';
-  $pg->db->query("update minion_jobs set expires = now() - interval '1 day' where id = ?", $id);
+  $pg->db->query("UPDATE minion_jobs SET expires = NOW() - INTERVAL '1 day' WHERE id = ?", $id);
   $minion->repair;
   ok $job = $minion->job($id), 'job still exists';
   is $job->info->{state}, 'active', 'right state';
@@ -1237,7 +1230,7 @@ subtest 'Expiring jobs' => sub {
   $id = $minion->enqueue('test' => [] => {expire => 300});
   my $id2 = $minion->enqueue('test' => [] => {parents => [$id]});
   ok !$worker->dequeue(0, {id => $id2}), 'parent is still inactive';
-  $pg->db->query("update minion_jobs set expires = now() - interval '1 day' where id = ?", $id);
+  $pg->db->query("UPDATE minion_jobs SET expires = NOW() - INTERVAL '1 day' WHERE id = ?", $id);
   ok $job = $worker->dequeue(0, {id => $id2}), 'parent has expired';
   ok $job->finish, 'job finished';
   $worker->unregister;
@@ -1396,6 +1389,6 @@ subtest 'Single process worker' => sub {
 };
 
 # Clean up once we are done
-$pg->db->query('drop schema minion_test cascade');
+$pg->db->query('DROP SCHEMA minion_test CASCADE');
 
 done_testing();
