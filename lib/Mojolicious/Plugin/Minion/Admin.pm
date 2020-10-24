@@ -85,8 +85,8 @@ sub _list_workers {
   $v->optional('id');
   $v->optional('limit')->num;
   $v->optional('offset')->num;
-  my $limit  = $v->param('limit')  || 10;
-  my $offset = $v->param('offset') || 0;
+  my $limit   = $v->param('limit')  || 10;
+  my $offset  = $v->param('offset') || 0;
   my $options = {};
   $options->{ids} = $v->every_param('id') if $v->is_valid('id');
 
