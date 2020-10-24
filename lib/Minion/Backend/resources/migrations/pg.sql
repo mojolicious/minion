@@ -3,92 +3,92 @@
 -- Downgrades may be used to clean up the database, but they do not have to work with old versions of Minion.
 --
 -- 18 up
-create type minion_state as enum ('inactive', 'active', 'failed', 'finished');
-create table if not exists minion_jobs (
-  id       bigserial not null primary key,
-  args     jsonb not null check(jsonb_typeof(args) = 'array'),
-  attempts int not null default 1,
-  created  timestamp with time zone not null default now(),
-  delayed  timestamp with time zone not null,
-  finished timestamp with time zone,
-  notes    jsonb check(jsonb_typeof(notes) = 'object') not null default '{}',
-  parents  bigint[] not null default '{}',
-  priority int not null,
-  queue    text not null default 'default',
-  result   jsonb,
-  retried  timestamp with time zone,
-  retries  int not null default 0,
-  started  timestamp with time zone,
-  state    minion_state not null default 'inactive'::minion_state,
-  task     text not null,
-  worker   bigint
+CREATE TYPE minion_state AS ENUM ('inactive', 'active', 'failed', 'finished');
+CREATE TABLE IF NOT EXISTS minion_jobs (
+  id       BIGSERIAL NOT NULL PRIMARY KEY,
+  args     JSONB NOT NULL CHECK(JSONB_TYPEOF(args) = 'array'),
+  attempts INT NOT NULL DEFAULT 1,
+  created  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  delayed  TIMESTAMP WITH TIME ZONE NOT NULL,
+  finished TIMESTAMP WITH TIME ZONE,
+  notes    JSONB CHECK(JSONB_TYPEOF(notes) = 'object') NOT NULL DEFAULT '{}',
+  parents  BIGINT[] NOT NULL DEFAULT '{}',
+  priority INT NOT NULL,
+  queue    TEXT NOT NULL DEFAULT 'default',
+  result   JSONB,
+  retried  TIMESTAMP WITH TIME ZONE,
+  retries  INT NOT NULL DEFAULT 0,
+  started  TIMESTAMP WITH TIME ZONE,
+  state    minion_state NOT NULL DEFAULT 'inactive'::MINION_STATE,
+  task     TEXT NOT NULL,
+  worker   BIGINT
 );
-create index on minion_jobs (state, priority desc, id);
-create index on minion_jobs using gin (parents);
-create table if not exists minion_workers (
-  id       bigserial not null primary key,
-  host     text not null,
-  inbox    jsonb check(jsonb_typeof(inbox) = 'array') not null default '[]',
-  notified timestamp with time zone not null default now(),
-  pid      int not null,
-  started  timestamp with time zone not null default now(),
-  status   jsonb check(jsonb_typeof(status) = 'object') not null default '{}'
+CREATE INDEX ON minion_jobs (state, priority DESC, id);
+CREATE INDEX ON minion_jobs USING GIN (parents);
+CREATE TABLE IF NOT EXISTS minion_workers (
+  id       BIGSERIAL NOT NULL PRIMARY KEY,
+  host     TEXT NOT NULL,
+  inbox    JSONB CHECK(JSONB_TYPEOF(inbox) = 'array') NOT NULL DEFAULT '[]',
+  notified TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  pid      INT NOT NULL,
+  started  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  status   JSONB CHECK(JSONB_TYPEOF(status) = 'object') NOT NULL DEFAULT '{}'
 );
-create unlogged table if not exists minion_locks (
-  id      bigserial not null primary key,
-  name    text not null,
-  expires timestamp with time zone not null
+CREATE UNLOGGED TABLE IF NOT EXISTS minion_locks (
+  id      BIGSERIAL NOT NULL PRIMARY KEY,
+  name    TEXT NOT NULL,
+  expires TIMESTAMP WITH TIME ZONE NOT NULL
 );
-create index on minion_locks (name, expires);
+CREATE INDEX ON minion_locks (name, expires);
 
-create or replace function minion_jobs_notify_workers() returns trigger as $$
-  begin
-    if new.delayed <= now() then
-      notify "minion.job";
-    end if;
-    return null;
-  end;
-$$ language plpgsql;
-create trigger minion_jobs_notify_workers_trigger
-  after insert or update of retries on minion_jobs
-  for each row execute procedure minion_jobs_notify_workers();
+CREATE OR REPLACE FUNCTION minion_jobs_notify_workers() RETURNS trigger AS $$
+  BEGIN
+    IF new.delayed <= NOW() THEN
+      NOTIFY "minion.job";
+    END IF;
+    RETURN NULL;
+  END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER minion_jobs_notify_workers_trigger
+  AFTER INSERT OR UPDATE OF retries ON minion_jobs
+  FOR EACH ROW EXECUTE PROCEDURE minion_jobs_notify_workers();
 
-create or replace function minion_lock(text, int, int) returns bool as $$
-declare
-  new_expires timestamp with time zone = now() + (interval '1 second' * $2);
-begin
-  lock table minion_locks in exclusive mode;
-  delete from minion_locks where expires < now();
-  if (select count(*) >= $3 from minion_locks where name = $1) then
-    return false;
-  end if;
-  if new_expires > now() then
-    insert into minion_locks (name, expires) values ($1, new_expires);
-  end if;
-  return true;
-end;
-$$ language plpgsql;
+CREATE OR REPLACE FUNCTION minion_lock(TEXT, INT, INT) RETURNS BOOL AS $$
+DECLARE
+  new_expires TIMESTAMP WITH TIME ZONE = NOW() + (INTERVAL '1 second' * $2);
+BEGIN
+  lock TABLE minion_locks IN exclusive mode;
+  DELETE FROM minion_locks WHERE expires < NOW();
+  IF (SELECT COUNT(*) >= $3 FROM minion_locks WHERE NAME = $1) THEN
+    RETURN false;
+  END IF;
+  IF new_expires > NOW() THEN
+    INSERT INTO minion_locks (name, expires) VALUES ($1, new_expires);
+  END IF;
+  RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
 
 -- 18 down
-drop table if exists minion_jobs;
-drop table if exists minion_workers;
-drop table if exists minion_locks;
-drop type if exists minion_state;
-drop trigger if exists minion_jobs_notify_workers_trigger on minion_jobs;
-drop function if exists minion_jobs_notify_workers();
-drop function if exists minion_lock(text, int, int);
+DROP TABLE IF EXISTS minion_jobs;
+DROP TABLE if EXISTS minion_workers;
+DROP TABLE IF EXISTS minion_locks;
+DROP TYPE IF EXISTS minion_state;
+DROP TRIGGER IF EXISTS minion_jobs_notify_workers_trigger ON minion_jobs;
+DROP FUNCTION IF EXISTS minion_jobs_notify_workers();
+DROP FUNCTION IF EXISTS minion_lock(TEXT, INT, INT);
 
 -- 19 up
-create index on minion_jobs using gin (notes);
+CREATE INDEX ON minion_jobs USING GIN (notes);
 
 -- 20 up
-alter table minion_workers set unlogged;
+ALTER TABLE minion_workers SET UNLOGGED;
 
 -- 22 up
-alter table minion_jobs drop column if exists sequence;
-alter table minion_jobs drop column if exists next;
-alter table minion_jobs add column expires timestamp with time zone;
-create index on minion_jobs (expires);
+ALTER TABLE minion_jobs DROP COLUMN IF EXISTS SEQUENCE;
+ALTER TABLE minion_jobs DROP COLUMN IF EXISTS NEXT;
+ALTER TABLE minion_jobs ADD COLUMN EXPIRES TIMESTAMP WITH TIME ZONE;
+CREATE INDEX ON minion_jobs (expires);
 
 -- 23 up
-alter table minion_jobs add column lax bool not null default false;
+ALTER TABLE minion_jobs ADD COLUMN lax BOOL NOT NULL DEFAULT FALSE;
