@@ -1,4 +1,6 @@
 
+10.15  2020-10-25
+
 10.14  2020-10-24
   - Changed SQL style to use uppercase keywords.
   - Fixed a bug where Minion::Worker could inherit timers from Mojolicious applications.
