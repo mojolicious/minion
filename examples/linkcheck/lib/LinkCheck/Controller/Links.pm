@@ -1,9 +1,7 @@
 package LinkCheck::Controller::Links;
-use Mojo::Base 'Mojolicious::Controller';
+use Mojo::Base 'Mojolicious::Controller', -signatures;
 
-sub check {
-  my $self = shift;
-
+sub check ($self) {
   my $v = $self->validation;
   $v->required('url');
   return $self->render(action => 'index') if $v->has_error;
@@ -14,11 +12,8 @@ sub check {
 
 sub index { }
 
-sub result {
-  my $self = shift;
-
+sub result ($self) {
   return $self->reply->not_found unless my $job = $self->minion->job($self->param('id'));
-
   $self->render(result => $job->info->{result});
 }
 

@@ -1,8 +1,7 @@
 package LinkCheck;
-use Mojo::Base 'Mojolicious';
+use Mojo::Base 'Mojolicious', -signatures;
 
-sub startup {
-  my $self = shift;
+sub startup ($self) {
 
   # Configuration
   my $config = $self->plugin(Config => {file => 'linkcheck.conf'});

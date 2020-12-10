@@ -173,8 +173,7 @@ Mojolicious::Plugin::Minion::Admin - Admin UI
   plugin 'Minion::Admin';
 
   # Secure access to the admin ui with Basic authentication
-  my $under = $self->routes->under('/minion' =>sub {
-    my $c = shift;
+  my $under = $self->routes->under('/minion' =>sub ($c) {
     return 1 if $c->req->url->to_abs->userinfo eq 'Bender:rocks';
     $c->res->headers->www_authenticate('Basic');
     $c->render(text => 'Authentication required!', status => 401);

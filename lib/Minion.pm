@@ -187,8 +187,7 @@ Minion - Job queue
   my $minion = Minion->new(Pg => 'postgresql://postgres@/test');
 
   # Add tasks
-  $minion->add_task(something_slow => sub {
-    my ($job, @args) = @_;
+  $minion->add_task(something_slow => sub ($job, @args) {
     sleep 5;
     say 'This is a background worker process.';
   });
@@ -232,20 +231,18 @@ HTTP downloads, building tarballs, warming caches and basically everything else 
 You can use L<Minion> as a standalone job queue or integrate it into L<Mojolicious> applications with the plugin
 L<Mojolicious::Plugin::Minion>.
 
-  use Mojolicious::Lite;
+  use Mojolicious::Lite -signatures;
 
   plugin Minion => {Pg => 'postgresql://sri:s3cret@localhost/test'};
 
   # Slow task
-  app->minion->add_task(poke_mojo => sub {
-    my $job = shift;
+  app->minion->add_task(poke_mojo => sub ($job, @args) {
     $job->app->ua->get('mojolicious.org');
     $job->app->log->debug('We have poked mojolicious.org for a visitor');
   });
 
   # Perform job in a background worker process
-  get '/' => sub {
-    my $c = shift;
+  get '/' => sub ($c) {
     $c->minion->enqueue('poke_mojo');
     $c->render(text => 'We will poke mojolicious.org for you soon.');
   };
@@ -305,12 +302,10 @@ L</"missing_after">.
 And as your application grows, you can move tasks into application specific plugins.
 
   package MyApp::Task::PokeMojo;
-  use Mojo::Base 'Mojolicious::Plugin';
+  use Mojo::Base 'Mojolicious::Plugin', -signatures;
 
-  sub register {
-    my ($self, $app) = @_;
-    $app->minion->add_task(poke_mojo => sub {
-      my $job = shift;
+  sub register ($self, $app, $config) {
+    $app->minion->add_task(poke_mojo => sub ($job, @args) {
       $job->app->ua->get('mojolicious.org');
       $job->app->log->debug('We have poked mojolicious.org for a visitor');
     });
@@ -333,10 +328,9 @@ inheritance and roles. But be aware that support for task classes is still B<EXP
 warning!
 
   package MyApp::Task::PokeMojo;
-  use Mojo::Base 'Minion::Job';
+  use Mojo::Base 'Minion::Job', -signatures;
 
-  sub run {
-    my $self = shift;
+  sub run ($self, @args) {
     $self->app->ua->get('mojolicious.org');
     $self->app->log->debug('We have poked mojolicious.org for a visitor');
   }
@@ -360,29 +354,25 @@ L<Minion> inherits all events from L<Mojo::EventEmitter> and can emit the follow
 
 =head2 enqueue
 
-  $minion->on(enqueue => sub {
-    my ($minion, $id) = @_;
+  $minion->on(enqueue => sub ($minion, $id) {
     ...
   });
 
 Emitted after a job has been enqueued, in the process that enqueued it.
 
-  $minion->on(enqueue => sub {
-    my ($minion, $id) = @_;
+  $minion->on(enqueue => sub ($minion, $id) {
     say "Job $id has been enqueued.";
   });
 
 =head2 worker
 
-  $minion->on(worker => sub {
-    my ($minion, $worker) = @_;
+  $minion->on(worker => sub ($minion, $worker) {
     ...
   });
 
 Emitted in the worker process after it has been created.
 
-  $minion->on(worker => sub {
-    my ($minion, $worker) = @_;
+  $minion->on(worker => sub ($minion, $worker) {
     say "Worker $$ started.";
   });
 
@@ -412,8 +402,7 @@ Backend, usually a L<Minion::Backend::Pg> object.
 A callback used to calculate the delay for automatically retried jobs, defaults to C<(retries ** 4) + 15> (15, 16, 31,
 96, 271, 640...), which means that roughly C<25> attempts can be made in C<21> days.
 
-  $minion->backoff(sub {
-    my $retries = shift;
+  $minion->backoff(sub ($retries) {
     return ($retries ** 4) + 15 + int(rand 30);
   });
 
@@ -462,8 +451,7 @@ Register a task, which can be a closure or a custom L<Minion::Job> subclass. Not
 is B<EXPERIMENTAL> and might change without warning!
 
   # Job with result
-  $minion->add_task(add => sub {
-    my ($job, $first, $second) = @_;
+  $minion->add_task(add => sub ($job, $first, $second) {
     $job->finish($first + $second);
   });
   my $id = $minion->enqueue(add => [1, 1]);
@@ -578,16 +566,14 @@ Same as L</"lock">, but returns a scope guard object that automatically releases
 destroyed, or C<undef> if aquiring the lock failed.
 
   # Only one job should run at a time (unique job)
-  $minion->add_task(do_unique_stuff => sub {
-    my ($job, @args) = @_;
+  $minion->add_task(do_unique_stuff => sub ($job, @args) {
     return $job->finish('Previous job is still active')
       unless my $guard = $minion->guard('fragile_backend_service', 7200);
     ...
   });
 
   # Only five jobs should run at a time and we try again later if necessary
-  $minion->add_task(do_concurrent_stuff => sub {
-    my ($job, @args) = @_;
+  $minion->add_task(do_concurrent_stuff => sub ($job, @args) {
     return $job->retry({delay => 30})
       unless my $guard = $minion->guard('some_web_service', 60, {limit => 5});
     ...
@@ -832,8 +818,7 @@ the lock manually with L</"unlock"> to limit concurrency, or let it expire for r
 also use L</"guard"> to release the lock automatically, even if the job failed.
 
   # Only one job should run at a time (unique job)
-  $minion->add_task(do_unique_stuff => sub {
-    my ($job, @args) = @_;
+  $minion->add_task(do_unique_stuff => sub ($job, @args) {
     return $job->finish('Previous job is still active')
       unless $minion->lock('fragile_backend_service', 7200);
     ...
@@ -841,16 +826,14 @@ also use L</"guard"> to release the lock automatically, even if the job failed.
   });
 
   # Only five jobs should run at a time and we wait for our turn
-  $minion->add_task(do_concurrent_stuff => sub {
-    my ($job, @args) = @_;
+  $minion->add_task(do_concurrent_stuff => sub ($job, @args) {
     sleep 1 until $minion->lock('some_web_service', 60, {limit => 5});
     ...
     $minion->unlock('some_web_service');
   });
 
   # Only a hundred jobs should run per hour and we try again later if necessary
-  $minion->add_task(do_rate_limited_stuff => sub {
-    my ($job, @args) = @_;
+  $minion->add_task(do_rate_limited_stuff => sub ($job, @args) {
     return $job->retry({delay => 3600})
       unless $minion->lock('another_web_service', 3600, {limit => 100});
     ...
@@ -947,12 +930,10 @@ the promise manually at any time.
 
   # Enqueue job and receive the result at some point in the future
   my $id = $minion->enqueue('foo');
-  $minion->result_p($id)->then(sub {
-    my $info   = shift;
+  $minion->result_p($id)->then(sub ($info) {
     my $result = ref $info ? $info->{result} : 'Job already removed';
     say "Finished: $result";
-  })->catch(sub {
-    my $info = shift;
+  })->catch(sub ($info) {
     say "Failed: $info->{result}";
   })->wait;
 

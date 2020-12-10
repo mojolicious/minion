@@ -1,16 +1,13 @@
 package LinkCheck::Task::CheckLinks;
-use Mojo::Base 'Mojolicious::Plugin';
+use Mojo::Base 'Mojolicious::Plugin', -signatures;
 
 use Mojo::URL;
 
-sub register {
-  my ($self, $app) = @_;
+sub register ($self, $app, $config) {
   $app->minion->add_task(check_links => \&_check_links);
 }
 
-sub _check_links {
-  my ($job, $url) = @_;
-
+sub _check_links ($job, $url) {
   my @results;
   my $ua  = $job->app->ua;
   my $res = $ua->get($url)->result;

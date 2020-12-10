@@ -1,5 +1,6 @@
 
-10.15  2020-10-25
+10.15  2020-12-10
+  - Updated examples to use signatures.
 
 10.14  2020-10-24
   - Changed SQL style to use uppercase keywords.

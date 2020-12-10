@@ -31,8 +31,7 @@ Mojolicious::Plugin::Minion - Minion job queue plugin
   plugin Minion => {Pg => app->pg};
 
   # Add tasks to your application
-  app->minion->add_task(slow_log => sub {
-    my ($job, $msg) = @_;
+  app->minion->add_task(slow_log => sub ($job, $msg) {
     sleep 5;
     $job->app->log->debug(qq{Received message "$msg"});
   });

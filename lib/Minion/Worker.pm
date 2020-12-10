@@ -176,45 +176,39 @@ L<Minion::Worker> inherits all events from L<Mojo::EventEmitter> and can emit th
 
 =head2 busy
 
-  $worker->on(busy => sub {
-    my $worker = shift;
+  $worker->on(busy => sub ($worker) {
     ...
   });
 
 Emitted in the worker process when it is performing the maximum number of jobs in parallel.
 
-  $worker->on(busy => sub {
-    my $worker = shift;
+  $worker->on(busy => sub ($worker) {
     my $max = $worker->status->{jobs};
     say "Performing $max jobs.";
   });
 
 =head2 dequeue
 
-  $worker->on(dequeue => sub {
-    my ($worker, $job) = @_;
+  $worker->on(dequeue => sub ($worker, $job) {
     ...
   });
 
 Emitted in the worker process after a job has been dequeued.
 
-  $worker->on(dequeue => sub {
-    my ($worker, $job) = @_;
+  $worker->on(dequeue => sub ($worker, $job) {
     my $id = $job->id;
     say "Job $id has been dequeued.";
   });
 
 =head2 wait
 
-  $worker->on(wait => sub {
-    my $worker = shift;
+  $worker->on(wait => sub ($worker) {
     ...
   });
 
 Emitted in the worker process before it tries to dequeue a job.
 
-  $worker->on(wait => sub {
-    my $worker = shift;
+  $worker->on(wait => sub ($worker) {
     my $max = $worker->status->{dequeue_timeout};
     say "Waiting up to $max seconds for a new job.";
   });
@@ -261,8 +255,7 @@ L<Minion::Worker> inherits all methods from L<Mojo::EventEmitter> and implements
 
 Register a worker remote control command.
 
-  $worker->add_command(foo => sub {
-    my ($worker, @args) = @_;
+  $worker->add_command(foo => sub ($worker, @args) {
     ...
   });
 

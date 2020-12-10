@@ -107,10 +107,9 @@ Minion::Job - Minion job
 =head1 SYNOPSIS
 
   package MyApp::Task::Foo;
-  use Mojo::Base 'Minion::Job';
+  use Mojo::Base 'Minion::Job', -signatures;
 
-  sub run {
-    my ($self, @args) = @_;
+  sub run ($self, @args) {
 
     # Magic here! :)
   }
@@ -125,44 +124,38 @@ L<Minion::Job> inherits all events from L<Mojo::EventEmitter> and can emit the f
 
 =head2 cleanup
 
-  $job->on(cleanup => sub {
-    my $job = shift;
+  $job->on(cleanup => sub ($job) {
     ...
   });
 
 Emitted in the process performing this job right before the process will exit.
 
-  $job->on(cleanup => sub {
-    my $job = shift;
+  $job->on(cleanup => sub ($job) {
     $job->app->log->debug("Process $$ is about to exit");
   });
 
 =head2 failed
 
-  $job->on(failed => sub {
-    my ($job, $err) = @_;
+  $job->on(failed => sub ($job, $err) {
     ...
   });
 
 Emitted in the worker process managing this job or the process performing it, after it has transitioned to the
 C<failed> state.
 
-  $job->on(failed => sub {
-    my ($job, $err) = @_;
+  $job->on(failed => sub ($job, $err) {
     say "Something went wrong: $err";
   });
 
 =head2 finish
 
-  $job->on(finish => sub {
-    my $job = shift;
+  $job->on(finish => sub ($job) {
     ...
   });
 
 Emitted in the process performing this job if the task was successful.
 
-  $job->on(finish => sub {
-    my $job  = shift;
+  $job->on(finish => sub ($job) {
     my $id   = $job->id;
     my $task = $job->task;
     $job->app->log->debug(qq{Job "$id" was performed with task "$task"});
@@ -170,61 +163,53 @@ Emitted in the process performing this job if the task was successful.
 
 =head2 finished
 
-  $job->on(finished => sub {
-    my ($job, $result) = @_;
+  $job->on(finished => sub ($job, $result) {
     ...
   });
 
 Emitted in the worker process managing this job or the process performing it, after it has transitioned to the
 C<finished> state.
 
-  $job->on(finished => sub {
-    my ($job, $result) = @_;
+  $job->on(finished => sub ($job, $result) {
     my $id = $job->id;
     say "Job $id is finished.";
   });
 
 =head2 reap
 
-  $job->on(reap => sub {
-    my ($job, $pid) = @_;
+  $job->on(reap => sub ($job, $pid) {
     ...
   });
 
 Emitted in the worker process managing this job, after the process performing it has exited.
 
-  $job->on(reap => sub {
-    my ($job, $pid) = @_;
+  $job->on(reap => sub ($job, $pid) {
     my $id = $job->id;
     say "Job $id ran in process $pid";
   });
 
 =head2 spawn
 
-  $job->on(spawn => sub {
-    my ($job, $pid) = @_;
+  $job->on(spawn => sub ($job, $pid) {
     ...
   });
 
 Emitted in the worker process managing this job, after a new process has been spawned for processing.
 
-  $job->on(spawn => sub {
-    my ($job, $pid) = @_;
+  $job->on(spawn => sub ($job, $pid) {
     my $id = $job->id;
     say "Job $id running in process $pid";
   });
 
 =head2 start
 
-  $job->on(start => sub {
-    my $job = shift;
+  $job->on(start => sub ($job) {
     ...
   });
 
 Emitted in the process performing this job, after it has been spawned.
 
-  $job->on(start => sub {
-    my $job = shift;
+  $job->on(start => sub ($job) {
     $0 = $job->id;
   });
 
