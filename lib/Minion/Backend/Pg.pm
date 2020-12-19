@@ -22,12 +22,11 @@ sub dequeue {
   if ((my $job = $self->_try($id, $options))) { return $job }
   return undef if Mojo::IOLoop->is_running;
 
-  my $db = $self->pg->db;
-  $db->listen('minion.job')->on(notification => sub { Mojo::IOLoop->stop });
+  my $ps = $self->pg->pubsub;
+  $ps->listen('minion.job' => sub { Mojo::IOLoop->stop });
   my $timer = Mojo::IOLoop->timer($wait => sub { Mojo::IOLoop->stop });
   Mojo::IOLoop->start;
-  $db->unlisten('*') and Mojo::IOLoop->remove($timer);
-  undef $db;
+  $ps->unlisten('minion.job') and Mojo::IOLoop->remove($timer);
 
   return $self->_try($id, $options);
 }
