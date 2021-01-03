@@ -20,7 +20,7 @@ has missing_after                  => 1800;
 has [qw(remove_after stuck_after)] => 172800;
 has tasks                          => sub { {} };
 
-our $VERSION = '10.15';
+our $VERSION = '10.16';
 
 sub add_task {
   my ($self, $name, $task) = @_;
@@ -1255,7 +1255,7 @@ Stefan Adams
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2014-2020, Sebastian Riedel and others.
+Copyright (C) 2014-2021, Sebastian Riedel and others.
 
 This program is free software, you can redistribute it and/or modify it under the terms of the Artistic License version
 2.0.
