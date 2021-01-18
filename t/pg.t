@@ -11,6 +11,7 @@ use lib curfile->sibling('lib')->to_string;
 
 use Minion;
 use Mojo::IOLoop;
+use Mojo::Promise;
 use Sys::Hostname qw(hostname);
 use Time::HiRes qw(usleep);
 
@@ -873,7 +874,7 @@ subtest 'Nested data structures' => sub {
 
 subtest 'Perform job in a running event loop' => sub {
   my $id = $minion->enqueue(add => [8, 9]);
-  Mojo::IOLoop->delay(sub { $minion->perform_jobs })->wait;
+  Mojo::Promise->new->resolve->then(sub { $minion->perform_jobs })->wait;
   is $minion->job($id)->info->{state}, 'finished', 'right state';
   is_deeply $minion->job($id)->info->{result}, {added => 17}, 'right result';
 };
