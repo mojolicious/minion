@@ -1,5 +1,6 @@
 
-10.16  2021-01-03
+10.16  2021-02-16
+  - Fixed Mojolicious 9.0 compatibility.
 
 10.15  2020-12-10
   - Updated examples to use signatures.
