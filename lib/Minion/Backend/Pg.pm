@@ -269,13 +269,14 @@ sub _try {
           SELECT 1 FROM minion_jobs WHERE id = ANY (j.parents) AND (
             state = 'active' OR (state = 'failed' AND NOT j.lax)
             OR (state = 'inactive' AND (expires IS NULL OR expires > NOW())))
-        )) AND queue = ANY (?) AND state = 'inactive' AND task = ANY (?) AND (EXPIRES IS NULL OR expires > NOW())
+        )) AND priority >= COALESCE(?, priority) AND queue = ANY (?) AND state = 'inactive' AND task = ANY (?)
+          AND (EXPIRES IS NULL OR expires > NOW())
         ORDER BY priority DESC, id
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       )
-      RETURNING id, args, retries, task}, $id, $options->{id}, $options->{queues} || ['default'],
-    [keys %{$self->minion->tasks}]
+      RETURNING id, args, retries, task}, $id, $options->{id}, $options->{min_priority},
+    $options->{queues} || ['default'], [keys %{$self->minion->tasks}]
   )->expand->hash;
 }
 
@@ -351,6 +352,12 @@ These options are currently available:
   id => '10023'
 
 Dequeue a specific job.
+
+=item min_priority
+
+  min_priority => 3
+
+Do not dequeue jobs with a lower priority.
 
 =item queues
 

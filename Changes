@@ -1,5 +1,6 @@
 
-10.17  2021-02-17
+10.17  2021-03-04
+  - Added min_priority option to dequeue methods in Minion::Worker and Minion::Backend::Pg.
 
 10.16  2021-02-16
   - Fixed Mojolicious 9.0 compatibility.

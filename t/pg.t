@@ -688,6 +688,28 @@ subtest 'Jobs with priority' => sub {
   is $job->info->{retries},  2, 'job has been retried twice';
   is $job->info->{priority}, 0, 'low priority';
   ok $job->finish, 'job finished';
+
+  $id = $minion->enqueue(add => [2, 6], {priority => 2});
+  ok !$worker->dequeue(0, {min_priority => 5});
+  ok !$worker->dequeue(0, {min_priority => 3});
+  ok $job = $worker->dequeue(0, {min_priority => 2});
+  is $job->id, $id, 'right id';
+  is $job->info->{priority}, 2, 'expected priority';
+  ok $job->finish, 'job finished';
+  $minion->enqueue(add => [2, 8], {priority => 0});
+  $minion->enqueue(add => [2, 7], {priority => 5});
+  $minion->enqueue(add => [2, 8], {priority => -2});
+  ok !$worker->dequeue(0, {min_priority => 6});
+  ok $job = $worker->dequeue(0, {min_priority => 0});
+  is $job->info->{priority}, 5, 'expected priority';
+  ok $job->finish, 'job finished';
+  ok $job = $worker->dequeue(0, {min_priority => 0});
+  is $job->info->{priority}, 0, 'expected priority';
+  ok $job->finish, 'job finished';
+  ok !$worker->dequeue(0, {min_priority => 0});
+  ok $job = $worker->dequeue(0, {min_priority => -10});
+  is $job->info->{priority}, -2, 'expected priority';
+  ok $job->finish, 'job finished';
   $worker->unregister;
 };
 

@@ -119,6 +119,12 @@ These options are currently available:
 
 Dequeue a specific job.
 
+=item min_priority
+
+  min_priority => 3
+
+Do not dequeue jobs with a lower priority.
+
 =item queues
 
   queues => ['important']
