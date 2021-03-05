@@ -1,6 +1,9 @@
 
-10.17  2021-03-04
+10.17  2021-03-05
+  - Added support for high priority fast lane.
   - Added min_priority option to dequeue methods in Minion::Worker and Minion::Backend::Pg.
+  - Added spare and spare_min_priority options to run method in Minion::Worker.
+  - Added -s and -S options to worker command.
 
 10.16  2021-02-16
   - Fixed Mojolicious 9.0 compatibility.

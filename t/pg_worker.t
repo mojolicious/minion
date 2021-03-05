@@ -91,6 +91,8 @@ subtest 'Signals' => sub {
   is_deeply $status->{queues},      ['default'], 'right structure';
   is $status->{performed},          1, 'right value';
   ok $status->{repair_interval},    'has a value';
+  is $status->{spare},              1, 'right value';
+  is $status->{spare_min_priority}, 1, 'right value';
 };
 
 # Clean up once we are done

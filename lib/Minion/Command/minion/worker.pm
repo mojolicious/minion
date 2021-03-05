@@ -17,7 +17,9 @@ sub run {
     'I|heartbeat-interval=i' => \$status->{heartbeat_interval},
     'j|jobs=i'               => \$status->{jobs},
     'q|queue=s'              => \my @queues,
-    'R|repair-interval=i'    => \$status->{repair_interval};
+    'R|repair-interval=i'    => \$status->{repair_interval},
+    's|spare=i'              => \$status->{spare},
+    'S|spare-min-priority=i' => \$status->{spare_min_priority};
   $status->{queues} = \@queues if @queues;
 
   my $log = $self->app->log;
@@ -60,7 +62,8 @@ Minion::Command::minion::worker - Minion worker command
                                          MOJO_HOME or auto-detection
     -I, --heartbeat-interval <seconds>   Heartbeat interval, defaults to 300
     -j, --jobs <number>                  Maximum number of jobs to perform
-                                         parallel in forked worker processes,
+                                         parallel in forked worker processes
+                                         (not including spare processes),
                                          defaults to 4
     -m, --mode <name>                    Operating mode for your application,
                                          defaults to the value of
@@ -71,6 +74,11 @@ Minion::Command::minion::worker - Minion worker command
                                          value can be subtracted randomly to
                                          make sure not all workers repair at the
                                          same time, defaults to 21600 (6 hours)
+    -s, --spare <number>                 Number of spare worker processes to
+                                         reserve for high priority jobs,
+                                         defaults to 1
+    -S, --spare-min-priority <number>    Minimum priority of jobs to use spare
+                                         worker processes for, defaults to 1
 
 =head1 DESCRIPTION
 

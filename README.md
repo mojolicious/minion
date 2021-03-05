@@ -4,9 +4,9 @@
 ![Screenshot](https://raw.github.com/mojolicious/minion/master/examples/admin.png?raw=true)
 
   A high performance job queue for the Perl programming language, with support for multiple named queues, priorities,
-  delayed jobs, job dependencies, job progress, job results, retries with backoff, rate limiting, unique jobs, expiring
-  jobs, statistics, distributed workers, parallel processing, autoscaling, remote control,
-  [Mojolicious](https://mojolicious.org) admin ui, resource leak protection and multiple backends (such as
+  high priority fast lane, delayed jobs, job dependencies, job progress, job results, retries with backoff, rate
+  limiting, unique jobs, expiring jobs, statistics, distributed workers, parallel processing, autoscaling, remote
+  control, [Mojolicious](https://mojolicious.org) admin ui, resource leak protection and multiple backends (such as
   [PostgreSQL](https://www.postgresql.org)).
 
   Job queues allow you to process time and/or computationally intensive tasks in background processes, outside of the

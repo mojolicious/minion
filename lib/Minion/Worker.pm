@@ -60,6 +60,8 @@ sub run {
   $status->{performed}       //= 0;
   $status->{repair_interval} //= 21600;
   $status->{repair_interval} -= int rand $status->{repair_interval} / 2;
+  $status->{spare}              //= 1;
+  $status->{spare_min_priority} //= 1;
 
   # Reset event loop
   Mojo::IOLoop->reset;
@@ -119,11 +121,13 @@ sub _work {
   @$jobs = map { $_->is_finished && ++$status->{performed} ? () : $_ } @$jobs;
 
   # Job limit has been reached or worker is stopping
-  return $self->emit('busy') if $status->{jobs} <= @$jobs || $self->{finished};
+  my @extra;
+  if    ($self->{finished} || ($status->{jobs} + $status->{spare}) <= @$jobs) { return $self->emit('busy') }
+  elsif ($status->{jobs} <= @$jobs) { @extra = (min_priority => $status->{spare_min_priority}) }
 
   # Try to get more jobs
   my ($max, $queues) = @{$status}{qw(dequeue_timeout queues)};
-  my $job = $self->emit('wait')->dequeue($max => {queues => $queues});
+  my $job = $self->emit('wait')->dequeue($max => {queues => $queues, @extra});
   push @$jobs, $job->start if $job;
 }
 
@@ -395,7 +399,7 @@ Heartbeat interval, defaults to C<300>.
 
   jobs => 12
 
-Maximum number of jobs to perform parallel in forked worker processes, defaults to C<4>.
+Maximum number of jobs to perform parallel in forked worker processes (not including spare processes), defaults to C<4>.
 
 =item queues
 
@@ -409,6 +413,18 @@ One or more queues to get jobs from, defaults to C<default>.
 
 Repair interval, up to half of this value can be subtracted randomly to make sure not all workers repair at the same
 time, defaults to C<21600> (6 hours).
+
+=item spare
+
+  spare => 2
+
+Number of spare worker processes to reserve for high priority jobs, defaults to C<1>.
+
+=item spare_min_priority
+
+  spare_min_priority => 7
+
+Minimum priority of jobs to use spare worker processes for, defaults to C<1>.
 
 =back
 
