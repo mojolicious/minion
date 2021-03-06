@@ -5,6 +5,7 @@ use Mojo::URL;
 
 sub register ($self, $app, $config) {
   $app->minion->add_task(check_links => \&_check_links);
+  $app->minion->add_task(foo         => sub {die});
 }
 
 sub _check_links ($job, $url) {

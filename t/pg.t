@@ -545,6 +545,10 @@ subtest 'List jobs' => sub {
   is $jobs->next,  undef, 'no more results';
   is $jobs->total, 4,     'four jobs';
 
+  my @tasks;
+  $minion->jobs->each(sub { push @tasks, [shift->{task}, $_->{task}] });
+  is_deeply \@tasks, [['add', 'add'], ['fail', 'fail'], ['fail', 'fail'], ['fail', 'fail']], 'right structure';
+
   $jobs = $minion->jobs->fetch(2);
   is $jobs->options->{before}, undef,  'no before';
   is $jobs->next->{task},      'add',  'right task';
