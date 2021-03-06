@@ -1,4 +1,6 @@
 
+10.18  2021-03-06
+
 10.17  2021-03-05
   - Added support for high priority fast lane.
   - Added each method to Minion::Iterator.
