@@ -540,7 +540,8 @@ can be processed.
 
   priority => 5
 
-Job priority, defaults to C<0>. Jobs with a higher priority get performed first.
+Job priority, defaults to C<0>. Jobs with a higher priority get performed first. Priorities can be positive or negative,
+but should be in the range between C<100> and C<-100>.
 
 =item queue
 
