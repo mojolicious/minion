@@ -43,10 +43,10 @@ sub _list_jobs {
   my $c = shift;
 
   my $v = $c->validation;
-  $v->optional($_) for qw(id note queue task);
+  $v->optional($_, 'not_empty') for qw(id note queue task);
   $v->optional('limit')->num;
   $v->optional('offset')->num;
-  $v->optional('state')->in(qw(active failed finished inactive));
+  $v->optional('state', 'not_empty')->in(qw(active failed finished inactive));
   my $options = {};
   $v->is_valid($_) && ($options->{"${_}s"} = $v->every_param($_)) for qw(id note queue state task);
   my $limit  = $v->param('limit')  || 10;
