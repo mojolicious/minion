@@ -23,18 +23,15 @@
     %= content_for 'head'
   </head>
   <body>
-    <nav
-      class="navbar navbar-expand-lg navbar-light bg-light mb-3 border-bottom">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3 border-bottom">
       <div class="container">
         %= link_to 'minion_dashboard' => (class => 'navbar-brand') => begin
           <picture>
             <img src="<%= url_for '/minion/logo-black.png' %>" srcset="<%= url_for '/minion/logo-black-2x.png' %> 2x">
           </picture>
         % end
-        <button class="navbar-toggler" type="button" data-toggle="collapse"
-          data-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent" aria-expanded="false"
-          aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
