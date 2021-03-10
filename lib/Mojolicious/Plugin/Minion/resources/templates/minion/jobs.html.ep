@@ -28,55 +28,6 @@
   % }
 % end
 
-<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel"
-  aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <form action="<%= url_for 'minion_jobs' %>">
-        <div class="modal-header">
-          <h5 class="modal-title" id="searchModalLabel">Find jobs</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="state">Task</label>
-            <select class="custom-select" id="state" name="task">
-              <option selected></option>
-              % for my $task (sort keys %{app->minion->tasks}) {
-                <option><%= $task %></option>
-              % }
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="state">State</label>
-            <select class="custom-select" id="state" name="state">
-              <option selected></option>
-              <option>inactive</option>
-              <option>active</option>
-              <option>finished</option>
-              <option>failed</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="queue">Queue</label>
-            <input type="text" class="form-control" id="queue" name="queue">
-          </div>
-          <div class="form-group">
-            <label for="note">Note</label>
-            <input type="text" class="form-control" id="note" name="note">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary">Search</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
 %= include 'minion/_notifications'
 
 %= form_for 'minion_manage_jobs' => begin
@@ -112,9 +63,6 @@
             </button>
           </div>
         </div>
-        <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#searchModal">
-          <i class="fas fa-search"></i> Search
-        </button>
       </div>
     </div>
     <p class="align-middle">
