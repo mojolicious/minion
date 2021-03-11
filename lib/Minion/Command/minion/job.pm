@@ -2,7 +2,7 @@ package Minion::Command::minion::job;
 use Mojo::Base 'Mojolicious::Command';
 
 use Mojo::JSON qw(decode_json);
-use Mojo::Util qw(dumper getopt tablify);
+use Mojo::Util qw(getopt tablify);
 
 has description => 'Manage Minion jobs';
 has usage       => sub { shift->extract_usage };
@@ -50,7 +50,7 @@ sub run {
   return $self->_stats if $stats;
 
   # Show history
-  return print dumper $minion->history if $history;
+  return print Minion::_dump($minion->history) if $history;
 
   # List tasks
   return print tablify [map { [$_, $minion->class_for_task($_)] } keys %{$minion->tasks}] if $tasks;
@@ -81,7 +81,7 @@ sub run {
   return $minion->foreground($id) || die "Job is not ready.\n" if $foreground;
 
   # Job info
-  print dumper Minion::_datetime($job->info);
+  print Minion::_dump(Minion::_datetime($job->info));
 }
 
 sub _list_jobs {
@@ -101,12 +101,12 @@ sub _list_workers {
   print tablify \@workers;
 }
 
-sub _stats { print dumper shift->app->minion->stats }
+sub _stats { print Minion::_dump(shift->app->minion->stats) }
 
 sub _worker {
   my $worker = shift->app->minion->backend->list_workers(0, 1, {ids => [shift]})->{workers}[0];
   die "Worker does not exist.\n" unless $worker;
-  print dumper Minion::_datetime($worker);
+  print Minion::_dump(Minion::_datetime($worker));
 }
 
 1;
