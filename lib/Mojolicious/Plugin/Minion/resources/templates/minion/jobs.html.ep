@@ -155,7 +155,7 @@
               <tr>
                 <td colspan="9" class="hiddenRow">
                   <div class="collapse" id="job<%= $i %>">
-                    <pre class="border rounded"><%= dumper Minion::_datetime $job %></pre>
+                    <pre class="border rounded"><%= Minion::_dump(Minion::_datetime($job)) %></pre>
                   </div>
                 </td>
               </tr>
