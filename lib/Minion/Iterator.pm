@@ -100,6 +100,6 @@ that gets updated every time new results are fetched.
 
 =head1 SEE ALSO
 
-L<Minion>, L<https://minion.pm>, L<Mojolicious::Guides>, L<https://mojolicious.org>.
+L<Minion>, L<Minion::Guide>, L<https://minion.pm>, L<Mojolicious::Guides>, L<https://mojolicious.org>.
 
 =cut

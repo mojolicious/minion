@@ -226,121 +226,7 @@ Job queues allow you to process time and/or computationally intensive tasks in b
 request/response lifecycle of web applications. Among those tasks you'll commonly find image resizing, spam filtering,
 HTTP downloads, building tarballs, warming caches and basically everything else you can imagine that's not super fast.
 
-=head1 BASICS
-
-You can use L<Minion> as a standalone job queue or integrate it into L<Mojolicious> applications with the plugin
-L<Mojolicious::Plugin::Minion>.
-
-  use Mojolicious::Lite -signatures;
-
-  plugin Minion => {Pg => 'postgresql://sri:s3cret@localhost/test'};
-
-  # Slow task
-  app->minion->add_task(poke_mojo => sub ($job, @args) {
-    $job->app->ua->get('mojolicious.org');
-    $job->app->log->debug('We have poked mojolicious.org for a visitor');
-  });
-
-  # Perform job in a background worker process
-  get '/' => sub ($c) {
-    $c->minion->enqueue('poke_mojo');
-    $c->render(text => 'We will poke mojolicious.org for you soon.');
-  };
-
-  app->start;
-
-Background worker processes are usually started with the command L<Minion::Command::minion::worker>, which becomes
-automatically available when an application loads L<Mojolicious::Plugin::Minion>.
-
-  $ ./myapp.pl minion worker
-
-The worker process will fork a new process for every job that is being processed. This allows for resources such as
-memory to be returned to the operating system once a job is finished. Perl fork is very fast, so don't worry about the
-overhead.
-
-  Minion::Worker
-  |- Minion::Job [1]
-  |- Minion::Job [2]
-  +- ...
-
-By default up to four jobs will be processed in parallel, but that can be changed with configuration options or on
-demand with signals.
-
-  $ ./myapp.pl minion worker -j 12
-
-Jobs can be managed right from the command line with L<Minion::Command::minion::job>.
-
-  $ ./myapp.pl minion job
-
-You can also add an admin ui to your application by loading the plugin L<Mojolicious::Plugin::Minion::Admin>. Just make
-sure to secure access before making your application publically accessible.
-
-  # Make admin ui available under "/minion"
-  plugin 'Minion::Admin';
-
-To manage background worker processes with systemd, you can use a unit configuration file like this.
-
-  [Unit]
-  Description=My Mojolicious application workers
-  After=postgresql.service
-
-  [Service]
-  Type=simple
-  ExecStart=/home/sri/myapp/myapp.pl minion worker -m production
-  KillMode=process
-
-  [Install]
-  WantedBy=multi-user.target
-
-Every job can fail or succeed, but not get lost, the system is eventually consistent and will preserve job results for
-as long as you like, depending on L</"remove_after">. While individual workers can fail in the middle of processing a
-job, the system will detect this and ensure that no job is left in an uncertain state, depending on
-L</"missing_after">.
-
-=head1 GROWING
-
-And as your application grows, you can move tasks into application specific plugins.
-
-  package MyApp::Task::PokeMojo;
-  use Mojo::Base 'Mojolicious::Plugin', -signatures;
-
-  sub register ($self, $app, $config) {
-    $app->minion->add_task(poke_mojo => sub ($job, @args) {
-      $job->app->ua->get('mojolicious.org');
-      $job->app->log->debug('We have poked mojolicious.org for a visitor');
-    });
-  }
-
-  1;
-
-Which are loaded like any other plugin from your application.
-
-  # Mojolicious
-  $app->plugin('MyApp::Task::PokeMojo');
-
-  # Mojolicious::Lite
-  plugin 'MyApp::Task::PokeMojo';
-
-=head1 TASK CLASSES
-
-For even more flexibility you can also move tasks into dedicated classes. Allowing the use of Perl features such as
-inheritance and roles. But be aware that support for task classes is still B<EXPERIMENTAL> and might change without
-warning!
-
-  package MyApp::Task::PokeMojo;
-  use Mojo::Base 'Minion::Job', -signatures;
-
-  sub run ($self, @args) {
-    $self->app->ua->get('mojolicious.org');
-    $self->app->log->debug('We have poked mojolicious.org for a visitor');
-  }
-
-  1;
-
-Task classes are registered just like any other task with L</"add_task"> and you can even register the same class with
-multiple names.
-
-  $minion->add_task(poke_mojo => 'MyApp::Task::PokeMojo');
+Take a look at our excellent documentation in L<Minion::Guide>!
 
 =head1 EXAMPLES
 
@@ -1265,6 +1151,7 @@ This program is free software, you can redistribute it and/or modify it under th
 
 =head1 SEE ALSO
 
-L<https://github.com/mojolicious/minion>, L<https://minion.pm>, L<Mojolicious::Guides>, L<https://mojolicious.org>.
+L<https://github.com/mojolicious/minion>, L<Minion::Guide>, L<https://minion.pm>, L<Mojolicious::Guides>,
+L<https://mojolicious.org>.
 
 =cut
