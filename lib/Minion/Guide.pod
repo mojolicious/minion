@@ -109,8 +109,9 @@ L<Minion> has many great features. This section is still very incomplete, but wi
 
 =head2 Priorities
 
-Jobs with a higher priority get performed first. The default priority is C<0>. Priorities can be positive or negative,
-but should be in the range between C<100> and C<-100>.
+The priority is selected when a job is enqueued with L<Minion/"enqueue">. Jobs with a higher priority get performed
+first, the default priority is C<0>. Priorities can be positive or negative, but should be in the range between C<100>
+and C<-100>.
 
   # Default priority
   $minion->enqueue('check_links', ['https://mojolicious.org']);
@@ -121,7 +122,7 @@ but should be in the range between C<100> and C<-100>.
   # Low priority
   $minion->enqueue('check_links', ['https://mojolicious.org'], {priority => -30});
 
-The priority of any job can be changed with L<Minion::Job/"retry">.
+To raise or lower the priority of a job you can use L<Minion::Job/"retry">.
 
   $job->retry({priority => 50});
 
