@@ -1226,11 +1226,13 @@ Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
 
 Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
 
-=head1 AUTHOR
+=head1 AUTHORS
+
+=head2 Project Founder
 
 Sebastian Riedel, C<sri@cpan.org>.
 
-=head1 CREDITS
+=head2 Contributors
 
 In alphabetical order:
 
