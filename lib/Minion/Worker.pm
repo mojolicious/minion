@@ -373,6 +373,11 @@ Register worker or send heartbeat to show that this worker is still alive.
 
 Run worker and wait for L</"WORKER SIGNALS">.
 
+  # Start a worker for a special named queue
+  my $worker = $minion->worker;
+  $worker->status->{queues} = ['important'];
+  $worker->run;
+
 These L</"status"> options are currently available:
 
 =over 2
