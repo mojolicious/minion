@@ -267,7 +267,7 @@ Which are loaded like any other plugin from your application.
   # Mojolicious::Lite
   plugin 'MyApp::Task::PokeMojo';
 
-=head1 Task classes
+=head2 Task classes
 
 For more flexibility, or if you are using L<Minion> as a standalone job queue, you can also move tasks into dedicated
 classes. Allowing the use of Perl features such as inheritance and roles. But be aware that support for task classes is
