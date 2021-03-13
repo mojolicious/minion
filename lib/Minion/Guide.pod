@@ -153,7 +153,7 @@ You can use L<Minion::Job/"retry"> to raise or lower the priority of a job.
 =head2 Job results
 
 The result of a job has two parts. First there is its state, which can be C<finished> for a successfully processed job,
-and C<failed> for the opposite. And second there's a C<result> data structure, that may be C<undef>, a string, a hash
+and C<failed> for the opposite. And second there's a C<result> data structure, that may be C<undef>, a scalar, a hash
 reference, or an array reference. You can check both at any time in the life cycle of a job with L<Minion/"job">, all
 you need is the job id.
 
@@ -168,7 +168,7 @@ manually with L<"finish" in Minion::Job|Minion::Job/"finish1">.
 
   $minion->add_job(job_with_result => sub ($job) {
     sleep 5;
-    $job->result({message => 'This job should have taken about 5 seconds'});
+    $job->finish({message => 'This job should have taken about 5 seconds'});
   });
 
 For jobs that C<failed> due to an exception, that exception will be assigned as C<result>.
@@ -187,6 +187,37 @@ But jobs can also fail manually with L<Minion::Job/"fail">.
 
 Retrieving job results is of course completely optional, and it is very common to have jobs where the result is
 unimportant.
+
+=head2 Job progress
+
+Progress information and other job metadata can be stored in notes at any time during the life cycle of a job with
+L<Minion::Job/"note">. The metadata can be arbitrary data strucutres constructed with scalars, hash references and array
+references.
+
+  $minion->add_job(job_with_progress => sub ($job) {
+    sleep 1;
+    $job->note(progress => '25%');
+    sleep 1;
+    $job->note(progress => '50%');
+    sleep 1;
+    $job->note(progress => '75%');
+    sleep 1;
+    $job->note(progress => '100%');
+  });
+
+Notes, similar to job results, can be retrieved with L<Minion/"job">, all you need is the job id.
+
+  # Get job metadata
+  my $progress = $minion->job($job_id)->info->{notes}{progress};
+
+You can also use notes to store arbitrary metadata with new jobs when you create them with
+L<"enqueue" in Minion|Minion/"enqueue1">.
+
+  # Create job with metadata
+  $minion->enqueue('job_with_progress', [], {notes => {progress => 0, something_else => [1, 2, 3]}});
+
+The admin ui provided by L<Mojolicious::Plugin::Minion::Admin> allows searching for jobs containing a certain note, so
+you can also use them to tag jobs.
 
 =head2 Delayed jobs
 

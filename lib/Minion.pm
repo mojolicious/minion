@@ -499,7 +499,7 @@ Get L<Minion::Job> object without making any changes to the actual job or return
   my $state = $minion->job($id)->info->{state};
 
   # Get job metadata
-  my $progress = $minion->$job($id)->info->{notes}{progress};
+  my $progress = $minion->job($id)->info->{notes}{progress};
 
   # Get job result
   my $result = $minion->job($id)->info->{result};
