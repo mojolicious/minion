@@ -1,5 +1,6 @@
 
 10.20  2021-03-13
+  - Removed experimental status from expiring jobs feature.
   - Added Minion::Guide.
   - Improved admin ui design.
 

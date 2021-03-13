@@ -26,6 +26,10 @@ HTTP downloads, building tarballs, warming caches and basically everything else 
   +- Mojo::Server::Daemon [4]                        +--------------+                     |- Minion::Job [4]
                                                                                           +- Minion::Job [5]
 
+They are not to be confused with time based job schedulers, such as cron or systemd timers. Both serve very different
+purposes, and cron jobs are in fact commonly used to enqueue L<Minion> jobs that need to follow a schedule. For example
+to perform regular maintenance tasks.
+
 =head2 Mojolicous
 
 You can use L<Minion> as a standalone job queue or integrate it into L<Mojolicious> applications with the plugin
@@ -96,12 +100,29 @@ To manage background worker processes with systemd, you can use a unit configura
 
 =head2 Consistency
 
-Every job can fail or succeed, but not get lost, the system is eventually consistent and will preserve job results for
-as long as you like, depending on L<Minion/"remove_after">. While individual workers can fail in the middle of
-processing a job, the system will detect this and ensure that no job is left in an uncertain state, depending on
-L<Minion/"missing_after">. Jobs that do not get processed after a certain amount of time, depending on
-L<Minion/"stuck_after">, will be considered stuck and fail automatically. So an admin can take a look and resolve the
-issue.
+Every new job starts out as C<incative>, then progresses to C<active> when it is dequeued by a worker, and finally ends
+up as C<finished> or C<failed>, depending on its result. Every C<failed> job can then be retried to progress back to the
+C<inactive> state and start all over again.
+
+                                                      +----------+
+                                                      |          |
+                                             +----->  | finished |
+   +----------+            +--------+        |        |          |
+   |          |            |        |        |        +----------+
+   | inactive |  ------->  | active |  ------+
+   |          |            |        |        |        +----------+
+   +----------+            +--------+        |        |          |
+                                             +----->  |  failed  |  -----+
+        ^                                             |          |       |
+        |                                             +----------+       |
+        |                                                                |
+        +----------------------------------------------------------------+
+
+The system is eventually consistent and will preserve job results for as long as you like, depending on
+L<Minion/"remove_after">. While individual workers can fail in the middle of processing a job, the system will detect
+this and ensure that no job is left in an uncertain state, depending on L<Minion/"missing_after">. Jobs that do not get
+processed after a certain amount of time, depending on L<Minion/"stuck_after">, will be considered stuck and fail
+automatically. So an admin can take a look and resolve the issue.
 
 =head1 FEATURES
 
@@ -109,9 +130,9 @@ L<Minion> has many great features. This section is still very incomplete, but wi
 
 =head2 Priorities
 
-The priority is selected when a job is enqueued with L<"enqueue" in Minion|Minion/"enqueue1">. Jobs with a higher
-priority get performed first, the default priority is C<0>. Priorities can be positive or negative, but should be in the
-range between C<100> and C<-100>.
+Every job enqueued with L<"enqueue" in Minion|Minion/"enqueue1"> has a priority. Jobs with a higher priority get
+performed first, the default priority is C<0>. Priorities can be positive or negative, but should be in the range
+between C<100> and C<-100>.
 
   # Default priority
   $minion->enqueue('check_links', ['https://mojolicious.org']);
@@ -122,9 +143,68 @@ range between C<100> and C<-100>.
   # Low priority
   $minion->enqueue('check_links', ['https://mojolicious.org'], {priority => -30});
 
-To raise or lower the priority of a job you can use L<Minion::Job/"retry">.
+You can use L<Minion::Job/"retry"> to raise or lower the priority of a job.
 
   $job->retry({priority => 50});
+
+=head2 Job results
+
+The result of a job has two parts. First there is its state, which can be C<finished> for a successfully processed job,
+and C<failed> for the opposite. And second there's a C<result> data structure, that may be C<undef>, a string, a hash
+reference, or an array reference. You can check both at any time in the life cycle of a job with L<Minion/"job">, all
+you need is the job id.
+
+  # Check job state
+  my $state = $minion->job($job_id)->info->{state};
+
+  # Get job result
+  my $result = $minion->job($job_id)->info->{result};
+
+While the C<state> will be assigned automatically by L<Minion>, the C<result> for C<finished> jobs is usually assigned
+manually with L<"finish" in Minion::Job|Minion::Job/"finish1">.
+
+  $minion->add_job(job_with_result => sub ($job) {
+    sleep 5;
+    $job->result({message => 'This job should have taken about 5 seconds'});
+  });
+
+For jobs that C<failed> due to an exception, that exception will be assigned as C<result>.
+
+  $minion->add_job(job_that_fails => sub ($job) {
+    sleep 5;
+    die 'This job should always fail after 5 seconds';
+  });
+
+But jobs can also fail manually with L<Minion::Job/"fail">.
+
+  $minion->add_job(job_that_fails_with_result => sub ($job) {
+    sleep 5;
+    $job->fail({errors => ['This job should fail after 5 seconds']});
+  });
+
+=head2 Delayed jobs
+
+The C<delay> option of L<"enqueue" in Minion|Minion/"enqueue1"> can be used to delay the processing of a job by a
+certain amount of seconds (from now).
+
+  # Job will not be processed for 60 seconds
+  $minion->enqueue('check_links', ['https://mojolicious.org'], {delay => 20});
+
+You can use L<Minion::Job/"retry"> to change the delay.
+
+  $job->retry({delay => 10});
+
+=head2 Expiring jobs
+
+The C<expire> option of L<"enqueue" in Minion|Minion/"enqueue1"> can be used to limit for how many seconds (from now) a
+job should be valid before it expires and gets deleted from the queue.
+
+  # Job will vanish if it is not dequeued within 60 seconds
+  $minion->enqueue('check_links', ['https://mojolicious.org'], {expire => 60});
+
+You can use L<Minion::Job/"retry"> to reset the expiration time.
+
+  $job->retry({expire => 30});
 
 =head2 Task plugins
 
