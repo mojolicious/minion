@@ -119,10 +119,13 @@ C<inactive> state and start all over again.
         +----------------------------------------------------------------+
 
 The system is eventually consistent and will preserve job results for as long as you like, depending on
-L<Minion/"remove_after">. While individual workers can fail in the middle of processing a job, the system will detect
-this and ensure that no job is left in an uncertain state, depending on L<Minion/"missing_after">. Jobs that do not get
-processed after a certain amount of time, depending on L<Minion/"stuck_after">, will be considered stuck and fail
-automatically. So an admin can take a look and resolve the issue.
+L<Minion/"remove_after">. But be aware that C<failed> results are presrved indefinitely, and need to be manually removed
+by an administrator if they are out of automatic retries.
+
+While individual workers can fail in the middle of processing a job, the system will detect this and ensure that no job
+is left in an uncertain state, depending on L<Minion/"missing_after">. Jobs that do not get processed after a certain
+amount of time, depending on L<Minion/"stuck_after">, will be considered stuck and fail automatically. So an admin can
+take a look and resolve the issue.
 
 =head1 FEATURES
 
@@ -181,6 +184,9 @@ But jobs can also fail manually with L<Minion::Job/"fail">.
     sleep 5;
     $job->fail({errors => ['This job should fail after 5 seconds']});
   });
+
+Retrieving job results is of course completely optional, and it is very common to have jobs where the result is
+unimportant.
 
 =head2 Delayed jobs
 
