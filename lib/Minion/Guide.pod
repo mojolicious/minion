@@ -243,6 +243,35 @@ You can use L<Minion::Job/"retry"> to reset the expiration time.
 
   $job->retry({expire => 30});
 
+=head2 Custom workers
+
+In cases where you don't want to use L<Minion> together with L<Mojolicious>, you can just skip the plugins and write
+your own worker scripts.
+
+  #!/usr/bin/perl
+  use strict;
+  use warnings;
+
+  use Minion;
+
+  # Connect to backend
+  my $minion = Minion->new(Pg => 'postgresql://postgres@/test');
+
+  # Add tasks
+  $minion->add_task(something_slow => sub ($job, @args) {
+    sleep 5;
+    say 'This is a background worker process.';
+  });
+
+  # Start a worker to perform up to 12 jobs concurrently
+  my $worker = $minion->worker;
+  $worker->status->{jobs} = 12;
+  $worker->run;
+
+The method L<Minion::Worker/"run"> contains all features you would expect from a L<Minion> worker and can be easily
+configured with L<Minion::Worker/"status">. For even more customization options L<Minion::Worker> also has a very rich
+low level API you could for example use to build workers that do not fork at all.
+
 =head2 Task plugins
 
 As your L<Mojolicious> application grows, you can move tasks into application specific plugins.
