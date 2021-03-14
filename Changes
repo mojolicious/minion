@@ -2,7 +2,7 @@
 10.20  2021-03-13
   - Removed experimental status from expiring jobs feature.
   - Added Minion::Guide.
-  - Improved admin ui design.
+  - Improved admin ui and job command to use YAML::XS to make job information easier to read.
 
 10.19  2021-03-10
   - Improved admin ui to include search feature on all pages.
