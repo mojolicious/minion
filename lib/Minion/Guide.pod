@@ -166,21 +166,21 @@ you need is the job id.
 While the C<state> will be assigned automatically by L<Minion>, the C<result> for C<finished> jobs is usually assigned
 manually with L<"finish" in Minion::Job|Minion::Job/"finish1">.
 
-  $minion->add_job(job_with_result => sub ($job) {
+  $minion->add_task(job_with_result => sub ($job) {
     sleep 5;
     $job->finish({message => 'This job should have taken about 5 seconds'});
   });
 
 For jobs that C<failed> due to an exception, that exception will be assigned as C<result>.
 
-  $minion->add_job(job_that_fails => sub ($job) {
+  $minion->add_task(job_that_fails => sub ($job) {
     sleep 5;
     die 'This job should always fail after 5 seconds';
   });
 
 But jobs can also fail manually with L<Minion::Job/"fail">.
 
-  $minion->add_job(job_that_fails_with_result => sub ($job) {
+  $minion->add_task(job_that_fails_with_result => sub ($job) {
     sleep 5;
     $job->fail({errors => ['This job should fail after 5 seconds']});
   });
@@ -194,7 +194,7 @@ Progress information and other job metadata can be stored in notes at any time d
 L<Minion::Job/"note">. The metadata can be arbitrary data strucutres constructed with scalars, hash references and array
 references.
 
-  $minion->add_job(job_with_progress => sub ($job) {
+  $minion->add_task(job_with_progress => sub ($job) {
     sleep 1;
     $job->note(progress => '25%');
     sleep 1;
