@@ -28,6 +28,6 @@ WriteMakefile(
       x_IRC => {url => 'irc://chat.freenode.net/#mojo', web => 'https://webchat.freenode.net/#mojo'}
     },
   },
-  PREREQ_PM => {Mojolicious => '9.0', 'YAML::XS' => 0},
+  PREREQ_PM => {Mojolicious => '9.0', 'YAML::XS' => '0.67'},
   test      => {TESTS       => 't/*.t t/*/*.t'}
 );

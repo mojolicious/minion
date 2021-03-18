@@ -1,5 +1,6 @@
 
-10.21  2021-03-14
+10.21  2021-03-18
+  - Fixed YAML::XS dependency.
 
 10.20  2021-03-13
   - Removed experimental status from expiring jobs feature.
