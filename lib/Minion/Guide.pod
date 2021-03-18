@@ -30,7 +30,7 @@ They are not to be confused with time based job schedulers, such as cron or syst
 purposes, and cron jobs are in fact commonly used to enqueue L<Minion> jobs that need to follow a schedule. For example
 to perform regular maintenance tasks.
 
-=head2 Mojolicous
+=head2 Mojolicious
 
 You can use L<Minion> as a standalone job queue or integrate it into L<Mojolicious> applications with the plugin
 L<Mojolicious::Plugin::Minion>.
