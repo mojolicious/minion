@@ -188,6 +188,27 @@ But jobs can also fail manually with L<Minion::Job/"fail">.
 Retrieving job results is of course completely optional, and it is very common to have jobs where the result is
 unimportant.
 
+=head2 Named queues
+
+Each job can be enqueued with L<"enqueue" in Minion|Minion/"enqueue1"> into arbitrarily named queues, independent of all
+their other properties. This is commonly used to have separate classes of workers, for example to ensure that free
+customers of your web service do not negatively affect your service level agreements with paying customers. The default
+named queue is C<default>, but aside from that it has no special properties.
+
+  # Use "default" queue
+  $minion->enqueue('check_links', ['https://mojolicious.org']);
+
+  # Use custom "important" queue
+  $minion->enqueue('check_links', ['https://mojolicious.org'], {queue => 'important'});
+
+For every named queue you can start as many workers as you like with the command L<Minion::Command::minion::worker>. And
+each worker can process jobs from multiple named queues. So your workers can have overlapping responsibilities.
+
+  $ ./myapp.pl minion worker -q default -q important
+
+There is one special named queue called C<minion_foreground> that you should avoid using directly. It is reserved for
+debugging jobs with L<Minion/"foreground">.
+
 =head2 Job progress
 
 Progress information and other job metadata can be stored in notes at any time during the life cycle of a job with
