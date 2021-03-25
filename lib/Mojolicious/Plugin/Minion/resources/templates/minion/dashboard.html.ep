@@ -2,9 +2,9 @@
 
 % content_for head => begin
   <script>
-    var chart
-    var historychart
-    var backlog = 0
+    let chart
+    let historychart
+    let backlog = 0
     function pageStats(data) {
       $('.minion-stats-uptime').text(Math.round(data.uptime / 86400))
       $('.minion-stats-delayed-jobs').text(data.delayed_jobs)
