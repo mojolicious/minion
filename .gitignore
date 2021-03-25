@@ -11,3 +11,5 @@
 !MANIFEST.SKIP
 /META.*
 /MYMETA.*
+node_modules
+package-lock.json
