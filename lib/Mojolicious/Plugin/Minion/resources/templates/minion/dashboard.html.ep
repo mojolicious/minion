@@ -2,15 +2,15 @@
 
 % content_for head => begin
   <script>
-    let chart
-    let historychart
-    let backlog = 0
+    let chart;
+    let historychart;
+    let backlog = 0;
     function pageStats(data) {
-      $('.minion-stats-uptime').text(Math.round(data.uptime / 86400))
-      $('.minion-stats-delayed-jobs').text(data.delayed_jobs)
-      const proc = data.enqueued_jobs - (data.inactive_jobs + data.active_jobs)
-      $('.minion-stats-processed-jobs').text(proc)
-      backlog = data.active_jobs + (data.inactive_jobs - data.delayed_jobs)
+      $('.minion-stats-uptime').text(Math.round(data.uptime / 86400));
+      $('.minion-stats-delayed-jobs').text(data.delayed_jobs);
+      const proc = data.enqueued_jobs - (data.inactive_jobs + data.active_jobs);
+      $('.minion-stats-processed-jobs').text(proc);
+      backlog = data.active_jobs + (data.inactive_jobs - data.delayed_jobs);
     }
     function updateBacklogChart() {
       if (chart == null) {
@@ -24,22 +24,22 @@
             label: 'Inactive Jobs',
             values: [{time: new Date().getTime(), y: backlog}]
           }]
-        })
+        });
       }
       else {
-        chart.push([{time: new Date().getTime(), y: backlog}])
+        chart.push([{time: new Date().getTime(), y: backlog}]);
       }
-      setTimeout(updateBacklogChart, 1000)
+      setTimeout(updateBacklogChart, 1000);
     }
     function updateHistoryChart() {
       $.get('<%= url_for 'minion_history' %>').done(function (data) {
-        let hour
-        let historylog = []
+        let hour;
+        let historylog = [];
         for (hour = 0; hour < data.daily.length; hour++) { 
           historylog.push({
             x: new Date(data.daily[hour].epoch * 1000).getTime(),
             y: data.daily[hour].finished_jobs + data.daily[hour].failed_jobs
-          })
+          });
         }
         if (historychart == null) {
           historychart = $('#history-chart').epoch({
@@ -51,16 +51,16 @@
               label: 'processed',
               values: historylog
             }]
-          })
+          });
         }
         else { historychart.update([{ label: 'processed', values: historylog }]) }
-        setTimeout(updateHistoryChart, 1000 * 60 * 10)
+        setTimeout(updateHistoryChart, 1000 * 60 * 10);
       }).fail(() => { setTimeout(updateHistoryChart, 1000 * 60) })
     }
     $(() => {
-      updateBacklogChart()
-      updateHistoryChart()
-    })
+      updateBacklogChart();
+      updateHistoryChart();
+    });
   </script>
 % end
 
