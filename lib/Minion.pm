@@ -213,8 +213,7 @@ Minion - Job queue
 =begin html
 
 <p>
-  <img alt="Screenshot" src="https://raw.github.com/mojolicious/minion/master/examples/admin.png?raw=true"    
-    width="600px">
+  <img alt="Screenshot" src="https://raw.github.com/mojolicious/minion/main/examples/admin.png?raw=true" width="600px">
 </p>
 
 =end html
@@ -234,7 +233,7 @@ Take a look at our excellent documentation in L<Minion::Guide>!
 =head1 EXAMPLES
 
 This distribution also contains a great example application you can use for inspiration. The L<link
-checker|https://github.com/mojolicious/minion/tree/master/examples/linkcheck> will show you how to integrate background
+checker|https://github.com/mojolicious/minion/tree/main/examples/linkcheck> will show you how to integrate background
 jobs into well-structured L<Mojolicious> applications.
 
 =head1 EVENTS

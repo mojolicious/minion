@@ -1,7 +1,7 @@
 
 # Minion [![](https://github.com/mojolicious/minion/workflows/linux/badge.svg)](https://github.com/mojolicious/minion/actions)
 
-![Screenshot](https://raw.github.com/mojolicious/minion/master/examples/admin.png?raw=true)
+![Screenshot](https://raw.github.com/mojolicious/minion/main/examples/admin.png?raw=true)
 
   A high performance job queue for the Perl programming language, with support for multiple named queues, priorities,
   high priority fast lane, delayed jobs, job dependencies, job progress, job results, retries with backoff, rate
