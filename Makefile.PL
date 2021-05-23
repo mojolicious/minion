@@ -25,7 +25,7 @@ WriteMakefile(
         url  => 'https://github.com/mojolicious/minion.git',
         web  => 'https://github.com/mojolicious/minion',
       },
-      x_IRC => {url => 'irc://chat.freenode.net/#mojo', web => 'https://webchat.freenode.net/#mojo'}
+      x_IRC => {url => 'irc://irc.libera.chat/#mojo', web => 'https://kiwiirc.com/nextclient/#ircs://irc.libera.chat/#mojo'}
     },
   },
   PREREQ_PM => {Mojolicious => '9.0', 'YAML::XS' => '0.67'},
