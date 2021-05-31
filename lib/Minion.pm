@@ -126,7 +126,7 @@ sub result_p {
   return $promise;
 }
 
-sub stats  { shift->backend->stats }
+sub stats  { shift->backend->stats(@_) }
 sub unlock { shift->backend->unlock(@_) }
 
 sub worker {

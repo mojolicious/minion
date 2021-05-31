@@ -405,7 +405,7 @@ subtest 'Stats' => sub {
   is $minion->stats->{inactive_workers}, 1, 'one inactive worker';
   $minion->enqueue('fail');
   is $minion->stats->{enqueued_jobs}, 1, 'one enqueued job';
-  $minion->enqueue('fail');
+  $minion->enqueue('fail' => [] => {queue => 'queue1'});
   is $minion->stats->{enqueued_jobs}, 2, 'two enqueued jobs';
   is $minion->stats->{inactive_jobs}, 2, 'two inactive jobs';
   ok my $job = $worker->dequeue(0), 'job dequeued';
@@ -414,11 +414,19 @@ subtest 'Stats' => sub {
   is $stats->{active_jobs},    1, 'one active job';
   is $stats->{inactive_jobs},  1, 'one inactive job';
   $minion->enqueue('fail');
-  ok my $job2 = $worker->dequeue(0), 'job dequeued';
+  ok my $job2 = $worker->dequeue(0, {queues => ['queue1']}), 'job dequeued in queue1';
   $stats = $minion->stats;
   is $stats->{active_workers}, 1, 'one active worker';
   is $stats->{active_jobs},    2, 'two active jobs';
   is $stats->{inactive_jobs},  1, 'one inactive job';
+  $stats = $minion->stats('default');
+  is $stats->{active_workers}, 1, 'one active worker in default';
+  is $stats->{active_jobs},    1, 'one active jobs in default';
+  is $stats->{inactive_jobs},  1, 'one inactive job in default';
+  $stats = $minion->stats('queue1');
+  is $stats->{active_workers}, 1, 'one active worker in queue1';
+  is $stats->{active_jobs},    1, 'one active jobs in queue1';
+  is $stats->{inactive_jobs},  0, 'no inactive jobs in queue1';
   ok $job2->finish, 'job finished';
   ok $job->finish,  'job finished';
   is $minion->stats->{finished_jobs}, 2, 'two finished jobs';
@@ -512,8 +520,11 @@ subtest 'List jobs' => sub {
   is $batch->[0]{queue}, 'default', 'right queue';
   is $batch->[1]{queue}, 'default', 'right queue';
   is $batch->[2]{queue}, 'default', 'right queue';
-  is $batch->[3]{queue}, 'default', 'right queue';
-  ok !$batch->[4], 'no more results';
+  ok !$batch->[3], 'no more results';
+
+  $batch = $minion->backend->list_jobs(0, 10, {queues => ['queue1']})->{jobs};
+  is $batch->[0]{queue}, 'queue1', 'right queue';
+  ok !$batch->[1], 'no more results';
 
   my $id2 = $minion->enqueue('test' => [] => {notes => {is_test => 1}});
   $batch = $minion->backend->list_jobs(0, 10, {notes => ['is_test']})->{jobs};
