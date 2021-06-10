@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-Minion::Guide - An introducion to Minion
+Minion::Guide - An introduction to Minion
 
 =head1 OVERVIEW
 
