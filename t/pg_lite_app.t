@@ -48,7 +48,7 @@ my $t = Test::Mojo->new;
 
 subtest 'Perform jobs automatically' => sub {
   $t->get_ok('/add' => form => {first => 1, second => 2})->status_is(200);
-  $t->app->minion->perform_jobs({queues => ['test']});
+  $t->app->minion->perform_jobs_in_foreground({queues => ['test']});
   $t->get_ok('/result' => form => {id    => $t->tx->res->text})->status_is(200)->content_is('3');
   $t->get_ok('/add'    => form => {first => 2, second => 3})->status_is(200);
   my $first = $t->tx->res->text;

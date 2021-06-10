@@ -1326,6 +1326,29 @@ subtest 'Custom task classes' => sub {
   $worker->unregister;
 };
 
+subtest 'perform_jobs/perform_jobs_in_foreground' => sub {
+  $minion->add_task(
+    record_pid => sub {
+      my $job = shift;
+      $job->finish({pid => $$});
+    }
+  );
+
+  my $id = $minion->enqueue('record_pid');
+  $minion->perform_jobs;
+  my $job = $minion->job($id);
+  is $job->task, 'record_pid', 'right task';
+  is $job->info->{state}, 'finished', 'right state';
+  isnt $job->info->{result}{pid}, $$, 'different process id';
+
+  my $id2 = $minion->enqueue('record_pid');
+  $minion->perform_jobs_in_foreground;
+  my $job2 = $minion->job($id2);
+  is $job2->task, 'record_pid', 'right task';
+  is $job2->info->{state}, 'finished', 'right state';
+  is $job2->info->{result}{pid}, $$, 'same process id';
+};
+
 subtest 'Foreground' => sub {
   my $id  = $minion->enqueue(test => [] => {attempts => 2});
   my $id2 = $minion->enqueue('test');
