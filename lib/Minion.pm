@@ -168,11 +168,9 @@ sub _perform_jobs {
 
   my $worker = $minion->worker;
   while (my $job = $worker->register->dequeue(0, $options)) {
-    if (!$foreground) { $job->perform }
-    else {
-      my $err = $job->execute;
-      defined $err ? $job->fail($err) : $job->finish;
-    }
+    if    (!$foreground)                     { $job->perform }
+    elsif (defined(my $err = $job->execute)) { $job->fail($err) }
+    else                                     { $job->finish }
   }
   $worker->unregister;
 }

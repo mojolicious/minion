@@ -1333,6 +1333,7 @@ subtest 'perform_jobs/perform_jobs_in_foreground' => sub {
       $job->finish({pid => $$});
     }
   );
+  $minion->add_task(perform_fails => sub { die 'Just a test' });
 
   my $id = $minion->enqueue('record_pid');
   $minion->perform_jobs;
@@ -1342,11 +1343,21 @@ subtest 'perform_jobs/perform_jobs_in_foreground' => sub {
   isnt $job->info->{result}{pid}, $$, 'different process id';
 
   my $id2 = $minion->enqueue('record_pid');
+  my $id3 = $minion->enqueue('perform_fails');
+  my $id4 = $minion->enqueue('record_pid');
   $minion->perform_jobs_in_foreground;
   my $job2 = $minion->job($id2);
   is $job2->task, 'record_pid', 'right task';
   is $job2->info->{state}, 'finished', 'right state';
   is $job2->info->{result}{pid}, $$, 'same process id';
+  my $job3 = $minion->job($id3);
+  is $job3->task, 'perform_fails', 'right task';
+  is $job3->info->{state},    'failed',        'right state';
+  like $job3->info->{result}, qr/Just a test/, 'right error';
+  my $job4 = $minion->job($id4);
+  is $job4->task, 'record_pid', 'right task';
+  is $job4->info->{state}, 'finished', 'right state';
+  is $job4->info->{result}{pid}, $$, 'same process id';
 };
 
 subtest 'Foreground' => sub {
