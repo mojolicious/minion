@@ -2,7 +2,7 @@
 10.23  2021-06-11
 
 10.22  2021-06-10
-  - Add perform_jobs_in_foreground method to Minion.
+  - Added perform_jobs_in_foreground method to Minion.
 
 10.21  2021-03-20
   - Fixed YAML::XS dependency.

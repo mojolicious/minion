@@ -777,6 +777,18 @@ These options are currently available:
 
 =over 2
 
+=item id
+
+  id => '10023'
+
+Dequeue a specific job.
+
+=item min_priority
+
+  min_priority => 3
+
+Do not dequeue jobs with a lower priority.
+
 =item queues
 
   queues => ['important']
