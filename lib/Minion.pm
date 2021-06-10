@@ -785,6 +785,13 @@ One or more queues to dequeue jobs from, defaults to C<default>.
 
 =back
 
+=head2 perform_jobs_in_foreground
+
+  $minion->perform_jobs_in_foreground;
+  $minion->perform_jobs_in_foreground({queues => ['important']});
+
+Same as L</"perform_jobs">, but all jobs are performed in the current process, without spawning new processes.
+
 =head2 repair
 
   $minion = $minion->repair;
@@ -814,13 +821,6 @@ Reset everything.
 Reset only locks.
 
 =back
-
-=head2 perform_jobs_in_foreground
-
-  $minion->perform_jobs_in_foreground;
-  $minion->perform_jobs_in_foreground({queues => ['important']});
-
-Same as L</"perform_jobs">, but all jobs are performed in the current process, without spawning new processes.
 
 =head2 result_p
 
