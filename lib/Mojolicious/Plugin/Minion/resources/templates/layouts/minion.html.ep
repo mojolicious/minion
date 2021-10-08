@@ -3,7 +3,6 @@
     <title><%= title() || 'Minion' %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     %= javascript '/mojo/jquery/jquery.js'
-    %= javascript '/minion/popper/popper.js'
     %= javascript '/minion/bootstrap/bootstrap.js'
     %= stylesheet '/minion/bootstrap/bootstrap.css'
     %= javascript '/minion/moment/moment.js'
