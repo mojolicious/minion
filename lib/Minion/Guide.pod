@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-Minion::Guide - An introducion to Minion
+Minion::Guide - An introduction to Minion
 
 =head1 OVERVIEW
 
@@ -77,7 +77,7 @@ Jobs can be managed right from the command line with L<Minion::Command::minion::
   $ ./myapp.pl minion job
 
 You can also add an admin ui to your application by loading the plugin L<Mojolicious::Plugin::Minion::Admin>. Just make
-sure to secure access before making your application publically accessible.
+sure to secure access before making your application publicly accessible.
 
   # Make admin ui available under "/minion"
   plugin 'Minion::Admin';
@@ -100,7 +100,7 @@ To manage background worker processes with systemd, you can use a unit configura
 
 =head2 Consistency
 
-Every new job starts out as C<incative>, then progresses to C<active> when it is dequeued by a worker, and finally ends
+Every new job starts out as C<inactive>, then progresses to C<active> when it is dequeued by a worker, and finally ends
 up as C<finished> or C<failed>, depending on its result. Every C<failed> job can then be retried to progress back to the
 C<inactive> state and start all over again.
 
@@ -119,8 +119,8 @@ C<inactive> state and start all over again.
         +----------------------------------------------------------------+
 
 The system is eventually consistent and will preserve job results for as long as you like, depending on
-L<Minion/"remove_after">. But be aware that C<failed> results are presrved indefinitely, and need to be manually removed
-by an administrator if they are out of automatic retries.
+L<Minion/"remove_after">. But be aware that C<failed> results are preserved indefinitely, and need to be manually
+removed by an administrator if they are out of automatic retries.
 
 While individual workers can fail in the middle of processing a job, the system will detect this and ensure that no job
 is left in an uncertain state, depending on L<Minion/"missing_after">. Jobs that do not get processed after a certain
@@ -212,7 +212,7 @@ debugging jobs with L<Minion/"foreground">.
 =head2 Job progress
 
 Progress information and other job metadata can be stored in notes at any time during the life cycle of a job with
-L<Minion::Job/"note">. The metadata can be arbitrary data strucutres constructed with scalars, hash references and array
+L<Minion::Job/"note">. The metadata can be arbitrary data structures constructed with scalars, hash references and array
 references.
 
   $minion->add_task(job_with_progress => sub ($job) {
