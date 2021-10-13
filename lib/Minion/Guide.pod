@@ -101,8 +101,8 @@ To manage background worker processes with systemd, you can use a unit configura
 =head2 Consistency
 
 Every new job starts out as C<inactive>, then progresses to C<active> when it is dequeued by a worker, and finally ends
-up as C<finished> or C<failed>, depending on its result. Every C<failed> job can then be retried to progress back to the
-C<inactive> state and start all over again.
+up as C<finished> or C<failed>, depending on its result. Every C<failed> job can then be retried to progress back to 
+the C<inactive> state and start all over again.
 
                                                       +----------+
                                                       |          |
@@ -119,8 +119,8 @@ C<inactive> state and start all over again.
         +----------------------------------------------------------------+
 
 The system is eventually consistent and will preserve job results for as long as you like, depending on
-L<Minion/"remove_after">. But be aware that C<failed> results are preserved indefinitely, and need to be manually removed
-by an administrator if they are out of automatic retries.
+L<Minion/"remove_after">. But be aware that C<failed> results are preserved indefinitely, and need to be manually
+removed by an administrator if they are out of automatic retries.
 
 While individual workers can fail in the middle of processing a job, the system will detect this and ensure that no job
 is left in an uncertain state, depending on L<Minion/"missing_after">. Jobs that do not get processed after a certain
@@ -190,8 +190,8 @@ unimportant.
 
 =head2 Named queues
 
-Each job can be enqueued with L<"enqueue" in Minion|Minion/"enqueue1"> into arbitrarily named queues, independent of all
-their other properties. This is commonly used to have separate classes of workers, for example to ensure that free
+Each job can be enqueued with L<"enqueue" in Minion|Minion/"enqueue1"> into arbitrarily named queues, independent of 
+all their other properties. This is commonly used to have separate classes of workers, for example to ensure that free
 customers of your web service do not negatively affect your service level agreements with paying customers. The default
 named queue is C<default>, but aside from that it has no special properties.
 
