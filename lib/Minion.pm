@@ -41,7 +41,7 @@ sub broadcast { shift->backend->broadcast(@_) }
 sub class_for_task {
   my ($self, $task) = @_;
   my $class = $self->tasks->{$task};
-  return !$class || ref $class ? 'Minion::Job' : $class;
+  return (!$class || ref $class) ? 'Minion::Job' : $class;
 }
 
 sub enqueue {
