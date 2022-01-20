@@ -180,10 +180,13 @@ sub repair {
 
   # Old jobs with no unresolved dependencies and expired jobs
   $db->query(
-    "DELETE FROM minion_jobs AS j
-     WHERE (finished <= NOW() - INTERVAL '1 second' * ? AND NOT EXISTS (
-       SELECT 1 FROM minion_jobs WHERE parents @> ARRAY[j.id] AND state != 'finished'
-     ) AND state = 'finished') OR (expires <= NOW() AND state = 'inactive')", $minion->remove_after
+    "DELETE FROM minion_jobs WHERE id IN (
+       SELECT j.id FROM minion_jobs AS j LEFT JOIN minion_jobs AS children
+         ON children.state != 'finished' AND ARRAY_LENGTH(children.parents, 1) > 0 AND j.id = ANY(children.parents)
+       WHERE j.state = 'finished' AND j.finished <= NOW() - INTERVAL '1 second' * ? AND children.id IS NULL
+       UNION ALL
+       SELECT id FROM minion_jobs WHERE state = 'inactive' AND expires <= NOW()
+    )", $minion->remove_after
   );
 
   # Jobs with missing worker (can be retried)

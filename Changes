@@ -1,5 +1,6 @@
 
-10.23  2021-06-11
+10.23  2022-01-20
+  - Improved repair performance in Minion::Backend::Pg.
 
 10.22  2021-06-10
   - Added perform_jobs_in_foreground method to Minion.
