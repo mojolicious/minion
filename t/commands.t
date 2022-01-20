@@ -6,8 +6,8 @@ subtest 'minion' => sub {
   require Minion::Command::minion;
   my $minion = Minion::Command::minion->new;
   ok $minion->description, 'has a description';
-  like $minion->message,   qr/minion/, 'has a message';
-  like $minion->hint,      qr/help/,   'has a hint';
+  like $minion->message, qr/minion/, 'has a message';
+  like $minion->hint,    qr/help/,   'has a hint';
 };
 
 subtest 'job' => sub {

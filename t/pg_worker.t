@@ -88,9 +88,9 @@ subtest 'Signals' => sub {
   is $status->{dequeue_timeout},    5,   'right value';
   is $status->{heartbeat_interval}, 300, 'right value';
   is $status->{jobs},               4,   'right value';
-  is_deeply $status->{queues},      ['default'], 'right structure';
-  is $status->{performed},          1, 'right value';
-  ok $status->{repair_interval},    'has a value';
+  is_deeply $status->{queues}, ['default'], 'right structure';
+  is $status->{performed}, 1, 'right value';
+  ok $status->{repair_interval}, 'has a value';
   is $status->{spare},              1, 'right value';
   is $status->{spare_min_priority}, 1, 'right value';
 };
