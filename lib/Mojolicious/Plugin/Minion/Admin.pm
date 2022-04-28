@@ -119,8 +119,13 @@ sub _manage_jobs {
   }
   elsif ($do eq 'remove') {
     my $fail = grep { $minion->job($_)->remove ? () : 1 } @$ids;
-    if   ($fail) { $c->flash(danger  => "Couldn't remove all jobs.") }
-    else         { $c->flash(success => 'All selected jobs removed.') }
+    if ($fail) { $c->flash(danger => "Couldn't remove all jobs.") }
+    else {
+      $c->flash(success => 'All selected jobs removed.');
+      my $id_list        = join ', ', @$ids;
+      my $remote_address = $c->tx->remote_address;
+      $c->log->debug(qq{Jobs removed by user "$remote_address": $id_list});
+    }
   }
   elsif ($do eq 'stop') {
     $minion->broadcast(stop => [$_]) for @$ids;
