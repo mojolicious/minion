@@ -1,4 +1,6 @@
 
+10.26  2022-06-25
+
 10.25  2022-06-24
   - Added workers field to stats methods in Minion and Minion::Backend::Pg.
 
