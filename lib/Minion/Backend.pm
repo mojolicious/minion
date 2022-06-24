@@ -801,6 +801,12 @@ Number of workers that are currently not processing a job.
 
 Uptime in seconds.
 
+=item workers
+
+  workers => 200;
+
+Number of registered workers.
+
 =back
 
 =head2 unlock

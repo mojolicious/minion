@@ -1,7 +1,7 @@
 package Minion::Backend::Pg;
 use Mojo::Base 'Minion::Backend';
 
-use Carp qw(croak);
+use Carp       qw(croak);
 use Mojo::File qw(path);
 use Mojo::IOLoop;
 use Mojo::Pg 4.0;
@@ -235,11 +235,11 @@ sub stats {
        (SELECT COUNT(*) FROM minion_locks WHERE expires > NOW()) AS active_locks,
        COUNT(DISTINCT worker) FILTER (WHERE state = 'active') AS active_workers,
        (SELECT CASE WHEN is_called THEN last_value ELSE 0 END FROM minion_jobs_id_seq) AS enqueued_jobs,
-       (SELECT COUNT(*) FROM minion_workers) AS inactive_workers,
+       (SELECT COUNT(*) FROM minion_workers) AS workers,
        EXTRACT(EPOCH FROM NOW() - PG_POSTMASTER_START_TIME()) AS uptime
      FROM minion_jobs"
   )->hash;
-  $stats->{inactive_workers} -= $stats->{active_workers};
+  $stats->{inactive_workers} = $stats->{workers} - $stats->{active_workers};
 
   return $stats;
 }
@@ -1040,6 +1040,12 @@ Number of workers that are currently not processing a job.
   uptime => 1000
 
 Uptime in seconds.
+
+=item workers
+
+  workers => 200;
+
+Number of registered workers.
 
 =back
 

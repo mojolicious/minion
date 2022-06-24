@@ -1,5 +1,6 @@
 
-10.25  2022-04-29
+10.25  2022-06-24
+  - Added workers field to stats methods in Minion and Minion::Backend::Pg.
 
 10.24  2022-04-28
   - Improved Mojolicious::Plugin::Minion::Admin to log whenever a job gets removed.

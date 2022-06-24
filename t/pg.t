@@ -13,7 +13,7 @@ use Minion;
 use Mojo::IOLoop;
 use Mojo::Promise;
 use Sys::Hostname qw(hostname);
-use Time::HiRes qw(usleep);
+use Time::HiRes   qw(usleep);
 
 # Isolate tests
 require Mojo::Pg;
@@ -390,6 +390,7 @@ subtest 'Stats' => sub {
   );
   $minion->add_task(fail => sub { die "Intentional failure!\n" });
   my $stats = $minion->stats;
+  is $stats->{workers},          0, 'no workers';
   is $stats->{active_workers},   0, 'no active workers';
   is $stats->{inactive_workers}, 0, 'no inactive workers';
   is $stats->{enqueued_jobs},    0, 'no enqueued jobs';
@@ -401,6 +402,7 @@ subtest 'Stats' => sub {
   is $stats->{active_locks},     0, 'no active locks';
   ok $stats->{uptime}, 'has uptime';
   my $worker = $minion->worker->register;
+  is $minion->stats->{workers},          1, 'one worker';
   is $minion->stats->{inactive_workers}, 1, 'one inactive worker';
   $minion->enqueue('fail');
   is $minion->stats->{enqueued_jobs}, 1, 'one enqueued job';
@@ -409,6 +411,7 @@ subtest 'Stats' => sub {
   is $minion->stats->{inactive_jobs}, 2, 'two inactive jobs';
   ok my $job = $worker->dequeue(0), 'job dequeued';
   $stats = $minion->stats;
+  is $stats->{workers},        1, 'one worker';
   is $stats->{active_workers}, 1, 'one active worker';
   is $stats->{active_jobs},    1, 'one active job';
   is $stats->{inactive_jobs},  1, 'one inactive job';
@@ -429,6 +432,7 @@ subtest 'Stats' => sub {
   ok $worker->dequeue(0)->finish(['works']), 'job finished';
   $worker->unregister;
   $stats = $minion->stats;
+  is $stats->{workers},          0, 'no workers';
   is $stats->{active_workers},   0, 'no active workers';
   is $stats->{inactive_workers}, 0, 'no inactive workers';
   is $stats->{active_jobs},      0, 'no active jobs';
