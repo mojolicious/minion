@@ -12,7 +12,7 @@ use Mojo::Loader qw(load_class);
 use Mojo::Promise;
 use Mojo::Server;
 use Mojo::Util qw(scope_guard steady_time);
-use YAML::XS qw(Dump);
+use YAML::XS   qw(Dump);
 
 has app => sub { $_[0]{app_ref} = Mojo::Server->new->build_app('Mojo::HelloWorld') }, weak => 1;
 has 'backend';
