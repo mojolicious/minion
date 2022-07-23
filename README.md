@@ -1,7 +1,7 @@
 
-# Minion [![](https://github.com/mojolicious/minion/workflows/linux/badge.svg)](https://github.com/mojolicious/minion/actions)
-
 ![Screenshot](https://raw.github.com/mojolicious/minion/main/examples/admin.png?raw=true)
+
+[![](https://github.com/mojolicious/minion/workflows/linux/badge.svg)](https://github.com/mojolicious/minion/actions)
 
 A high performance job queue for the Perl programming language. Also available for [Node.js](https://github.com/mojolicious/minion.js).
 
