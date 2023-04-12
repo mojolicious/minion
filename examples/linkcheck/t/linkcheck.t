@@ -4,7 +4,7 @@ use Test::More;
 
 # This test requires a PostgreSQL connection string for an existing database
 #
-#   TEST_ONLINE=postgres://tester:testing@/test script/linkcheck test
+#   TEST_ONLINE=postgres://tester:testing@/test prove t/*.t
 #
 plan skip_all => 'set TEST_ONLINE to enable this test' unless $ENV{TEST_ONLINE};
 
