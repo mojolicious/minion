@@ -24,4 +24,5 @@ jobs:
         run: |
           shopt -s extglob globstar nullglob
           export GLOBIGNORE=t/lib/MinionTest/SyntaxErrorTestTask.pm
-          perltidy --pro=.../.perltidyrc -b -bext='/' **/*.p[lm] **/*.t && git diff --exit-code
+          perltidy --assert-tidy --pro=.../.perltidyrc -b -bext='/' **/*.p[lm] **/*.t 
+
