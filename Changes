@@ -1,4 +1,6 @@
 
+10.27  2023-11-11
+
 10.26  2023-11-10
   - Added type information to worker status.
   - Improved workers by calling srand() after starting a new job process.
