@@ -1,6 +1,7 @@
 
-10.26  2023-02-03
+10.26  2023-11-10
   - Added type information to worker status.
+  - Improved workers by calling srand() after starting a new job process.
 
 10.25  2022-06-24
   - Added workers field to stats methods in Minion and Minion::Backend::Pg.

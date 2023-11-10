@@ -81,6 +81,7 @@ sub start {
   Mojo::IOLoop->reset;
   local $SIG{CHLD} = local $SIG{INT}  = local $SIG{TERM} = local $SIG{QUIT} = 'DEFAULT';
   local $SIG{USR1} = local $SIG{USR2} = 'IGNORE';
+  srand;
 
   # Child
   if (defined(my $err = $self->execute)) { $self->fail($err) }
