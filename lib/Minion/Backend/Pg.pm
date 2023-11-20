@@ -178,7 +178,7 @@ sub repair {
   my $minion = $self->minion;
   $db->query("DELETE FROM minion_workers WHERE notified < NOW() - INTERVAL '1 second' * ?", $minion->missing_after);
 
-  # Old jobs with no unresolved dependencies and expired jobs
+  # Old jobs
   $db->query("DELETE FROM minion_jobs WHERE  state = 'finished' AND finished <= NOW() - INTERVAL '1 second' * ?",
     $minion->remove_after);
 
