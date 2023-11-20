@@ -179,11 +179,11 @@ sub repair {
   $db->query("DELETE FROM minion_workers WHERE notified < NOW() - INTERVAL '1 second' * ?", $minion->missing_after);
 
   # Old jobs
-  $db->query("DELETE FROM minion_jobs WHERE  state = 'finished' AND finished <= NOW() - INTERVAL '1 second' * ?",
+  $db->query("DELETE FROM minion_jobs WHERE state = 'finished' AND finished <= NOW() - INTERVAL '1 second' * ?",
     $minion->remove_after);
 
   # Expired jobs
-  $db->query("DELETE FROM minion_jobs WHERE  state = 'inactive' AND expires <= NOW()");
+  $db->query("DELETE FROM minion_jobs WHERE state = 'inactive' AND expires <= NOW()");
 
   # Jobs with missing worker (can be retried)
   $db->query(
