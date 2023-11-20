@@ -1,5 +1,6 @@
 
-10.27  2023-11-11
+10.27  2023-11-20
+  - Improved repair performance in cases where there are a lot of finished jobs with dependencies.
 
 10.26  2023-11-10
   - Added type information to worker status.
