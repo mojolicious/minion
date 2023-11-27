@@ -29,9 +29,9 @@ subtest 'Nothing to repair' => sub {
 };
 
 subtest 'Migrate up and down' => sub {
-  is $minion->backend->pg->migrations->active,             23, 'active version is 23';
+  is $minion->backend->pg->migrations->active,             24, 'active version is 24';
   is $minion->backend->pg->migrations->migrate(0)->active, 0,  'active version is 0';
-  is $minion->backend->pg->migrations->migrate->active,    23, 'active version is 23';
+  is $minion->backend->pg->migrations->migrate->active,    24, 'active version is 24';
 };
 
 subtest 'Register and unregister' => sub {

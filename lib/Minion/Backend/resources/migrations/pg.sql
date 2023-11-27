@@ -92,3 +92,6 @@ CREATE INDEX ON minion_jobs (expires);
 
 -- 23 up
 ALTER TABLE minion_jobs ADD COLUMN lax BOOL NOT NULL DEFAULT FALSE;
+
+-- 24 up
+CREATE INDEX ON minion_jobs (finished, state);

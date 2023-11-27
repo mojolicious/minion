@@ -1,5 +1,6 @@
 
-10.28  2023-11-21
+10.28  2023-11-217
+  - Improved repair and history performance in most cases.
 
 10.27  2023-11-20
   - Improved repair performance in cases where there are a lot of finished jobs with dependencies.
