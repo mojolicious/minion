@@ -21,7 +21,7 @@ has missing_after                  => 1800;
 has [qw(remove_after stuck_after)] => 172800;
 has tasks                          => sub { {} };
 
-our $VERSION = '10.28';
+our $VERSION = '10.29';
 
 sub add_task {
   my ($self, $name, $task) = @_;
