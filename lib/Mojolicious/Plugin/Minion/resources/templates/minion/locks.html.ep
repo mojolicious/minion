@@ -23,6 +23,7 @@
         <thead>
           <tr>
             <th><input class="checkall" data-check="name" type="checkbox"></th>
+            <th>Lock ID</th>
             <th>Name</th>
             <th>Expires</th>
           </tr>
@@ -36,6 +37,9 @@
               <tr>
                 <td>
                   <input type="checkbox" name="name" value="<%= $lock->{name} %>">
+                </td>
+                <td id="lock_id">
+                  <%= $lock->{id} %>
                 </td>
                 <td>
                   <a href="<%= url_for->query({name => $lock->{name}}) %>">
