@@ -96,7 +96,7 @@ sub list_locks {
   my ($self, $offset, $limit, $options) = @_;
 
   my $locks = $self->pg->db->query(
-    'SELECT name, EXTRACT(EPOCH FROM expires) AS expires, COUNT(*) OVER() AS total FROM minion_locks
+    'SELECT id, name, EXTRACT(EPOCH FROM expires) AS expires, COUNT(*) OVER() AS total FROM minion_locks
      WHERE expires > NOW() AND (name = ANY ($1) OR $1 IS NULL)
      ORDER BY id DESC LIMIT $2 OFFSET $3', $options->{names}, $limit, $offset
   )->hashes->to_array;
@@ -726,6 +726,12 @@ These fields are currently available:
   expires => 784111777
 
 Epoch time this lock will expire.
+
+=item id
+
+  id => 1
+
+Lock id.
 
 =item name
 

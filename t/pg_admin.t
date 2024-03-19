@@ -56,10 +56,14 @@ subtest 'Workers' => sub {
 
 subtest 'Locks' => sub {
   $t->app->minion->lock('foo', 3600);
+  $t->get_ok('/minion/stats')->status_is(200)->json_is('/active_locks' => 1);
   $t->app->minion->lock('bar', 3600);
+  $t->get_ok('/minion/stats')->status_is(200)->json_is('/active_locks' => 2);
   $t->ua->max_redirects(5);
-  $t->get_ok('/minion/locks')->status_is(200)->text_like('tbody td a' => qr/bar/);
-  $t->get_ok('/minion/locks?name=foo')->status_is(200)->text_like('tbody td a' => qr/foo/);
+  $t->get_ok('/minion/locks')->status_is(200)->text_like('tbody td a'       => qr/bar/);
+  $t->get_ok('/minion/locks')->status_is(200)->text_like('tbody td#lock_id' => qr/2/);
+  $t->get_ok('/minion/locks?name=foo')->status_is(200)->text_like('tbody td a'       => qr/foo/);
+  $t->get_ok('/minion/locks?name=foo')->status_is(200)->text_like('tbody td#lock_id' => qr/1/);
   $t->post_ok('/minion/locks?_method=DELETE&name=bar')->status_is(200)->text_like('tbody td a' => qr/foo/)
     ->text_like('.alert-success', qr/All selected named locks released/);
   is $t->tx->previous->res->code, 302, 'right status';

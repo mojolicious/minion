@@ -92,7 +92,7 @@ sub _list_jobs {
 sub _list_locks {
   my $locks = shift->app->minion->backend->list_locks(@_)->{locks};
   @$locks = map { Minion::_datetime($_) } @$locks;
-  print tablify [map { [@$_{qw(name expires)}] } @$locks];
+  print tablify [map { [@$_{qw(id name expires)}] } @$locks];
 }
 
 sub _list_workers {
