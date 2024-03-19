@@ -1,5 +1,6 @@
 
-10.29  2023-11-28
+10.29  2024-03-19
+  - Fixed jQuery dependency.
 
 10.28  2023-11-27
   - Improved repair and history performance in most cases.

@@ -1115,6 +1115,12 @@ Licensed under the CC-SA License, Version 4.0 L<http://creativecommons.org/licen
 
 Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
 
+=head2 jQuery
+
+  Copyright (C) jQuery Foundation.
+
+Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
+
 =head2 D3.js
 
   Copyright (C) 2010-2016, Michael Bostock.
@@ -1172,7 +1178,7 @@ Stefan Adams
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2014-2023, Sebastian Riedel and others.
+Copyright (C) 2014-2024, Sebastian Riedel and others.
 
 This program is free software, you can redistribute it and/or modify it under the terms of the Artistic License version
 2.0.
