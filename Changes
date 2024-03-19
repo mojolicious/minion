@@ -1,5 +1,7 @@
 
 10.29  2024-03-19
+  - Added id field to list_locks method in Minion::Backend::Pg. (stuartskelton)
+  - Improved admin UI with lock id information. (stuartskelton)
   - Fixed jQuery dependency.
 
 10.28  2023-11-27
