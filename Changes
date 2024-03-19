@@ -1,4 +1,6 @@
 
+10.30 2024-03-20
+
 10.29  2024-03-19
   - Added id field to list_locks method in Minion::Backend::Pg. (stuartskelton)
   - Improved admin UI with lock id information. (stuartskelton)
