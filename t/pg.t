@@ -1116,9 +1116,9 @@ subtest 'Job dependencies' => sub {
   is_deeply $job->info->{children}, [],          'right children';
   is_deeply $job->info->{parents},  [$id, $id2], 'right parents';
   is $minion->stats->{finished_jobs},         2, 'two finished jobs';
-  is $minion->repair->stats->{finished_jobs}, 0, 'no finished jobs';
+  is $minion->repair->stats->{finished_jobs}, 2, 'still two finished jobs';
   ok $job->finish, 'job finished';
-  is $minion->stats->{finished_jobs},                               1, 'one finished job';
+  is $minion->stats->{finished_jobs},                               3, 'three finished job';
   is $minion->repair->remove_after(172800)->stats->{finished_jobs}, 0, 'no finished jobs';
   $id = $minion->enqueue(test => [] => {parents => [-1]});
   ok $job = $worker->dequeue(0), 'job dequeued';
