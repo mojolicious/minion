@@ -29,5 +29,6 @@ WriteMakefile(
     },
   },
   PREREQ_PM => {Mojolicious => '9.0', 'YAML::XS' => '0.67'},
-  test      => {TESTS       => 't/*.t t/*/*.t'}
+  test      => {TESTS       => 't/*.t t/*/*.t'},
+  dist      => {TARFLAGS    => '-c -v --format=ustar -f' },
 );
