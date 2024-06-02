@@ -224,17 +224,17 @@ sub stats {
   my $self = shift;
 
   my $stats = $self->pg->db->query(qq{
-  select
-  (select count(*) from minion_jobs mj where state = 'inactive' and (expires IS NULL OR expires > NOW()))  as inactive_jobs,
-  (select count(*) from minion_jobs mj where state = 'active') as active_jobs,
-  (select count(*) from minion_jobs mj where state = 'failed') as failed_jobs,
-  (select count(*) from minion_jobs mj where state = 'finished') as finished_jobs,
-  (select count(*) from minion_jobs mj where state = 'inactive' and delayed > NOW()) as delayed_jobs,
-  (select COUNT(*) from minion_locks where expires > NOW()) as active_locks,
-  (select count(DISTINCT worker)  from minion_jobs mj  where state = 'active') as active_workers,
-  (select CASE WHEN is_called THEN last_value ELSE 0 END FROM minion_jobs_id_seq) as enqueued_jobs,
-  (select COUNT(*) from minion_workers) as workers,
-  EXTRACT(EPOCH FROM NOW() - PG_POSTMASTER_START_TIME()) as uptime
+  SELECT
+    (SELECT COUNT(*) FROM minion_jobs WHERE state = 'inactive' AND (expires IS NULL OR expires > NOW())) AS inactive_jobs,
+    (SELECT COUNT(*) FROM minion_jobs WHERE state = 'active') AS active_jobs,
+    (SELECT COUNT(*) FROM minion_jobs WHERE state = 'failed') AS failed_jobs,
+    (SELECT COUNT(*) FROM minion_jobs WHERE state = 'finished') AS finished_jobs,
+    (SELECT COUNT(*) FROM minion_jobs WHERE state = 'inactive' AND delayed > NOW()) AS delayed_jobs,
+    (SELECT COUNT(*) FROM minion_locks WHERE expires > NOW()) AS active_locks,
+    (SELECT COUNT(DISTINCT worker) FROM minion_jobs mj WHERE state = 'active') AS active_workers,
+    (SELECT CASE WHEN is_called THEN last_value ELSE 0 END FROM minion_jobs_id_seq) AS enqueued_jobs,
+    (SELECT COUNT(*) FROM minion_workers) AS workers,
+    EXTRACT(EPOCH FROM NOW() - PG_POSTMASTER_START_TIME()) AS uptime
   })->hash;
   $stats->{inactive_workers} = $stats->{workers} - $stats->{active_workers};
 
