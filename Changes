@@ -1,5 +1,6 @@
 
-10.30 2024-03-20
+10.30 2024-06-05
+  - Improved stats performance in Minion::Backend::Pg by an order of magnitude. (rshingleton)
 
 10.29  2024-03-19
   - Added id field to list_locks method in Minion::Backend::Pg. (stuartskelton)

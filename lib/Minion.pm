@@ -1172,6 +1172,8 @@ Joel Berger
 
 Paul Williams
 
+Russell Shingleton
+
 Stefan Adams
 
 Stuart Skelton
