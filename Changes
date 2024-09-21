@@ -1,5 +1,6 @@
 
-10.31 2024-06-06
+10.31 2024-09-21
+  - Restore old repair behavior for job dependencies without performance loss. (HEM42)
 
 10.30 2024-06-05
   - Improved stats performance in Minion::Backend::Pg by an order of magnitude. (rshingleton)
