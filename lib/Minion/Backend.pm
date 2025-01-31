@@ -23,6 +23,7 @@ sub list_locks        { croak 'Method "list_locks" not implemented by subclass' 
 sub list_workers      { croak 'Method "list_workers" not implemented by subclass' }
 sub lock              { croak 'Method "lock" not implemented by subclass' }
 sub note              { croak 'Method "note" not implemented by subclass' }
+sub ping              { croak 'Method "ping" not implemented by subclass' }
 sub receive           { croak 'Method "receive" not implemented by subclass' }
 sub register_worker   { croak 'Method "register_worker" not implemented by subclass' }
 sub remove_job        { croak 'Method "remove_job" not implemented by subclass' }
@@ -57,6 +58,7 @@ Minion::Backend - Backend base class
   sub list_workers      {...}
   sub lock              {...}
   sub note              {...}
+  sub ping              {...}
   sub receive           {...}
   sub register_worker   {...}
   sub remove_job        {...}
@@ -615,6 +617,12 @@ Number of shared locks with the same name that can be active at the same time, d
 
 Change one or more metadata fields for a job. Setting a value to C<undef> will remove the field. Meant to be overloaded
 in a subclass.
+
+=head2 ping
+
+  my $bool = $backend->ping;
+
+Check backend connection.
 
 =head2 receive
 
