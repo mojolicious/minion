@@ -622,7 +622,7 @@ in a subclass.
 
   my $bool = $backend->ping;
 
-Check backend connection.
+Shortcut to underlying database object C<ping> method, useful for avoiding connexion timeout.
 
 =head2 receive
 
