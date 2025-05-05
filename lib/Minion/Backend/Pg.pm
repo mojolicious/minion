@@ -271,11 +271,11 @@ sub _try {
         SELECT id FROM minion_jobs AS j
         WHERE delayed <= NOW() AND id = COALESCE(?, id) AND (parents = '{}' OR NOT EXISTS (
           SELECT 1 FROM minion_jobs
-          WHERE id = ANY(j.parents) AND (
+          WHERE id = ANY (j.parents) AND (
             state = 'active' OR (state = 'failed' AND NOT j.lax)
             OR (state = 'inactive' AND (expires IS NULL OR expires > NOW()))
           )
-        )) AND priority >= COALESCE(?, priority) AND queue = ANY(?) AND state = 'inactive' AND task = ANY(?)
+        )) AND priority >= COALESCE(?, priority) AND queue = ANY (?) AND state = 'inactive' AND task = ANY (?)
           AND (expires IS NULL OR expires > NOW())
         ORDER BY priority DESC, id
         LIMIT 1
