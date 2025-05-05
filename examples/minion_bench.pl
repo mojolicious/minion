@@ -5,6 +5,7 @@ use Time::HiRes 'time';
 
 my $ENQUEUE     = 10000;
 my $DEQUEUE     = 1000;
+my $PARENTS     = 50;
 my $REPETITIONS = 2;
 my $WORKERS     = 4;
 my $INFO        = 100;
@@ -22,7 +23,7 @@ $minion->reset({all => 1});
 
 # Enqueue
 say "Clean start with $ENQUEUE jobs";
-my @parents = map { $minion->enqueue('foo') } 1 .. 5;
+my @parents = map { $minion->enqueue('foo') } 1 .. $PARENTS;
 my $before  = time;
 $minion->enqueue($_ % 2 ? 'foo' : 'bar' => [] => {parents => \@parents}) for 1 .. $ENQUEUE;
 my $elapsed = time - $before;
