@@ -32,23 +32,37 @@ subtest 'Dashboard' => sub {
 };
 
 subtest 'Stats' => sub {
-  $t->get_ok('/minion/stats')->status_is(200)->json_is('/active_jobs' => 0)->json_is('/active_locks' => 0)
-    ->json_is('/active_workers'   => 0)->json_is('/delayed_jobs'  => 0)->json_is('/enqueued_jobs' => 2)
-    ->json_is('/failed_jobs'      => 0)->json_is('/finished_jobs' => 1)->json_is('/inactive_jobs' => 1)
-    ->json_is('/inactive_workers' => 0)->json_has('/uptime');
+  $t->get_ok('/minion/stats')
+    ->status_is(200)
+    ->json_is('/active_jobs'      => 0)
+    ->json_is('/active_locks'     => 0)
+    ->json_is('/active_workers'   => 0)
+    ->json_is('/delayed_jobs'     => 0)
+    ->json_is('/enqueued_jobs'    => 2)
+    ->json_is('/failed_jobs'      => 0)
+    ->json_is('/finished_jobs'    => 1)
+    ->json_is('/inactive_jobs'    => 1)
+    ->json_is('/inactive_workers' => 0)
+    ->json_has('/uptime');
 };
 
 subtest 'Jobs' => sub {
-  $t->get_ok('/minion/jobs?state=inactive')->status_is(200)->text_like('tbody td a' => qr/$inactive/)
+  $t->get_ok('/minion/jobs?state=inactive')
+    ->status_is(200)
+    ->text_like('tbody td a' => qr/$inactive/)
     ->text_unlike('tbody td a' => qr/$finished/);
-  $t->get_ok('/minion/jobs?state=finished')->status_is(200)->text_like('tbody td a' => qr/$finished/)
+  $t->get_ok('/minion/jobs?state=finished')
+    ->status_is(200)
+    ->text_like('tbody td a' => qr/$finished/)
     ->text_unlike('tbody td a' => qr/$inactive/);
 };
 
 subtest 'Workers' => sub {
   $t->get_ok('/minion/workers')->status_is(200)->element_exists_not('tbody td a');
   my $worker = app->minion->worker->register;
-  $t->get_ok('/minion/workers')->status_is(200)->element_exists('tbody td a')
+  $t->get_ok('/minion/workers')
+    ->status_is(200)
+    ->element_exists('tbody td a')
     ->text_like('tbody td a' => qr/@{[$worker->id]}/);
   $worker->unregister;
   $t->get_ok('/minion/workers')->status_is(200)->element_exists_not('tbody td a');
@@ -64,11 +78,15 @@ subtest 'Locks' => sub {
   $t->get_ok('/minion/locks')->status_is(200)->text_like('tbody td#lock_id' => qr/2/);
   $t->get_ok('/minion/locks?name=foo')->status_is(200)->text_like('tbody td a'       => qr/foo/);
   $t->get_ok('/minion/locks?name=foo')->status_is(200)->text_like('tbody td#lock_id' => qr/1/);
-  $t->post_ok('/minion/locks?_method=DELETE&name=bar')->status_is(200)->text_like('tbody td a' => qr/foo/)
+  $t->post_ok('/minion/locks?_method=DELETE&name=bar')
+    ->status_is(200)
+    ->text_like('tbody td a' => qr/foo/)
     ->text_like('.alert-success', qr/All selected named locks released/);
   is $t->tx->previous->res->code, 302, 'right status';
   like $t->tx->previous->res->headers->location, qr/locks/, 'right "Location" value';
-  $t->post_ok('/minion/locks?_method=DELETE&name=foo')->status_is(200)->element_exists_not('tbody td a')
+  $t->post_ok('/minion/locks?_method=DELETE&name=foo')
+    ->status_is(200)
+    ->element_exists_not('tbody td a')
     ->text_like('.alert-success', qr/All selected named locks released/);
   is $t->tx->previous->res->code, 302, 'right status';
   like $t->tx->previous->res->headers->location, qr/locks/, 'right "Location" value';
