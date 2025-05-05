@@ -95,3 +95,7 @@ ALTER TABLE minion_jobs ADD COLUMN lax BOOL NOT NULL DEFAULT FALSE;
 
 -- 24 up
 CREATE INDEX ON minion_jobs (finished, state);
+
+-- 25 up
+CREATE INDEX ON minion_jobs (state, queue, priority DESC, delayed, id) WHERE state = 'inactive';
+CREATE INDEX ON minion_jobs USING GIN (parents) WHERE state = 'inactive';
