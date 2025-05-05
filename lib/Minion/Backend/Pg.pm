@@ -128,7 +128,7 @@ sub new {
   my $self = shift->SUPER::new(pg => Mojo::Pg->new(@_));
 
   my $db = Mojo::Pg->new(@_)->db;
-  croak 'PostgreSQL 9.5 or later is required' if $db->dbh->{pg_server_version} < 90500;
+  croak 'PostgreSQL 12 or later is required' if $db->dbh->{pg_server_version} < 130000;
   $db->disconnect;
 
   my $schema = path(__FILE__)->dirname->child('resources', 'migrations', 'pg.sql');
@@ -267,21 +267,25 @@ sub _try {
   my ($self, $id, $options) = @_;
 
   return $self->pg->db->query(
-    q{UPDATE minion_jobs SET started = NOW(), state = 'active', worker = ?
-      WHERE id = (
+    q{WITH cte AS (
         SELECT id FROM minion_jobs AS j
         WHERE delayed <= NOW() AND id = COALESCE(?, id) AND (parents = '{}' OR NOT EXISTS (
-          SELECT 1 FROM minion_jobs WHERE id = ANY (j.parents) AND (
+          SELECT 1 FROM minion_jobs
+          WHERE id = ANY(j.parents) AND (
             state = 'active' OR (state = 'failed' AND NOT j.lax)
-            OR (state = 'inactive' AND (expires IS NULL OR expires > NOW())))
-        )) AND priority >= COALESCE(?, priority) AND queue = ANY (?) AND state = 'inactive' AND task = ANY (?)
-          AND (EXPIRES IS NULL OR expires > NOW())
+            OR (state = 'inactive' AND (expires IS NULL OR expires > NOW()))
+          )
+        )) AND priority >= COALESCE(?, priority) AND queue = ANY(?) AND state = 'inactive' AND task = ANY(?)
+          AND (expires IS NULL OR expires > NOW())
         ORDER BY priority DESC, id
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       )
-      RETURNING id, args, retries, task}, $id, $options->{id}, $options->{min_priority},
-    $options->{queues} || ['default'], [keys %{$self->minion->tasks}]
+      UPDATE minion_jobs
+      SET started = NOW(), state = 'active', worker = ?
+      WHERE id = (SELECT id FROM cte)
+      RETURNING id, args, retries, task}, $options->{id}, $options->{min_priority}, $options->{queues} || ['default'],
+    [keys %{$self->minion->tasks}], $id
   )->expand->hash;
 }
 

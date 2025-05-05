@@ -1,5 +1,6 @@
 
-10.32 2024-09-22
+11.00 2025-05-05
+- Minion::Backend::Pg now requires PostgreSQL 13.
 
 10.31 2024-09-21
   - Restore old repair behavior for job dependencies without performance loss. (HEM42)
