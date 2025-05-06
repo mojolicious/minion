@@ -3,19 +3,20 @@ use Mojo::Base -strict;
 use Minion;
 use Time::HiRes 'time';
 
-my $ENQUEUE     = 10000;
-my $DEQUEUE     = 1000;
+my $ENQUEUE     = 20000;
+my $BATCHES     = 20;
+my $DEQUEUE     = 50;
 my $PARENTS     = 50;
+my $CHILDREN    = 500;
 my $REPETITIONS = 2;
 my $WORKERS     = 4;
 my $INFO        = 100;
 my $STATS       = 100;
-my $REPAIR      = 100;
+my $REPAIR      = 10;
 my $LOCK        = 1000;
 my $UNLOCK      = 1000;
 
-# A benchmark script for comparing backends and evaluating the performance
-# impact of proposed changes
+# A benchmark script for comparing backends and evaluating the performance impact of proposed changes
 my $minion = Minion->new(Pg => 'postgresql://postgres@127.0.0.1:5432/postgres');
 $minion->add_task(foo => sub { });
 $minion->add_task(bar => sub { });
@@ -24,12 +25,18 @@ $minion->reset({all => 1});
 # Enqueue
 say "Clean start with $ENQUEUE jobs";
 my @parents = map { $minion->enqueue('foo') } 1 .. $PARENTS;
+my $worker  = $minion->worker->register;
+$worker->dequeue(0.5, {id => $_})->finish for @parents;
+$worker->unregister;
 my $before  = time;
-$minion->enqueue($_ % 2 ? 'foo' : 'bar' => [] => {parents => \@parents}) for 1 .. $ENQUEUE;
+my @jobs    = map { $minion->enqueue($_ % 2 ? 'foo' : 'bar' => [] => {parents => \@parents}) } 1 .. $ENQUEUE;
 my $elapsed = time - $before;
 my $avg     = sprintf '%.3f', $ENQUEUE / $elapsed;
 say "Enqueued $ENQUEUE jobs in $elapsed seconds ($avg/s)";
+$minion->enqueue('foo' => [] => {parents => \@jobs}) for 1 .. $CHILDREN;
 $minion->backend->pg->db->query('ANALYZE minion_jobs');
+
+my $FINISH = $DEQUEUE * $BATCHES;
 
 # Dequeue
 sub dequeue {
@@ -38,12 +45,18 @@ sub dequeue {
     die "Couldn't fork: $!" unless defined(my $pid = fork);
     unless ($pid) {
       my $worker = $minion->repair->worker->register;
-      say "$$ will finish $DEQUEUE jobs";
       my $before = time;
-      $worker->dequeue(0.5)->finish for 1 .. $DEQUEUE;
+      for (1 .. $BATCHES) {
+        my @jobs;
+        while (@jobs < $DEQUEUE) {
+          next unless my $job = $worker->dequeue(0.5);
+          push @jobs, $job;
+        }
+        $_->finish({minion_bench => $_->id}) for @jobs;
+      }
       my $elapsed = time - $before;
-      my $avg     = sprintf '%.3f', $DEQUEUE / $elapsed;
-      say "$$ finished $DEQUEUE jobs in $elapsed seconds ($avg/s)";
+      my $avg     = sprintf '%.3f', $FINISH / $elapsed;
+      say "$$ finished $FINISH jobs in $elapsed seconds ($avg/s)";
       $worker->unregister;
       exit;
     }
@@ -54,8 +67,8 @@ sub dequeue {
   my $before = time;
   waitpid $_, 0 for @pids;
   my $elapsed = time - $before;
-  my $avg     = sprintf '%.3f', ($DEQUEUE * $WORKERS) / $elapsed;
-  say "$WORKERS workers finished $DEQUEUE jobs each in $elapsed seconds ($avg/s)";
+  my $avg     = sprintf '%.3f', ($FINISH * $WORKERS) / $elapsed;
+  say "$WORKERS workers finished $FINISH jobs each in $elapsed seconds ($avg/s)";
 }
 dequeue() for 1 .. $REPETITIONS;
 
