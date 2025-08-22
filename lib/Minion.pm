@@ -154,7 +154,7 @@ sub _delegate {
   return $self;
 }
 
-sub _dump { local $YAML::XS::Boolean = 'JSON::PP'; Dump(@_) }
+sub _dump { local $YAML::XS::Boolean = 'JSON::PP'; Mojo::Util::decode 'UTF-8', Dump(@_) }
 
 sub _iterator {
   my ($self, $jobs, $options) = (shift, shift, shift // {});
