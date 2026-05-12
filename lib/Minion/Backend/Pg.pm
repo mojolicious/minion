@@ -4,16 +4,16 @@ use Mojo::Base 'Minion::Backend';
 use Carp       qw(croak);
 use Mojo::File qw(path);
 use Mojo::IOLoop;
-use Mojo::Pg 4.0;
+use Mojo::Pg 4.29;
 use Sys::Hostname qw(hostname);
 
 has 'pg';
 
 sub broadcast {
   my ($self, $command, $args, $ids) = (shift, shift, shift || [], shift || []);
-  return !!$self->pg->db->query(
+  return $self->pg->db->query(
     q{UPDATE minion_workers SET inbox = inbox || $1::JSONB WHERE (id = ANY ($2) OR $2 = '{}')},
-    {json => [[$command, @$args]]}, $ids)->rows;
+    {json => [[$command, @$args]]}, $ids)->rv > 0;
 }
 
 sub dequeue {
@@ -139,8 +139,8 @@ sub new {
 
 sub note {
   my ($self, $id, $merge) = @_;
-  return !!$self->pg->db->query('UPDATE minion_jobs SET notes = JSONB_STRIP_NULLS(notes || ?) WHERE id = ?',
-    {json => $merge}, $id)->rows;
+  return $self->pg->db->query('UPDATE minion_jobs SET notes = JSONB_STRIP_NULLS(notes || ?) WHERE id = ?',
+    {json => $merge}, $id)->rv > 0;
 }
 
 sub receive {
@@ -166,8 +166,8 @@ sub register_worker {
 
 sub remove_job {
   my ($self, $id) = @_;
-  return !!$self->pg->db->query(
-    "DELETE FROM minion_jobs WHERE id = ? AND state IN ('inactive', 'failed', 'finished') RETURNING 1", $id)->rows;
+  return $self->pg->db->query(
+    "DELETE FROM minion_jobs WHERE id = ? AND state IN ('inactive', 'failed', 'finished') RETURNING 1", $id)->rv > 0;
 }
 
 sub repair {
@@ -214,7 +214,7 @@ sub reset {
 sub retry_job {
   my ($self, $id, $retries, $options) = (shift, shift, shift, shift || {});
 
-  return !!$self->pg->db->query(
+  return $self->pg->db->query(
     q{UPDATE minion_jobs SET attempts = COALESCE($1, attempts), delayed = (NOW() + (INTERVAL '1 second' * $2)),
         expires = CASE WHEN $3::BIGINT IS NOT NULL THEN NOW() + (INTERVAL '1 second' * $3::BIGINT) ELSE expires END,
         lax = COALESCE($4, lax), parents = COALESCE($5, parents), priority = COALESCE($6, priority),
@@ -222,7 +222,7 @@ sub retry_job {
       WHERE id = $8 AND retries = $9
       RETURNING 1}, $options->{attempts}, $options->{delay} // 0, $options->{expire},
     exists $options->{lax} ? $options->{lax} ? 1 : 0 : undef, @$options{qw(parents priority queue)}, $id, $retries
-  )->rows;
+  )->rv > 0;
 }
 
 sub stats {
@@ -247,11 +247,11 @@ sub stats {
 }
 
 sub unlock {
-  !!shift->pg->db->query(
+  shift->pg->db->query(
     'DELETE FROM minion_locks WHERE id = (
        SELECT id FROM minion_locks WHERE expires > NOW() AND name = ? ORDER BY expires LIMIT 1 FOR UPDATE
      ) RETURNING 1', shift
-  )->rows;
+  )->rv > 0;
 }
 
 sub unregister_worker { shift->pg->db->query('DELETE FROM minion_workers WHERE id = ?', shift) }
