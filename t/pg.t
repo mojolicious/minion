@@ -29,9 +29,9 @@ subtest 'Nothing to repair' => sub {
 };
 
 subtest 'Migrate up and down' => sub {
-  is $minion->backend->pg->migrations->active,             24, 'active version is 24';
+  is $minion->backend->pg->migrations->active,             25, 'active version is 25';
   is $minion->backend->pg->migrations->migrate(0)->active, 0,  'active version is 0';
-  is $minion->backend->pg->migrations->migrate->active,    24, 'active version is 24';
+  is $minion->backend->pg->migrations->migrate->active,    25, 'active version is 25';
 };
 
 subtest 'Register and unregister' => sub {
@@ -372,13 +372,130 @@ subtest 'Reset (locks)' => sub {
 
 subtest 'Reset (all)' => sub {
   $minion->lock('test', 3600);
-  ok $minion->backend->list_jobs(0, 1)->{total},    'jobs';
-  ok $minion->backend->list_locks(0, 1)->{total},   'locks';
-  ok $minion->backend->list_workers(0, 1)->{total}, 'workers';
+  $minion->schedule(reset_test => '0 4 * * *' => 'test');
+  ok $minion->backend->list_jobs(0, 1)->{total},      'jobs';
+  ok $minion->backend->list_locks(0, 1)->{total},     'locks';
+  ok $minion->backend->list_schedules(0, 1)->{total}, 'schedules';
+  ok $minion->backend->list_workers(0, 1)->{total},   'workers';
   $minion->reset({all => 1})->repair;
-  ok !$minion->backend->list_jobs(0, 1)->{total},    'no jobs';
-  ok !$minion->backend->list_locks(0, 1)->{total},   'no locks';
-  ok !$minion->backend->list_workers(0, 1)->{total}, 'no workers';
+  ok !$minion->backend->list_jobs(0, 1)->{total},      'no jobs';
+  ok !$minion->backend->list_locks(0, 1)->{total},     'no locks';
+  ok !$minion->backend->list_schedules(0, 1)->{total}, 'no schedules';
+  ok !$minion->backend->list_workers(0, 1)->{total},   'no workers';
+};
+
+subtest 'Schedules' => sub {
+  is $minion->list_schedules(0, 10)->{total}, 0, 'no schedules';
+  my $sid = $minion->schedule(daily => '0 4 * * *' => 'test');
+  ok $sid, 'schedule id returned';
+  my $info = $minion->list_schedules(0, 10)->{schedules}[0];
+  is $info->{name},     'daily',     'right name';
+  is $info->{cron},     '0 4 * * *', 'right cron';
+  is $info->{task},     'test',      'right task';
+  is $info->{queue},    'default',   'default queue';
+  is $info->{priority}, 0,           'default priority';
+  is $info->{paused},   0,           'not paused';
+  is $info->{last_job}, undef,       'never fired';
+  is $info->{last_run}, undef,       'no last run';
+  ok $info->{next_run} > time, 'next_run is in the future';
+
+  my $next1 = $info->{next_run};
+  $minion->schedule(daily => '0 4 * * *' => 'test');
+  is $minion->list_schedules(0, 10)->{schedules}[0]{next_run}, $next1, 'next_run unchanged for same cron';
+  $minion->schedule(daily => '30 5 * * *' => 'test');
+  $info = $minion->list_schedules(0, 10)->{schedules}[0];
+  isnt $info->{next_run}, $next1,       'next_run recomputed';
+  is $info->{cron},       '30 5 * * *', 'cron updated';
+
+  ok $minion->pause_schedule('daily'), 'paused';
+  is $minion->list_schedules(0, 10)->{schedules}[0]{paused}, 1, 'is paused';
+  ok $minion->resume_schedule('daily'), 'resumed';
+  is $minion->list_schedules(0, 10)->{schedules}[0]{paused}, 0, 'not paused';
+  ok !$minion->pause_schedule('does_not_exist'),  'pause unknown returns false';
+  ok !$minion->resume_schedule('does_not_exist'), 'resume unknown returns false';
+
+  $minion->schedule(opts => '*/5 * * * *' => 'test' => [1, 2, 3] =>
+      {attempts => 3, expire => 600, lax => 1, notes => {kind => 'unit'}, priority => 5, queue => 'important'});
+  my ($got) = grep { $_->{name} eq 'opts' } @{$minion->list_schedules(0, 10)->{schedules}};
+  is $got->{attempts}, 3,           'attempts stored';
+  is $got->{expire},   600,         'expire stored';
+  is $got->{lax},      1,           'lax stored';
+  is $got->{priority}, 5,           'priority stored';
+  is $got->{queue},    'important', 'queue stored';
+  is_deeply $got->{notes}, {kind => 'unit'}, 'notes stored';
+  is_deeply $got->{args},  [1, 2, 3],        'args stored';
+
+  my $by_name = $minion->list_schedules(0, 10, {names => ['daily']});
+  is $by_name->{total},              1,       'one match';
+  is $by_name->{schedules}[0]{name}, 'daily', 'right name';
+  is $minion->list_schedules(0, 10, {ids => [$sid]})->{total}, 1, 'filter by id';
+
+  eval { $minion->schedule(bad => 'not a cron' => 'test') };
+  like $@, qr/Invalid cron/, 'invalid cron rejected';
+  is $minion->list_schedules(0, 10, {names => ['bad']})->{total}, 0, 'no row created on failure';
+
+  ok $minion->unschedule('daily'),  'removed';
+  ok $minion->unschedule('opts'),   'removed';
+  ok !$minion->unschedule('daily'), 'second remove returns false';
+  is $minion->list_schedules(0, 10)->{total}, 0, 'all gone';
+};
+
+subtest 'Dispatch schedules' => sub {
+  is_deeply $minion->dispatch_schedules, [], 'nothing due';
+
+  my $sid = $minion->schedule(due => '0 4 * * *' => 'test');
+  $minion->backend->pg->db->query(q{UPDATE minion_schedules SET next_run = NOW() - INTERVAL '1 minute' WHERE id = ?},
+    $sid);
+
+  my @events;
+  $minion->on(enqueue_from_schedule => sub { push @events, [$_[1], $_[2]] });
+
+  my $dispatched = $minion->dispatch_schedules;
+  is scalar @$dispatched,    1,     'one dispatched';
+  is $dispatched->[0]{name}, 'due', 'right name';
+  ok $dispatched->[0]{job}, 'job id returned';
+  is scalar @events, 1,                     'event fired';
+  is $events[0][1],  'due',                 'event has schedule name';
+  is $events[0][0],  $dispatched->[0]{job}, 'event has job id';
+
+  my $info = $minion->list_schedules(0, 10, {ids => [$sid]})->{schedules}[0];
+  is $info->{last_job}, $dispatched->[0]{job}, 'last_job recorded';
+  ok $info->{last_run}, 'last_run recorded';
+  ok $info->{next_run} > time, 'next_run advanced into the future';
+
+  is_deeply $minion->dispatch_schedules, [], 'no further dispatch';
+
+  $minion->backend->pg->db->query(q{UPDATE minion_schedules SET next_run = NOW() - INTERVAL '1 hour' WHERE id = ?},
+    $sid);
+  my $before = $minion->stats->{inactive_jobs};
+  $minion->dispatch_schedules;
+  is $minion->stats->{inactive_jobs}, $before + 1, 'one make-up enqueue, not many';
+
+  $minion->backend->pg->db->query(q{UPDATE minion_schedules SET next_run = NOW() - INTERVAL '1 minute' WHERE id = ?},
+    $sid);
+  $minion->pause_schedule('due');
+  is_deeply $minion->dispatch_schedules, [], 'paused schedule skipped';
+  $minion->resume_schedule('due');
+  $minion->unschedule('due');
+};
+
+subtest 'Dispatch schedules with concurrent dispatchers' => sub {
+  my $sid = $minion->schedule(racy => '0 4 * * *' => 'test');
+  $minion->backend->pg->db->query(q{UPDATE minion_schedules SET next_run = NOW() - INTERVAL '1 minute' WHERE id = ?},
+    $sid);
+
+  my $blocker = $minion->backend->pg->db;
+  my $tx      = $blocker->begin;
+  is $blocker->query(q{SELECT pg_try_advisory_xact_lock(hashtext('minion.schedules'))})->array->[0], 1,
+    'blocker holds lock';
+  is_deeply $minion->dispatch_schedules, [], 'second dispatcher backs off';
+  $tx->commit;
+  undef $blocker;
+
+  is scalar @{$minion->dispatch_schedules}, 1, 'fired after lock released';
+
+  $minion->unschedule('racy');
+  $minion->reset({all => 1});
 };
 
 subtest 'Stats' => sub {
@@ -397,9 +514,11 @@ subtest 'Stats' => sub {
   is $stats->{active_jobs},      0, 'no active jobs';
   is $stats->{failed_jobs},      0, 'no failed jobs';
   is $stats->{finished_jobs},    0, 'no finished jobs';
-  is $stats->{inactive_jobs},    0, 'no inactive jobs';
-  is $stats->{delayed_jobs},     0, 'no delayed jobs';
-  is $stats->{active_locks},     0, 'no active locks';
+  is $stats->{inactive_jobs},      0, 'no inactive jobs';
+  is $stats->{delayed_jobs},       0, 'no delayed jobs';
+  is $stats->{active_locks},       0, 'no active locks';
+  is $stats->{schedules},          0, 'no schedules';
+  is $stats->{inactive_schedules}, 0, 'no paused schedules';
   ok $stats->{uptime}, 'has uptime';
   my $worker = $minion->worker->register;
   is $minion->stats->{workers},          1, 'one worker';

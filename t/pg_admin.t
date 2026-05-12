@@ -34,15 +34,17 @@ subtest 'Dashboard' => sub {
 subtest 'Stats' => sub {
   $t->get_ok('/minion/stats')
     ->status_is(200)
-    ->json_is('/active_jobs'      => 0)
-    ->json_is('/active_locks'     => 0)
-    ->json_is('/active_workers'   => 0)
-    ->json_is('/delayed_jobs'     => 0)
-    ->json_is('/enqueued_jobs'    => 2)
-    ->json_is('/failed_jobs'      => 0)
-    ->json_is('/finished_jobs'    => 1)
-    ->json_is('/inactive_jobs'    => 1)
-    ->json_is('/inactive_workers' => 0)
+    ->json_is('/active_jobs'        => 0)
+    ->json_is('/active_locks'       => 0)
+    ->json_is('/active_workers'     => 0)
+    ->json_is('/delayed_jobs'       => 0)
+    ->json_is('/enqueued_jobs'      => 2)
+    ->json_is('/failed_jobs'        => 0)
+    ->json_is('/finished_jobs'      => 1)
+    ->json_is('/inactive_jobs'      => 1)
+    ->json_is('/inactive_schedules' => 0)
+    ->json_is('/inactive_workers'   => 0)
+    ->json_is('/schedules'          => 0)
     ->json_has('/uptime');
 };
 
@@ -117,6 +119,36 @@ subtest 'Manage jobs' => sub {
   is $t->tx->previous->res->code, 302, 'right status';
   like $t->tx->previous->res->headers->location, qr/id=$finished/, 'right "Location" value';
   is app->minion->job($finished), undef, 'job has been removed';
+};
+
+subtest 'Schedules' => sub {
+  $t->get_ok('/minion/schedules')->status_is(200)->content_like(qr/No schedules found/);
+  app->minion->schedule(daily  => '0 4 * * *' => 'test');
+  app->minion->schedule(hourly => '0 * * * *' => 'test');
+  $t->get_ok('/minion/stats')->status_is(200)->json_is('/schedules' => 2);
+  $t->ua->max_redirects(5);
+  $t->get_ok('/minion/schedules')
+    ->status_is(200)
+    ->content_like(qr/daily/)
+    ->content_like(qr/hourly/)
+    ->content_like(qr/0 4 \* \* \*/);
+  $t->get_ok('/minion/schedules?name=daily')->status_is(200)->content_like(qr/daily/)->content_unlike(qr/hourly/);
+  $t->post_ok('/minion/schedules?_method=PATCH' => form => {name => 'daily', do => 'pause'})
+    ->text_like('.alert-success', qr/All selected schedules paused/)
+    ->content_like(qr/paused/);
+  is $t->tx->previous->res->code, 302, 'right status';
+  like $t->tx->previous->res->headers->location, qr/name=daily/, 'right "Location" value';
+  $t->get_ok('/minion/stats')->status_is(200)->json_is('/schedules' => 1)->json_is('/inactive_schedules' => 1);
+  $t->post_ok('/minion/schedules?_method=PATCH' => form => {name => 'daily', do => 'resume'})
+    ->text_like('.alert-success', qr/All selected schedules resumed/);
+  $t->get_ok('/minion/stats')->status_is(200)->json_is('/schedules' => 2);
+  $t->post_ok('/minion/schedules?_method=PATCH' => form => {name => 'daily', do => 'remove'})
+    ->text_like('.alert-success', qr/All selected schedules removed/);
+  $t->post_ok('/minion/schedules?_method=PATCH' => form => {name => 'hourly', do => 'remove'})
+    ->text_like('.alert-success', qr/All selected schedules removed/);
+  $t->get_ok('/minion/schedules')->status_is(200)->content_like(qr/No schedules found/);
+  $t->post_ok('/minion/schedules?_method=PATCH' => form => {name => 'gone', do => 'remove'})
+    ->text_like('.alert-danger', qr/Couldn't remove all schedules/);
 };
 
 subtest 'Bundled static files' => sub {

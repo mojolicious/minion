@@ -95,3 +95,27 @@ ALTER TABLE minion_jobs ADD COLUMN lax BOOL NOT NULL DEFAULT FALSE;
 
 -- 24 up
 CREATE INDEX ON minion_jobs (finished, state);
+
+-- 25 up
+CREATE TABLE IF NOT EXISTS minion_schedules (
+  id       BIGSERIAL NOT NULL PRIMARY KEY,
+  args     JSONB NOT NULL CHECK(JSONB_TYPEOF(args) = 'array') DEFAULT '[]',
+  attempts INT NOT NULL DEFAULT 1,
+  created  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  cron     TEXT NOT NULL,
+  expire   INT,
+  last_job BIGINT,
+  last_run TIMESTAMP WITH TIME ZONE,
+  lax      BOOL NOT NULL DEFAULT FALSE,
+  name     TEXT NOT NULL UNIQUE,
+  next_run TIMESTAMP WITH TIME ZONE NOT NULL,
+  notes    JSONB CHECK(JSONB_TYPEOF(notes) = 'object') NOT NULL DEFAULT '{}',
+  paused   BOOL NOT NULL DEFAULT FALSE,
+  priority INT NOT NULL DEFAULT 0,
+  queue    TEXT NOT NULL DEFAULT 'default',
+  task     TEXT NOT NULL
+);
+CREATE INDEX ON minion_schedules (next_run) WHERE NOT paused;
+
+-- 25 down
+DROP TABLE IF EXISTS minion_schedules;

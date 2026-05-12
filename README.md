@@ -5,10 +5,11 @@
 
 A high performance job queue for the Perl programming language. Also available for [Node.js](https://github.com/mojolicious/minion.js).
 
-Minion comes with support for multiple named queues, priorities, high priority fast lane, delayed jobs, job
-dependencies, job progress, job results, retries with backoff, rate limiting, unique jobs, expiring jobs, statistics,
-distributed workers, parallel processing, autoscaling, remote control, [Mojolicious](https://mojolicious.org) admin ui,
-resource leak protection and multiple backends (such as [PostgreSQL](https://www.postgresql.org)).
+Minion comes with support for multiple named queues, priorities, high priority fast lane, delayed jobs, cron style
+recurring jobs, job dependencies, job progress, job results, retries with backoff, rate limiting, unique jobs, expiring
+jobs, statistics, distributed workers, parallel processing, autoscaling, remote control,
+[Mojolicious](https://mojolicious.org) admin ui, resource leak protection and multiple backends (such as
+[PostgreSQL](https://www.postgresql.org)).
 
 Job queues allow you to process time and/or computationally intensive tasks in background processes, outside of the
 request/response lifecycle of web applications. Among those tasks you'll commonly find image resizing, spam filtering,

@@ -12,22 +12,28 @@ sub auto_retry_job {
   return $self->retry_job($id, $retries, {attempts => $attempts > 1 ? $attempts - 1 : 1, delay => $delay});
 }
 
+sub add_schedule      { croak 'Method "add_schedule" not implemented by subclass' }
 sub broadcast         { croak 'Method "broadcast" not implemented by subclass' }
 sub dequeue           { croak 'Method "dequeue" not implemented by subclass' }
+sub dispatch_schedules { croak 'Method "dispatch_schedules" not implemented by subclass' }
 sub enqueue           { croak 'Method "enqueue" not implemented by subclass' }
 sub fail_job          { croak 'Method "fail_job" not implemented by subclass' }
 sub finish_job        { croak 'Method "finish_job" not implemented by subclass' }
 sub history           { croak 'Method "history" not implemented by subclass' }
 sub list_jobs         { croak 'Method "list_jobs" not implemented by subclass' }
 sub list_locks        { croak 'Method "list_locks" not implemented by subclass' }
+sub list_schedules    { croak 'Method "list_schedules" not implemented by subclass' }
 sub list_workers      { croak 'Method "list_workers" not implemented by subclass' }
 sub lock              { croak 'Method "lock" not implemented by subclass' }
 sub note              { croak 'Method "note" not implemented by subclass' }
+sub pause_schedule    { croak 'Method "pause_schedule" not implemented by subclass' }
 sub receive           { croak 'Method "receive" not implemented by subclass' }
 sub register_worker   { croak 'Method "register_worker" not implemented by subclass' }
 sub remove_job        { croak 'Method "remove_job" not implemented by subclass' }
+sub remove_schedule   { croak 'Method "remove_schedule" not implemented by subclass' }
 sub repair            { croak 'Method "repair" not implemented by subclass' }
 sub reset             { croak 'Method "reset" not implemented by subclass' }
+sub resume_schedule   { croak 'Method "resume_schedule" not implemented by subclass' }
 sub retry_job         { croak 'Method "retry_job" not implemented by subclass' }
 sub stats             { croak 'Method "stats" not implemented by subclass' }
 sub unlock            { croak 'Method "unlock" not implemented by subclass' }
@@ -46,26 +52,32 @@ Minion::Backend - Backend base class
   package Minion::Backend::MyBackend;
   use Mojo::Base 'Minion::Backend';
 
-  sub broadcast         {...}
-  sub dequeue           {...}
-  sub enqueue           {...}
-  sub fail_job          {...}
-  sub finish_job        {...}
-  sub history           {...}
-  sub list_jobs         {...}
-  sub list_locks        {...}
-  sub list_workers      {...}
-  sub lock              {...}
-  sub note              {...}
-  sub receive           {...}
-  sub register_worker   {...}
-  sub remove_job        {...}
-  sub repair            {...}
-  sub reset             {...}
-  sub retry_job         {...}
-  sub stats             {...}
-  sub unlock            {...}
-  sub unregister_worker {...}
+  sub add_schedule       {...}
+  sub broadcast          {...}
+  sub dequeue            {...}
+  sub dispatch_schedules {...}
+  sub enqueue            {...}
+  sub fail_job           {...}
+  sub finish_job         {...}
+  sub history            {...}
+  sub list_jobs          {...}
+  sub list_locks         {...}
+  sub list_schedules     {...}
+  sub list_workers       {...}
+  sub lock               {...}
+  sub note               {...}
+  sub pause_schedule     {...}
+  sub receive            {...}
+  sub register_worker    {...}
+  sub remove_job         {...}
+  sub remove_schedule    {...}
+  sub repair             {...}
+  sub reset              {...}
+  sub resume_schedule    {...}
+  sub retry_job          {...}
+  sub stats              {...}
+  sub unlock             {...}
+  sub unregister_worker  {...}
 
 =head1 DESCRIPTION
 
@@ -85,6 +97,61 @@ L<Minion> object this backend belongs to. Note that this attribute is weakened.
 =head1 METHODS
 
 L<Minion::Backend> inherits all methods from L<Mojo::Base> and implements the following new ones.
+
+=head2 add_schedule
+
+  my $id = $backend->add_schedule('daily', '0 4 * * *', 'cleanup');
+  my $id = $backend->add_schedule('daily', '0 4 * * *', 'cleanup', [@args]);
+  my $id = $backend->add_schedule(
+    'daily', '0 4 * * *', 'cleanup', [@args], {priority => 5});
+
+Create or replace a schedule by unique name. The cron expression is parsed up front and the next firing time is
+computed; the entry is rejected if the expression is invalid. Existing schedules with the same name are updated, but
+the firing time is preserved if the cron expression has not changed. Meant to be overloaded in a subclass.
+
+These options are currently available:
+
+=over 2
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing each enqueued job will be attempted, with a delay based on L<Minion/"backoff"> after the
+first attempt, defaults to C<1>.
+
+=item expire
+
+  expire => 300
+
+Each enqueued job is valid for this many seconds (from enqueue time) before it expires.
+
+=item lax
+
+  lax => 1
+
+Existing jobs each enqueued job depends on may also have transitioned to the C<failed> state to allow for it to be
+processed, defaults to C<false>.
+
+=item notes
+
+  notes => {foo => 'bar', baz => [1, 2, 3]}
+
+Hash reference with arbitrary metadata for each enqueued job.
+
+=item priority
+
+  priority => 5
+
+Priority of each enqueued job, defaults to C<0>.
+
+=item queue
+
+  queue => 'important'
+
+Queue to put each enqueued job in, defaults to C<default>.
+
+=back
 
 =head2 auto_retry_job
 
@@ -166,6 +233,38 @@ Number of times job has been retried.
   task => 'foo'
 
 Task name.
+
+=back
+
+=head2 dispatch_schedules
+
+  my $dispatched = $backend->dispatch_schedules;
+
+Enqueue jobs for all schedules whose firing time has been reached, advance their firing times to the next match, and
+return information about each dispatch as an array reference. Coordinates across multiple workers so a single dispatch
+cycle never enqueues a schedule twice. Meant to be overloaded in a subclass.
+
+Each dispatched entry contains these fields:
+
+=over 2
+
+=item id
+
+  id => 23
+
+Schedule id.
+
+=item job
+
+  job => '10025'
+
+Id of the job that was just enqueued.
+
+=item name
+
+  name => 'daily'
+
+Schedule name.
 
 =back
 
@@ -514,6 +613,146 @@ Lock name.
 
 =back
 
+=head2 list_schedules
+
+  my $results = $backend->list_schedules($offset, $limit);
+  my $results = $backend->list_schedules($offset, $limit, {names => ['daily']});
+
+Returns information about schedules in batches. Meant to be overloaded in a subclass.
+
+  # Get the total number of results (without limit)
+  my $num = $backend->list_schedules(0, 100)->{total};
+
+  # Check next firing time
+  my $results = $backend->list_schedules(0, 1, {names => ['daily']});
+  my $next    = $results->{schedules}[0]{next_run};
+
+These options are currently available:
+
+=over 2
+
+=item before
+
+  before => 23
+
+List only schedules before this id.
+
+=item ids
+
+  ids => ['23', '24']
+
+List only schedules with these ids.
+
+=item names
+
+  names => ['foo', 'bar']
+
+List only schedules with these names.
+
+=back
+
+These fields are currently available:
+
+=over 2
+
+=item args
+
+  args => ['foo', 'bar']
+
+Job arguments used for each enqueued job.
+
+=item attempts
+
+  attempts => 25
+
+Number of attempts each enqueued job will get.
+
+=item created
+
+  created => 784111777
+
+Epoch time the schedule was created.
+
+=item cron
+
+  cron => '0 9 * * 1-5'
+
+Cron expression.
+
+=item expire
+
+  expire => 300
+
+Expiration in seconds for each enqueued job.
+
+=item id
+
+  id => 23
+
+Schedule id.
+
+=item last_job
+
+  last_job => '10025'
+
+Id of the most recently enqueued job, or C<undef> if the schedule has not fired yet.
+
+=item last_run
+
+  last_run => 784111777
+
+Epoch time the schedule last fired, or C<undef> if it has not fired yet.
+
+=item lax
+
+  lax => 0
+
+Lax dependency setting for each enqueued job.
+
+=item name
+
+  name => 'daily'
+
+Schedule name.
+
+=item next_run
+
+  next_run => 784111777
+
+Epoch time the schedule will fire next.
+
+=item notes
+
+  notes => {foo => 'bar'}
+
+Hash reference with arbitrary metadata applied to each enqueued job.
+
+=item paused
+
+  paused => 0
+
+True if the schedule is paused and will not fire.
+
+=item priority
+
+  priority => 0
+
+Priority of each enqueued job.
+
+=item queue
+
+  queue => 'default'
+
+Queue each enqueued job is placed in.
+
+=item task
+
+  task => 'foo'
+
+Task name.
+
+=back
+
 =head2 list_workers
 
   my $results = $backend->list_workers($offset, $limit);
@@ -622,6 +861,13 @@ Number of shared locks with the same name that can be active at the same time, d
 Change one or more metadata fields for a job. Setting a value to C<undef> will remove the field. Meant to be overloaded
 in a subclass.
 
+=head2 pause_schedule
+
+  my $bool = $backend->pause_schedule('daily');
+
+Pause a schedule by name so it stops firing until resumed. Returns true on success, false if the schedule does not
+exist. Meant to be overloaded in a subclass.
+
 =head2 receive
 
   my $commands = $backend->receive($worker_id);
@@ -655,6 +901,13 @@ Hash reference with whatever status information the worker would like to share.
 
 Remove C<failed>, C<finished> or C<inactive> job from queue. Meant to be overloaded in a subclass.
 
+=head2 remove_schedule
+
+  my $bool = $backend->remove_schedule('daily');
+
+Remove a schedule by name. Returns true on success, false if the schedule does not exist. Meant to be overloaded in a
+subclass.
+
 =head2 repair
 
   $backend->repair;
@@ -684,6 +937,13 @@ Reset everything.
 Reset only locks.
 
 =back
+
+=head2 resume_schedule
+
+  my $bool = $backend->resume_schedule('daily');
+
+Resume a previously paused schedule. Returns true on success, false if the schedule does not exist. Meant to be
+overloaded in a subclass.
 
 =head2 retry_job
 
@@ -801,11 +1061,23 @@ Number of jobs in C<finished> state.
 
 Number of jobs in C<inactive> state.
 
+=item inactive_schedules
+
+  inactive_schedules => 100
+
+Number of schedules that are currently paused.
+
 =item inactive_workers
 
   inactive_workers => 100
 
 Number of workers that are currently not processing a job.
+
+=item schedules
+
+  schedules => 100
+
+Number of schedules that are currently active.
 
 =item uptime
 

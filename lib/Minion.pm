@@ -44,6 +44,13 @@ sub class_for_task {
   return !$class || ref $class ? 'Minion::Job' : $class;
 }
 
+sub dispatch_schedules {
+  my $self       = shift;
+  my $dispatched = $self->backend->dispatch_schedules;
+  $self->emit(enqueue_from_schedule => $_->{job}, $_->{name}) for @$dispatched;
+  return $dispatched;
+}
+
 sub enqueue {
   my $self = shift;
   my $id   = $self->backend->enqueue(@_);
@@ -91,6 +98,8 @@ sub job {
 
 sub jobs { shift->_iterator(1, @_) }
 
+sub list_schedules { shift->backend->list_schedules(@_) }
+
 sub lock { shift->backend->lock(@_) }
 
 sub new {
@@ -102,6 +111,8 @@ sub new {
 
   return $self->backend($class->new(@_)->minion($self));
 }
+
+sub pause_schedule { shift->backend->pause_schedule(@_) }
 
 sub perform_jobs               { _perform_jobs(0, @_) }
 sub perform_jobs_in_foreground { _perform_jobs(1, @_) }
@@ -122,8 +133,12 @@ sub result_p {
   return $promise;
 }
 
-sub stats  { shift->backend->stats }
-sub unlock { shift->backend->unlock(@_) }
+sub resume_schedule { shift->backend->resume_schedule(@_) }
+sub schedule        { shift->backend->add_schedule(@_) }
+
+sub stats      { shift->backend->stats }
+sub unlock     { shift->backend->unlock(@_) }
+sub unschedule { shift->backend->remove_schedule(@_) }
 
 sub worker {
   my $self = shift;
@@ -140,11 +155,11 @@ sub workers { shift->_iterator(0, @_) }
 
 sub _backoff { (shift()**4) + 15 }
 
-# Used by the job command and admin plugin
+# Used by the job and schedule commands and admin plugin
 sub _datetime {
   my $hash = shift;
   $hash->{$_} and $hash->{$_} = Mojo::Date->new($hash->{$_})->to_datetime
-    for qw(created delayed expires finished notified retried started time);
+    for qw(created delayed expires finished last_run next_run notified retried started time);
   return $hash;
 }
 
@@ -227,10 +242,10 @@ Minion - Job queue
 =end html
 
 L<Minion> is a high performance job queue for the Perl programming language, with support for multiple named queues,
-priorities, high priority fast lane, delayed jobs, job dependencies, job progress, job results, retries with backoff,
-rate limiting, unique jobs, expiring jobs, statistics, distributed workers, parallel processing, autoscaling, remote
-control, L<Mojolicious|https://mojolicious.org> admin ui, resource leak protection and multiple backends (such as
-L<PostgreSQL|https://www.postgresql.org>).
+priorities, high priority fast lane, delayed jobs, cron style recurring jobs, job dependencies, job progress, job
+results, retries with backoff, rate limiting, unique jobs, expiring jobs, statistics, distributed workers, parallel
+processing, autoscaling, remote control, L<Mojolicious|https://mojolicious.org> admin ui, resource leak protection and
+multiple backends (such as L<PostgreSQL|https://www.postgresql.org>).
 
 Job queues allow you to process time and/or computationally intensive tasks in background processes, outside of the
 request/response lifecycle of web applications. Among those tasks you'll commonly find image resizing, spam filtering,
@@ -258,6 +273,19 @@ Emitted after a job has been enqueued, in the process that enqueued it.
 
   $minion->on(enqueue => sub ($minion, $id) {
     say "Job $id has been enqueued.";
+  });
+
+=head2 enqueue_from_schedule
+
+  $minion->on(enqueue_from_schedule => sub ($minion, $id, $name) {
+    ...
+  });
+
+Emitted for every job that L</"dispatch_schedules"> has just enqueued, in the process that called it. The C<$name>
+argument is the schedule name.
+
+  $minion->on(enqueue_from_schedule => sub ($minion, $id, $name) {
+    say qq{Schedule "$name" enqueued job $id.};
   });
 
 =head2 worker
@@ -378,6 +406,19 @@ Broadcast remote control command to one or more workers.
   my $class = $minion->class_for_task('foo');
 
 Return job class for task. Note that this method is B<EXPERIMENTAL> and might change without warning!
+
+=head2 dispatch_schedules
+
+  my $dispatched = $minion->dispatch_schedules;
+
+Enqueue jobs for all schedules whose firing time has been reached, advance their firing times to the next match, and
+return information about each dispatch as an array reference. Coordinates across multiple workers via a Postgres
+advisory lock so a single tick never enqueues a schedule twice. Workers tick this automatically, see L<Minion::Worker>.
+
+  # Manually fire any due schedules
+  for my $info (@{$minion->dispatch_schedules}) {
+    say qq{Schedule "$info->{name}" enqueued job $info->{job}.};
+  }
 
 =head2 enqueue
 
@@ -707,6 +748,145 @@ Id of worker that is processing the job.
 
 =back
 
+=head2 list_schedules
+
+  my $results = $minion->list_schedules(0, 10);
+  my $results = $minion->list_schedules(0, 10, {names => ['daily']});
+
+Return information about schedules in batches.
+
+  # Get the total number of schedules
+  my $num = $minion->list_schedules(0, 100)->{total};
+
+  # Inspect the next firing time of a schedule by name
+  my $next = $minion->list_schedules(0, 1, {names => ['daily']})->{schedules}[0]{next_run};
+
+These options are currently available:
+
+=over 2
+
+=item before
+
+  before => 23
+
+List only schedules before this id.
+
+=item ids
+
+  ids => ['23', '24']
+
+List only schedules with these ids.
+
+=item names
+
+  names => ['foo', 'bar']
+
+List only schedules with these names.
+
+=back
+
+These fields are currently available:
+
+=over 2
+
+=item args
+
+  args => ['foo', 'bar']
+
+Job arguments.
+
+=item attempts
+
+  attempts => 25
+
+Number of attempts each enqueued job will get.
+
+=item created
+
+  created => 784111777
+
+Epoch time the schedule was created.
+
+=item cron
+
+  cron => '0 9 * * 1-5'
+
+Cron expression.
+
+=item expire
+
+  expire => 300
+
+Expiration in seconds for each enqueued job.
+
+=item id
+
+  id => 23
+
+Schedule id.
+
+=item last_job
+
+  last_job => '10025'
+
+Id of the most recently enqueued job, or C<undef> if the schedule has not fired yet.
+
+=item last_run
+
+  last_run => 784111777
+
+Epoch time the schedule last fired, or C<undef> if it has not fired yet.
+
+=item lax
+
+  lax => 0
+
+Lax dependency setting for each enqueued job.
+
+=item name
+
+  name => 'daily'
+
+Schedule name.
+
+=item next_run
+
+  next_run => 784111777
+
+Epoch time the schedule will fire next.
+
+=item notes
+
+  notes => {foo => 'bar'}
+
+Hash reference with arbitrary metadata applied to each enqueued job.
+
+=item paused
+
+  paused => 0
+
+True if the schedule is paused and will not fire.
+
+=item priority
+
+  priority => 0
+
+Priority of each enqueued job.
+
+=item queue
+
+  queue => 'default'
+
+Queue each enqueued job is placed in.
+
+=item task
+
+  task => 'foo'
+
+Task name.
+
+=back
+
 =head2 lock
 
   my $bool = $minion->lock('foo', 3600);
@@ -763,6 +943,13 @@ Number of shared locks with the same name that can be active at the same time, d
   my $minion = Minion->new(Pg => Mojo::Pg->new);
 
 Construct a new L<Minion> object.
+
+=head2 pause_schedule
+
+  my $bool = $minion->pause_schedule('daily');
+
+Pause a schedule by name so it stops firing until resumed. Returns true on success, false if the schedule does not
+exist.
 
 =head2 perform_jobs
 
@@ -867,6 +1054,78 @@ Polling interval in seconds for checking if the state of the job has changed, de
 
 =back
 
+=head2 resume_schedule
+
+  my $bool = $minion->resume_schedule('daily');
+
+Resume a previously paused schedule. Returns true on success, false if the schedule does not exist.
+
+=head2 schedule
+
+  my $id = $minion->schedule('daily', '0 4 * * *', 'cleanup');
+  my $id = $minion->schedule('daily', '0 4 * * *', 'cleanup', [@args]);
+  my $id = $minion->schedule(
+    'daily', '0 4 * * *', 'cleanup', [@args], {priority => 5});
+
+Create or update a schedule by unique name. The cron expression is parsed up front, so invalid expressions raise an
+exception immediately. The expression uses the standard five field form (minute, hour, day-of-month, month,
+day-of-week), with C<*>, C<*/N>, C<a-b>, C<a-b/N> and comma separated lists. Times are interpreted in the local
+timezone, matching Unix L<cron(8)>. Updating a schedule with the same cron expression preserves its current firing
+time; changing the expression recomputes it. Schedules are dispatched by L<Minion::Worker> in the background, see
+L</"dispatch_schedules">.
+
+  # A daily job
+  $minion->schedule(daily => '0 4 * * *' => 'cleanup');
+
+  # Every 5 minutes with arguments and options
+  $minion->schedule(
+    every_5min => '*/5 * * * *' => 'foo' => [1, 2, 3] => {priority => 5, queue => 'important'});
+
+  # Weekdays at 9 with retries
+  $minion->schedule(weekday_report => '0 9 * * 1-5' => 'report' => [] => {attempts => 3});
+
+These options are currently available:
+
+=over 2
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing each enqueued job will be attempted, defaults to C<1>.
+
+=item expire
+
+  expire => 300
+
+Each enqueued job is valid for this many seconds before it expires.
+
+=item lax
+
+  lax => 1
+
+Existing jobs each enqueued job depends on may also have transitioned to the C<failed> state, defaults to C<false>.
+
+=item notes
+
+  notes => {foo => 'bar'}
+
+Hash reference with arbitrary metadata applied to each enqueued job.
+
+=item priority
+
+  priority => 5
+
+Priority of each enqueued job, defaults to C<0>.
+
+=item queue
+
+  queue => 'important'
+
+Queue to put each enqueued job in, defaults to C<default>.
+
+=back
+
 =head2 stats
 
   my $stats = $minion->stats;
@@ -929,11 +1188,23 @@ Number of jobs in C<finished> state.
 
 Number of jobs in C<inactive> state.
 
+=item inactive_schedules
+
+  inactive_schedules => 100
+
+Number of schedules that are currently paused.
+
 =item inactive_workers
 
   inactive_workers => 100
 
 Number of workers that are currently not processing a job.
+
+=item schedules
+
+  schedules => 100
+
+Number of schedules that are currently active.
 
 =item uptime
 
@@ -954,6 +1225,12 @@ Number of registered workers.
   my $bool = $minion->unlock('foo');
 
 Release a named lock that has been previously acquired with L</"lock">.
+
+=head2 unschedule
+
+  my $bool = $minion->unschedule('daily');
+
+Remove a schedule by name. Returns true on success, false if the schedule does not exist.
 
 =head2 worker
 

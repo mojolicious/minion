@@ -1,0 +1,115 @@
+% layout 'minion', title => 'Minion - Schedules';
+
+%= include 'minion/_notifications'
+
+%= form_for 'minion_manage_schedules' => begin
+  <div class="d-flex justify-content-between">
+    <div>
+      <div class="btn-group" role="group">
+        <button class="btn btn-outline-secondary" name="do" value="pause" type="submit">
+          <i class="fas fa-pause" aria-hidden="true"></i> Pause
+        </button>
+        <button class="btn btn-outline-secondary" name="do" value="resume" type="submit">
+          <i class="fas fa-play" aria-hidden="true"></i> Resume
+        </button>
+        <button class="btn btn-outline-secondary" name="do" value="remove" type="submit">
+          <i class="fas fa-times" aria-hidden="true"></i> Remove
+        </button>
+      </div>
+    </div>
+    <p class="align-middle">
+      % if (@$schedules) {
+        <%= $offset + 1 %>-<%= $offset + @$schedules %> of <%= $total %>
+      % }
+    </p>
+    %= include 'minion/_limit'
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table">
+        <thead>
+          <tr>
+            <th><input class="checkall" data-check="name" type="checkbox"></th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Task</th>
+            <th>Cron</th>
+            <th>Queue</th>
+            <th>Last run</th>
+            <th>Next run</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        % if (@$schedules) {
+          % my $i = 0;
+          % for my $schedule (@$schedules) {
+            % $i++;
+            % my $base = url_with->query({offset => 0});
+            <tbody>
+              <tr>
+                <td>
+                  <input type="checkbox" name="name" value="<%= $schedule->{name} %>">
+                </td>
+                <td>
+                  <a href="<%= url_for->query({name => $schedule->{name}}) %>">
+                    <%= $schedule->{id} %>
+                  </a>
+                </td>
+                <td>
+                  <a href="<%= $base->clone->query({name => $schedule->{name}}) %>">
+                    <%= $schedule->{name} %>
+                  </a>
+                </td>
+                <td><%= $schedule->{task} %></td>
+                <td><code><%= $schedule->{cron} %></code></td>
+                <td>
+                  <a href="<%= url_for('minion_jobs')->query({queue => $schedule->{queue}}) %>">
+                    <%= $schedule->{queue} %>
+                  </a>
+                </td>
+                <td>
+                  % if ($schedule->{last_job}) {
+                    <a class="from-now" href="<%= url_for('minion_jobs')->query({id => $schedule->{last_job}}) %>">
+                      <%= $schedule->{last_run} %>
+                    </a>
+                  % }
+                  % else {
+                    <span class="text-muted">never</span>
+                  % }
+                </td>
+                <td class="from-now"><%= $schedule->{next_run} %></td>
+                <td class="accordion-toggle collapsed" data-toggle="collapse" data-target="#schedule<%= $i %>">
+                  % if ($schedule->{paused}) {
+                    <span class="badge badge-warning">paused</span>
+                  % }
+                  % else {
+                    <span class="badge badge-success">active</span>
+                  % }
+                </td>
+                <td class="accordion-toggle collapsed expand" data-toggle="collapse" data-target="#schedule<%= $i %>">
+                  <span class="fas fa-lg expand-icon"></span>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="10" class="hiddenRow">
+                  <div class="collapse" id="schedule<%= $i %>">
+                    <pre class="border rounded"><%= Minion::_dump(Minion::_datetime($schedule)) %></pre>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          % }
+        % }
+        % else {
+          <tr><td colspan="10"><p class="text-center"><i class="fas fa-info-circle"></i> No schedules found</p></td></tr>
+        % }
+      </table>
+    </div>
+  </div>
+% end
+
+<div class="d-flex justify-content-center">
+  %= include 'minion/_pagination'
+</div>

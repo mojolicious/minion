@@ -17,6 +17,13 @@ subtest 'job' => sub {
   like $job->usage, qr/job/, 'has usage information';
 };
 
+subtest 'schedule' => sub {
+  require Minion::Command::minion::schedule;
+  my $schedule = Minion::Command::minion::schedule->new;
+  ok $schedule->description, 'has a description';
+  like $schedule->usage, qr/schedule/, 'has usage information';
+};
+
 subtest 'worker' => sub {
   require Minion::Command::minion::worker;
   my $worker = Minion::Command::minion::worker->new;
