@@ -12,32 +12,32 @@ sub auto_retry_job {
   return $self->retry_job($id, $retries, {attempts => $attempts > 1 ? $attempts - 1 : 1, delay => $delay});
 }
 
-sub add_schedule      { croak 'Method "add_schedule" not implemented by subclass' }
-sub broadcast         { croak 'Method "broadcast" not implemented by subclass' }
-sub dequeue           { croak 'Method "dequeue" not implemented by subclass' }
+sub broadcast          { croak 'Method "broadcast" not implemented by subclass' }
+sub dequeue            { croak 'Method "dequeue" not implemented by subclass' }
 sub dispatch_schedules { croak 'Method "dispatch_schedules" not implemented by subclass' }
-sub enqueue           { croak 'Method "enqueue" not implemented by subclass' }
-sub fail_job          { croak 'Method "fail_job" not implemented by subclass' }
-sub finish_job        { croak 'Method "finish_job" not implemented by subclass' }
-sub history           { croak 'Method "history" not implemented by subclass' }
-sub list_jobs         { croak 'Method "list_jobs" not implemented by subclass' }
-sub list_locks        { croak 'Method "list_locks" not implemented by subclass' }
-sub list_schedules    { croak 'Method "list_schedules" not implemented by subclass' }
-sub list_workers      { croak 'Method "list_workers" not implemented by subclass' }
-sub lock              { croak 'Method "lock" not implemented by subclass' }
-sub note              { croak 'Method "note" not implemented by subclass' }
-sub pause_schedule    { croak 'Method "pause_schedule" not implemented by subclass' }
-sub receive           { croak 'Method "receive" not implemented by subclass' }
-sub register_worker   { croak 'Method "register_worker" not implemented by subclass' }
-sub remove_job        { croak 'Method "remove_job" not implemented by subclass' }
-sub remove_schedule   { croak 'Method "remove_schedule" not implemented by subclass' }
-sub repair            { croak 'Method "repair" not implemented by subclass' }
-sub reset             { croak 'Method "reset" not implemented by subclass' }
-sub resume_schedule   { croak 'Method "resume_schedule" not implemented by subclass' }
-sub retry_job         { croak 'Method "retry_job" not implemented by subclass' }
-sub stats             { croak 'Method "stats" not implemented by subclass' }
-sub unlock            { croak 'Method "unlock" not implemented by subclass' }
-sub unregister_worker { croak 'Method "unregister_worker" not implemented by subclass' }
+sub enqueue            { croak 'Method "enqueue" not implemented by subclass' }
+sub fail_job           { croak 'Method "fail_job" not implemented by subclass' }
+sub finish_job         { croak 'Method "finish_job" not implemented by subclass' }
+sub history            { croak 'Method "history" not implemented by subclass' }
+sub list_jobs          { croak 'Method "list_jobs" not implemented by subclass' }
+sub list_locks         { croak 'Method "list_locks" not implemented by subclass' }
+sub list_schedules     { croak 'Method "list_schedules" not implemented by subclass' }
+sub list_workers       { croak 'Method "list_workers" not implemented by subclass' }
+sub lock               { croak 'Method "lock" not implemented by subclass' }
+sub note               { croak 'Method "note" not implemented by subclass' }
+sub pause_schedule     { croak 'Method "pause_schedule" not implemented by subclass' }
+sub receive            { croak 'Method "receive" not implemented by subclass' }
+sub register_worker    { croak 'Method "register_worker" not implemented by subclass' }
+sub remove_job         { croak 'Method "remove_job" not implemented by subclass' }
+sub repair             { croak 'Method "repair" not implemented by subclass' }
+sub reset              { croak 'Method "reset" not implemented by subclass' }
+sub resume_schedule    { croak 'Method "resume_schedule" not implemented by subclass' }
+sub retry_job          { croak 'Method "retry_job" not implemented by subclass' }
+sub schedule           { croak 'Method "schedule" not implemented by subclass' }
+sub stats              { croak 'Method "stats" not implemented by subclass' }
+sub unlock             { croak 'Method "unlock" not implemented by subclass' }
+sub unregister_worker  { croak 'Method "unregister_worker" not implemented by subclass' }
+sub unschedule         { croak 'Method "unschedule" not implemented by subclass' }
 
 1;
 
@@ -52,7 +52,6 @@ Minion::Backend - Backend base class
   package Minion::Backend::MyBackend;
   use Mojo::Base 'Minion::Backend';
 
-  sub add_schedule       {...}
   sub broadcast          {...}
   sub dequeue            {...}
   sub dispatch_schedules {...}
@@ -70,14 +69,15 @@ Minion::Backend - Backend base class
   sub receive            {...}
   sub register_worker    {...}
   sub remove_job         {...}
-  sub remove_schedule    {...}
   sub repair             {...}
   sub reset              {...}
   sub resume_schedule    {...}
   sub retry_job          {...}
+  sub schedule           {...}
   sub stats              {...}
   sub unlock             {...}
   sub unregister_worker  {...}
+  sub unschedule         {...}
 
 =head1 DESCRIPTION
 
@@ -97,61 +97,6 @@ L<Minion> object this backend belongs to. Note that this attribute is weakened.
 =head1 METHODS
 
 L<Minion::Backend> inherits all methods from L<Mojo::Base> and implements the following new ones.
-
-=head2 add_schedule
-
-  my $id = $backend->add_schedule('daily', '0 4 * * *', 'cleanup');
-  my $id = $backend->add_schedule('daily', '0 4 * * *', 'cleanup', [@args]);
-  my $id = $backend->add_schedule(
-    'daily', '0 4 * * *', 'cleanup', [@args], {priority => 5});
-
-Create or replace a schedule by unique name. The cron expression is parsed up front and the next firing time is
-computed; the entry is rejected if the expression is invalid. Existing schedules with the same name are updated, but
-the firing time is preserved if the cron expression has not changed. Meant to be overloaded in a subclass.
-
-These options are currently available:
-
-=over 2
-
-=item attempts
-
-  attempts => 25
-
-Number of times performing each enqueued job will be attempted, with a delay based on L<Minion/"backoff"> after the
-first attempt, defaults to C<1>.
-
-=item expire
-
-  expire => 300
-
-Each enqueued job is valid for this many seconds (from enqueue time) before it expires.
-
-=item lax
-
-  lax => 1
-
-Existing jobs each enqueued job depends on may also have transitioned to the C<failed> state to allow for it to be
-processed, defaults to C<false>.
-
-=item notes
-
-  notes => {foo => 'bar', baz => [1, 2, 3]}
-
-Hash reference with arbitrary metadata for each enqueued job.
-
-=item priority
-
-  priority => 5
-
-Priority of each enqueued job, defaults to C<0>.
-
-=item queue
-
-  queue => 'important'
-
-Queue to put each enqueued job in, defaults to C<default>.
-
-=back
 
 =head2 auto_retry_job
 
@@ -901,13 +846,6 @@ Hash reference with whatever status information the worker would like to share.
 
 Remove C<failed>, C<finished> or C<inactive> job from queue. Meant to be overloaded in a subclass.
 
-=head2 remove_schedule
-
-  my $bool = $backend->remove_schedule('daily');
-
-Remove a schedule by name. Returns true on success, false if the schedule does not exist. Meant to be overloaded in a
-subclass.
-
 =head2 repair
 
   $backend->repair;
@@ -999,6 +937,61 @@ Job priority.
   queue => 'important'
 
 Queue to put job in.
+
+=back
+
+=head2 schedule
+
+  my $id = $backend->schedule('daily', '0 4 * * *', 'cleanup');
+  my $id = $backend->schedule('daily', '0 4 * * *', 'cleanup', [@args]);
+  my $id = $backend->schedule(
+    'daily', '0 4 * * *', 'cleanup', [@args], {priority => 5});
+
+Create or replace a schedule by unique name. The cron expression is parsed up front and the next firing time is
+computed; the entry is rejected if the expression is invalid. Existing schedules with the same name are updated, but
+the firing time is preserved if the cron expression has not changed. Meant to be overloaded in a subclass.
+
+These options are currently available:
+
+=over 2
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing each enqueued job will be attempted, with a delay based on L<Minion/"backoff"> after the
+first attempt, defaults to C<1>.
+
+=item expire
+
+  expire => 300
+
+Each enqueued job is valid for this many seconds (from enqueue time) before it expires.
+
+=item lax
+
+  lax => 1
+
+Existing jobs each enqueued job depends on may also have transitioned to the C<failed> state to allow for it to be
+processed, defaults to C<false>.
+
+=item notes
+
+  notes => {foo => 'bar', baz => [1, 2, 3]}
+
+Hash reference with arbitrary metadata for each enqueued job.
+
+=item priority
+
+  priority => 5
+
+Priority of each enqueued job, defaults to C<0>.
+
+=item queue
+
+  queue => 'important'
+
+Queue to put each enqueued job in, defaults to C<default>.
 
 =back
 
@@ -1104,6 +1097,13 @@ Release a named lock. Meant to be overloaded in a subclass.
   $backend->unregister_worker($worker_id);
 
 Unregister worker. Meant to be overloaded in a subclass.
+
+=head2 unschedule
+
+  my $bool = $backend->unschedule('daily');
+
+Remove a schedule by name. Returns true on success, false if the schedule does not exist. Meant to be overloaded in a
+subclass.
 
 =head1 SEE ALSO
 

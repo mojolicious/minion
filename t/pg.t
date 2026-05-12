@@ -423,12 +423,12 @@ subtest 'Schedules' => sub {
   is $got->{priority}, 5,           'priority stored';
   is $got->{queue},    'important', 'queue stored';
   is_deeply $got->{notes}, {kind => 'unit'}, 'notes stored';
-  is_deeply $got->{args},  [1, 2, 3],        'args stored';
+  is_deeply $got->{args}, [1, 2, 3], 'args stored';
 
   my $by_name = $minion->list_schedules(0, 10, {names => ['daily']});
-  is $by_name->{total},              1,       'one match';
-  is $by_name->{schedules}[0]{name}, 'daily', 'right name';
-  is $minion->list_schedules(0, 10, {ids => [$sid]})->{total}, 1, 'filter by id';
+  is $by_name->{total},                                        1,       'one match';
+  is $by_name->{schedules}[0]{name},                           'daily', 'right name';
+  is $minion->list_schedules(0, 10, {ids => [$sid]})->{total}, 1,       'filter by id';
 
   eval { $minion->schedule(bad => 'not a cron' => 'test') };
   like $@, qr/Invalid cron/, 'invalid cron rejected';
@@ -447,20 +447,23 @@ subtest 'Dispatch schedules' => sub {
   $minion->backend->pg->db->query(q{UPDATE minion_schedules SET next_run = NOW() - INTERVAL '1 minute' WHERE id = ?},
     $sid);
 
-  my @events;
-  $minion->on(enqueue_from_schedule => sub { push @events, [$_[1], $_[2]] });
+  my (@enqueue, @events);
+  $minion->on(enqueue               => sub { push @enqueue, $_[1] });
+  $minion->on(enqueue_from_schedule => sub { push @events,  [$_[1], $_[2]] });
 
   my $dispatched = $minion->dispatch_schedules;
   is scalar @$dispatched,    1,     'one dispatched';
   is $dispatched->[0]{name}, 'due', 'right name';
   ok $dispatched->[0]{job}, 'job id returned';
-  is scalar @events, 1,                     'event fired';
-  is $events[0][1],  'due',                 'event has schedule name';
-  is $events[0][0],  $dispatched->[0]{job}, 'event has job id';
+  is scalar @enqueue, 1,                     'enqueue event fired';
+  is $enqueue[0],     $dispatched->[0]{job}, 'enqueue event has job id';
+  is scalar @events,  1,                     'enqueue_from_schedule event fired';
+  is $events[0][1],   'due',                 'enqueue_from_schedule has schedule name';
+  is $events[0][0],   $dispatched->[0]{job}, 'enqueue_from_schedule has job id';
 
   my $info = $minion->list_schedules(0, 10, {ids => [$sid]})->{schedules}[0];
   is $info->{last_job}, $dispatched->[0]{job}, 'last_job recorded';
-  ok $info->{last_run}, 'last_run recorded';
+  ok $info->{last_run},        'last_run recorded';
   ok $info->{next_run} > time, 'next_run advanced into the future';
 
   is_deeply $minion->dispatch_schedules, [], 'no further dispatch';
@@ -507,13 +510,13 @@ subtest 'Stats' => sub {
   );
   $minion->add_task(fail => sub { die "Intentional failure!\n" });
   my $stats = $minion->stats;
-  is $stats->{workers},          0, 'no workers';
-  is $stats->{active_workers},   0, 'no active workers';
-  is $stats->{inactive_workers}, 0, 'no inactive workers';
-  is $stats->{enqueued_jobs},    0, 'no enqueued jobs';
-  is $stats->{active_jobs},      0, 'no active jobs';
-  is $stats->{failed_jobs},      0, 'no failed jobs';
-  is $stats->{finished_jobs},    0, 'no finished jobs';
+  is $stats->{workers},            0, 'no workers';
+  is $stats->{active_workers},     0, 'no active workers';
+  is $stats->{inactive_workers},   0, 'no inactive workers';
+  is $stats->{enqueued_jobs},      0, 'no enqueued jobs';
+  is $stats->{active_jobs},        0, 'no active jobs';
+  is $stats->{failed_jobs},        0, 'no failed jobs';
+  is $stats->{finished_jobs},      0, 'no finished jobs';
   is $stats->{inactive_jobs},      0, 'no inactive jobs';
   is $stats->{delayed_jobs},       0, 'no delayed jobs';
   is $stats->{active_locks},       0, 'no active locks';

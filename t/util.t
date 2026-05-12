@@ -18,11 +18,11 @@ subtest 'parse_cron: basic forms' => sub {
   is_deeply [sort { $a <=> $b } keys %{parse_cron('* * * * *')->[0]{set}}], [0 .. 59], 'star expands minutes';
   is parse_cron('* * * * *')->[0]{is_star}, 1, 'star flag set';
   is parse_cron('5 * * * *')->[0]{is_star}, 0, 'is_star clear for value';
-  is_deeply [sort { $a <=> $b } keys %{parse_cron('5,15,25 * * * *')->[0]{set}}], [5, 15, 25], 'list parsed';
-  is_deeply [sort { $a <=> $b } keys %{parse_cron('0 9-17 * * *')->[1]{set}}], [9 .. 17], 'range parsed';
-  is_deeply [sort { $a <=> $b } keys %{parse_cron('*/15 * * * *')->[0]{set}}], [0, 15, 30, 45], 'star step parsed';
+  is_deeply [sort { $a <=> $b } keys %{parse_cron('5,15,25 * * * *')->[0]{set}}], [5, 15, 25],     'list parsed';
+  is_deeply [sort { $a <=> $b } keys %{parse_cron('0 9-17 * * *')->[1]{set}}],    [9 .. 17],       'range parsed';
+  is_deeply [sort { $a <=> $b } keys %{parse_cron('*/15 * * * *')->[0]{set}}],    [0, 15, 30, 45], 'star step parsed';
   is_deeply [sort { $a <=> $b } keys %{parse_cron('0-30/10 * * * *')->[0]{set}}], [0, 10, 20, 30], 'range step parsed';
-  is_deeply [sort { $a <=> $b } keys %{parse_cron('5/10 * * * *')->[0]{set}}], [5, 15, 25, 35, 45, 55], 'value step';
+  is_deeply [sort { $a <=> $b } keys %{parse_cron('5/10 * * * *')->[0]{set}}],    [5, 15, 25, 35, 45, 55], 'value step';
 };
 
 subtest 'parse_cron: errors' => sub {
@@ -53,9 +53,9 @@ subtest 'next_cron_time' => sub {
   # Pin all expectations to local time so the test is timezone independent
   my $base = timelocal 0, 0, 12, 12, 4, 2026;    # 2026-05-12 12:00:00 local (Tuesday)
 
-  is next_cron_time('* * * * *', $base), $base + 60, 'every minute';
-  is next_cron_time('*/5 * * * *', $base), $base + 60 * 5, 'every 5 minutes (next is 12:05)';
-  is next_cron_time('0 13 * * *', $base), timelocal(0, 0, 13, 12, 4, 2026), 'today 13:00';
+  is next_cron_time('* * * * *',   $base), $base + 60,                       'every minute';
+  is next_cron_time('*/5 * * * *', $base), $base + 60 * 5,                   'every 5 minutes (next is 12:05)';
+  is next_cron_time('0 13 * * *',  $base), timelocal(0, 0, 13, 12, 4, 2026), 'today 13:00';
 
   # 9am on 2026-05-12 is in the past for $base, so next is 2026-05-13 09:00
   is next_cron_time('0 9 * * *', $base), timelocal(0, 0, 9, 13, 4, 2026), 'tomorrow 09:00';
@@ -72,6 +72,9 @@ subtest 'next_cron_time' => sub {
 
   # Right at the boundary: we round up to the *next* minute strictly after $from
   is next_cron_time('* * * * *', $base + 30), $base + 60, 'rounds up to next minute';
+
+  # Quadrennial: from 2027-01-01 the next Feb 29 is over a year away (in 2028)
+  is next_cron_time('0 0 29 2 *', timelocal(0, 0, 0, 1, 0, 2027)), timelocal(0, 0, 0, 29, 1, 2028), 'next Feb 29';
 };
 
 done_testing();

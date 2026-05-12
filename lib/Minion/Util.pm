@@ -27,7 +27,7 @@ sub next_cron_time {
 
   my $parsed = parse_cron($expr);
   my $t      = int($from / 60) * 60 + 60;
-  my $limit  = $t + 366 * 86400;
+  my $limit  = $t + 5 * 366 * 86400;
   while ($t < $limit) {
     my (undef, $min, $hour, $mday, $mon, undef, $wday) = localtime $t;
     return $t
@@ -53,9 +53,9 @@ sub parse_cron {
 
 sub _day_match {
   my ($parsed, $mday, $wday) = @_;
-  return 1                                   if $parsed->[2]{is_star} && $parsed->[4]{is_star};
-  return $parsed->[4]{set}{$wday}            if $parsed->[2]{is_star};
-  return $parsed->[2]{set}{$mday}            if $parsed->[4]{is_star};
+  return 1                        if $parsed->[2]{is_star} && $parsed->[4]{is_star};
+  return $parsed->[4]{set}{$wday} if $parsed->[2]{is_star};
+  return $parsed->[2]{set}{$mday} if $parsed->[4]{is_star};
   return $parsed->[2]{set}{$mday} || $parsed->[4]{set}{$wday};
 }
 
