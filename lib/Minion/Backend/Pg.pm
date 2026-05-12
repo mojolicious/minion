@@ -4,7 +4,7 @@ use Mojo::Base 'Minion::Backend';
 use Carp       qw(croak);
 use Mojo::File qw(path);
 use Mojo::IOLoop;
-use Mojo::Pg 4.29;
+use Mojo::Pg 5.0;
 use Sys::Hostname qw(hostname);
 
 has 'pg';
