@@ -62,6 +62,11 @@
               </a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" href="<%= url_for 'minion_schedules' %>">
+                Schedules <span class="badge badge-pill badge-secondary minion-stats-schedules">0</span>
+              </a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="<%= url_for 'minion_workers' %>">
                 Workers <span class="badge badge-pill badge-secondary minion-stats-workers">0</span>
               </a>

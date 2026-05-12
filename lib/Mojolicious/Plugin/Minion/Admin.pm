@@ -25,6 +25,8 @@ sub register {
   $prefix->patch('/jobs' => \&_manage_jobs)->name('minion_manage_jobs');
   $prefix->get('/locks' => \&_list_locks)->name('minion_locks');
   $prefix->delete('/locks' => \&_unlock)->name('minion_unlock');
+  $prefix->get('/schedules' => \&_list_schedules)->name('minion_schedules');
+  $prefix->patch('/schedules' => \&_manage_schedules)->name('minion_manage_schedules');
   $prefix->get('/workers' => \&_list_workers)->name('minion_workers');
 }
 
@@ -75,6 +77,28 @@ sub _list_locks {
     total  => $results->{total},
     limit  => $limit,
     offset => $offset
+  );
+}
+
+sub _list_schedules {
+  my $c = shift;
+
+  my $v = $c->validation;
+  $v->optional('limit')->num;
+  $v->optional('name', 'not_empty');
+  $v->optional('offset')->num;
+  my $options = {};
+  $options->{names} = $v->every_param('name') if $v->is_valid('name');
+  my $limit  = $v->param('limit')  || 10;
+  my $offset = $v->param('offset') || 0;
+
+  my $results = $c->minion->backend->list_schedules($offset, $limit, $options);
+  $c->render(
+    'minion/schedules',
+    schedules => $results->{schedules},
+    total     => $results->{total},
+    limit     => $limit,
+    offset    => $offset
   );
 }
 
@@ -138,6 +162,37 @@ sub _manage_jobs {
   }
 
   $c->redirect_to($c->url_for('minion_jobs')->query(id => $ids));
+}
+
+sub _manage_schedules {
+  my $c = shift;
+
+  my $v = $c->validation;
+  $v->required('name');
+  $v->required('do')->in('pause', 'resume', 'remove');
+
+  $c->redirect_to('minion_schedules') if $v->has_error;
+
+  my $minion = $c->minion;
+  my $names  = $v->every_param('name');
+  my $do     = $v->param('do');
+  if ($do eq 'pause') {
+    my $fail = grep { $minion->pause_schedule($_) ? () : 1 } @$names;
+    if   ($fail) { $c->flash(danger  => "Couldn't pause all schedules.") }
+    else         { $c->flash(success => 'All selected schedules paused.') }
+  }
+  elsif ($do eq 'resume') {
+    my $fail = grep { $minion->resume_schedule($_) ? () : 1 } @$names;
+    if   ($fail) { $c->flash(danger  => "Couldn't resume all schedules.") }
+    else         { $c->flash(success => 'All selected schedules resumed.') }
+  }
+  elsif ($do eq 'remove') {
+    my $fail = grep { $minion->unschedule($_) ? () : 1 } @$names;
+    if   ($fail) { $c->flash(danger  => "Couldn't remove all schedules.") }
+    else         { $c->flash(success => 'All selected schedules removed.') }
+  }
+
+  $c->redirect_to($c->url_for('minion_schedules')->query(name => $names));
 }
 
 sub _stats {

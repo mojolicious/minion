@@ -1,13 +1,33 @@
 package Minion::Backend::Pg;
 use Mojo::Base 'Minion::Backend';
 
-use Carp       qw(croak);
-use Mojo::File qw(path);
+use Carp         qw(croak);
+use Minion::Util qw(next_cron_time);
+use Mojo::File   qw(path);
 use Mojo::IOLoop;
 use Mojo::Pg 5.0;
 use Sys::Hostname qw(hostname);
 
 has 'pg';
+
+sub add_schedule {
+  my ($self, $name, $cron, $task, $args, $options) = (shift, shift, shift, shift, shift || [], shift || {});
+
+  my $next = next_cron_time $cron, time;
+
+  return $self->pg->db->query(
+    q{INSERT INTO minion_schedules (args, attempts, cron, expire, lax, name, next_run, notes, priority, queue, task)
+      VALUES ($1, $2, $3, $4, $5, $6, TO_TIMESTAMP($7), $8, $9, $10, $11)
+      ON CONFLICT (name) DO UPDATE SET
+        args = EXCLUDED.args, attempts = EXCLUDED.attempts, cron = EXCLUDED.cron, expire = EXCLUDED.expire,
+        lax = EXCLUDED.lax, notes = EXCLUDED.notes, priority = EXCLUDED.priority, queue = EXCLUDED.queue,
+        task = EXCLUDED.task,
+        next_run = CASE WHEN minion_schedules.cron = EXCLUDED.cron THEN minion_schedules.next_run ELSE EXCLUDED.next_run END
+      RETURNING id}, {json => $args}, $options->{attempts} // 1, $cron, $options->{expire},
+    $options->{lax} ? 1 : 0, $name, $next, {json => $options->{notes} || {}}, $options->{priority} // 0,
+    $options->{queue} // 'default', $task
+  )->hash->{id};
+}
 
 sub broadcast {
   my ($self, $command, $args, $ids) = (shift, shift, shift || [], shift || []);
@@ -30,6 +50,39 @@ sub dequeue {
   undef $db;
 
   return $self->_try($id, $options);
+}
+
+sub dispatch_schedules {
+  my $self = shift;
+
+  my $db = $self->pg->db;
+  my $tx = $db->begin;
+  return [] unless $db->query(q{SELECT pg_try_advisory_xact_lock(hashtext('minion.schedules'))})->array->[0];
+
+  my $due = $db->query(
+    q{SELECT id, args, attempts, cron, expire, lax, name, notes, priority, queue, task
+      FROM minion_schedules WHERE next_run <= NOW() AND NOT paused FOR UPDATE}
+  )->expand->hashes;
+
+  my @dispatched;
+  for my $s (@$due) {
+    my $job_id = $db->query(
+      q{INSERT INTO minion_jobs (args, attempts, delayed, expires, lax, notes, parents, priority, queue, task)
+        VALUES ($1, $2, NOW(), CASE WHEN $3::BIGINT IS NOT NULL THEN NOW() + (INTERVAL '1 second' * $3::BIGINT) END,
+          $4, $5, '{}', $6, $7, $8)
+        RETURNING id}, {json => $s->{args}}, $s->{attempts}, $s->{expire}, $s->{lax} ? 1 : 0,
+      {json => $s->{notes}}, $s->{priority}, $s->{queue}, $s->{task}
+    )->hash->{id};
+
+    my $next = next_cron_time $s->{cron}, time;
+    $db->query('UPDATE minion_schedules SET last_job = ?, last_run = NOW(), next_run = TO_TIMESTAMP(?) WHERE id = ?',
+      $job_id, $next, $s->{id});
+
+    push @dispatched, {id => $s->{id}, name => $s->{name}, job => $job_id};
+  }
+  $tx->commit;
+
+  return \@dispatched;
 }
 
 sub enqueue {
@@ -103,6 +156,21 @@ sub list_locks {
   return _total('locks', $locks);
 }
 
+sub list_schedules {
+  my ($self, $offset, $limit, $options) = @_;
+
+  my $schedules = $self->pg->db->query(
+    q{SELECT id, args, attempts, EXTRACT(EPOCH FROM created) AS created, cron, expire, last_job,
+        EXTRACT(EPOCH FROM last_run) AS last_run, lax, name, EXTRACT(EPOCH FROM next_run) AS next_run, notes, paused,
+        priority, queue, task, COUNT(*) OVER() AS total
+      FROM minion_schedules
+      WHERE (id < $1 OR $1 IS NULL) AND (id = ANY ($2) OR $2 IS NULL) AND (name = ANY ($3) OR $3 IS NULL)
+      ORDER BY id DESC LIMIT $4 OFFSET $5}, @$options{qw(before ids names)}, $limit, $offset
+  )->expand->hashes->to_array;
+
+  return _total('schedules', $schedules);
+}
+
 sub list_workers {
   my ($self, $offset, $limit, $options) = @_;
 
@@ -143,6 +211,8 @@ sub note {
     {json => $merge}, $id)->rv > 0;
 }
 
+sub pause_schedule { shift->_set_paused(shift, 1) }
+
 sub receive {
   my $array = shift->pg->db->query(
     "UPDATE minion_workers AS new SET inbox = '[]'
@@ -168,6 +238,10 @@ sub remove_job {
   my ($self, $id) = @_;
   return $self->pg->db->query(
     "DELETE FROM minion_jobs WHERE id = ? AND state IN ('inactive', 'failed', 'finished') RETURNING 1", $id)->rv > 0;
+}
+
+sub remove_schedule {
+  return shift->pg->db->query('DELETE FROM minion_schedules WHERE name = ? RETURNING 1', shift)->rv > 0;
 }
 
 sub repair {
@@ -207,9 +281,13 @@ sub repair {
 sub reset {
   my ($self, $options) = (shift, shift // {});
 
-  if ($options->{all}) { $self->pg->db->query('TRUNCATE minion_jobs, minion_locks, minion_workers RESTART IDENTITY') }
+  if ($options->{all}) {
+    $self->pg->db->query('TRUNCATE minion_jobs, minion_locks, minion_schedules, minion_workers RESTART IDENTITY');
+  }
   elsif ($options->{locks}) { $self->pg->db->query('TRUNCATE minion_locks') }
 }
+
+sub resume_schedule { shift->_set_paused(shift, 0) }
 
 sub retry_job {
   my ($self, $id, $retries, $options) = (shift, shift, shift, shift || {});
@@ -236,6 +314,8 @@ sub stats {
        (SELECT COUNT(*) FROM minion_jobs WHERE state = 'finished') AS finished_jobs,
        (SELECT COUNT(*) FROM minion_jobs WHERE state = 'inactive' AND delayed > NOW()) AS delayed_jobs,
        (SELECT COUNT(*) FROM minion_locks WHERE expires > NOW()) AS active_locks,
+       (SELECT COUNT(*) FROM minion_schedules WHERE NOT paused) AS schedules,
+       (SELECT COUNT(*) FROM minion_schedules WHERE paused) AS inactive_schedules,
        (SELECT COUNT(DISTINCT worker) FROM minion_jobs mj WHERE state = 'active') AS active_workers,
        (SELECT CASE WHEN is_called THEN last_value ELSE 0 END FROM minion_jobs_id_seq) AS enqueued_jobs,
        (SELECT COUNT(*) FROM minion_workers) AS workers,
@@ -255,6 +335,12 @@ sub unlock {
 }
 
 sub unregister_worker { shift->pg->db->query('DELETE FROM minion_workers WHERE id = ?', shift) }
+
+sub _set_paused {
+  my ($self, $name, $paused) = @_;
+  return $self->pg->db->query('UPDATE minion_schedules SET paused = ? WHERE name = ? RETURNING 1', $paused, $name)->rv
+    > 0;
+}
 
 sub _total {
   my ($name, $results) = @_;
@@ -336,6 +422,58 @@ L<Mojo::Pg> object used to store all data.
 
 L<Minion::Backend::Pg> inherits all methods from L<Minion::Backend> and implements the following new ones.
 
+=head2 add_schedule
+
+  my $id = $backend->add_schedule('daily', '0 4 * * *', 'cleanup');
+  my $id = $backend->add_schedule('daily', '0 4 * * *', 'cleanup', [@args]);
+  my $id = $backend->add_schedule(
+    'daily', '0 4 * * *', 'cleanup', [@args], {priority => 5});
+
+Create or replace a schedule by unique name. Updating a schedule with the same cron expression preserves its current
+firing time; changing the expression recomputes it.
+
+These options are currently available:
+
+=over 2
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing each enqueued job will be attempted, defaults to C<1>.
+
+=item expire
+
+  expire => 300
+
+Each enqueued job is valid for this many seconds before it expires.
+
+=item lax
+
+  lax => 1
+
+Existing jobs each enqueued job depends on may also have transitioned to the C<failed> state, defaults to C<false>.
+
+=item notes
+
+  notes => {foo => 'bar'}
+
+Hash reference with arbitrary metadata applied to each enqueued job.
+
+=item priority
+
+  priority => 5
+
+Priority of each enqueued job, defaults to C<0>.
+
+=item queue
+
+  queue => 'important'
+
+Queue to put each enqueued job in, defaults to C<default>.
+
+=back
+
 =head2 broadcast
 
   my $bool = $backend->broadcast('some_command');
@@ -411,6 +549,16 @@ Number of times job has been retried.
 Task name.
 
 =back
+
+=head2 dispatch_schedules
+
+  my $dispatched = $backend->dispatch_schedules;
+
+Enqueue jobs for all schedules whose firing time has been reached, advance their firing times to the next match, and
+return information about each dispatch as an array reference. A Postgres advisory lock is held for the duration of the
+dispatch cycle so that multiple workers ticking at the same time will not produce duplicate enqueues.
+
+Each entry contains C<id>, C<job> and C<name>.
 
 =head2 enqueue
 
@@ -757,6 +905,44 @@ Lock name.
 
 =back
 
+=head2 list_schedules
+
+  my $results = $backend->list_schedules($offset, $limit);
+  my $results = $backend->list_schedules($offset, $limit, {names => ['daily']});
+
+Returns information about schedules in batches.
+
+  # Get the total number of results (without limit)
+  my $num = $backend->list_schedules(0, 100)->{total};
+
+  # Check next firing time
+  my $results = $backend->list_schedules(0, 1, {names => ['daily']});
+  my $next    = $results->{schedules}[0]{next_run};
+
+These options are currently available:
+
+=over 2
+
+=item before
+
+  before => 23
+
+List only schedules before this id.
+
+=item ids
+
+  ids => ['23', '24']
+
+List only schedules with these ids.
+
+=item names
+
+  names => ['foo', 'bar']
+
+List only schedules with these names.
+
+=back
+
 =head2 list_workers
 
   my $results = $backend->list_workers($offset, $limit);
@@ -870,6 +1056,13 @@ Construct a new L<Minion::Backend::Pg> object.
 
 Change one or more metadata fields for a job. Setting a value to C<undef> will remove the field.
 
+=head2 pause_schedule
+
+  my $bool = $backend->pause_schedule('daily');
+
+Pause a schedule by name so it stops firing until resumed. Returns true on success, false if the schedule does not
+exist.
+
 =head2 receive
 
   my $commands = $backend->receive($worker_id);
@@ -903,6 +1096,12 @@ Hash reference with whatever status information the worker would like to share.
 
 Remove C<failed>, C<finished> or C<inactive> job from queue.
 
+=head2 remove_schedule
+
+  my $bool = $backend->remove_schedule('daily');
+
+Remove a schedule by name. Returns true on success, false if the schedule does not exist.
+
 =head2 repair
 
   $backend->repair;
@@ -932,6 +1131,12 @@ Reset everything.
 Reset only locks.
 
 =back
+
+=head2 resume_schedule
+
+  my $bool = $backend->resume_schedule('daily');
+
+Resume a previously paused schedule. Returns true on success, false if the schedule does not exist.
 
 =head2 retry_job
 
@@ -1047,11 +1252,23 @@ Number of jobs in C<finished> state.
 
 Number of jobs in C<inactive> state.
 
+=item inactive_schedules
+
+  inactive_schedules => 100
+
+Number of schedules that are currently paused.
+
 =item inactive_workers
 
   inactive_workers => 100
 
 Number of workers that are currently not processing a job.
+
+=item schedules
+
+  schedules => 100
+
+Number of schedules that are currently active.
 
 =item uptime
 

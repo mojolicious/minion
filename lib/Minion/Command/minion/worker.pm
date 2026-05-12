@@ -14,6 +14,7 @@ sub run {
   getopt \@args,
     'C|command-interval=i'   => \$status->{command_interval},
     'D|dequeue-timeout=i'    => \$status->{dequeue_timeout},
+    'dispatch-interval=i'    => \$status->{dispatch_interval},
     'I|heartbeat-interval=i' => \$status->{heartbeat_interval},
     'j|jobs=i'               => \$status->{jobs},
     'L|limit=s' => sub { $_[1] =~ /^(\S+)=(\d+)$/ ? ($status->{limits}{$1} = $2) : warn "Invalid limit option: $_[1]" },
@@ -58,6 +59,9 @@ Minion::Command::minion::worker - Minion worker command
                                          defaults to 10
     -D, --dequeue-timeout <seconds>      Maximum amount of time to wait for
                                          jobs, defaults to 5
+        --dispatch-interval <seconds>    Interval for dispatching due
+                                         schedules, defaults to 30 (set to 0
+                                         to disable on this worker)
     -h, --help                           Show this summary of available options
         --home <path>                    Path to home directory of your
                                          application, defaults to the value of

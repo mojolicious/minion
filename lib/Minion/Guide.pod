@@ -252,6 +252,51 @@ You can use L<Minion::Job/"retry"> to change the delay.
 
   $job->retry({delay => 10});
 
+=head2 Recurring jobs
+
+For jobs that should run on a wall clock schedule, use L<"schedule" in Minion|Minion/"schedule"> with a standard five
+field cron expression. Schedules are stored in the database as the source of truth, so they survive restarts and only
+fire once per interval no matter how many workers are running.
+
+  # Daily cleanup at 4am, no arguments
+  $minion->schedule(daily_cleanup => '0 4 * * *' => 'cleanup');
+
+  # Every five minutes, with arguments and options
+  $minion->schedule(
+    refresh => '*/5 * * * *' => 'refresh_cache' => ['users'] => {priority => 5});
+
+  # Weekdays at 9, with retries
+  $minion->schedule(
+    weekday_report => '0 9 * * 1-5' => 'report' => [] => {attempts => 3});
+
+The expression uses the standard fields C<minute hour day-of-month month day-of-week>, with C<*>, C<*/N>, C<a-b>,
+C<a-b/N> and comma separated lists. Times are interpreted in the local timezone, matching Unix L<cron(8)>. Calling
+L<"schedule" in Minion|Minion/"schedule"> again with the same name updates the schedule; using the same cron expression
+preserves the next firing time, changing it recomputes it. Invalid expressions raise an exception immediately.
+
+Running workers tick L<"dispatch_schedules" in Minion|Minion/"dispatch_schedules"> every C<dispatch_interval> seconds
+(default C<30>) to enqueue any due jobs, coordinated through a Postgres advisory lock so a single dispatch cycle never
+fires the same schedule twice. If no worker has been running, the dispatcher will not catch up missed runs; the next
+firing time is always the next match strictly after the current time.
+
+  # Pause and resume schedules without removing them
+  $minion->pause_schedule('daily_cleanup');
+  $minion->resume_schedule('daily_cleanup');
+
+  # Inspect the firing time of a schedule
+  my $epoch = $minion->list_schedules(0, 1, {names => ['daily_cleanup']})->{schedules}[0]{next_run};
+
+  # Remove a schedule
+  $minion->unschedule('daily_cleanup');
+
+Schedules are also visible in the L<Mojolicious::Plugin::Minion::Admin> UI, where they can be paused, resumed and
+removed, and can be managed from the command line with L<Minion::Command::minion::schedule>.
+
+  $ ./myapp.pl minion schedule
+  $ ./myapp.pl minion schedule -e daily -c '0 4 * * *' -t cleanup
+  $ ./myapp.pl minion schedule -P daily
+  $ ./myapp.pl minion schedule -R daily
+
 =head2 Expiring jobs
 
 The C<expire> option of L<"enqueue" in Minion|Minion/"enqueue1"> can be used to limit for how many seconds (from now) a

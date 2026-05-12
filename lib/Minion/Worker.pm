@@ -58,6 +58,7 @@ sub run {
   my $status = $self->status;
   $status->{command_interval}   //= 10;
   $status->{dequeue_timeout}    //= 5;
+  $status->{dispatch_interval}  //= 30;
   $status->{heartbeat_interval} //= 300;
   $status->{jobs}               //= 4;
   $status->{limits}             //= {};
@@ -121,6 +122,13 @@ sub _work {
   if (($self->{last_repair} + $status->{repair_interval}) < steady_time) {
     $self->minion->repair;
     $self->{last_repair} = steady_time;
+  }
+
+  # Dispatch schedules in regular intervals (database advisory lock prevents duplicates)
+  $self->{last_dispatch} ||= 0;
+  if ($status->{dispatch_interval} && ($self->{last_dispatch} + $status->{dispatch_interval}) < steady_time) {
+    $self->minion->dispatch_schedules;
+    $self->{last_dispatch} = steady_time;
   }
 
   # Check if jobs are finished
@@ -408,6 +416,13 @@ Worker remote control command interval, defaults to C<10>.
   dequeue_timeout => 5
 
 Maximum amount time in seconds to wait for a job, defaults to C<5>.
+
+=item dispatch_interval
+
+  dispatch_interval => 60
+
+Interval in seconds for dispatching due L<Minion/"schedule">d jobs, defaults to C<30>. Set to C<0> to disable schedule
+dispatching on this worker (for example when a dedicated scheduler worker is used).
 
 =item heartbeat_interval
 
