@@ -47,7 +47,10 @@ sub class_for_task {
 sub dispatch_schedules {
   my $self       = shift;
   my $dispatched = $self->backend->dispatch_schedules;
-  $self->emit(enqueue_from_schedule => $_->{job}, $_->{name}) for @$dispatched;
+  for my $info (@$dispatched) {
+    $self->emit(enqueue               => $info->{job});
+    $self->emit(enqueue_from_schedule => $info->{job}, $info->{name});
+  }
   return $dispatched;
 }
 
@@ -134,11 +137,11 @@ sub result_p {
 }
 
 sub resume_schedule { shift->backend->resume_schedule(@_) }
-sub schedule        { shift->backend->add_schedule(@_) }
+sub schedule        { shift->backend->schedule(@_) }
 
 sub stats      { shift->backend->stats }
 sub unlock     { shift->backend->unlock(@_) }
-sub unschedule { shift->backend->remove_schedule(@_) }
+sub unschedule { shift->backend->unschedule(@_) }
 
 sub worker {
   my $self = shift;
@@ -282,7 +285,7 @@ Emitted after a job has been enqueued, in the process that enqueued it.
   });
 
 Emitted for every job that L</"dispatch_schedules"> has just enqueued, in the process that called it. The C<$name>
-argument is the schedule name.
+argument is the schedule name. The L</"enqueue"> event is also emitted for each of these jobs.
 
   $minion->on(enqueue_from_schedule => sub ($minion, $id, $name) {
     say qq{Schedule "$name" enqueued job $id.};
@@ -1364,6 +1367,8 @@ This is the class hierarchy of the L<Minion> distribution.
 =item * L<Minion::Command::minion>
 
 =item * L<Minion::Command::minion::job>
+
+=item * L<Minion::Command::minion::schedule>
 
 =item * L<Minion::Command::minion::worker>
 

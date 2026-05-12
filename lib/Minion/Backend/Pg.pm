@@ -10,25 +10,6 @@ use Sys::Hostname qw(hostname);
 
 has 'pg';
 
-sub add_schedule {
-  my ($self, $name, $cron, $task, $args, $options) = (shift, shift, shift, shift, shift || [], shift || {});
-
-  my $next = next_cron_time $cron, time;
-
-  return $self->pg->db->query(
-    q{INSERT INTO minion_schedules (args, attempts, cron, expire, lax, name, next_run, notes, priority, queue, task)
-      VALUES ($1, $2, $3, $4, $5, $6, TO_TIMESTAMP($7), $8, $9, $10, $11)
-      ON CONFLICT (name) DO UPDATE SET
-        args = EXCLUDED.args, attempts = EXCLUDED.attempts, cron = EXCLUDED.cron, expire = EXCLUDED.expire,
-        lax = EXCLUDED.lax, notes = EXCLUDED.notes, priority = EXCLUDED.priority, queue = EXCLUDED.queue,
-        task = EXCLUDED.task,
-        next_run = CASE WHEN minion_schedules.cron = EXCLUDED.cron THEN minion_schedules.next_run ELSE EXCLUDED.next_run END
-      RETURNING id}, {json => $args}, $options->{attempts} // 1, $cron, $options->{expire},
-    $options->{lax} ? 1 : 0, $name, $next, {json => $options->{notes} || {}}, $options->{priority} // 0,
-    $options->{queue} // 'default', $task
-  )->hash->{id};
-}
-
 sub broadcast {
   my ($self, $command, $args, $ids) = (shift, shift, shift || [], shift || []);
   return $self->pg->db->query(
@@ -66,18 +47,22 @@ sub dispatch_schedules {
 
   my @dispatched;
   for my $s (@$due) {
-    my $job_id = $db->query(
-      q{INSERT INTO minion_jobs (args, attempts, delayed, expires, lax, notes, parents, priority, queue, task)
-        VALUES ($1, $2, NOW(), CASE WHEN $3::BIGINT IS NOT NULL THEN NOW() + (INTERVAL '1 second' * $3::BIGINT) END,
-          $4, $5, '{}', $6, $7, $8)
-        RETURNING id}, {json => $s->{args}}, $s->{attempts}, $s->{expire}, $s->{lax} ? 1 : 0,
-      {json => $s->{notes}}, $s->{priority}, $s->{queue}, $s->{task}
-    )->hash->{id};
-
+    my $job_id = $self->_enqueue(
+      $db,
+      $s->{task},
+      $s->{args},
+      {
+        attempts => $s->{attempts},
+        expire   => $s->{expire},
+        lax      => $s->{lax},
+        notes    => $s->{notes},
+        priority => $s->{priority},
+        queue    => $s->{queue}
+      }
+    );
     my $next = next_cron_time $s->{cron}, time;
     $db->query('UPDATE minion_schedules SET last_job = ?, last_run = NOW(), next_run = TO_TIMESTAMP(?) WHERE id = ?',
       $job_id, $next, $s->{id});
-
     push @dispatched, {id => $s->{id}, name => $s->{name}, job => $job_id};
   }
   $tx->commit;
@@ -86,16 +71,8 @@ sub dispatch_schedules {
 }
 
 sub enqueue {
-  my ($self, $task, $args, $options) = (shift, shift, shift || [], shift || {});
-
-  return $self->pg->db->query(
-    q{INSERT INTO minion_jobs (args, attempts, delayed, expires, lax, notes, parents, priority, queue, task)
-      VALUES ($1, $2, (NOW() + (INTERVAL '1 second' * $3)),
-      CASE WHEN $4::BIGINT IS NOT NULL THEN NOW() + (INTERVAL '1 second' * $4::BIGINT) END, $5, $6, $7, $8, $9, $10)
-      RETURNING id}, {json => $args}, $options->{attempts} // 1, $options->{delay} // 0, $options->{expire},
-    $options->{lax} ? 1 : 0, {json => $options->{notes} || {}}, $options->{parents} || [], $options->{priority} // 0,
-    $options->{queue} // 'default', $task
-  )->hash->{id};
+  my $self = shift;
+  return $self->_enqueue($self->pg->db, @_);
 }
 
 sub fail_job   { shift->_update(1, @_) }
@@ -240,10 +217,6 @@ sub remove_job {
     "DELETE FROM minion_jobs WHERE id = ? AND state IN ('inactive', 'failed', 'finished') RETURNING 1", $id)->rv > 0;
 }
 
-sub remove_schedule {
-  return shift->pg->db->query('DELETE FROM minion_schedules WHERE name = ? RETURNING 1', shift)->rv > 0;
-}
-
 sub repair {
   my $self = shift;
 
@@ -303,6 +276,24 @@ sub retry_job {
   )->rv > 0;
 }
 
+sub schedule {
+  my ($self, $name, $cron, $task, $args, $options) = (shift, shift, shift, shift, shift || [], shift || {});
+
+  my $next = next_cron_time $cron, time;
+
+  return $self->pg->db->query(
+    q{INSERT INTO minion_schedules (args, attempts, cron, expire, lax, name, next_run, notes, priority, queue, task)
+      VALUES ($1, $2, $3, $4, $5, $6, TO_TIMESTAMP($7), $8, $9, $10, $11)
+      ON CONFLICT (name) DO UPDATE SET
+        args = EXCLUDED.args, attempts = EXCLUDED.attempts, cron = EXCLUDED.cron, expire = EXCLUDED.expire,
+        lax = EXCLUDED.lax, notes = EXCLUDED.notes, priority = EXCLUDED.priority, queue = EXCLUDED.queue,
+        task = EXCLUDED.task,
+        next_run = CASE WHEN minion_schedules.cron = EXCLUDED.cron THEN minion_schedules.next_run ELSE EXCLUDED.next_run END
+      RETURNING id}, {json => $args}, $options->{attempts} // 1, $cron, $options->{expire}, $options->{lax} ? 1 : 0,
+    $name, $next, {json => $options->{notes} || {}}, $options->{priority} // 0, $options->{queue} // 'default', $task
+  )->hash->{id};
+}
+
 sub stats {
   my $self = shift;
 
@@ -335,6 +326,23 @@ sub unlock {
 }
 
 sub unregister_worker { shift->pg->db->query('DELETE FROM minion_workers WHERE id = ?', shift) }
+
+sub unschedule {
+  return shift->pg->db->query('DELETE FROM minion_schedules WHERE name = ? RETURNING 1', shift)->rv > 0;
+}
+
+sub _enqueue {
+  my ($self, $db, $task, $args, $options) = (shift, shift, shift, shift || [], shift || {});
+
+  return $db->query(
+    q{INSERT INTO minion_jobs (args, attempts, delayed, expires, lax, notes, parents, priority, queue, task)
+      VALUES ($1, $2, (NOW() + (INTERVAL '1 second' * $3)),
+      CASE WHEN $4::BIGINT IS NOT NULL THEN NOW() + (INTERVAL '1 second' * $4::BIGINT) END, $5, $6, $7, $8, $9, $10)
+      RETURNING id}, {json => $args}, $options->{attempts} // 1, $options->{delay} // 0, $options->{expire},
+    $options->{lax} ? 1 : 0, {json => $options->{notes} || {}}, $options->{parents} || [], $options->{priority} // 0,
+    $options->{queue} // 'default', $task
+  )->hash->{id};
+}
 
 sub _set_paused {
   my ($self, $name, $paused) = @_;
@@ -421,58 +429,6 @@ L<Mojo::Pg> object used to store all data.
 =head1 METHODS
 
 L<Minion::Backend::Pg> inherits all methods from L<Minion::Backend> and implements the following new ones.
-
-=head2 add_schedule
-
-  my $id = $backend->add_schedule('daily', '0 4 * * *', 'cleanup');
-  my $id = $backend->add_schedule('daily', '0 4 * * *', 'cleanup', [@args]);
-  my $id = $backend->add_schedule(
-    'daily', '0 4 * * *', 'cleanup', [@args], {priority => 5});
-
-Create or replace a schedule by unique name. Updating a schedule with the same cron expression preserves its current
-firing time; changing the expression recomputes it.
-
-These options are currently available:
-
-=over 2
-
-=item attempts
-
-  attempts => 25
-
-Number of times performing each enqueued job will be attempted, defaults to C<1>.
-
-=item expire
-
-  expire => 300
-
-Each enqueued job is valid for this many seconds before it expires.
-
-=item lax
-
-  lax => 1
-
-Existing jobs each enqueued job depends on may also have transitioned to the C<failed> state, defaults to C<false>.
-
-=item notes
-
-  notes => {foo => 'bar'}
-
-Hash reference with arbitrary metadata applied to each enqueued job.
-
-=item priority
-
-  priority => 5
-
-Priority of each enqueued job, defaults to C<0>.
-
-=item queue
-
-  queue => 'important'
-
-Queue to put each enqueued job in, defaults to C<default>.
-
-=back
 
 =head2 broadcast
 
@@ -1096,12 +1052,6 @@ Hash reference with whatever status information the worker would like to share.
 
 Remove C<failed>, C<finished> or C<inactive> job from queue.
 
-=head2 remove_schedule
-
-  my $bool = $backend->remove_schedule('daily');
-
-Remove a schedule by name. Returns true on success, false if the schedule does not exist.
-
 =head2 repair
 
   $backend->repair;
@@ -1191,6 +1141,58 @@ Job priority.
   queue => 'important'
 
 Queue to put job in.
+
+=back
+
+=head2 schedule
+
+  my $id = $backend->schedule('daily', '0 4 * * *', 'cleanup');
+  my $id = $backend->schedule('daily', '0 4 * * *', 'cleanup', [@args]);
+  my $id = $backend->schedule(
+    'daily', '0 4 * * *', 'cleanup', [@args], {priority => 5});
+
+Create or replace a schedule by unique name. Updating a schedule with the same cron expression preserves its current
+firing time; changing the expression recomputes it.
+
+These options are currently available:
+
+=over 2
+
+=item attempts
+
+  attempts => 25
+
+Number of times performing each enqueued job will be attempted, defaults to C<1>.
+
+=item expire
+
+  expire => 300
+
+Each enqueued job is valid for this many seconds before it expires.
+
+=item lax
+
+  lax => 1
+
+Existing jobs each enqueued job depends on may also have transitioned to the C<failed> state, defaults to C<false>.
+
+=item notes
+
+  notes => {foo => 'bar'}
+
+Hash reference with arbitrary metadata applied to each enqueued job.
+
+=item priority
+
+  priority => 5
+
+Priority of each enqueued job, defaults to C<0>.
+
+=item queue
+
+  queue => 'important'
+
+Queue to put each enqueued job in, defaults to C<default>.
 
 =back
 
@@ -1295,6 +1297,12 @@ Release a named lock.
   $backend->unregister_worker($worker_id);
 
 Unregister worker.
+
+=head2 unschedule
+
+  my $bool = $backend->unschedule('daily');
+
+Remove a schedule by name. Returns true on success, false if the schedule does not exist.
 
 =head1 SEE ALSO
 

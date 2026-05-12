@@ -4,8 +4,6 @@ use Test::More;
 use Minion::Backend;
 
 subtest 'Abstract methods' => sub {
-  eval { Minion::Backend->add_schedule };
-  like $@, qr/Method "add_schedule" not implemented by subclass/, 'right error';
   eval { Minion::Backend->broadcast };
   like $@, qr/Method "broadcast" not implemented by subclass/, 'right error';
   eval { Minion::Backend->dequeue };
@@ -40,8 +38,6 @@ subtest 'Abstract methods' => sub {
   like $@, qr/Method "register_worker" not implemented by subclass/, 'right error';
   eval { Minion::Backend->remove_job };
   like $@, qr/Method "remove_job" not implemented by subclass/, 'right error';
-  eval { Minion::Backend->remove_schedule };
-  like $@, qr/Method "remove_schedule" not implemented by subclass/, 'right error';
   eval { Minion::Backend->repair };
   like $@, qr/Method "repair" not implemented by subclass/, 'right error';
   eval { Minion::Backend->reset };
@@ -50,12 +46,16 @@ subtest 'Abstract methods' => sub {
   like $@, qr/Method "resume_schedule" not implemented by subclass/, 'right error';
   eval { Minion::Backend->retry_job };
   like $@, qr/Method "retry_job" not implemented by subclass/, 'right error';
+  eval { Minion::Backend->schedule };
+  like $@, qr/Method "schedule" not implemented by subclass/, 'right error';
   eval { Minion::Backend->stats };
   like $@, qr/Method "stats" not implemented by subclass/, 'right error';
   eval { Minion::Backend->unlock };
   like $@, qr/Method "unlock" not implemented by subclass/, 'right error';
   eval { Minion::Backend->unregister_worker };
   like $@, qr/Method "unregister_worker" not implemented by subclass/, 'right error';
+  eval { Minion::Backend->unschedule };
+  like $@, qr/Method "unschedule" not implemented by subclass/, 'right error';
 };
 
 done_testing();
