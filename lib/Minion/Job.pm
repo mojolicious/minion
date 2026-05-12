@@ -75,7 +75,10 @@ sub start {
 
   # Parent
   die "Can't fork: $!" unless defined(my $pid = fork);
-  return $self->emit(spawn => $pid) if $self->{pid} = $pid;
+  if ($self->{pid} = $pid) {
+    $self->note(minion_pid => $pid);
+    return $self->emit(spawn => $pid);
+  }
 
   # Reset event loop
   Mojo::IOLoop->reset;

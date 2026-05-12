@@ -917,11 +917,12 @@ subtest 'Nested data structures' => sub {
   is $job->info->{state}, 'finished', 'right state';
   ok $job->note(yada => ['works']),                     'added metadata';
   ok !$minion->backend->note(-1, {yada => ['failed']}), 'not added metadata';
-  my $notes = {foo => [4, 5, 6], bar => {baz => [1, 2, 3]}, baz => 'yada', yada => ['works']};
+  my $pid   = $job->info->{notes}{minion_pid};
+  my $notes = {foo => [4, 5, 6], bar => {baz => [1, 2, 3]}, baz => 'yada', yada => ['works'], minion_pid => $pid};
   is_deeply $job->info->{notes},  $notes,                   'right metadata';
   is_deeply $job->info->{result}, [{23 => 'testtesttest'}], 'right structure';
   ok $job->note(yada => undef, bar => undef), 'removed metadata';
-  $notes = {foo => [4, 5, 6], baz => 'yada'};
+  $notes = {foo => [4, 5, 6], baz => 'yada', minion_pid => $pid};
   is_deeply $job->info->{notes}, $notes, 'right metadata';
   $worker->unregister;
 };
@@ -1478,6 +1479,15 @@ subtest 'Single process worker' => sub {
   my $job2 = $minion->job($id2);
   is $job2->info->{state}, 'failed', 'right state';
   like $job2->info->{result}, qr/Error: Bad job!/, 'right error';
+};
+
+subtest 'Worker command stores job PID in notes' => sub {
+  my $id = $minion->enqueue('add', [5, 6]);
+  $minion->perform_jobs;
+  my $info = $minion->job($id)->info;
+  is $info->{state}, 'finished', 'right state';
+  ok my $pid = $info->{notes}{minion_pid}, 'pid stored in notes';
+  isnt $pid, $$, 'different process id';
 };
 
 # Clean up once we are done
