@@ -264,6 +264,192 @@ You can use L<Minion::Job/"retry"> to reset the expiration time.
 
   $job->retry({expire => 30});
 
+=head2 Job dependencies
+
+The C<parents> option of L<"enqueue" in Minion|Minion/"enqueue1"> can be used to make a new job depend on
+one or more existing jobs, which all need to have reached the state C<finished> before it can be processed.
+
+  # Second job will not be processed until first job has finished
+  my $first = $minion->enqueue('step_one');
+  $minion->enqueue('step_two', [], {parents => [$first]});
+
+This is commonly used to build workflows where tasks need to run in a specific order.
+
+  my $a = $minion->enqueue('prepare');
+  my $b = $minion->enqueue('process', [], {parents => [$a]});
+  my $c = $minion->enqueue('cleanup', [], {parents => [$b]});
+
+If a parent job transitions to the C<failed> state, all dependent jobs will remain C<inactive> and wait until
+it has been retried successfully or removed. You can use the C<lax> option to allow a job to be processed
+even if its parents have C<failed>.
+
+  # Job will be processed even if parent jobs have failed
+  $minion->enqueue('cleanup', [], {parents => [$id], lax => 1});
+
+=head2 Automatic retries
+
+The C<attempts> option of L<"enqueue" in Minion|Minion/"enqueue1"> can be used to allow a job to be retried
+automatically if it fails, up to the specified number of attempts.
+
+  # Job will be attempted up to five times
+  $minion->enqueue('check_links', ['https://mojolicious.org'], {attempts => 5});
+
+The delay between retries is determined by L<Minion/"backoff">, which defaults to C<(retries ** 4) + 15>
+(15, 16, 31, 96, 271, 640...) seconds, allowing roughly 25 attempts to be made over 21 days. You can change
+the formula by providing your own callback.
+
+  # Add some randomness to spread retry load
+  $minion->backoff(sub ($retries) { ($retries ** 4) + 15 + int(rand 30) });
+
+=head2 Named locks
+
+L<Minion/"lock"> and L<Minion/"unlock"> can be used to limit the concurrency of certain tasks, or to
+implement rate limiting for access to external services.
+
+  # Only one job should run at a time
+  $minion->add_task(do_unique_stuff => sub ($job, @args) {
+    return $job->finish('Previous job is still active')
+      unless $minion->lock('fragile_backend_service', 7200);
+    ...
+    $minion->unlock('fragile_backend_service');
+  });
+
+The second argument is the number of seconds after which the lock will expire automatically, in case the job
+fails to release it. An optional C<limit> argument can be used to allow more than one lock with the same name
+to be active at the same time.
+
+  # Only five jobs should run at a time and we try again later if necessary
+  $minion->add_task(do_concurrent_stuff => sub ($job, @args) {
+    return $job->retry({delay => 30})
+      unless $minion->lock('some_web_service', 60, {limit => 5});
+    ...
+    $minion->unlock('some_web_service');
+  });
+
+For convenience you can also use L<Minion/"guard"> to release the lock automatically as soon as the job is
+finished, even if it failed.
+
+  $minion->add_task(do_concurrent_stuff => sub ($job, @args) {
+    return $job->retry({delay => 30})
+      unless my $guard = $minion->guard('some_web_service', 60, {limit => 5});
+    ...
+  });
+
+=head2 Result promises
+
+L<Minion/"result_p"> can be used to wait for the result of a job asynchronously, without blocking the event
+loop. It returns a L<Mojo::Promise> object that will be fulfilled when the job reaches the state C<finished>,
+or rejected when it reaches the state C<failed>.
+
+  # Enqueue job and receive the result at some point in the future
+  my $id = $minion->enqueue('foo');
+  $minion->result_p($id)->then(sub ($info) {
+    say "Finished: $info->{result}";
+  })->catch(sub ($info) {
+    say "Failed: $info->{result}";
+  })->wait;
+
+=head2 Foreground debugging
+
+L<Minion/"foreground"> can be used to retry a job in the C<minion_foreground> queue and perform it right
+away in the current process, making it very easy to debug a failed job with the full output of your
+application available. This is usually done from the command line with L<Minion::Command::minion::job>.
+
+  $ ./myapp.pl minion job -f 10023
+
+=head2 Worker signals
+
+Worker processes can be controlled at runtime with signals. C<INT> and C<TERM> will stop the worker
+gracefully after finishing its current jobs, while C<QUIT> will stop it immediately.
+
+  # Stop worker gracefully
+  $ kill -INT $worker_pid
+
+Job processes spawned by the worker can also receive signals. C<INT> and C<TERM> start out with the
+operating system default, allowing jobs to install custom signal handlers to stop gracefully. C<USR1> and
+C<USR2> start out being ignored, and are available for jobs to use as they see fit.
+
+  $minion->add_task(myapp_task => sub ($job, @args) {
+    local $SIG{INT} = sub { ...; exit };
+    ...
+  });
+
+=head2 Remote control
+
+L<Minion/"broadcast"> can be used to send remote control commands to one or more workers. Several commands
+are built in, such as C<stop> to kill a job, C<kill> to send a signal to a job process, and C<jobs> to
+change how many jobs a worker runs concurrently. This is usually done from the command line with
+L<Minion::Command::minion::job>.
+
+  # Kill job 10025
+  $ ./myapp.pl minion job -b stop -a '[10025]'
+
+  # Send USR1 signal to job 10026
+  $ ./myapp.pl minion job -b kill -a '["USR1", 10026]'
+
+  # Reduce concurrency of worker 23 to two jobs
+  $ ./myapp.pl minion job -b jobs -a '[2]' 23
+
+You can also add your own commands to workers with L<Minion::Worker/"add_command">.
+
+  $worker->add_command(my_command => sub ($worker, @args) {
+    ...
+  });
+
+=head2 Testing
+
+L<Minion/"perform_jobs"> can be used to perform all jobs in the queue with a temporary worker, making it
+very easy to test background tasks without having to start a real worker process.
+
+  use Test::More;
+  use Mojolicious::Lite -signatures;
+
+  plugin Minion => {Pg => 'postgresql://postgres@/test'};
+
+  app->minion->add_task(add => sub ($job, $a, $b) {
+    $job->finish($a + $b);
+  });
+
+  my $id = app->minion->enqueue(add => [1, 1]);
+  app->minion->perform_jobs;
+  is app->minion->job($id)->info->{result}, 2, 'right result';
+
+  done_testing;
+
+=head2 Job iteration
+
+L<Minion/"jobs"> can be used to safely iterate through job information, with a variety of filters to narrow
+down the results.
+
+  # Iterate through all failed jobs for a task
+  my $jobs = $minion->jobs({states => ['failed'], tasks => ['check_links']});
+  while (my $info = $jobs->next) {
+    say "$info->{id}: $info->{result}";
+  }
+
+This is commonly used to build custom monitoring or to perform bulk operations on jobs.
+
+  # Retry all failed jobs in a queue
+  my $jobs = $minion->jobs({states => ['failed'], queues => ['important']});
+  while (my $info = $jobs->next) {
+    $minion->job($info->{id})->retry;
+  }
+
+=head2 Rate limiting
+
+Named locks can also be used to limit how often a job accesses an external service, by letting them expire
+naturally instead of releasing them manually with L<Minion/"unlock">.
+
+  # Only a hundred jobs should run per hour
+  $minion->add_task(do_rate_limited_stuff => sub ($job, @args) {
+    return $job->retry({delay => 3600})
+      unless $minion->lock('some_web_service', 3600, {limit => 100});
+    ...
+  });
+
+Each lock acquired this way will count against the limit for the duration of its expiration time, effectively
+capping throughput to C<limit> jobs per expiration period.
+
 =head2 Custom workers
 
 In cases where you don't want to use L<Minion> together with L<Mojolicious>, you can just skip the plugins and write
