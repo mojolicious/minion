@@ -16,6 +16,11 @@ sub broadcast {
     {json => [[$command, @$args]]}, $ids)->rows;
 }
 
+sub ping {
+  my ($self) = @_;
+  return $self->pg->db->ping();
+}
+
 sub dequeue {
   my ($self, $id, $wait, $options) = @_;
 
