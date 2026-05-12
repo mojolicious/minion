@@ -26,9 +26,8 @@ HTTP downloads, building tarballs, warming caches and basically everything else 
   +- Mojo::Server::Daemon [4]                        +--------------+                     |- Minion::Job [4]
                                                                                           +- Minion::Job [5]
 
-They are not to be confused with time based job schedulers, such as cron or systemd timers. Both serve very different
-purposes, and cron jobs are in fact commonly used to enqueue L<Minion> jobs that need to follow a schedule. For example
-to perform regular maintenance tasks.
+They are not to be confused with time based job schedulers, such as cron or systemd timers, but L<Minion> has built in
+support for cron style L</"Recurring jobs"> when you want a task to run on a wall clock schedule.
 
 =head2 Mojolicious
 
@@ -72,9 +71,11 @@ demand with signals.
 
   $ ./myapp.pl minion worker -j 12
 
-Jobs can be managed right from the command line with L<Minion::Command::minion::job>.
+Jobs can be managed right from the command line with L<Minion::Command::minion::job>, and recurring schedules with
+L<Minion::Command::minion::schedule>.
 
   $ ./myapp.pl minion job
+  $ ./myapp.pl minion schedule
 
 You can also add an admin ui to your application by loading the plugin L<Mojolicious::Plugin::Minion::Admin>. Just make
 sure to secure access before making your application publicly accessible.
@@ -254,48 +255,44 @@ You can use L<Minion::Job/"retry"> to change the delay.
 
 =head2 Recurring jobs
 
-For jobs that should run on a wall clock schedule, use L<"schedule" in Minion|Minion/"schedule"> with a standard five
-field cron expression. Schedules are stored in the database as the source of truth, so they survive restarts and only
-fire once per interval no matter how many workers are running.
+For jobs that should run on a wall clock schedule, use L<Minion::Command::minion::schedule> with a standard five field
+cron expression. Schedules are stored in the database as the source of truth, so they survive restarts and only fire
+once per interval no matter how many workers are running.
 
   # Daily cleanup at 4am, no arguments
-  $minion->schedule(daily_cleanup => '0 4 * * *' => 'cleanup');
+  $ ./myapp.pl minion schedule -e daily_cleanup -c '0 4 * * *' -t cleanup
 
   # Every five minutes, with arguments and options
-  $minion->schedule(
-    refresh => '*/5 * * * *' => 'refresh_cache' => ['users'] => {priority => 5});
+  $ ./myapp.pl minion schedule -e refresh -c '*/5 * * * *' -t refresh_cache -a '["users"]' -p 5
 
   # Weekdays at 9, with retries
-  $minion->schedule(
-    weekday_report => '0 9 * * 1-5' => 'report' => [] => {attempts => 3});
+  $ ./myapp.pl minion schedule -e weekday_report -c '0 9 * * 1-5' -t report -A 3
 
 The expression uses the standard fields C<minute hour day-of-month month day-of-week>, with C<*>, C<*/N>, C<a-b>,
-C<a-b/N> and comma separated lists. Times are interpreted in the local timezone, matching Unix L<cron(8)>. Calling
-L<"schedule" in Minion|Minion/"schedule"> again with the same name updates the schedule; using the same cron expression
-preserves the next firing time, changing it recomputes it. Invalid expressions raise an exception immediately.
+C<a-b/N> and comma separated lists. Times are interpreted in the local timezone, matching Unix L<cron(8)>. Adding a
+schedule with an existing name updates it; reusing the same cron expression preserves the next firing time, changing
+it recomputes it. Invalid expressions are rejected immediately.
+
+  # Pause and resume schedules without removing them
+  $ ./myapp.pl minion schedule -P daily_cleanup
+  $ ./myapp.pl minion schedule -r daily_cleanup
+
+  # Show or list schedules
+  $ ./myapp.pl minion schedule
+  $ ./myapp.pl minion schedule daily_cleanup
+
+  # Remove a schedule
+  $ ./myapp.pl minion schedule -R daily_cleanup
+
+Schedules can also be declared in code with L<"schedule" in Minion|Minion/"schedule"> and managed from the
+L<Mojolicious::Plugin::Minion::Admin> UI.
+
+  $minion->schedule(daily_cleanup => '0 4 * * *' => 'cleanup');
 
 Running workers tick L<"dispatch_schedules" in Minion|Minion/"dispatch_schedules"> every C<dispatch_interval> seconds
 (default C<30>) to enqueue any due jobs, coordinated through a Postgres advisory lock so a single dispatch cycle never
 fires the same schedule twice. If no worker has been running, the dispatcher will not catch up missed runs; the next
 firing time is always the next match strictly after the current time.
-
-  # Pause and resume schedules without removing them
-  $minion->pause_schedule('daily_cleanup');
-  $minion->resume_schedule('daily_cleanup');
-
-  # Inspect the firing time of a schedule
-  my $epoch = $minion->list_schedules(0, 1, {names => ['daily_cleanup']})->{schedules}[0]{next_run};
-
-  # Remove a schedule
-  $minion->unschedule('daily_cleanup');
-
-Schedules are also visible in the L<Mojolicious::Plugin::Minion::Admin> UI, where they can be paused, resumed and
-removed, and can be managed from the command line with L<Minion::Command::minion::schedule>.
-
-  $ ./myapp.pl minion schedule
-  $ ./myapp.pl minion schedule -e daily -c '0 4 * * *' -t cleanup
-  $ ./myapp.pl minion schedule -P daily
-  $ ./myapp.pl minion schedule -R daily
 
 =head2 Expiring jobs
 
