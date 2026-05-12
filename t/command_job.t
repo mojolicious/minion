@@ -97,7 +97,7 @@ subtest 'Job info' => sub {
     local *STDOUT = $handle;
     $job->run($id);
   }
-  like $buffer, qr/id:\s*$id/,        'right id';
+  like $buffer, qr/id:\s*$id/,         'right id';
   like $buffer, qr/task:\s*test/,      'right task';
   like $buffer, qr/state:\s*inactive/, 'right state';
 };

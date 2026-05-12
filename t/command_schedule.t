@@ -43,8 +43,10 @@ subtest 'Add schedule' => sub {
     {
       open my $handle, '>', \$buffer;
       local *STDOUT = $handle;
-      $cmd->run('-e', 'opts', '-c', '*/5 * * * *', '-t', 'test',
-        '-A', '3', '-p', '5', '-q', 'important', '-n', '{"foo":"bar"}', '-a', '[1, 2]');
+      $cmd->run(
+        '-e', 'opts', '-c', '*/5 * * * *', '-t', 'test',          '-A', '3',
+        '-p', '5',    '-q', 'important',   '-n', '{"foo":"bar"}', '-a', '[1, 2]'
+      );
     }
     like $buffer, qr/^\d+$/, 'right id';
     $buffer = '';
@@ -54,13 +56,13 @@ subtest 'Add schedule' => sub {
       $cmd->run('opts');
     }
     like $buffer, qr/\*\/5 \* \* \* \*/, 'right cron';
-    like $buffer, qr/task:\s*test/,       'right task';
-    like $buffer, qr/important/,          'right queue';
-    like $buffer, qr/foo/,                'right notes';
+    like $buffer, qr/task:\s*test/,      'right task';
+    like $buffer, qr/important/,         'right queue';
+    like $buffer, qr/foo/,               'right notes';
   };
 
   subtest 'Update existing' => sub {
-    my $id1 = app->minion->list_schedules(0, 1, {names => ['daily']})->{schedules}[0]{id};
+    my $id1    = app->minion->list_schedules(0, 1, {names => ['daily']})->{schedules}[0]{id};
     my $buffer = '';
     {
       open my $handle, '>', \$buffer;
@@ -92,7 +94,7 @@ subtest 'Schedule info' => sub {
     local *STDOUT = $handle;
     $cmd->run('daily');
   }
-  like $buffer, qr/id:\s*$id/, 'right id';
+  like $buffer, qr/id:\s*$id/,     'right id';
   like $buffer, qr/name:\s*daily/, 'right name';
   like $buffer, qr/task:\s*test/,  'right task';
 };
@@ -126,8 +128,8 @@ subtest 'List schedules with limit and offset' => sub {
     local *STDOUT = $handle;
     $cmd->run('-l', '1');
   }
-  my ($shown)  = $buffer =~ /(first|second)/;
-  my $other    = $shown eq 'first' ? 'second' : 'first';
+  my ($shown) = $buffer =~ /(first|second)/;
+  my $other = $shown eq 'first' ? 'second' : 'first';
   like $buffer,   qr/$shown/, 'right schedule listed';
   unlike $buffer, qr/$other/, 'other schedule not listed';
   $buffer = '';
