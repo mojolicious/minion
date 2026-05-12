@@ -14,8 +14,6 @@ jobs:
         codename:
           - buster
         perl-version:
-          - '5.16'
-          - '5.18'
           - '5.20'
           - '5.22'
           - '5.30'
@@ -31,8 +29,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: perl -V
         run: perl -V
-      - name: Fix ExtUtils::MakeMaker (for Perl 5.16 and 5.18)
-        run: cpanm -n App::cpanminus ExtUtils::MakeMaker
       - name: Install dependencies
         run: |
           cpanm -n --installdeps .
