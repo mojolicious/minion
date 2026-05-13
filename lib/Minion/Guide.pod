@@ -323,8 +323,7 @@ changing it recomputes it. Invalid expressions are rejected immediately.
   # Remove a schedule
   $ ./myapp.pl minion schedule -R daily_cleanup
 
-Schedules can also be declared in code with L<"schedule" in Minion|Minion/"schedule"> and managed from the
-L<Mojolicious::Plugin::Minion::Admin> UI.
+Schedules can also be declared in code with L<"schedule" in Minion|Minion/"schedule"> and managed from the admin UI.
 
   $minion->schedule(daily_cleanup => '0 4 * * *' => 'cleanup');
 
