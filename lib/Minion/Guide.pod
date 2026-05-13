@@ -255,23 +255,61 @@ You can use L<Minion::Job/"retry"> to change the delay.
 
 =head2 Recurring jobs
 
-For jobs that should run on a wall clock schedule, use L<Minion::Command::minion::schedule> with a standard five field
-cron expression. Schedules are stored in the database as the source of truth, so they survive restarts and only fire
-once per interval no matter how many workers are running.
+For jobs that should run on a wall clock schedule, use L<Minion::Command::minion::schedule> with a cron expression.
+Schedules are stored in the database as the source of truth, so they survive restarts and only fire once per interval
+no matter how many workers are running.
 
-  # Daily cleanup at 4am, no arguments
+  # Daily cleanup at 4am
   $ ./myapp.pl minion schedule -e daily_cleanup -c '0 4 * * *' -t cleanup
 
-  # Every five minutes, with arguments and options
+A cron expression is five fields separated by spaces, one for each part of the wall clock.
+
+  * * * * *
+  | | | | |
+  | | | | +---- day of week  (0-6, 0=Sun; or SUN-SAT; 7 also means Sun)
+  | | | +------ month        (1-12; or JAN-DEC)
+  | | +-------- day of month (1-31)
+  | +---------- hour         (0-23)
+  +------------ minute       (0-59)
+
+A C<*> means "every value", so C<* * * * *> reads as "every minute of every hour, every day". Pin a field to a
+specific number to fix that part of the clock.
+
+  0 4 * * *       # 04:00 every day
+  30 9 * * 1      # 09:30 every Monday
+  0 0 1 1 *       # midnight on January 1st (once a year)
+
+Use C</N> for "every Nth value", C<a-b> for ranges, and commas for lists.
+
+  */15 * * * *    # every 15 minutes
+  0 9-17 * * *    # at the top of every hour from 09:00 to 17:00
+  0 9 * * 1-5     # 09:00 every weekday
+  0 0,12 * * *    # midnight and noon
+
+Common patterns also have nicknames that expand to one of the forms above.
+
+  @hourly         # 0 * * * *
+  @daily          # 0 0 * * *
+  @midnight       # 0 0 * * *
+  @weekly         # 0 0 * * 0
+  @monthly        # 0 0 1 * *
+  @yearly         # 0 0 1 1 *
+
+When both C<day-of-month> and C<day-of-week> are restricted, the job fires when B<either> matches, following the
+standard Vixie L<cron(8)> behavior. So C<0 0 1 * 0> means "midnight on the 1st of the month B<and> every Sunday at
+midnight". Times are interpreted in UTC.
+
+Arguments, priorities, queues and retries can be set per schedule with the same options as
+L<Minion::Command::minion::job>.
+
+  # Every five minutes, with arguments and high priority
   $ ./myapp.pl minion schedule -e refresh -c '*/5 * * * *' -t refresh_cache -a '["users"]' -p 5
 
   # Weekdays at 9, with retries
   $ ./myapp.pl minion schedule -e weekday_report -c '0 9 * * 1-5' -t report -A 3
 
-The expression uses the standard fields C<minute hour day-of-month month day-of-week>, with C<*>, C<*/N>, C<a-b>,
-C<a-b/N> and comma separated lists. Times are interpreted in UTC. Adding a schedule with an existing name updates it;
-reusing the same cron expression preserves the next firing time, changing it recomputes it. Invalid expressions are
-rejected immediately.
+Adding a schedule with an existing name updates it; reusing the same cron expression preserves the next firing time,
+changing it recomputes it. Invalid expressions are rejected immediately.
 
   # Pause and resume schedules without removing them
   $ ./myapp.pl minion schedule -P daily_cleanup
