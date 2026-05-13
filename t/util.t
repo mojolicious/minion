@@ -2,7 +2,7 @@ use Mojo::Base -strict;
 
 use Test::More;
 use Minion::Util qw(desired_tasks next_cron_time parse_cron);
-use Time::Local  qw(timelocal);
+use Time::Local  qw(timegm);
 
 subtest 'desired_tasks' => sub {
   is_deeply desired_tasks({},                   [],                    []),                    [],      'no tasks';
@@ -50,31 +50,31 @@ subtest 'parse_cron: errors' => sub {
 
 subtest 'next_cron_time' => sub {
 
-  # Pin all expectations to local time so the test is timezone independent
-  my $base = timelocal 0, 0, 12, 12, 4, 2026;    # 2026-05-12 12:00:00 local (Tuesday)
+  # All expectations are in UTC
+  my $base = timegm 0, 0, 12, 12, 4, 2026;    # 2026-05-12 12:00:00 UTC (Tuesday)
 
-  is next_cron_time('* * * * *',   $base), $base + 60,                       'every minute';
-  is next_cron_time('*/5 * * * *', $base), $base + 60 * 5,                   'every 5 minutes (next is 12:05)';
-  is next_cron_time('0 13 * * *',  $base), timelocal(0, 0, 13, 12, 4, 2026), 'today 13:00';
+  is next_cron_time('* * * * *',   $base), $base + 60,                    'every minute';
+  is next_cron_time('*/5 * * * *', $base), $base + 60 * 5,                'every 5 minutes (next is 12:05)';
+  is next_cron_time('0 13 * * *',  $base), timegm(0, 0, 13, 12, 4, 2026), 'today 13:00';
 
   # 9am on 2026-05-12 is in the past for $base, so next is 2026-05-13 09:00
-  is next_cron_time('0 9 * * *', $base), timelocal(0, 0, 9, 13, 4, 2026), 'tomorrow 09:00';
+  is next_cron_time('0 9 * * *', $base), timegm(0, 0, 9, 13, 4, 2026), 'tomorrow 09:00';
 
   # Weekday filter: 2026-05-12 is Tuesday, next Mon-Fri 9am after 12:00 is Wed 09:00
-  is next_cron_time('0 9 * * 1-5', $base), timelocal(0, 0, 9, 13, 4, 2026), 'next weekday 09:00';
+  is next_cron_time('0 9 * * 1-5', $base), timegm(0, 0, 9, 13, 4, 2026), 'next weekday 09:00';
 
   # Vixie OR semantics: dom = 1, dow = 0 (Sunday) => fire on either
   # Next 1st of any month is 2026-06-01, next Sunday after $base is 2026-05-17 — Sunday wins
-  is next_cron_time('0 0 1 * 0', $base), timelocal(0, 0, 0, 17, 4, 2026), 'dom OR dow (Sunday wins)';
+  is next_cron_time('0 0 1 * 0', $base), timegm(0, 0, 0, 17, 4, 2026), 'dom OR dow (Sunday wins)';
 
   # Yearly: 0 0 1 1 *  -> next 2027-01-01 00:00
-  is next_cron_time('0 0 1 1 *', $base), timelocal(0, 0, 0, 1, 0, 2027), 'next New Year';
+  is next_cron_time('0 0 1 1 *', $base), timegm(0, 0, 0, 1, 0, 2027), 'next New Year';
 
   # Right at the boundary: we round up to the *next* minute strictly after $from
   is next_cron_time('* * * * *', $base + 30), $base + 60, 'rounds up to next minute';
 
   # Quadrennial: from 2027-01-01 the next Feb 29 is over a year away (in 2028)
-  is next_cron_time('0 0 29 2 *', timelocal(0, 0, 0, 1, 0, 2027)), timelocal(0, 0, 0, 29, 1, 2028), 'next Feb 29';
+  is next_cron_time('0 0 29 2 *', timegm(0, 0, 0, 1, 0, 2027)), timegm(0, 0, 0, 29, 1, 2028), 'next Feb 29';
 };
 
 done_testing();

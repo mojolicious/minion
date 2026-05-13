@@ -269,9 +269,9 @@ once per interval no matter how many workers are running.
   $ ./myapp.pl minion schedule -e weekday_report -c '0 9 * * 1-5' -t report -A 3
 
 The expression uses the standard fields C<minute hour day-of-month month day-of-week>, with C<*>, C<*/N>, C<a-b>,
-C<a-b/N> and comma separated lists. Times are interpreted in the local timezone, matching Unix L<cron(8)>. Adding a
-schedule with an existing name updates it; reusing the same cron expression preserves the next firing time, changing
-it recomputes it. Invalid expressions are rejected immediately.
+C<a-b/N> and comma separated lists. Times are interpreted in UTC. Adding a schedule with an existing name updates it;
+reusing the same cron expression preserves the next firing time, changing it recomputes it. Invalid expressions are
+rejected immediately.
 
   # Pause and resume schedules without removing them
   $ ./myapp.pl minion schedule -P daily_cleanup

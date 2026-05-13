@@ -41,7 +41,8 @@ sub dispatch_schedules {
   return [] unless $db->query(q{SELECT pg_try_advisory_xact_lock(hashtext('minion.schedules'))})->array->[0];
 
   my $due = $db->query(
-    q{SELECT id, args, attempts, cron, expire, lax, name, notes, priority, queue, task
+    q{SELECT id, args, attempts, cron, expire, lax, name, EXTRACT(EPOCH FROM next_run) AS next_run,
+        EXTRACT(EPOCH FROM NOW()) AS now, notes, priority, queue, task
       FROM minion_schedules WHERE next_run <= NOW() AND NOT paused FOR UPDATE}
   )->expand->hashes;
 
@@ -60,7 +61,8 @@ sub dispatch_schedules {
         queue    => $s->{queue}
       }
     );
-    my $next = next_cron_time $s->{cron}, time;
+    my $basis = $s->{next_run} > $s->{now} ? $s->{next_run} : $s->{now};
+    my $next  = next_cron_time $s->{cron}, $basis;
     $db->query('UPDATE minion_schedules SET last_job = ?, last_run = NOW(), next_run = TO_TIMESTAMP(?) WHERE id = ?',
       $job_id, $next, $s->{id});
     push @dispatched, {id => $s->{id}, name => $s->{name}, job => $job_id};
@@ -279,9 +281,10 @@ sub retry_job {
 sub schedule {
   my ($self, $name, $cron, $task, $args, $options) = (shift, shift, shift, shift, shift || [], shift || {});
 
-  my $next = next_cron_time $cron, time;
+  my $db   = $self->pg->db;
+  my $next = next_cron_time $cron, $db->query('SELECT EXTRACT(EPOCH FROM NOW())')->array->[0];
 
-  return $self->pg->db->query(
+  return $db->query(
     q{INSERT INTO minion_schedules (args, attempts, cron, expire, lax, name, next_run, notes, priority, queue, task)
       VALUES ($1, $2, $3, $4, $5, $6, TO_TIMESTAMP($7), $8, $9, $10, $11)
       ON CONFLICT (name) DO UPDATE SET

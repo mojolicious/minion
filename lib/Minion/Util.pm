@@ -29,7 +29,7 @@ sub next_cron_time {
   my $t      = int($from / 60) * 60 + 60;
   my $limit  = $t + 5 * 366 * 86400;
   while ($t < $limit) {
-    my (undef, $min, $hour, $mday, $mon, undef, $wday) = localtime $t;
+    my (undef, $min, $hour, $mday, $mon, undef, $wday) = gmtime $t;
     return $t
       if $parsed->[0]{set}{$min}
       && $parsed->[1]{set}{$hour}
@@ -116,10 +116,10 @@ Enforce limits and generate list of currently desired tasks.
   my $epoch = next_cron_time $expr, $from;
 
 Compute the next epoch time matching a five field cron expression, strictly after the given epoch. Times are
-interpreted in the local timezone, matching the convention of Unix L<cron(8)>.
+interpreted in UTC.
 
-  # 1747053900 (next 12:05 local time after 1747053600)
-  next_cron_time '*/5 * * * *', 1747053600;
+  # 1747051500 (next 12:05 UTC after 1747051200)
+  next_cron_time '*/5 * * * *', 1747051200;
 
 =head2 parse_cron
 
