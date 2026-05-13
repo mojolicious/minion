@@ -202,9 +202,9 @@ Enforce limits and generate list of currently desired tasks.
   my $epoch = next_cron_time $expr,   $from;
   my $epoch = next_cron_time $parsed, $from;
 
-Compute the next epoch time matching a five field cron expression, strictly after the given epoch. Times are
-interpreted in UTC. Accepts either a cron expression string or a structure returned by L</"parse_cron">, so the parsed
-form can be reused across calls without reparsing.
+Compute the next epoch time matching a five field cron expression, strictly after the given epoch. All times are
+interpreted in B<UTC>, not local time. Accepts either a cron expression string or a structure returned by
+L</"parse_cron">, so the parsed form can be reused across calls without reparsing.
 
   # 1747051500 (next 12:05 UTC after 1747051200)
   next_cron_time '*/5 * * * *', 1747051200;

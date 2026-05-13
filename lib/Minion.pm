@@ -1073,9 +1073,9 @@ Resume a previously paused schedule. Returns true on success, false if the sched
 Create or update a schedule by unique name. The cron expression is parsed up front, so invalid expressions raise an
 exception immediately. The expression uses the standard five field form (minute, hour, day-of-month, month,
 day-of-week), with C<*>, C<*/N>, C<a-b>, C<a-b/N> and comma separated lists, the names C<JAN>-C<DEC> and
-C<SUN>-C<SAT>, and the nicknames C<@yearly>, C<@monthly>, C<@weekly>, C<@daily>, C<@midnight> and C<@hourly>. Times
-are interpreted in UTC. Updating a schedule with the same cron expression preserves its current firing time; changing
-the expression recomputes it. Schedules are dispatched by L<Minion::Worker> in the background, see
+C<SUN>-C<SAT>, and the nicknames C<@yearly>, C<@monthly>, C<@weekly>, C<@daily>, C<@midnight> and C<@hourly>. All
+times are interpreted in B<UTC>, not local time. Updating a schedule with the same cron expression preserves its current
+firing time; changing the expression recomputes it. Schedules are dispatched by L<Minion::Worker> in the background, see
 L</"dispatch_schedules">.
 
   # A daily job

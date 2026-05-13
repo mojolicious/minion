@@ -262,7 +262,8 @@ no matter how many workers are running.
   # Daily cleanup at 4am
   $ ./myapp.pl minion schedule -e daily_cleanup -c '0 4 * * *' -t cleanup
 
-A cron expression is five fields separated by spaces, one for each part of the wall clock.
+A cron expression is five fields separated by spaces, one for each part of the wall clock. All times are interpreted
+in B<UTC>, not local time.
 
   * * * * *
   | | | | |
