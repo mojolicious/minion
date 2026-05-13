@@ -902,6 +902,108 @@ List only schedules with these names.
 
 =back
 
+These fields are currently available:
+
+=over 2
+
+=item args
+
+  args => ['foo', 'bar']
+
+Job arguments used for each enqueued job.
+
+=item attempts
+
+  attempts => 25
+
+Number of attempts each enqueued job will get.
+
+=item created
+
+  created => 784111777
+
+Epoch time the schedule was created.
+
+=item cron
+
+  cron => '0 9 * * 1-5'
+
+Cron expression.
+
+=item expire
+
+  expire => 300
+
+Expiration in seconds for each enqueued job.
+
+=item id
+
+  id => 23
+
+Schedule id.
+
+=item last_job
+
+  last_job => '10025'
+
+Id of the most recently enqueued job, or C<undef> if the schedule has not fired yet.
+
+=item last_run
+
+  last_run => 784111777
+
+Epoch time the schedule last fired, or C<undef> if it has not fired yet.
+
+=item lax
+
+  lax => 0
+
+Lax dependency setting for each enqueued job.
+
+=item name
+
+  name => 'daily'
+
+Schedule name.
+
+=item next_run
+
+  next_run => 784111777
+
+Epoch time the schedule will fire next.
+
+=item notes
+
+  notes => {foo => 'bar'}
+
+Hash reference with arbitrary metadata applied to each enqueued job.
+
+=item paused
+
+  paused => 0
+
+True if the schedule is paused and will not fire.
+
+=item priority
+
+  priority => 0
+
+Priority of each enqueued job.
+
+=item queue
+
+  queue => 'default'
+
+Queue each enqueued job is placed in.
+
+=item task
+
+  task => 'foo'
+
+Task name.
+
+=back
+
 =head2 list_workers
 
   my $results = $backend->list_workers($offset, $limit);
