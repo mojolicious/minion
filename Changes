@@ -1,4 +1,6 @@
 
+12.01 2026-05-18
+
 12.0 2026-05-12
   - Added support for cron-style recurring jobs with schedule, unschedule, pause_schedule, resume_schedule,
     list_schedules and dispatch_schedules methods to Minion.
