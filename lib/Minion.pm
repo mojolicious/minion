@@ -1376,6 +1376,8 @@ This is the class hierarchy of the L<Minion> distribution.
 
 =item * L<Minion::Job>
 
+=item * L<Minion::Util>
+
 =item * L<Minion::Worker>
 
 =item * L<Mojolicious::Plugin::Minion>
