@@ -175,7 +175,7 @@ sub new {
   my $self = shift->SUPER::new(pg => Mojo::Pg->new(@_));
 
   my $db = Mojo::Pg->new(@_)->db;
-  croak 'PostgreSQL 12 or later is required' if $db->dbh->{pg_server_version} < 130000;
+  croak 'PostgreSQL 13 or later is required' if $db->dbh->{pg_server_version} < 130000;
   $db->disconnect;
 
   my $schema = path(__FILE__)->dirname->child('resources', 'migrations', 'pg.sql');
