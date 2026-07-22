@@ -130,8 +130,8 @@
                     <span class="badge badge-secondary">inactive</span>
                   % }
                 </td>
-                % if (grep { $job->{state} eq $_ } qw(active finished failed)) {
-                  % my $end = $job->{state} eq 'active' ? 'time' : 'finished';
+                % my $end = $job->{state} eq 'active' ? 'time' : 'finished';
+                % if ((grep { $job->{state} eq $_ } qw(active finished failed)) && defined $job->{started} && defined $job->{$end}) {
                   % my $runtime = $job->{$end} - $job->{started};
                   <td class="accordion-toggle collapsed duration" data-toggle="collapse" data-target="#job<%= $i %>">
                     <%= $runtime %>
