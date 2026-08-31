@@ -564,6 +564,20 @@ subtest 'Stats' => sub {
   is $stats->{delayed_jobs},     0, 'no delayed jobs';
 };
 
+subtest 'Tasks' => sub {
+  $minion->add_task(tasks_test_registered => sub { });
+  my $id1   = $minion->enqueue('tasks_test_registered');
+  my $id2   = $minion->enqueue('tasks_test_registered');
+  my $id3   = $minion->enqueue('tasks_test_unregistered');
+  my $tasks = $minion->backend->tasks;
+  is $tasks->{tasks_test_registered},   2, 'two jobs for registered task';
+  is $tasks->{tasks_test_unregistered}, 1, 'one job for a task never passed to add_task';
+  ok !exists $minion->tasks->{tasks_test_unregistered}, 'task is not registered in this process';
+  $minion->job($id1)->remove;
+  $minion->job($id2)->remove;
+  $minion->job($id3)->remove;
+};
+
 subtest 'History' => sub {
   $minion->enqueue('fail');
   my $worker = $minion->worker->register;

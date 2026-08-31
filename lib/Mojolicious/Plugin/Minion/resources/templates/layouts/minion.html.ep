@@ -104,7 +104,8 @@
                   <label for="state">Task</label>
                   <select class="custom-select" id="state" name="task">
                     <option selected></option>
-                    % for my $task (sort keys %{minion->tasks}) {
+                    % my %all_tasks = (%{minion->tasks}, %{minion->backend->tasks});
+                    % for my $task (sort keys %all_tasks) {
                       <option><%= $task %></option>
                     % }
                   </select>
