@@ -35,6 +35,7 @@ sub resume_schedule    { croak 'Method "resume_schedule" not implemented by subc
 sub retry_job          { croak 'Method "retry_job" not implemented by subclass' }
 sub schedule           { croak 'Method "schedule" not implemented by subclass' }
 sub stats              { croak 'Method "stats" not implemented by subclass' }
+sub tasks              { {} }
 sub unlock             { croak 'Method "unlock" not implemented by subclass' }
 sub unregister_worker  { croak 'Method "unregister_worker" not implemented by subclass' }
 sub unschedule         { croak 'Method "unschedule" not implemented by subclass' }
@@ -1085,6 +1086,14 @@ Uptime in seconds.
 Number of registered workers.
 
 =back
+
+=head2 tasks
+
+  my $tasks = $backend->tasks;
+
+Get a hash reference of task names with job counts as values, for tasks that have jobs in the backend. The default
+implementation returns an empty hash reference, but a subclass may override it to expose task names discovered from
+stored jobs, independently of tasks registered with L<Minion/"add_task"> in the current process.
 
 =head2 unlock
 

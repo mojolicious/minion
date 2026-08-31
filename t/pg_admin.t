@@ -59,6 +59,15 @@ subtest 'Jobs' => sub {
     ->text_unlike('tbody td a' => qr/$inactive/);
 };
 
+subtest 'Task filter' => sub {
+  app->minion->enqueue('unregistered_task');
+  ok !exists app->minion->tasks->{unregistered_task}, 'task is not registered in this process';
+  $t->get_ok('/minion')
+    ->status_is(200)
+    ->content_like(qr/<option>test<\/option>/,              'registered task is listed')
+    ->content_like(qr/<option>unregistered_task<\/option>/, 'task known only to the backend is also listed');
+};
+
 subtest 'Workers' => sub {
   $t->get_ok('/minion/workers')->status_is(200)->element_exists_not('tbody td a');
   my $worker = app->minion->worker->register;

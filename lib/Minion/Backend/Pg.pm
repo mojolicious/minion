@@ -320,6 +320,15 @@ sub stats {
   return $stats;
 }
 
+sub tasks {
+  my $self = shift;
+
+  my $rows = $self->pg->db->query('SELECT task, COUNT(*) AS count FROM minion_jobs GROUP BY task ORDER BY task')
+    ->hashes->to_array;
+
+  return {map { $_->{task} => $_->{count} } @$rows};
+}
+
 sub unlock {
   shift->pg->db->query(
     'DELETE FROM minion_locks WHERE id = (
@@ -1390,6 +1399,20 @@ Uptime in seconds.
 Number of registered workers.
 
 =back
+
+=head2 tasks
+
+  my $tasks = $backend->tasks;
+
+Get a hash reference of all task names that have jobs in the backend, with job counts as values. This allows the
+admin interface to discover and search for tasks independently of workers, without requiring tasks to be registered
+via C<add_task>.
+
+  # Get all tasks (registered + backend)
+  my %all_tasks = (%{$minion->tasks}, %{$minion->backend->tasks});
+
+  # Task names with job counts
+  say "$_ has $all_tasks{$_} jobs" for sort keys %all_tasks;
 
 =head2 unlock
 
