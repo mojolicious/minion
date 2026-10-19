@@ -59,6 +59,15 @@ subtest 'Jobs' => sub {
     ->text_unlike('tbody td a' => qr/$inactive/);
 };
 
+subtest 'Failed job without timestamps' => sub {
+  my $stuck = app->minion->enqueue('test');
+  app->minion->backend->pg->db->query("UPDATE minion_jobs SET state = 'failed' WHERE id = ?", $stuck);
+  my @warnings;
+  local $SIG{__WARN__} = sub { push @warnings, $_[0] };
+  $t->get_ok('/minion/jobs?state=failed')->status_is(200)->text_like('tbody td a' => qr/$stuck/);
+  is_deeply \@warnings, [], 'no uninitialized value warnings';
+};
+
 subtest 'Workers' => sub {
   $t->get_ok('/minion/workers')->status_is(200)->element_exists_not('tbody td a');
   my $worker = app->minion->worker->register;
