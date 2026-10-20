@@ -59,6 +59,19 @@ subtest 'Jobs' => sub {
     ->text_unlike('tbody td a' => qr/$inactive/);
 };
 
+subtest 'Task filter' => sub {
+  $t->get_ok('/minion')
+    ->status_is(200)
+    ->element_exists('input[name=task][list=tasks]')
+    ->text_is('datalist#tasks option' => 'test');
+  my $id = app->minion->enqueue('unregistered');
+  $t->get_ok('/minion/jobs?task=unregistered')
+    ->status_is(200)
+    ->text_like('tbody td a' => qr/$id/)
+    ->text_unlike('tbody td a' => qr/$inactive/);
+  app->minion->job($id)->remove;
+};
+
 subtest 'Workers' => sub {
   $t->get_ok('/minion/workers')->status_is(200)->element_exists_not('tbody td a');
   my $worker = app->minion->worker->register;

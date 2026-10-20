@@ -101,13 +101,13 @@
               </div>
               <div class="modal-body">
                 <div class="form-group">
-                  <label for="state">Task</label>
-                  <select class="custom-select" id="state" name="task">
-                    <option selected></option>
+                  <label for="task">Task</label>
+                  <input type="text" class="form-control" id="task" name="task" list="tasks">
+                  <datalist id="tasks">
                     % for my $task (sort keys %{minion->tasks}) {
                       <option><%= $task %></option>
                     % }
-                  </select>
+                  </datalist>
                 </div>
                 <div class="form-group">
                   <label for="state">State</label>
